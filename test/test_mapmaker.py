@@ -6,7 +6,7 @@ import unittest
 
 import numpy as np
 
-from .night_horizons_mapmaker import mapmaker
+import night_horizons_mapmaker.mapmaker as mapmaker
 
 
 class TestGlobal(unittest.TestCase):
