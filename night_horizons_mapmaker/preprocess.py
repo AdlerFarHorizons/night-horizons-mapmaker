@@ -380,6 +380,13 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
         return gps_log_df
 
 
+GEOTRANSFORM_COLS = [
+    'x_min', 'pixel_width', 'x_rot',
+    'y_max', 'y_rot', 'pixel_height',
+    'n_x', 'n_y',
+]
+
+
 class GeoPreprocesser(TransformerMixin, BaseEstimator):
     '''Transform filepaths into a metadata dataframe.
 
@@ -417,11 +424,6 @@ class GeoPreprocesser(TransformerMixin, BaseEstimator):
             self.crs = pyproj.CRS(self.crs)
 
         # Loop over and get datasets
-        columns = [
-            'x_min', 'pixel_width', 'x_rot',
-            'y_max', 'y_rot', 'pixel_height',
-            'n_x', 'n_y',
-        ]
         rows = []
         for i, fp in enumerate(X['filepath']):
 
@@ -429,8 +431,8 @@ class GeoPreprocesser(TransformerMixin, BaseEstimator):
             dataset = gdal.Open(fp, gdal.GA_ReadOnly)
             if dataset is None:
                 row = pd.Series(
-                    [np.nan,] * len(columns),
-                    index=columns,
+                    [np.nan,] * len(GEOTRANSFORM_COLS),
+                    index=GEOTRANSFORM_COLS,
                     name=X.index[i]
                 )
                 rows.append(row)
@@ -461,7 +463,7 @@ class GeoPreprocesser(TransformerMixin, BaseEstimator):
                     y_max, y_rot, pixel_height,
                     dataset.RasterXSize, dataset.RasterYSize,
                 ],
-                index=columns,
+                index=GEOTRANSFORM_COLS,
                 name=X.index[i]
             )
             rows.append(row)

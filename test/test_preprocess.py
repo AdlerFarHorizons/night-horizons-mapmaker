@@ -111,12 +111,7 @@ class TestGeoPreprocesser(unittest.TestCase):
         transformer = preprocess.GeoPreprocesser()
         X = transformer.fit_transform(fps)
 
-        expected_cols = [
-            'filepath',
-            'x_min', 'pixel_width', 'x_rot',
-            'y_max', 'y_rot', 'pixel_height',
-            'n_x', 'n_y',
-        ]
+        expected_cols = ['filepath',] + preprocess.GEOTRANSFORM_COLS
         assert (~X.columns.isin(expected_cols)).sum() == 0
 
         assert len(X) == n_files
