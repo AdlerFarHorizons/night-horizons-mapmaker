@@ -399,10 +399,8 @@ class GeoPreprocesser(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        output_columns: list[str] = None,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
     ):
-        self.output_columns = output_columns
         self.crs = crs
 
     def fit_transform(
@@ -421,7 +419,8 @@ class GeoPreprocesser(TransformerMixin, BaseEstimator):
         # Loop over and get datasets
         columns = [
             'x_min', 'pixel_width', 'x_rot',
-            'y_max', 'y_rot', 'pixel_height'
+            'y_max', 'y_rot', 'pixel_height',
+            'n_x', 'n_y',
         ]
         rows = []
         for i, fp in enumerate(X['filepath']):
@@ -459,7 +458,8 @@ class GeoPreprocesser(TransformerMixin, BaseEstimator):
             row = pd.Series(
                 [
                     x_min, pixel_width, x_rot,
-                    y_max, y_rot, pixel_height
+                    y_max, y_rot, pixel_height,
+                    dataset.RasterXSize, dataset.RasterYSize,
                 ],
                 index=columns,
                 name=X.index[i]
