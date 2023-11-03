@@ -5,6 +5,7 @@ from typing import Union
 import numpy as np
 from numpy import ndarray
 import pandas as pd
+import pyproj
 import scipy
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
@@ -23,8 +24,13 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
     n_features_ : int
         The number of features of the data passed to :meth:`fit`.
     """
-    def __init__(self, output_columns: list[str] = None):
+    def __init__(
+        self,
+        output_columns: list[str] = None,
+        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+    ):
         self.output_columns = output_columns
+        self.crs = crs
 
     # def fit(self, X, y=None):
     #     """A reference implementation of a fitting function for a transformer.
@@ -78,7 +84,7 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
 
     def fit_transform(
         self,
-        X: np.ndarray[str],
+        X: Union[np.ndarray[str], list[str]],
         y=None,
         img_log_fp: str = None,
         imu_log_fp: str = None,
@@ -89,29 +95,37 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
         assert imu_log_fp is not None, 'Must pass imu_log filepath.'
         assert gps_log_fp is not None, 'Must pass gps_log filepath.'
 
-        X = check_array(X, dtype='str')
+        # We offer some minor reshaping to be compatible with common
+        # expectations that a single list of features doesn't need to be 2D.
+        if len(np.array(X).shape) == 1:
+            X = np.array(X).reshape(1, len(X))
 
-        # Unpack X (only fps inside)
-        fps = X[0]
+        # Check and unpack X
+        X = check_array(X, dtype='str')
+        X = pd.DataFrame(X.transpose(), columns=['filepath'])
+        X['filename'] = X['filepath'].apply(os.path.basename)
+
+        # Convert CRS as needed
+        if isinstance(self.crs, str):
+            self.crs = pyproj.CRS(self.crs)
 
         # Get the raw metadata
-        log_df = self.get_all_logs(img_log_fp, imu_log_fp, gps_log_fp)
+        log_df = self.get_logs(img_log_fp, imu_log_fp, gps_log_fp)
 
-        metadata_df = self.correlate_filepaths(fps, log_df)
+        # Merge, assuming filenames remain the same.
+        X = pd.merge(X, log_df, on='filename')
 
-    def correlate_filepaths(
-        self,
-        filepaths: np.ndarray[str],
-        log_df: pd.DataFrame,
-    ):
+        # Select only the desired columns
+        X = X[self.output_columns]
 
-        pass
+        return X
 
-    def get_all_logs(
+    def get_logs(
         self,
         img_log_fp: str,
         imu_log_fp: str,
         gps_log_fp: str,
+        tz_offset_in_hr: float = 5.,
     ) -> pd.DataFrame:
         '''Combine the different logs
 
@@ -149,7 +163,7 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
             # Get the timestamps in the right time zone
             df_to_include['CurrTimestamp_in_img_tz'] = (
                 df_to_include['CurrTimestamp']
-                - pd.Timedelta(self.metadata_tz_offset_in_hr, 'hr')
+                - pd.Timedelta(tz_offset_in_hr, 'hr')
             )
             df_to_include = df_to_include.dropna(
                 subset=['CurrTimestamp_in_img_tz']
@@ -227,23 +241,11 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
         )
 
         # Get filepaths
-        def get_filepath(filename):
-            return os.path.join(
-                self.image_dir,
-                filename,
-            )
         img_log_df['obc_filename'] = img_log_df['filename'].copy()
         img_log_df['filename'] = img_log_df['obc_filename'].apply(
             os.path.basename
         )
-        img_log_df['filepath'] = img_log_df['filename'].apply(get_filepath)
-        # TODO: Currently flight only deals with one camera at a time.
-        # Filepaths that are for other cameras are invalid.
-        img_log_df['valid_filepath'] = img_log_df['filename'].isin(
-            os.listdir(self.image_dir)
-        )
 
-        self.img_log_df = img_log_df
         return img_log_df
 
     def load_imu_log(self, imu_log_fp: str = None) -> pd.DataFrame:
@@ -289,10 +291,13 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
         imu_log_df.loc[imu_log_df['mAltitude'] < 0., ac_columns] = np.nan
         imu_log_df.loc[imu_log_df['mAltitude'] > 20000., ac_columns] = np.nan
 
-        self.imu_log_df = imu_log_df
         return imu_log_df
 
-    def load_gps_log(self, gps_log_fp: str = None) -> pd.DataFrame:
+    def load_gps_log(
+        self,
+        gps_log_fp: str = None,
+        latlon_crs: str = 'EPSG:4326'
+    ) -> pd.DataFrame:
         '''Load the GPS log.
 
         Args:
@@ -333,16 +338,19 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
             gps_log_df[column] = gps_log_df[column].astype(float)
 
         # Coordinates
+        if isinstance(latlon_crs, str):
+            latlon_crs = pyproj.CRS(latlon_crs)
+        latlon_crs_to_crs = pyproj.Transformer.from_crs(
+            latlon_crs,
+            self.crs
+        )
         gps_log_df['sensor_x'], gps_log_df['sensor_y'] = \
-            self.latlon_to_cart.transform(
+            latlon_crs_to_crs.transform(
                 gps_log_df['GPSLat'],
                 gps_log_df['GPSLong']
         )
 
-        self.gps_log_df = gps_log_df
         return gps_log_df
-
-
 
 
 def discover_data(

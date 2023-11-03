@@ -44,19 +44,32 @@ class TestMetadataPreprocesser(unittest.TestCase):
 
     def setUp(self):
 
-        self.expected_cols = ['filepaths', 'sensor_x', 'sensor_y']
-        self.transformer = preprocess.MetadataPreprocesser(
-            output_columns=self.expected_cols
-        )
+        # Image filetree info
         image_dir = './test/test_data/images'
         self.fps = preprocess.discover_data(image_dir)
         self.n_files = len(self.fps)
-        self.fps = np.array([self.fps,])
+
+        # Metadata filetree info
+        metadata_dir = './test/test_data/metadata'
+        self.img_log_fp = os.path.join(metadata_dir, 'image.log')
+        self.imu_log_fp = os.path.join(metadata_dir, 'PresIMULog.csv')
+        self.gps_log_fp = os.path.join(metadata_dir, 'GPSLog.csv')
+
+        # Preprocesser construction
+        self.expected_cols = ['filepath', 'sensor_x', 'sensor_y']
+        self.transformer = preprocess.MetadataPreprocesser(
+            output_columns=self.expected_cols
+        )
 
     def test_output(self):
         '''The output prior to any form of georeferencing.
         '''
 
-        output_df = self.transformer.fit_transform(self.fps)
+        output_df = self.transformer.fit_transform(
+            self.fps,
+            img_log_fp=self.img_log_fp,
+            imu_log_fp=self.imu_log_fp,
+            gps_log_fp=self.gps_log_fp,
+        )
         assert len(output_df) == self.n_files
         assert (~output_df.columns.isin(self.expected_cols)).sum() == 0
