@@ -65,14 +65,15 @@ class TestMetadataPreprocesser(unittest.TestCase):
         fps = preprocess.discover_data(image_dir)
         n_files = len(fps)
 
-        output_df = self.transformer.fit_transform(
+        metadata = self.transformer.fit_transform(
             fps,
             img_log_fp=self.img_log_fp,
             imu_log_fp=self.imu_log_fp,
             gps_log_fp=self.gps_log_fp,
         )
-        assert len(output_df) == n_files
-        assert (~output_df.columns.isin(self.expected_cols)).sum() == 0
+        assert len(metadata) == n_files
+        assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
+        assert metadata['sensor_x'].isna().sum() == 0
 
     def test_output_referenced_files(self):
 
@@ -81,11 +82,12 @@ class TestMetadataPreprocesser(unittest.TestCase):
         fps = preprocess.discover_data(image_dir)
         n_files = len(fps)
 
-        output_df = self.transformer.fit_transform(
+        metadata = self.transformer.fit_transform(
             fps,
             img_log_fp=self.img_log_fp,
             imu_log_fp=self.imu_log_fp,
             gps_log_fp=self.gps_log_fp,
         )
-        assert len(output_df) == n_files
-        assert (~output_df.columns.isin(self.expected_cols)).sum() == 0
+        assert len(metadata) == n_files
+        assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
+        assert metadata['sensor_x'].isna().sum() == 0
