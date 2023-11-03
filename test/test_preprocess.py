@@ -91,3 +91,36 @@ class TestMetadataPreprocesser(unittest.TestCase):
         assert len(metadata) == n_files
         assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
         assert metadata['sensor_x'].isna().sum() == 0
+
+
+class TestGeoPreprocesser(unittest.TestCase):
+
+    def test_output(self):
+
+        # Image filetree info
+        image_dir = './test/test_data/images'
+        fps = preprocess.discover_data(image_dir)
+        n_files_unreffed = len(fps)
+        referenced_image_dir = './test/test_data/referenced_images'
+        fps.extend(preprocess.discover_data(
+            referenced_image_dir,
+            extension=['tif', 'tiff']
+        ))
+        n_files = len(fps)
+
+        transformer = preprocess.GeoPreprocesser()
+        X = transformer.fit_transform(fps)
+
+        expected_cols = [
+            'filepath',
+            'x_min', 'pixel_width', 'x_rot',
+            'y_max', 'y_rot', 'pixel_height'
+        ]
+        assert (~X.columns.isin(expected_cols)).sum() == 0
+
+        assert len(X) == n_files
+        assert X['x_min'].isna().sum() == n_files_unreffed
+
+        # Ensure the conversion was done, i.e. there shouldn't really be
+        # values to zero, unless our test dataset was within 1000m of (0,0)
+        assert np.nanmax(np.abs(X['x_min'])) > 1000
