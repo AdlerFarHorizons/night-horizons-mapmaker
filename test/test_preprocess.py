@@ -1,4 +1,4 @@
-'''Test file for preprocessing
+'''Test file for preprocessing.
 '''
 
 import os
@@ -114,7 +114,8 @@ class TestGeoPreprocesser(unittest.TestCase):
         expected_cols = [
             'filepath',
             'x_min', 'pixel_width', 'x_rot',
-            'y_max', 'y_rot', 'pixel_height'
+            'y_max', 'y_rot', 'pixel_height',
+            'n_x', 'n_y',
         ]
         assert (~X.columns.isin(expected_cols)).sum() == 0
 
