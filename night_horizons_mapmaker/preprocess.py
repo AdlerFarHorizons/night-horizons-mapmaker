@@ -103,7 +103,6 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
         # Check and unpack X
         X = check_array(X, dtype='str')
         X = pd.DataFrame(X.transpose(), columns=['filepath'])
-        X['filename'] = X['filepath'].apply(os.path.basename)
 
         # Convert CRS as needed
         if isinstance(self.crs, str):
@@ -112,8 +111,20 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
         # Get the raw metadata
         log_df = self.get_logs(img_log_fp, imu_log_fp, gps_log_fp)
 
+        # Identifiers for X
+        X['filename'] = X['filepath'].apply(os.path.basename)
+        pattern = r'(\d+)_\d.*.tif'
+        X['timestamp_id'] = X['filename'].str.findall(
+            pattern
+        ).str[0].astype('Int64')
+
         # Merge, assuming filenames remain the same.
-        X = pd.merge(X, log_df, on='filename')
+        X = pd.merge(
+            X,
+            log_df,
+            how='left',
+            on=['filename', 'timestamp_id']
+        )
 
         # Select only the desired columns
         X = X[self.output_columns]

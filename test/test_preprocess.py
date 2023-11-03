@@ -44,11 +44,6 @@ class TestMetadataPreprocesser(unittest.TestCase):
 
     def setUp(self):
 
-        # Image filetree info
-        image_dir = './test/test_data/images'
-        self.fps = preprocess.discover_data(image_dir)
-        self.n_files = len(self.fps)
-
         # Metadata filetree info
         metadata_dir = './test/test_data/metadata'
         self.img_log_fp = os.path.join(metadata_dir, 'image.log')
@@ -65,11 +60,32 @@ class TestMetadataPreprocesser(unittest.TestCase):
         '''The output prior to any form of georeferencing.
         '''
 
+        # Image filetree info
+        image_dir = './test/test_data/images'
+        fps = preprocess.discover_data(image_dir)
+        n_files = len(fps)
+
         output_df = self.transformer.fit_transform(
-            self.fps,
+            fps,
             img_log_fp=self.img_log_fp,
             imu_log_fp=self.imu_log_fp,
             gps_log_fp=self.gps_log_fp,
         )
-        assert len(output_df) == self.n_files
+        assert len(output_df) == n_files
+        assert (~output_df.columns.isin(self.expected_cols)).sum() == 0
+
+    def test_output_referenced_files(self):
+
+        # Image filetree info
+        image_dir = './test/test_data/referenced_images'
+        fps = preprocess.discover_data(image_dir)
+        n_files = len(fps)
+
+        output_df = self.transformer.fit_transform(
+            fps,
+            img_log_fp=self.img_log_fp,
+            imu_log_fp=self.imu_log_fp,
+            gps_log_fp=self.gps_log_fp,
+        )
+        assert len(output_df) == n_files
         assert (~output_df.columns.isin(self.expected_cols)).sum() == 0
