@@ -36,7 +36,7 @@ class TestDiscoverData(unittest.TestCase):
             './test/test_data/referenced_images/Geo 836109848_1.tif',
         ]
 
-        fps = preprocess.discover_data(image_dir, ['raw', 'tif*'])
+        fps = preprocess.discover_data(image_dir, ['raw', 'tif', 'tiff'])
         assert fps == expected_fps
 
 
