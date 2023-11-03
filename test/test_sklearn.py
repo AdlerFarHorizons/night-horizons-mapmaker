@@ -5,7 +5,7 @@ from night_horizons_mapmaker import reference
 
 @pytest.mark.parametrize(
     "estimator",
-    [reference.Georeferencer(),]
+    [reference.SensorGeoreferencer(),]
 )
 def test_all_estimators(estimator):
     return check_estimator(estimator)
