@@ -111,20 +111,36 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
         # Get the raw metadata
         log_df = self.get_logs(img_log_fp, imu_log_fp, gps_log_fp)
 
-        # Identifiers for X
-        X['filename'] = X['filepath'].apply(os.path.basename)
-        pattern = r'(\d+)_\d.*.tif'
-        X['timestamp_id'] = X['filename'].str.findall(
-            pattern
-        ).str[0].astype('Int64')
-
         # Merge, assuming filenames remain the same.
-        X = pd.merge(
+        X['filename'] = X['filepath'].apply(os.path.basename)
+        X_trans = pd.merge(
             X,
             log_df,
-            how='left',
-            on=['filename', 'timestamp_id']
+            how='inner',
+            on='filename'
         )
+        # Leftovers
+        X = X.loc[~X.index.isin(X_trans.index)]
+
+        # Secondary merge attempt, using a common pattern
+        pattern = r'(\d+)_\d.tif'
+        X['timestamp_id'] = X['filename'].str.findall(
+            pattern
+        ).str[-1].astype('Int64')
+        X_trans2 = pd.merge(
+            X,
+            log_df,
+            how='inner',
+            on='timestamp_id'
+        )
+        n_uncorrelated = (~X.index.isin(X_trans2.index)).sum()
+        assert n_uncorrelated == 0, (
+            'Did not successfully correlate filepaths. '
+            f'n_uncorrelated = {n_uncorrelated}'
+        )
+
+        # Recombine
+        X = pd.concat([X_trans, X_trans2], axis='rows')
 
         # Select only the desired columns
         X = X[self.output_columns]
