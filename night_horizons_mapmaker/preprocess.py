@@ -3,7 +3,7 @@ import os
 from typing import Union
 
 import numpy as np
-from numpy import ndarray
+from osgeo import gdal
 import pandas as pd
 import pyproj
 import scipy
@@ -12,18 +12,22 @@ from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
 
 class MetadataPreprocesser(TransformerMixin, BaseEstimator):
-    """ An example transformer that returns the element-wise square root.
+    '''Transform filepaths into a metadata dataframe.
 
     Parameters
     ----------
     output_columns :
         What columns to include in the output.
 
+    crs:
+        The coordinate reference system to use.
+
     Attributes
     ----------
     n_features_ : int
         The number of features of the data passed to :meth:`fit`.
-    """
+    '''
+
     def __init__(
         self,
         output_columns: list[str] = None,
@@ -32,8 +36,10 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
         self.output_columns = output_columns
         self.crs = crs
 
+    # DEBUG: Remove commented-out, once we know it works in a scikit-learn
+    #        pipeline.
     # def fit(self, X, y=None):
-    #     """A reference implementation of a fitting function for a transformer.
+    #     '''A reference implementation of a fitting function for a transformer.
 
     #     Parameters
     #     ----------
@@ -47,7 +53,7 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
     #     -------
     #     self : object
     #         Returns self.
-    #     """
+    #     '''
     #     X = check_array(X, dtype='str')
 
     #     self.n_features_ = X.shape[1]
@@ -56,7 +62,7 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
     #     return self
 
     # def transform(self, X):
-    #     """ A reference implementation of a transform function.
+    #     ''' A reference implementation of a transform function.
 
     #     Parameters
     #     ----------
@@ -68,7 +74,7 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
     #     X_transformed : array, shape (n_samples, n_features)
     #         The array containing the element-wise square roots of the values
     #         in ``X``.
-    #     """
+    #     '''
     #     # Check is fit had been called
     #     check_is_fitted(self, 'n_features_')
 
@@ -84,7 +90,7 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
 
     def fit_transform(
         self,
-        X: Union[np.ndarray[str], list[str]],
+        X: Union[np.ndarray[str], list[str], pd.DataFrame],
         y=None,
         img_log_fp: str = None,
         imu_log_fp: str = None,
@@ -95,14 +101,8 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
         assert imu_log_fp is not None, 'Must pass imu_log filepath.'
         assert gps_log_fp is not None, 'Must pass gps_log filepath.'
 
-        # We offer some minor reshaping to be compatible with common
-        # expectations that a single list of features doesn't need to be 2D.
-        if len(np.array(X).shape) == 1:
-            X = np.array(X).reshape(1, len(X))
-
-        # Check and unpack X
-        X = check_array(X, dtype='str')
-        X = pd.DataFrame(X.transpose(), columns=['filepath'])
+        # Check the input is good.
+        X = check_input(X)
 
         # Convert CRS as needed
         if isinstance(self.crs, str):
@@ -378,6 +378,129 @@ class MetadataPreprocesser(TransformerMixin, BaseEstimator):
         )
 
         return gps_log_df
+
+
+class GeoPreprocesser(TransformerMixin, BaseEstimator):
+    '''Transform filepaths into a metadata dataframe.
+
+    Parameters
+    ----------
+    output_columns :
+        What columns to include in the output.
+
+    crs:
+        The coordinate reference system to use.
+
+    Attributes
+    ----------
+    n_features_ : int
+        The number of features of the data passed to :meth:`fit`.
+    '''
+
+    def __init__(
+        self,
+        output_columns: list[str] = None,
+        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+    ):
+        self.output_columns = output_columns
+        self.crs = crs
+
+    def fit_transform(
+        self,
+        X: Union[np.ndarray[str], list[str], pd.DataFrame],
+        y=None,
+    ):
+
+        # Check the input is good.
+        X = check_input(X)
+
+        # Convert CRS as needed
+        if isinstance(self.crs, str):
+            self.crs = pyproj.CRS(self.crs)
+
+        # Loop over and get datasets
+        columns = [
+            'x_min', 'pixel_width', 'x_rot',
+            'y_max', 'y_rot', 'pixel_height'
+        ]
+        rows = []
+        for i, fp in enumerate(X['filepath']):
+
+            # Try to load the dataset
+            dataset = gdal.Open(fp, gdal.GA_ReadOnly)
+            if dataset is None:
+                row = pd.Series(
+                    [np.nan,] * len(columns),
+                    index=columns,
+                    name=X.index[i]
+                )
+                rows.append(row)
+                continue
+
+            x_min, pixel_width, x_rot, y_max, y_rot, pixel_height = \
+                dataset.GetGeoTransform()
+
+            # Convert to desired crs.
+            dataset_crs = pyproj.CRS(dataset.GetProjection())
+            dataset_crs_to_crs = pyproj.Transformer.from_crs(
+                dataset_crs,
+                self.crs,
+                always_xy=True
+            )
+            x_min, y_max = dataset_crs_to_crs.transform(
+                x_min,
+                y_max,
+            )
+            pixel_width, pixel_height = dataset_crs_to_crs.transform(
+                pixel_width,
+                pixel_height,
+            )
+
+            row = pd.Series(
+                [
+                    x_min, pixel_width, x_rot,
+                    y_max, y_rot, pixel_height
+                ],
+                index=columns,
+                name=X.index[i]
+            )
+            rows.append(row)
+
+        new_df = pd.DataFrame(rows)
+        X = pd.concat([X, new_df], axis='columns')
+
+        return X
+
+
+def check_input(
+    X: Union[np.ndarray[str], list[str], pd.DataFrame]
+) -> pd.DataFrame:
+    '''Input check for acceptable types for preprocessing.
+
+    Parameters
+    ----------
+        X:
+            Input data.
+    Returns
+    -------
+    '''
+
+    if isinstance(X, pd.DataFrame):
+        assert X.columns == ['filepath'], (
+            'Unexpected columns in preprocesser input.'
+        )
+        return X
+
+    # We offer some minor reshaping to be compatible with common
+    # expectations that a single list of features doesn't need to be 2D.
+    if len(np.array(X).shape) == 1:
+        X = np.array(X).reshape(1, len(X))
+
+    # Check and unpack X
+    X = check_array(X, dtype='str')
+    X = pd.DataFrame(X.transpose(), columns=['filepath'])
+
+    return X
 
 
 def discover_data(
