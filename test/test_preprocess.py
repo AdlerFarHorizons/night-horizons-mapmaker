@@ -40,7 +40,7 @@ class TestDiscoverData(unittest.TestCase):
         assert fps == expected_fps
 
 
-class TestMetadataPreprocesser(unittest.TestCase):
+class TestNITELitePreprocesser(unittest.TestCase):
 
     def setUp(self):
 
@@ -52,7 +52,7 @@ class TestMetadataPreprocesser(unittest.TestCase):
 
         # Preprocesser construction
         self.expected_cols = ['filepath', 'sensor_x', 'sensor_y']
-        self.transformer = preprocess.MetadataPreprocesser(
+        self.transformer = preprocess.NITELitePreprocesser(
             output_columns=self.expected_cols
         )
 
@@ -93,7 +93,7 @@ class TestMetadataPreprocesser(unittest.TestCase):
         assert metadata['sensor_x'].isna().sum() == 0
 
 
-class TestGeoPreprocesser(unittest.TestCase):
+class TestGeoTIFFPreprocesser(unittest.TestCase):
 
     def test_output(self):
 
@@ -108,7 +108,7 @@ class TestGeoPreprocesser(unittest.TestCase):
         ))
         n_files = len(fps)
 
-        transformer = preprocess.GeoPreprocesser()
+        transformer = preprocess.GeoTIFFPreprocesser()
         X = transformer.fit_transform(fps)
 
         expected_cols = ['filepath',] + preprocess.GEOTRANSFORM_COLS

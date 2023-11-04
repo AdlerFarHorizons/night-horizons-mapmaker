@@ -24,10 +24,10 @@ class GeoreferencingPipelines:
         pipeline = sk_pipeline.Pipeline([
             (
                 'metadata_preprocessing',
-                preprocess.MetadataPreprocesser(
+                preprocess.NITELitePreprocesser(
                     output_columns=['filepath', 'sensor_x', 'sensor_y', ],
                     crs=crs,
                 )
             ),
-            ('geo_preprocessing', preprocess.GeoPreprocesser(crs=crs)),
+            ('geo_preprocessing', preprocess.GeoTIFFPreprocesser(crs=crs)),
         ])
