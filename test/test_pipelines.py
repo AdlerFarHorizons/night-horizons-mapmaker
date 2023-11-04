@@ -32,9 +32,9 @@ class TestPreprocess(unittest.TestCase):
 
         output_df = ref_nitelite_pipeline.fit_transform(
             fps,
-            nitelite_preprocessing__img_log_fp=img_log_fp,
-            nitelite_preprocessing__imu_log_fp=imu_log_fp,
-            nitelite_preprocessing__gps_log_fp=gps_log_fp,
+            nitelite__img_log_fp=img_log_fp,
+            nitelite__imu_log_fp=imu_log_fp,
+            nitelite__gps_log_fp=gps_log_fp,
         )
         expected_cols = (
             preprocess.GEOTRANSFORM_COLS
@@ -56,15 +56,43 @@ class TestGeoreference(unittest.TestCase):
         image_dir = './test/test_data/referenced_images'
         fps = preprocess.discover_data(image_dir)
 
+        # Metadata filetree info
+        metadata_dir = './test/test_data/metadata'
+        img_log_fp = os.path.join(metadata_dir, 'image.log')
+        imu_log_fp = os.path.join(metadata_dir, 'PresIMULog.csv')
+        gps_log_fp = os.path.join(metadata_dir, 'GPSLog.csv')
+
+        # Get the y values
+        y_pipeline = pipelines.PreprocessingPipelines.referenced_nitelite()
+        y = y_pipeline.fit_transform(
+            fps,
+            nitelite__img_log_fp=img_log_fp,
+            nitelite__imu_log_fp=imu_log_fp,
+            nitelite__gps_log_fp=gps_log_fp,
+        )
+
+        # Train test split
+        inds_train, inds_test = train_test_split(
+            fps.index,
+            test_size=0.2,
+        )
+        fps_train = fps.loc[inds_train]
+        fps_test = fps.loc[inds_test]
+        y_train = y.loc[inds_train]
+        y_test = y.loc[inds_test]
+
         sensor_ref_pipeline = self.pipelines.sensor_georeferencing()
-
-        fps_train, fps_test = train_test_split(fps, test_size=0.2)
-
-        sensor_ref_pipeline.fit(fps_train)
+        sensor_ref_pipeline.fit(
+            fps_train,
+            preprocessing__nitelite__img_log_fp=img_log_fp,
+            preprocessing__nitelite__imu_log_fp=imu_log_fp,
+            preprocessing__nitelite__gps_log_fp=gps_log_fp,
+        )
         y_pred = sensor_ref_pipeline.predict(fps_test)
-
         expected_cols = (
             preprocess.GEOTRANSFORM_COLS
             + ['estimated_spatial_error',]
         )
-        assert y_pred.columns == expected_cols
+        matching_cols = y_pred.columns.isin(expected_cols)
+        assert matching_cols.sum() == len(expected_cols)
+        assert (~matching_cols).sum() == 0

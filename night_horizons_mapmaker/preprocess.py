@@ -454,7 +454,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
     ):
 
         # Check the input is good.
-        X = check_input(X)
+        X = check_input(X, passthrough=self.passthrough)
 
         # Check is fit had been called
         check_is_fitted(self, 'is_fitted_')
@@ -509,6 +509,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
             rows.append(row)
 
         new_df = pd.DataFrame(rows)
+
         X = pd.concat([X, new_df], axis='columns')
 
         return X
@@ -549,8 +550,8 @@ def check_input(
 
 def discover_data(
     directory: str,
-    extension: Union[str, list[str]] = None
-) -> list[str]:
+    extension: Union[str, list[str]] = None,
+) -> pd.Series:
     '''
     Parameters
     ----------
@@ -568,11 +569,11 @@ def discover_data(
     # When all files
     if extension is None:
         pattern = os.path.join(directory, '**', '*.*')
-        return glob.glob(pattern, recursive=True)
+        return pd.Series(glob.glob(pattern, recursive=True))
     # When a single extension
     elif isinstance(extension, str):
         pattern = os.path.join(directory, '**', f'*.{extension}')
-        return glob.glob(pattern, recursive=True)
+        return pd.Series(glob.glob(pattern, recursive=True))
     # When a list of extensions
     else:
         try:
@@ -580,6 +581,6 @@ def discover_data(
             for ext in extension:
                 pattern = os.path.join(directory, '**', f'*.{ext}')
                 fps.extend(glob.glob(pattern, recursive=True))
-            return fps
+            return pd.Series(fps)
         except TypeError:
             raise TypeError(f'Unexpected type for extension: {extension}')
