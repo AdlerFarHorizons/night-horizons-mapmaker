@@ -7,8 +7,8 @@ import unittest
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-import night_horizons_mapmaker.preprocess as preprocess
-import night_horizons_mapmaker.pipelines as pipelines
+import night_horizons.preprocess as preprocess
+import night_horizons.pipelines as pipelines
 
 
 class TestPreprocess(unittest.TestCase):
