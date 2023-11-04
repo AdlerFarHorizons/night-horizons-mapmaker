@@ -5,6 +5,7 @@ import os
 import unittest
 
 import numpy as np
+import pandas as pd
 
 import night_horizons.preprocess as preprocess
 
@@ -22,7 +23,7 @@ class TestDiscoverData(unittest.TestCase):
         ]
 
         fps = preprocess.discover_data(image_dir)
-        assert fps == expected_fps
+        assert list(fps) == expected_fps
 
     def test_discover_data_exts(self):
 
@@ -37,7 +38,7 @@ class TestDiscoverData(unittest.TestCase):
         ]
 
         fps = preprocess.discover_data(image_dir, ['raw', 'tif', 'tiff'])
-        assert fps == expected_fps
+        assert list(fps) == expected_fps
 
 
 class TestNITELitePreprocesser(unittest.TestCase):
@@ -102,10 +103,11 @@ class TestGeoTIFFPreprocesser(unittest.TestCase):
         fps = preprocess.discover_data(image_dir)
         n_files_unreffed = len(fps)
         referenced_image_dir = './test/test_data/referenced_images'
-        fps.extend(preprocess.discover_data(
+        fps2 = preprocess.discover_data(
             referenced_image_dir,
             extension=['tif', 'tiff']
-        ))
+        )
+        fps = pd.concat([fps, fps2], ignore_index=True)
         n_files = len(fps)
 
         transformer = preprocess.GeoTIFFPreprocesser()
