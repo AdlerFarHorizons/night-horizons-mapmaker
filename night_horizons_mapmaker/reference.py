@@ -7,6 +7,8 @@ import pyproj
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
+from . import preprocess
+
 
 class SensorGeoreferencer(BaseEstimator):
     '''Perform georeferencing based on sensor metadata.
@@ -46,38 +48,38 @@ class SensorGeoreferencer(BaseEstimator):
             Returns self.
         '''
         X, y = check_X_y(X, y, multi_output=True)
-        self.is_fitted_ = True
 
         if isinstance(self.crs, str):
             self.crs = pyproj.CRS(self.crs)
 
         # Calculate offsets
-        widths = X['pixel_width'] * X['n_x']
-        heights = X['pixel_height'] * X['n_y']
-        x_centers = X['x_min'] + 0.5 * widths
-        y_centers = X['y_max'] + 0.5 * heights
+        widths = y['pixel_width'] * y['n_x']
+        heights = y['pixel_height'] * y['n_y']
+        x_centers = y['x_min'] + 0.5 * widths
+        y_centers = y['y_max'] + 0.5 * heights
         offsets = np.sqrt(
             (X['sensor_x'] - x_centers)**2.
             + (X['sensor_y'] - y_centers)**2.
         )
 
         # Estimate values that are just averages
-        self.estimated_width_ = np.nanmedian(widths)
-        self.estimated_height_ = np.nanmedian(heights)
-        self.estimated_pixel_width_ = np.nanmedian(X['pixel_width'])
-        self.estimated_pixel_height_ = np.nanmedian(X['pixel_height'])
-        self.estimated_nx_ = np.round(
-            self.estimated_width_ / self.estimated_pixel_width_
+        self.width_ = np.nanmedian(widths)
+        self.height_ = np.nanmedian(heights)
+        self.pixel_width_ = np.nanmedian(y['pixel_width'])
+        self.pixel_height_ = np.nanmedian(y['pixel_height'])
+        self.nx_ = np.round(
+            self.width_ / self.pixel_width_
         ).astype(int)
-        self.estimated_ny_ = np.round(
-            self.estimated_height_ / self.estimated_pixel_height_
+        self.ny_ = np.round(
+            self.height_ / self.pixel_height_
         ).astype(int)
-        self.estimated_spatial_offset_ = np.nanpercentile(
+        self.spatial_offset_ = np.nanpercentile(
             offsets,
             self.q_offset
         )
 
         # `fit` should always return `self`
+        self.is_fitted_ = True
         return self
 
     def predict(self, X):
@@ -96,4 +98,12 @@ class SensorGeoreferencer(BaseEstimator):
         X = check_array(X, accept_sparse=True)
         check_is_fitted(self, 'is_fitted_')
 
-        return np.ones(X.shape[0], dtype=np.int64)
+        # Calculate properties
+        for key in preprocess.GEOTRANSFORM_COLS:
+            if key in ['x_min', 'y_max']:
+                continue
+            X[key] = getattr(self, key + '_')
+        X['x_min'] = X['sensor_x'] - 0.5 * self.width_
+        X['y_max'] = X['sensor_y'] - 0.5 * self.height_
+
+        return X
