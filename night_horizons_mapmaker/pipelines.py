@@ -13,7 +13,29 @@ import sklearn.pipeline as sk_pipeline
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import preprocess
+from . import preprocess, reference
+
+
+class PreprocessingPipelines:
+
+    @staticmethod
+    def referenced_nitelite(
+        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+        output_columns: list[str] = ['filepath', 'sensor_x', 'sensor_y', ]
+    ):
+
+        pipeline = sk_pipeline.Pipeline([
+            (
+                'nitelite_preprocessing',
+                preprocess.NITELitePreprocesser(
+                    output_columns=output_columns,
+                    crs=crs,
+                )
+            ),
+            ('geo_preprocessing', preprocess.GeoTIFFPreprocesser(crs=crs)),
+        ])
+
+        return pipeline
 
 
 class GeoreferencingPipelines:
@@ -30,4 +52,7 @@ class GeoreferencingPipelines:
                 )
             ),
             ('geo_preprocessing', preprocess.GeoTIFFPreprocesser(crs=crs)),
+            ('sensor_georeferencing', reference.SensorGeoreferencer(crs=crs)),
         ])
+
+        return pipeline

@@ -88,7 +88,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
     #                          'in `fit`')
     #     return np.sqrt(X)
 
-    def fit_transform(
+    def fit(
         self,
         X: Union[np.ndarray[str], list[str], pd.DataFrame],
         y=None,
@@ -97,9 +97,28 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         gps_log_fp: str = None,
     ):
 
+        # Check the input is good.
+        X = check_input(X)
+
+        # Check and set log fps
         assert img_log_fp is not None, 'Must pass img_log filepath.'
         assert imu_log_fp is not None, 'Must pass imu_log filepath.'
         assert gps_log_fp is not None, 'Must pass gps_log filepath.'
+        self.img_log_fp_ = img_log_fp
+        self.imu_log_fp_ = imu_log_fp
+        self.gps_log_fp_ = gps_log_fp
+
+        self.is_fitted_ = True
+        return self
+
+    def transform(
+        self,
+        X: Union[np.ndarray[str], list[str], pd.DataFrame],
+        y=None,
+    ):
+
+        # Check is fit had been called
+        check_is_fitted(self, 'is_fitted_')
 
         # Check the input is good.
         X = check_input(X)
@@ -109,7 +128,11 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
             self.crs = pyproj.CRS(self.crs)
 
         # Get the raw metadata
-        log_df = self.get_logs(img_log_fp, imu_log_fp, gps_log_fp)
+        log_df = self.get_logs(
+            self.img_log_fp_,
+            self.imu_log_fp_,
+            self.gps_log_fp_,
+        )
 
         # Merge, assuming filenames remain the same.
         X['filename'] = X['filepath'].apply(os.path.basename)
@@ -407,10 +430,24 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
     def __init__(
         self,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+        passthrough: bool = False,
     ):
         self.crs = crs
+        self.passthrough = passthrough
 
-    def fit_transform(
+    def fit(
+        self,
+        X: Union[np.ndarray[str], list[str], pd.DataFrame],
+        y=None,
+    ):
+
+        # Check the input is good.
+        X = check_input(X, passthrough=self.passthrough)
+
+        self.is_fitted_ = True
+        return self
+
+    def transform(
         self,
         X: Union[np.ndarray[str], list[str], pd.DataFrame],
         y=None,
@@ -418,6 +455,9 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
 
         # Check the input is good.
         X = check_input(X)
+
+        # Check is fit had been called
+        check_is_fitted(self, 'is_fitted_')
 
         # Convert CRS as needed
         if isinstance(self.crs, str):
@@ -475,7 +515,8 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
 
 
 def check_input(
-    X: Union[np.ndarray[str], list[str], pd.DataFrame]
+    X: Union[np.ndarray[str], list[str], pd.DataFrame],
+    passthrough: bool = False,
 ) -> pd.DataFrame:
     '''Input check for acceptable types for preprocessing.
 
@@ -488,9 +529,10 @@ def check_input(
     '''
 
     if isinstance(X, pd.DataFrame):
-        assert X.columns == ['filepath'], (
-            'Unexpected columns in preprocesser input.'
-        )
+        if not passthrough:
+            assert X.columns == ['filepath'], (
+                'Unexpected columns in preprocesser input.'
+            )
         return X
 
     # We offer some minor reshaping to be compatible with common
