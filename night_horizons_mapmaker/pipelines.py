@@ -8,6 +8,7 @@ import pandas as pd
 import pyproj
 import scipy
 from sklearn.base import BaseEstimator
+from sklearn.compose import ColumnTransformer
 import sklearn.pipeline as sk_pipeline
 # This is a draft---don't overengineer!
 # NO renaming!
@@ -49,8 +50,8 @@ class GeoreferencingPipelines:
     @staticmethod
     def sensor_georeferencing(
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        preprocessing: BaseEstimator =
-            PreprocessingPipelines.referenced_nitelite(),
+        preprocessing: BaseEstimator = preprocess.NITELitePreprocesser(
+            output_columns=['sensor_x', 'sensor_y']),
     ):
 
         pipeline = sk_pipeline.Pipeline([

@@ -54,7 +54,7 @@ class TestGeoreference(unittest.TestCase):
     def test_sensor_georeferencing(self):
 
         image_dir = './test/test_data/referenced_images'
-        fps = preprocess.discover_data(image_dir)
+        fps = preprocess.discover_data(image_dir, ['tif', 'tiff'])
 
         # Metadata filetree info
         metadata_dir = './test/test_data/metadata'
@@ -70,6 +70,7 @@ class TestGeoreference(unittest.TestCase):
             nitelite__imu_log_fp=imu_log_fp,
             nitelite__gps_log_fp=gps_log_fp,
         )
+        y = y[preprocess.GEOTRANSFORM_COLS]
 
         # Train test split
         inds_train, inds_test = train_test_split(
@@ -84,9 +85,10 @@ class TestGeoreference(unittest.TestCase):
         sensor_ref_pipeline = self.pipelines.sensor_georeferencing()
         sensor_ref_pipeline.fit(
             fps_train,
-            preprocessing__nitelite__img_log_fp=img_log_fp,
-            preprocessing__nitelite__imu_log_fp=imu_log_fp,
-            preprocessing__nitelite__gps_log_fp=gps_log_fp,
+            y_train,
+            preprocessing__img_log_fp=img_log_fp,
+            preprocessing__imu_log_fp=imu_log_fp,
+            preprocessing__gps_log_fp=gps_log_fp,
         )
         y_pred = sensor_ref_pipeline.predict(fps_test)
         expected_cols = (
