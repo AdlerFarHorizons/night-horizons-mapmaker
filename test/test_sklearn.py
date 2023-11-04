@@ -1,7 +1,7 @@
 import pytest
 from sklearn.utils.estimator_checks import check_estimator
 
-from night_horizons_mapmaker import reference
+from night_horizons import reference
 
 @pytest.mark.parametrize(
     "estimator",

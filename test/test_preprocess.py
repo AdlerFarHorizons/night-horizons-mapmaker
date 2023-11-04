@@ -6,7 +6,7 @@ import unittest
 
 import numpy as np
 
-import night_horizons_mapmaker.preprocess as preprocess
+import night_horizons.preprocess as preprocess
 
 
 class TestDiscoverData(unittest.TestCase):
