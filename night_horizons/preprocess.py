@@ -33,7 +33,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         self,
         output_columns: list[str] = None,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        unhandled_files: str = 'warn',
+        unhandled_files: str = 'warn and drop',
     ):
         self.output_columns = output_columns
         self.crs = crs
@@ -161,7 +161,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         )
         n_uncorrelated = (~X.index.isin(X_trans2.index)).sum()
         w_message = (
-            'Did not successfully correlate filepaths. '
+            'Did not successfully correlate all filepaths. '
             f'n_uncorrelated = {n_uncorrelated}'
         )
         if n_uncorrelated > 0:
@@ -603,5 +603,7 @@ def discover_data(
     if pattern is not None:
         contains_pattern = fps.str.findall(pattern).str[0].notna()
         fps = fps.loc[contains_pattern]
+
+    fps.index = np.arange(fps.size)
 
     return fps
