@@ -47,7 +47,9 @@ class SensorGeoreferencer(BaseEstimator):
         self : object
             Returns self.
         '''
-        X, y = check_X_y(X, y, multi_output=True)
+        # DEBUG: This check converts y to an array, but we should include some
+        # form of check
+        # X, y = check_X_y(X, y, multi_output=True)
 
         if isinstance(self.crs, str):
             self.crs = pyproj.CRS(self.crs)
@@ -67,10 +69,12 @@ class SensorGeoreferencer(BaseEstimator):
         self.height_ = np.nanmedian(heights)
         self.pixel_width_ = np.nanmedian(y['pixel_width'])
         self.pixel_height_ = np.nanmedian(y['pixel_height'])
-        self.nx_ = np.round(
+        self.x_rot_ = np.nanmedian(y['x_rot'])
+        self.y_rot_ = np.nanmedian(y['y_rot'])
+        self.n_x_ = np.round(
             self.width_ / self.pixel_width_
         ).astype(int)
-        self.ny_ = np.round(
+        self.n_y_ = np.round(
             self.height_ / self.pixel_height_
         ).astype(int)
         self.spatial_offset_ = np.nanpercentile(
@@ -95,7 +99,9 @@ class SensorGeoreferencer(BaseEstimator):
         y : ndarray, shape (n_samples,)
             Returns an array of ones.
         '''
-        X = check_array(X, accept_sparse=True)
+        # DEBUG: This check converts X to an array, but we should include some
+        # form of check
+        # X = check_array(X, accept_sparse=True)
         check_is_fitted(self, 'is_fitted_')
 
         # Calculate properties
