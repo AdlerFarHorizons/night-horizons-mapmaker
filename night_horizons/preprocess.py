@@ -1,6 +1,7 @@
 import glob
 import os
 from typing import Union
+import warnings
 
 import numpy as np
 from osgeo import gdal
@@ -32,9 +33,11 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         self,
         output_columns: list[str] = None,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+        unhandled_files: str = 'warn',
     ):
         self.output_columns = output_columns
         self.crs = crs
+        self.unhandled_files = unhandled_files
 
     # DEBUG: Remove commented-out, once we know it works in a scikit-learn
     #        pipeline.
@@ -157,10 +160,19 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
             on='timestamp_id'
         )
         n_uncorrelated = (~X.index.isin(X_trans2.index)).sum()
-        assert n_uncorrelated == 0, (
+        w_message = (
             'Did not successfully correlate filepaths. '
             f'n_uncorrelated = {n_uncorrelated}'
         )
+        if n_uncorrelated > 0:
+            if self.unhandled_files == 'error':
+                assert False, w_message
+            elif self.unhandled_files == 'warn and drop':
+                warnings.warn(w_message)
+            elif self.unhandled_files == 'drop':
+                pass
+            else:
+                raise ValueError('Unrecognized method for unhandled files.')
 
         # Recombine
         X = pd.concat([X_trans, X_trans2], axis='rows')
@@ -551,6 +563,7 @@ def check_input(
 def discover_data(
     directory: str,
     extension: Union[str, list[str]] = None,
+    pattern: str = None,
 ) -> pd.Series:
     '''
     Parameters
@@ -568,19 +581,27 @@ def discover_data(
 
     # When all files
     if extension is None:
-        pattern = os.path.join(directory, '**', '*.*')
-        return pd.Series(glob.glob(pattern, recursive=True))
+        glob_pattern = os.path.join(directory, '**', '*.*')
+        fps = glob.glob(glob_pattern, recursive=True)
     # When a single extension
     elif isinstance(extension, str):
-        pattern = os.path.join(directory, '**', f'*.{extension}')
-        return pd.Series(glob.glob(pattern, recursive=True))
+        glob_pattern = os.path.join(directory, '**', f'*{extension}')
+        fps = glob.glob(glob_pattern, recursive=True)
     # When a list of extensions
     else:
         try:
             fps = []
             for ext in extension:
-                pattern = os.path.join(directory, '**', f'*.{ext}')
-                fps.extend(glob.glob(pattern, recursive=True))
-            return pd.Series(fps)
+                glob_pattern = os.path.join(directory, '**', f'*{ext}')
+                fps.extend(glob.glob(glob_pattern, recursive=True))
         except TypeError:
             raise TypeError(f'Unexpected type for extension: {extension}')
+
+    fps = pd.Series(fps)
+
+    # Filter to select particular files
+    if pattern is not None:
+        contains_pattern = fps.str.findall(pattern).str[0].notna()
+        fps = fps.loc[contains_pattern]
+
+    return fps
