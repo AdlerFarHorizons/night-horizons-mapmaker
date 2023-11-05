@@ -40,6 +40,20 @@ class TestDiscoverData(unittest.TestCase):
         fps = preprocess.discover_data(image_dir, ['raw', 'tif', 'tiff'])
         assert list(fps) == expected_fps
 
+    def test_discover_data_patter(self):
+
+        image_dir = './test/test_data'
+        expected_fps = [
+            './test/test_data/referenced_images/Geo 836109848_1.tif',
+        ]
+
+        fps = preprocess.discover_data(
+            image_dir,
+            extension=['.tif', '.tiff'],
+            pattern=r'Geo\s\d+_\d.tif'
+        )
+        assert list(fps) == expected_fps
+
 
 class TestNITELitePreprocesser(unittest.TestCase):
 
