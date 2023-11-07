@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 import night_horizons.preprocess as preprocess
+import night_horizons.utils as utils
 
 
 class TestDiscoverData(unittest.TestCase):
@@ -136,3 +137,33 @@ class TestGeoTIFFPreprocesser(unittest.TestCase):
         # Ensure the conversion was done, i.e. there shouldn't really be
         # values to zero, unless our test dataset was within 1000m of (0,0)
         assert np.nanmax(np.abs(X['x_min'])) > 1000
+
+
+class TestGeoBoundsPreprocesser(unittest.TestCase):
+
+    def test_output(self):
+
+        rng = np.random.default_rng()
+
+        # Image filetree info
+        n_files = 10
+        X_in = pd.DataFrame(
+            data={
+                'x_min': rng.normal(size=n_files),
+                'width': rng.normal(size=n_files),
+                'x_rot': rng.normal(size=n_files),
+                'y_max': rng.normal(size=n_files),
+                'height': rng.normal(size=n_files),
+                'y_rot': rng.normal(size=n_files),
+                'n_x': rng.randint(100, 1000, size=n_files),
+                'n_y': rng.randint(100, 1000, size=n_files),
+            }
+        )
+
+        transformer = preprocess.GeoBoundsPreprocesser()
+        X = transformer.fit_transform(X_in)
+
+        utils.check_columns(
+            X.columns,
+            preprocess.GEOBOUNDS_COLS,
+        )
