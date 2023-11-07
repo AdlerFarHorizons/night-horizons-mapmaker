@@ -98,7 +98,8 @@ def check_columns(
             The validated columns.
     '''
 
-    required_not_in_actual = ~pd.Series(required).isin(actual)
+    required = pd.Series(required)
+    required_not_in_actual = ~required.isin(actual)
     assert required_not_in_actual.sum() == 0, (
         f'Missing columns {required.loc[required_not_in_actual]}'
     )

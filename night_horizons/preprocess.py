@@ -541,9 +541,11 @@ class GeoBoundsPreprocesser(TransformerMixin, BaseEstimator):
         self,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         passthrough: bool = False,
+        search_padding: float = 0.,
     ):
         self.crs = crs
         self.passthrough = passthrough
+        self.search_padding = search_padding
 
     def fit(
         self,
@@ -554,7 +556,7 @@ class GeoBoundsPreprocesser(TransformerMixin, BaseEstimator):
         # Check the input is good.
         X = utils.check_df_input(
             X,
-            GEOBOUNDS_COLS,
+            GEOTRANSFORM_COLS,
             passthrough=self.passthrough
         )
 
@@ -568,17 +570,29 @@ class GeoBoundsPreprocesser(TransformerMixin, BaseEstimator):
     ):
         X = utils.check_df_input(
             X,
-            GEOBOUNDS_COLS,
+            GEOTRANSFORM_COLS,
             passthrough=self.passthrough
         )
 
-        # Check is fit had been called
+        # Check if fit had been called
         check_is_fitted(self, 'is_fitted_')
 
         # Convert CRS as needed
         if isinstance(self.crs, str):
             self.crs = pyproj.CRS(self.crs)
 
+        # Convert and pad
+        X['x_max'] = X['x_min'] + X['pixel_width'] * X['n_x']
+        X['y_min'] = X['y_max'] + X['pixel_height'] * X['n_y']
+        X['x_min'] -= self.search_padding
+        X['x_max'] += self.search_padding
+        X['y_min'] -= self.search_padding
+        X['y_max'] += self.search_padding
+
+        if not self.passthrough:
+            X = X[GEOBOUNDS_COLS]
+
+        return X
 
 def discover_data(
     directory: str,

@@ -150,13 +150,13 @@ class TestGeoBoundsPreprocesser(unittest.TestCase):
         X_in = pd.DataFrame(
             data={
                 'x_min': rng.normal(size=n_files),
-                'width': rng.normal(size=n_files),
+                'pixel_width': rng.normal(size=n_files),
                 'x_rot': rng.normal(size=n_files),
                 'y_max': rng.normal(size=n_files),
-                'height': rng.normal(size=n_files),
+                'pixel_height': rng.normal(size=n_files),
                 'y_rot': rng.normal(size=n_files),
-                'n_x': rng.randint(100, 1000, size=n_files),
-                'n_y': rng.randint(100, 1000, size=n_files),
+                'n_x': rng.integers(100, 1000, size=n_files),
+                'n_y': rng.integers(100, 1000, size=n_files),
             }
         )
 
