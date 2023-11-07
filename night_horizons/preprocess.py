@@ -9,7 +9,9 @@ import pandas as pd
 import pyproj
 import scipy
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+from sklearn.utils.validation import check_is_fitted
+
+from . import utils
 
 
 class NITELitePreprocesser(TransformerMixin, BaseEstimator):
@@ -101,7 +103,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
     ):
 
         # Check the input is good.
-        X = check_input(X)
+        X = utils.check_filepaths_input(X)
 
         # Check and set log fps
         assert img_log_fp is not None, 'Must pass img_log filepath.'
@@ -124,7 +126,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         check_is_fitted(self, 'is_fitted_')
 
         # Check the input is good.
-        X = check_input(X)
+        X = utils.check_filepaths_input(X)
 
         # Convert CRS as needed
         if isinstance(self.crs, str):
@@ -423,7 +425,7 @@ GEOTRANSFORM_COLS = [
 
 
 class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
-    '''Transform filepaths into a metadata dataframe.
+    '''Transform filepaths into geotransform properties.
 
     Parameters
     ----------
@@ -453,8 +455,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
         y=None,
     ):
 
-        # Check the input is good.
-        X = check_input(X, passthrough=self.passthrough)
+        X = utils.check_filepaths_input(X, passthrough=self.passthrough)
 
         self.is_fitted_ = True
         return self
@@ -466,7 +467,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
     ):
 
         # Check the input is good.
-        X = check_input(X, passthrough=self.passthrough)
+        X = utils.check_filepaths_input(X, passthrough=self.passthrough)
 
         # Check is fit had been called
         check_is_fitted(self, 'is_fitted_')
@@ -527,37 +528,56 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
         return X
 
 
-def check_input(
-    X: Union[np.ndarray[str], list[str], pd.DataFrame],
-    passthrough: bool = False,
-) -> pd.DataFrame:
-    '''Input check for acceptable types for preprocessing.
+GEOBOUNDS_COLS = [
+    'x_min', 'x_max',
+    'y_min', 'y_max',
+    'n_x', 'n_y',
+]
 
-    Parameters
-    ----------
-        X:
-            Input data.
-    Returns
-    -------
-    '''
 
-    if isinstance(X, pd.DataFrame):
-        if not passthrough:
-            assert X.columns == ['filepath'], (
-                'Unexpected columns in preprocesser input.'
-            )
-        return X
+class GeoBoundsPreprocesser(TransformerMixin, BaseEstimator):
 
-    # We offer some minor reshaping to be compatible with common
-    # expectations that a single list of features doesn't need to be 2D.
-    if len(np.array(X).shape) == 1:
-        X = np.array(X).reshape(1, len(X))
+    def __init__(
+        self,
+        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+        passthrough: bool = False,
+    ):
+        self.crs = crs
+        self.passthrough = passthrough
 
-    # Check and unpack X
-    X = check_array(X, dtype='str')
-    X = pd.DataFrame(X.transpose(), columns=['filepath'])
+    def fit(
+        self,
+        X: Union[np.ndarray[str], list[str], pd.DataFrame],
+        y=None,
+    ):
 
-    return X
+        # Check the input is good.
+        X = utils.check_df_input(
+            X,
+            GEOBOUNDS_COLS,
+            passthrough=self.passthrough
+        )
+
+        self.is_fitted_ = True
+        return self
+
+    def transform(
+        self,
+        X: Union[np.ndarray[str], list[str], pd.DataFrame],
+        y=None,
+    ):
+        X = utils.check_df_input(
+            X,
+            GEOBOUNDS_COLS,
+            passthrough=self.passthrough
+        )
+
+        # Check is fit had been called
+        check_is_fitted(self, 'is_fitted_')
+
+        # Convert CRS as needed
+        if isinstance(self.crs, str):
+            self.crs = pyproj.CRS(self.crs)
 
 
 def discover_data(
