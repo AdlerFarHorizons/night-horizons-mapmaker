@@ -1,5 +1,8 @@
+import glob
+import os
 from typing import Union
 
+import cv2
 import numpy as np
 import pandas as pd
 import scipy
@@ -8,6 +11,85 @@ from sklearn.utils.validation import check_array
 # NO renaming!
 # NO refactoring!
 # TODO: Remove this when the draft is done.
+
+
+def discover_data(
+    directory: str,
+    extension: Union[str, list[str]] = None,
+    pattern: str = None,
+) -> pd.Series:
+    '''
+    Parameters
+    ----------
+        directory:
+            Directory containing the data.
+        extension:
+            What filetypes to include.
+
+    Returns
+    -------
+        filepaths:
+            Data filepaths.
+    '''
+
+    # When all files
+    if extension is None:
+        glob_pattern = os.path.join(directory, '**', '*.*')
+        fps = glob.glob(glob_pattern, recursive=True)
+    # When a single extension
+    elif isinstance(extension, str):
+        glob_pattern = os.path.join(directory, '**', f'*{extension}')
+        fps = glob.glob(glob_pattern, recursive=True)
+    # When a list of extensions
+    else:
+        try:
+            fps = []
+            for ext in extension:
+                glob_pattern = os.path.join(directory, '**', f'*{ext}')
+                fps.extend(glob.glob(glob_pattern, recursive=True))
+        except TypeError:
+            raise TypeError(f'Unexpected type for extension: {extension}')
+
+    fps = pd.Series(fps)
+
+    # Filter to select particular files
+    if pattern is not None:
+        contains_pattern = fps.str.findall(pattern).str[0].notna()
+        fps = fps.loc[contains_pattern]
+
+    fps.index = np.arange(fps.size)
+
+    return fps
+
+
+def load_image(filepath: str, dtype: type = np.uint8):
+    '''Load an image from disk.
+
+    Parameters
+    ----------
+        filepath
+            Location of the image.
+        dtype
+            Datatype. Defaults to integer from 0 to 255
+    Returns
+    -------
+    '''
+
+    # Load
+    img = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+
+    # Format
+    img = img[:, :, ::-1]
+
+    # When no conversion needs to be done
+    if img.dtype == dtype:
+        return img
+
+    # Rescale
+    img = img / np.iinfo(img.dtype).max
+    img = (img * np.iinfo(dtype).max).astype(dtype)
+
+    return img
 
 
 def check_filepaths_input(
@@ -80,9 +162,10 @@ def check_df_input(
 def check_columns(
     actual: pd.Series,
     required: list[str],
-    passthrough: bool = False
+    passthrough: Union[bool, list[str]] = False
 ):
-    '''
+    '''Check that the columns of a dataframe are as required.
+
     Parameters
     ----------
         actual
@@ -104,8 +187,13 @@ def check_columns(
         f'Missing columns {required.loc[required_not_in_actual]}'
     )
 
-    assert passthrough or len(actual) == len(required), (
-        f'Expecting *only* columns {required}.'
-    )
+    if isinstance(passthrough, bool):
+        assert passthrough or (len(actual) == len(required)), (
+            f'Expecting *only* columns {required.values}.'
+        )
+    else:
+        assert len(passthrough) + len(required) == len(actual), (
+            f'Expecting *only* columns {required.values, passthrough.values}.'
+        )
 
     return actual

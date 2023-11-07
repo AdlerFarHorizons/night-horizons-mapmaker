@@ -105,6 +105,10 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         # Check the input is good.
         X = utils.check_filepaths_input(X)
 
+        # Convert CRS as needed
+        if isinstance(self.crs, str):
+            self.crs = pyproj.CRS(self.crs)
+
         # Check and set log fps
         assert img_log_fp is not None, 'Must pass img_log filepath.'
         assert imu_log_fp is not None, 'Must pass imu_log filepath.'
@@ -127,10 +131,6 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
 
         # Check the input is good.
         X = utils.check_filepaths_input(X)
-
-        # Convert CRS as needed
-        if isinstance(self.crs, str):
-            self.crs = pyproj.CRS(self.crs)
 
         # Get the raw metadata
         log_df = self.get_logs(
@@ -420,7 +420,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
 GEOTRANSFORM_COLS = [
     'x_min', 'pixel_width', 'x_rot',
     'y_max', 'y_rot', 'pixel_height',
-    'n_x', 'n_y',
+    'xsize', 'ysize',
 ]
 
 
@@ -457,6 +457,10 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
 
         X = utils.check_filepaths_input(X, passthrough=self.passthrough)
 
+        # Convert CRS as needed
+        if isinstance(self.crs, str):
+            self.crs = pyproj.CRS(self.crs)
+
         self.is_fitted_ = True
         return self
 
@@ -471,10 +475,6 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
 
         # Check is fit had been called
         check_is_fitted(self, 'is_fitted_')
-
-        # Convert CRS as needed
-        if isinstance(self.crs, str):
-            self.crs = pyproj.CRS(self.crs)
 
         # Loop over and get datasets
         rows = []
@@ -531,7 +531,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
 GEOBOUNDS_COLS = [
     'x_min', 'x_max',
     'y_min', 'y_max',
-    'n_x', 'n_y',
+    'pixel_width', 'pixel_height',
 ]
 
 
@@ -582,62 +582,17 @@ class GeoBoundsPreprocesser(TransformerMixin, BaseEstimator):
             self.crs = pyproj.CRS(self.crs)
 
         # Convert and pad
-        X['x_max'] = X['x_min'] + X['pixel_width'] * X['n_x']
-        X['y_min'] = X['y_max'] + X['pixel_height'] * X['n_y']
+        X['x_max'] = X['x_min'] + X['pixel_width'] * X['xsize']
+        X['y_min'] = X['y_max'] + X['pixel_height'] * X['ysize']
         X['x_min'] -= self.search_padding
         X['x_max'] += self.search_padding
         X['y_min'] -= self.search_padding
         X['y_max'] += self.search_padding
 
-        if not self.passthrough:
-            X = X[GEOBOUNDS_COLS]
+        if isinstance(self.passthrough, bool):
+            if not self.passthrough:
+                X = X[GEOBOUNDS_COLS]
+        else:
+            X = X[list(self.passthrough) + GEOBOUNDS_COLS]
 
         return X
-
-def discover_data(
-    directory: str,
-    extension: Union[str, list[str]] = None,
-    pattern: str = None,
-) -> pd.Series:
-    '''
-    Parameters
-    ----------
-        directory:
-            Directory containing the data.
-        extension:
-            What filetypes to include.
-
-    Returns
-    -------
-        filepaths:
-            Data filepaths.
-    '''
-
-    # When all files
-    if extension is None:
-        glob_pattern = os.path.join(directory, '**', '*.*')
-        fps = glob.glob(glob_pattern, recursive=True)
-    # When a single extension
-    elif isinstance(extension, str):
-        glob_pattern = os.path.join(directory, '**', f'*{extension}')
-        fps = glob.glob(glob_pattern, recursive=True)
-    # When a list of extensions
-    else:
-        try:
-            fps = []
-            for ext in extension:
-                glob_pattern = os.path.join(directory, '**', f'*{ext}')
-                fps.extend(glob.glob(glob_pattern, recursive=True))
-        except TypeError:
-            raise TypeError(f'Unexpected type for extension: {extension}')
-
-    fps = pd.Series(fps)
-
-    # Filter to select particular files
-    if pattern is not None:
-        contains_pattern = fps.str.findall(pattern).str[0].notna()
-        fps = fps.loc[contains_pattern]
-
-    fps.index = np.arange(fps.size)
-
-    return fps
