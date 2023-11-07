@@ -155,8 +155,8 @@ class TestGeoBoundsPreprocesser(unittest.TestCase):
                 'y_max': rng.normal(size=n_files),
                 'pixel_height': rng.normal(size=n_files),
                 'y_rot': rng.normal(size=n_files),
-                'n_x': rng.integers(100, 1000, size=n_files),
-                'n_y': rng.integers(100, 1000, size=n_files),
+                'xsize': rng.integers(100, 1000, size=n_files),
+                'ysize': rng.integers(100, 1000, size=n_files),
             }
         )
 
