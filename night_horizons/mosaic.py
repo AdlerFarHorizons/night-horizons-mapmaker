@@ -45,34 +45,6 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
         self.n_bands = n_bands
         self.passthrough = passthrough
 
-    # DEBUG
-    # def open(self, filename: str, crs: pyproj.CRS = None, *args, **kwargs):
-
-    #     dataset.dataset = gdal.Open(filename, *args, **kwargs)
-
-    #     # CRS handling
-    #     if isinstance(crs, str):
-    #         crs = pyproj.CRS(crs)
-    #     if crs is None:
-    #         crs = pyproj.CRS(dataset.dataset.GetProjection())
-    #     else:
-    #         dataset.dataset.SetProjection(crs.to_wkt())
-    #     dataset.crs = crs
-    #     dataset.filename = filename
-
-    #     # Get bounds
-    #     (
-    #         dataset.x_bounds,
-    #         dataset.y_bounds,
-    #         dataset.pixel_width,
-    #         dataset.pixel_height
-    #     ) = get_bounds_from_dataset(
-    #         dataset.dataset,
-    #         crs,
-    #     )
-
-    #     return dataset
-
     def fit(
         self,
         X: pd.DataFrame,
@@ -176,11 +148,11 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
         # Loop through and include
         for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
 
-            row = X.loc[i]
+            row = X.iloc[i]
 
             # Get data
             src_img = utils.load_image(
-                row['filepath'],
+                fp,
                 dtype=self.dtype,
             )
             dst_img = self.get_img(
@@ -214,6 +186,8 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
 
         # Finish by flushing the cache
         self.dataset_.FlushCache()
+
+        return self.dataset_
 
     def bounds_to_offset(self, x_min, x_max, y_min, y_max):
 
