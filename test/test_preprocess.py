@@ -11,51 +11,6 @@ import night_horizons.preprocess as preprocess
 import night_horizons.utils as utils
 
 
-class TestDiscoverData(unittest.TestCase):
-
-    def test_discover_data(self):
-
-        image_dir = './test/test_data/images'
-        expected_fps = [
-            ('./test/test_data/images/23085686/'
-             '20220413_221313_1020286912_0_50_3.raw'),
-            ('./test/test_data/images/23085687/'
-             '20220413_202740_745696_1_50_0.raw'),
-        ]
-
-        fps = preprocess.discover_data(image_dir)
-        assert list(fps) == expected_fps
-
-    def test_discover_data_exts(self):
-
-        image_dir = './test/test_data'
-        expected_fps = [
-            ('./test/test_data/images/23085686/'
-             '20220413_221313_1020286912_0_50_3.raw'),
-            ('./test/test_data/images/23085687/'
-             '20220413_202740_745696_1_50_0.raw'),
-            './test/test_data/referenced_images/Geo 225856_1473511261_0.tif',
-            './test/test_data/referenced_images/Geo 836109848_1.tif',
-        ]
-
-        fps = preprocess.discover_data(image_dir, ['raw', 'tif', 'tiff'])
-        assert list(fps) == expected_fps
-
-    def test_discover_data_patter(self):
-
-        image_dir = './test/test_data'
-        expected_fps = [
-            './test/test_data/referenced_images/Geo 836109848_1.tif',
-        ]
-
-        fps = preprocess.discover_data(
-            image_dir,
-            extension=['.tif', '.tiff'],
-            pattern=r'Geo\s\d+_\d.tif'
-        )
-        assert list(fps) == expected_fps
-
-
 class TestNITELitePreprocesser(unittest.TestCase):
 
     def setUp(self):
@@ -78,7 +33,7 @@ class TestNITELitePreprocesser(unittest.TestCase):
 
         # Image filetree info
         image_dir = './test/test_data/images'
-        fps = preprocess.discover_data(image_dir)
+        fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
         metadata = self.transformer.fit_transform(
@@ -95,7 +50,7 @@ class TestNITELitePreprocesser(unittest.TestCase):
 
         # Image filetree info
         image_dir = './test/test_data/referenced_images'
-        fps = preprocess.discover_data(image_dir)
+        fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
         metadata = self.transformer.fit_transform(
@@ -115,10 +70,10 @@ class TestGeoTIFFPreprocesser(unittest.TestCase):
 
         # Image filetree info
         image_dir = './test/test_data/images'
-        fps = preprocess.discover_data(image_dir)
+        fps = utils.discover_data(image_dir)
         n_files_unreffed = len(fps)
         referenced_image_dir = './test/test_data/referenced_images'
-        fps2 = preprocess.discover_data(
+        fps2 = utils.discover_data(
             referenced_image_dir,
             extension=['tif', 'tiff']
         )
