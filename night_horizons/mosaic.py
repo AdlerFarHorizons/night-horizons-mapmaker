@@ -35,6 +35,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         dtype: type = np.uint8,
         n_bands: int = 4,
         passthrough: bool = False,
+        outline: int = 0,
     ):
         self.filepath = filepath
         self.crs = crs
@@ -44,6 +45,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         self.dtype = dtype
         self.n_bands = n_bands
         self.passthrough = passthrough
+        self.outline = outline
 
     def fit(
         self,
@@ -220,7 +222,12 @@ class Mosaic(TransformerMixin, BaseEstimator):
         )
 
     @staticmethod
-    def blend_images(src_img, dst_img, fill_value=None):
+    def blend_images(
+        src_img,
+        dst_img,
+        fill_value=None,
+        outline: int = 0,
+    ):
 
         # Fill value defaults to values that would be opaque
         if fill_value is None:
@@ -229,10 +236,11 @@ class Mosaic(TransformerMixin, BaseEstimator):
             else:
                 fill_value = 1.
 
-        # Blend
         # Doesn't consider zeros in the final channel as empty
         n_bands = dst_img.shape[-1]
         is_empty = (dst_img[:, :, :n_bands - 1].sum(axis=2) == 0)
+
+        # Blend
         blended_img = []
         for j in range(n_bands):
             try:
@@ -251,6 +259,13 @@ class Mosaic(TransformerMixin, BaseEstimator):
                 )
             blended_img.append(blended_img_j)
         blended_img = np.array(blended_img).transpose(1, 2, 0)
+
+        # Add an outline
+        if outline > 0:
+            blended_img[:outline] = fill_value
+            blended_img[-1 - outline:] = fill_value
+            blended_img[:, :outline] = fill_value
+            blended_img[:, -1 - outline:] = fill_value
 
         return blended_img
 
@@ -299,6 +314,7 @@ class ReferencedMosaic(Mosaic):
                 src_img=src_img_resized,
                 dst_img=dst_img,
                 fill_value=self.fill_value,
+                outline=self.outline,
             )
 
             # Store the image
