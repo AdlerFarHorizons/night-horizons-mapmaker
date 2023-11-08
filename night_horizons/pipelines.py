@@ -23,7 +23,7 @@ class MosaicPipelines:
     @staticmethod
     def referenced_mosaic(
         filepath: str,
-        crs: Union[str, pyproj.CRS],
+        crs: Union[str, pyproj.CRS] =  'EPSG:3857',
     ):
 
         pipeline = Pipeline([
