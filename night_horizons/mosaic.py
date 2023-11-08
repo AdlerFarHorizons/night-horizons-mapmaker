@@ -13,7 +13,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 import tqdm
 
-from . import preprocess, utils
+from . import preprocess, metrics, utils
 
 
 class ReferencedMosaic(TransformerMixin, BaseEstimator):
@@ -188,6 +188,27 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
         self.dataset_.FlushCache()
 
         return self.dataset_
+
+    def score(self, X, y=None, template_metric=cv2.TM_CCOEFF_NORMED):
+
+        self.scores_ = []
+        for i, fp in enumerate(X['filepath']):
+
+            row = X.iloc[i]
+
+            actual_img = utils.load_image(fp, dtype=self.dtype)
+            mosaic_img = self.get_image(
+                row['x_min'],
+                row['x_max'],
+                row['y_min'],
+                row['y_max'],
+            )
+
+            metrics.image_to_image_ccoeff(actual_img, mosaic_img)
+
+        score = np.median(self.scores_)
+
+        return score
 
     def bounds_to_offset(self, x_min, x_max, y_min, y_max):
 
