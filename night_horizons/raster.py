@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import seaborn as sns
 
-from typing import Tuple
+from typing import Tuple, Union
 
 
 class Image:
@@ -512,128 +512,154 @@ class ReferencedImage(Image):
             bounds_group.add_to(m)
 
 
-class Dataset:
-    '''Wrapper for GDAL Dataset.
-
-    TODO: Probably would be better for this to be a subclass.
+class BoundsDataset(gdal.Dataset):
+    '''Wrapper for GDAL Dataset that better handles
+    working with bounds and pixel resolutions instead of
+    corners, array dimensions, and pixel resolutions.
+    This is useful for mosaics, where the overlap really matters.
     '''
 
     def __init__(
         self,
-        filename: str,
-        x_bounds: Tuple[float, float],
-        y_bounds: Tuple[float, float],
+        filepath: str,
+        x_min: float,
+        x_max: float,
+        y_min: float,
+        y_max: float,
         pixel_width: float,
         pixel_height: float,
-        crs: pyproj.CRS,
         n_bands: int = 4,
+        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
     ):
 
+        # Get dimensions
+        width = x_max - x_min
+        xsize = int(np.round(width / pixel_width))
+        height = y_max - y_min
+        ysize = int(np.round(height / -pixel_height))
+
+        # Re-record pixel values to account for rounding
+        pixel_width = width / xsize
+        pixel_height = -height / ysize
+
         # Initialize an empty GeoTiff
-        xsize = int(np.round((x_bounds[1] - x_bounds[0]) / pixel_width))
-        ysize = int(np.round((y_bounds[1] - y_bounds[0]) / pixel_height))
-        driver = gdal.GetDriverByName('GTiff')
-        self.dataset = driver.Create(
-            filename,
-            xsize=xsize,
-            ysize=ysize,
-            bands=n_bands,
-            options=['TILED=YES']
-        )
+        if isinstance(filepath, str):
+            driver = gdal.GetDriverByName('GTiff')
+            self = driver.Create(
+                filepath,
+                xsize=xsize,
+                ysize=ysize,
+                bands=n_bands,
+                options=['TILED=YES']
+            )
+        else:
+            self = filepath
 
         # Properties
-        self.dataset.SetProjection(crs.to_wkt())
-        self.dataset.SetGeoTransform([
-            x_bounds[0],
+        if isinstance(crs, str):
+            crs = pyproj.CRS(crs)
+        self.SetProjection(crs.to_wkt())
+        self.SetGeoTransform([
+            x_min,
             pixel_width,
             0.,
-            y_bounds[1],
+            y_max,
             0.,
-            -pixel_height,
+            pixel_height,
         ])
         if n_bands == 4:
-            self.dataset.GetRasterBand(4).SetMetadataItem('Alpha', '1')
+            self.GetRasterBand(4).SetMetadataItem('Alpha', '1')
 
-        self.x_bounds = x_bounds
-        self.y_bounds = y_bounds
+        # Store properties
+        self.filepath = filepath
+        self.x_min = x_min
+        self.x_max = x_max
+        self.y_min = y_min
+        self.y_max = y_max
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height
-        self.crs = crs
-        self.filename = filename
         self.n_bands = n_bands
+        self.crs = crs
 
     @classmethod
-    def open(cls, filename: str, crs: pyproj.CRS = None, *args, **kwargs):
+    def Open(
+        cls,
+        filename: str,
+        crs: Union[str, pyproj.CRS] = None,
+        *args,
+        **kwargs
+    ):
 
-        dataset = cls.__new__(cls)
-        dataset.dataset = gdal.Open(filename, *args, **kwargs)
+        # Open up the file
+        dataset = gdal.Open(filename, *args, **kwargs)
 
         # CRS handling
         if isinstance(crs, str):
             crs = pyproj.CRS(crs)
         if crs is None:
-            crs = pyproj.CRS(dataset.dataset.GetProjection())
+            crs = pyproj.CRS(dataset.GetProjection())
         else:
-            dataset.dataset.SetProjection(crs.to_wkt())
+            dataset.SetProjection(crs.to_wkt())
         dataset.crs = crs
         dataset.filename = filename
 
         # Get bounds
         (
-            dataset.x_bounds,
-            dataset.y_bounds,
-            dataset.pixel_width,
-            dataset.pixel_height
+            dataset.x_min, dataset.x_max,
+            dataset.y_min, dataset.y_max,
+            dataset.pixel_width, dataset.pixel_height
         ) = get_bounds_from_dataset(
-            dataset.dataset,
+            dataset,
             crs,
         )
 
+        # Call this a subclass
+        dataset = dataset.__new__(cls)
+
         return dataset
 
-    def bounds_to_offset(self, x_bounds, y_bounds):
+    def bounds_to_offset(self, x_min, x_max, y_min, y_max):
 
         # Get offsets
-        x_offset = x_bounds[0] - self.x_bounds[0]
-        x_offset_count = int(np.round(x_offset / self.pixel_width))
-        y_offset = self.y_bounds[1] - y_bounds[1]
-        y_offset_count = int(np.round(y_offset / self.pixel_height))
+        x_offset = x_min - self.x_min_
+        x_offset_count = int(np.round(x_offset / self.pixel_width_))
+        y_offset = y_max - self.y_max_
+        y_offset_count = int(np.round(y_offset / -self.pixel_height_))
 
         # Get width counts
-        xsize = int(np.round((x_bounds[1] - x_bounds[0]) / self.pixel_width))
-        ysize = int(np.round((y_bounds[1] - y_bounds[0]) / self.pixel_height))
+        xsize = int(np.round((x_max - x_min) / self.pixel_width_))
+        ysize = int(np.round((y_max - y_min) / -self.pixel_height_))
 
         return x_offset_count, y_offset_count, xsize, ysize
 
-    def get_img(self, x_bounds, y_bounds):
+    def get_image(self, x_min, x_max, y_min, y_max):
 
         # Out of bounds
         if (
-            (x_bounds[0] > self.x_bounds[1])
-            or (x_bounds[1] < self.x_bounds[0])
-            or (y_bounds[0] > self.y_bounds[1])
-            or (y_bounds[1] < self.y_bounds[0])
+            (x_min > self.x_max_)
+            or (x_max < self.x_min_)
+            or (y_min > self.y_max_)
+            or (y_max < self.y_min_)
         ):
             raise ValueError(
                 'Tried to retrieve data fully out-of-bounds.'
             )
 
         # Only partially out-of-bounds
-        if x_bounds[0] < self.x_bounds[0]:
-            x_bounds[0] = self.x_bounds[0]
-        if x_bounds[1] > self.x_bounds[1]:
-            x_bounds[1] = self.x_bounds[1]
-        if y_bounds[0] < self.y_bounds[0]:
-            y_bounds[0] = self.y_bounds[0]
-        if y_bounds[1] > self.y_bounds[1]:
-            y_bounds[1] = self.y_bounds[1]
+        if x_min < self.x_min_:
+            x_min = self.x_min_
+        if x_max > self.x_max_:
+            x_max = self.x_max_
+        if y_min < self.y_min_:
+            y_min = self.y_min_
+        if y_max > self.y_max_:
+            y_max = self.y_max_
 
         x_offset_count, y_offset_count, xsize, ysize = self.bounds_to_offset(
-            x_bounds,
-            y_bounds,
+            x_min, x_max, y_min, y_max
         )
 
-        img = self.dataset.ReadAsArray(
+        img = self.dataset_.ReadAsArray(
             xoff=x_offset_count,
             yoff=y_offset_count,
             xsize=xsize,
@@ -641,47 +667,181 @@ class Dataset:
         )
         return img.transpose(1, 2, 0)
 
-    def get_referenced_image(self, x_bounds, y_bounds):
-
-        img = self.get_img(x_bounds, y_bounds)
-
-        reffed_image = ReferencedImage(
-            img,
-            x_bounds,
-            y_bounds,
-            cart_crs_code='{}:{}'.format(*self.crs.to_authority()),
-        )
-
-        return reffed_image
-
-    def flush_cache_and_close(self):
-
-        self.dataset.FlushCache()
-        self.dataset = None
-
-    def save_img(self, img, x_bounds, y_bounds):
-        '''
-        NOTE: You must call self.flush_cache_and_close to finish saving to disk.
-        '''
+    def save_image(self, img, x_min, x_max, y_min, y_max):
 
         x_offset_count, y_offset_count, xsize, ysize = self.bounds_to_offset(
-            x_bounds,
-            y_bounds,
+            x_min, x_max, y_min, y_max
         )
 
         img_to_save = img.transpose(2, 0, 1)
-        self.dataset.WriteArray(img_to_save, xoff=x_offset_count, yoff=y_offset_count)
+        self.dataset_.WriteArray(
+            img_to_save,
+            xoff=x_offset_count,
+            yoff=y_offset_count
+        )
+
+
+
+#    def __init__(
+#        self,
+#        filename: str,
+#        x_bounds: Tuple[float, float],
+#        y_bounds: Tuple[float, float],
+#        pixel_width: float,
+#        pixel_height: float,
+#        crs: pyproj.CRS,
+#        n_bands: int = 4,
+#    ):
+#
+#        # Initialize an empty GeoTiff
+#        xsize = int(np.round((x_bounds[1] - x_bounds[0]) / pixel_width))
+#        ysize = int(np.round((y_bounds[1] - y_bounds[0]) / pixel_height))
+#        driver = gdal.GetDriverByName('GTiff')
+#        self.dataset = driver.Create(
+#            filename,
+#            xsize=xsize,
+#            ysize=ysize,
+#            bands=n_bands,
+#            options=['TILED=YES']
+#        )
+#
+#        # Properties
+#        self.dataset.SetProjection(crs.to_wkt())
+#        self.dataset.SetGeoTransform([
+#            x_bounds[0],
+#            pixel_width,
+#            0.,
+#            y_bounds[1],
+#            0.,
+#            -pixel_height,
+#        ])
+#        if n_bands == 4:
+#            self.dataset.GetRasterBand(4).SetMetadataItem('Alpha', '1')
+#
+#        self.x_bounds = x_bounds
+#        self.y_bounds = y_bounds
+#        self.pixel_width = pixel_width
+#        self.pixel_height = pixel_height
+#        self.crs = crs
+#        self.filename = filename
+#        self.n_bands = n_bands
+#
+#    @classmethod
+#    def open(cls, filename: str, crs: pyproj.CRS = None, *args, **kwargs):
+#
+#        dataset = cls.__new__(cls)
+#        dataset.dataset = gdal.Open(filename, *args, **kwargs)
+#
+#        # CRS handling
+#        if isinstance(crs, str):
+#            crs = pyproj.CRS(crs)
+#        if crs is None:
+#            crs = pyproj.CRS(dataset.dataset.GetProjection())
+#        else:
+#            dataset.dataset.SetProjection(crs.to_wkt())
+#        dataset.crs = crs
+#        dataset.filename = filename
+#
+#        # Get bounds
+#        (
+#            dataset.x_bounds,
+#            dataset.y_bounds,
+#            dataset.pixel_width,
+#            dataset.pixel_height
+#        ) = get_bounds_from_dataset(
+#            dataset.dataset,
+#            crs,
+#        )
+#
+#        return dataset
+#
+#    def bounds_to_offset(self, x_bounds, y_bounds):
+#
+#        # Get offsets
+#        x_offset = x_bounds[0] - self.x_bounds[0]
+#        x_offset_count = int(np.round(x_offset / self.pixel_width))
+#        y_offset = self.y_bounds[1] - y_bounds[1]
+#        y_offset_count = int(np.round(y_offset / self.pixel_height))
+#
+#        # Get width counts
+#        xsize = int(np.round((x_bounds[1] - x_bounds[0]) / self.pixel_width))
+#        ysize = int(np.round((y_bounds[1] - y_bounds[0]) / self.pixel_height))
+#
+#        return x_offset_count, y_offset_count, xsize, ysize
+#
+#    def get_img(self, x_bounds, y_bounds):
+#
+#        # Out of bounds
+#        if (
+#            (x_bounds[0] > self.x_bounds[1])
+#            or (x_bounds[1] < self.x_bounds[0])
+#            or (y_bounds[0] > self.y_bounds[1])
+#            or (y_bounds[1] < self.y_bounds[0])
+#        ):
+#            raise ValueError(
+#                'Tried to retrieve data fully out-of-bounds.'
+#            )
+#
+#        # Only partially out-of-bounds
+#        if x_bounds[0] < self.x_bounds[0]:
+#            x_bounds[0] = self.x_bounds[0]
+#        if x_bounds[1] > self.x_bounds[1]:
+#            x_bounds[1] = self.x_bounds[1]
+#        if y_bounds[0] < self.y_bounds[0]:
+#            y_bounds[0] = self.y_bounds[0]
+#        if y_bounds[1] > self.y_bounds[1]:
+#            y_bounds[1] = self.y_bounds[1]
+#
+#        x_offset_count, y_offset_count, xsize, ysize = self.bounds_to_offset(
+#            x_bounds,
+#            y_bounds,
+#        )
+#
+#        img = self.dataset.ReadAsArray(
+#            xoff=x_offset_count,
+#            yoff=y_offset_count,
+#            xsize=xsize,
+#            ysize=ysize
+#        )
+#        return img.transpose(1, 2, 0)
+#
+#    def get_referenced_image(self, x_bounds, y_bounds):
+#
+#        img = self.get_img(x_bounds, y_bounds)
+#
+#        reffed_image = ReferencedImage(
+#            img,
+#            x_bounds,
+#            y_bounds,
+#            cart_crs_code='{}:{}'.format(*self.crs.to_authority()),
+#        )
+#
+#        return reffed_image
+#
+#    def flush_cache_and_close(self):
+#
+#        self.dataset.FlushCache()
+#        self.dataset = None
+#
+#    def save_img(self, img, x_bounds, y_bounds):
+#        '''
+#        NOTE: You must call self.flush_cache_and_close to finish saving to disk.
+#        '''
+#
+#        x_offset_count, y_offset_count, xsize, ysize = self.bounds_to_offset(
+#            x_bounds,
+#            y_bounds,
+#        )
+#
+#        img_to_save = img.transpose(2, 0, 1)
+#        self.dataset.WriteArray(img_to_save, xoff=x_offset_count, yoff=y_offset_count)
 
 
 def get_bounds_from_dataset(
     dataset: gdal.Dataset,
     crs: pyproj.CRS
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[float]:
     '''Get image bounds in a given coordinate system.
-    TODO: Apparently convention is for pixel_height to
-        be negative, consistent with increasing downwards.
-        However I treat these as absolute quantities.
-        This could be made consistent.
 
     Args:
         crs: Desired coordinate system.
@@ -708,7 +868,7 @@ def get_bounds_from_dataset(
         crs,
         always_xy=True
     )
-    x_bounds, y_bounds = dataset_to_desired.transform(
+    (x_min, x_max), (y_min, y_max) = dataset_to_desired.transform(
         [x_min, x_max],
         [y_min, y_max],
     )
@@ -717,11 +877,11 @@ def get_bounds_from_dataset(
         pixel_height,
     )
 
-    # Format for output
-    pixel_width = np.abs(pixel_width)
-    pixel_height = np.abs(pixel_height)
-
-    return x_bounds, y_bounds, pixel_width, pixel_height
+    return (
+        x_min, x_max,
+        y_min, y_max,
+        pixel_width, pixel_height
+    )
 
 
 def get_containing_bounds(reffed_images, crs, bordersize=0):
