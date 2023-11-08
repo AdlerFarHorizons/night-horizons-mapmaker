@@ -40,6 +40,28 @@ class TestReferencedMosaic(unittest.TestCase):
         score = self.pipeline.score(self.fps)
         assert score > metrics.R_ACCEPT
 
+    def test_bounds_to_offset(self):
+
+        mosaic = self.pipeline.fit_transform(self.fps)
+
+        # Bounds for the whole dataset
+        reffed_mosaic = self.pipeline.named_steps['mosaic']
+        (
+            x_offset,
+            y_offset,
+            x_count,
+            y_count,
+        ) = reffed_mosaic.bounds_to_offset(
+            reffed_mosaic.x_min_, reffed_mosaic.x_max_,
+            reffed_mosaic.y_min_, reffed_mosaic.y_max_,
+        )
+
+        assert x_offset == 0
+        assert y_offset == 0
+        assert x_count == reffed_mosaic.dataset_.RasterXSize
+        assert y_count == reffed_mosaic.dataset_.RasterYSize
+
+
     def test_external_consistency(self):
 
         mosaic = self.pipeline.fit_transform(self.fps)
