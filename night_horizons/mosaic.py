@@ -104,7 +104,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         # Re-record pixel values to account for rounding
         self.pixel_width_ = width / xsize
-        self.pixel_height_ = height / ysize
+        self.pixel_height_ = -height / ysize
 
         # Initialize an empty GeoTiff
         driver = gdal.GetDriverByName('GTiff')
@@ -134,7 +134,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
     def score(self, X, y=None, tm_metric=cv2.TM_CCOEFF_NORMED):
 
         self.scores_ = []
-        for i, fp in enumerate(X['filepath']):
+        for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
 
             row = X.iloc[i]
 
@@ -162,12 +162,12 @@ class Mosaic(TransformerMixin, BaseEstimator):
         # Get offsets
         x_offset = x_min - self.x_min_
         x_offset_count = int(np.round(x_offset / self.pixel_width_))
-        y_offset = y_min - self.y_min_
+        y_offset = y_max - self.y_max_
         y_offset_count = int(np.round(y_offset / self.pixel_height_))
 
         # Get width counts
         xsize = int(np.round((x_max - x_min) / self.pixel_width_))
-        ysize = int(np.round((y_max - y_min) / self.pixel_height_))
+        ysize = int(np.round((y_max - y_min) / -self.pixel_height_))
 
         return x_offset_count, y_offset_count, xsize, ysize
 
