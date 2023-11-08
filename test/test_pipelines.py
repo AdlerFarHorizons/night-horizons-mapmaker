@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 
 import night_horizons.utils as utils
 import night_horizons.pipelines as pipelines
+import night_horizons.metrics as metrics
 
 
 class TestMosaic(unittest.TestCase):
@@ -30,23 +31,13 @@ class TestMosaic(unittest.TestCase):
     def test_referenced_mosaic(self):
 
         image_dir = './test/test_data/referenced_images'
-        fps = utils.discover_data(image_dir)
+        fps = utils.discover_data(image_dir, extension=['tif', 'tiff'])
 
         pipeline = self.pipelines.referenced_mosaic(self.fp)
         mosaic = pipeline.fit_transform(fps)
 
-        # Compare to one of the input images
-        i = 0
-        fp = fps.iloc[i]
-        row = pipeline.named_steps['geobounds'].transform([fp,])
-        actual_img = utils.load_image(fp)
-        score = mosaic.score(
-            actual_img,
-            row['x_min'],
-            row['x_max'],
-            row['y_min'],
-            row['y_max']
-        )
-        assert score > 
+        # Check the score
+        score = pipeline.score(fps)
+        assert score > metrics.R_ACCEPT
 
 

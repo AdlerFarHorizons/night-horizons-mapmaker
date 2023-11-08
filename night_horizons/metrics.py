@@ -23,6 +23,6 @@ def image_to_image_ccoeff(
 
 def assert_approx_equal(img1, img2, r_accept=R_ACCEPT):
 
-    r = calc_ccoeff(img1, img2)
+    r = image_to_image_ccoeff(img1, img2)
 
     assert r > r_accept

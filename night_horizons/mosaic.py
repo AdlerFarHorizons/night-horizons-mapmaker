@@ -204,7 +204,8 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
                 row['y_max'],
             )
 
-            metrics.image_to_image_ccoeff(actual_img, mosaic_img)
+            r = metrics.image_to_image_ccoeff(actual_img, mosaic_img[:, :, :3])
+            self.scores_.append(r)
 
         score = np.median(self.scores_)
 

@@ -13,6 +13,18 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import utils
 
+GEOTRANSFORM_COLS = [
+    'x_min', 'pixel_width', 'x_rot',
+    'y_max', 'y_rot', 'pixel_height',
+    'xsize', 'ysize',
+]
+
+GEOBOUNDS_COLS = [
+    'x_min', 'x_max',
+    'y_min', 'y_max',
+    'pixel_width', 'pixel_height',
+]
+
 
 class NITELitePreprocesser(TransformerMixin, BaseEstimator):
     '''Transform filepaths into a metadata dataframe.
@@ -417,13 +429,6 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         return gps_log_df
 
 
-GEOTRANSFORM_COLS = [
-    'x_min', 'pixel_width', 'x_rot',
-    'y_max', 'y_rot', 'pixel_height',
-    'xsize', 'ysize',
-]
-
-
 class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
     '''Transform filepaths into geotransform properties.
 
@@ -526,13 +531,6 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
         X = pd.concat([X, new_df], axis='columns')
 
         return X
-
-
-GEOBOUNDS_COLS = [
-    'x_min', 'x_max',
-    'y_min', 'y_max',
-    'pixel_width', 'pixel_height',
-]
 
 
 class GeoBoundsPreprocesser(TransformerMixin, BaseEstimator):
