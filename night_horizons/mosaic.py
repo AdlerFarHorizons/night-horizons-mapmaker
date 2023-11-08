@@ -16,7 +16,7 @@ import tqdm
 from . import preprocess, metrics, utils
 
 
-class ReferencedMosaic(TransformerMixin, BaseEstimator):
+class Mosaic(TransformerMixin, BaseEstimator):
     '''Assemble a mosaic from georeferenced images.
 
     Parameters
@@ -131,65 +131,7 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
 
         return self
 
-    def transform(
-        self,
-        X: pd.DataFrame,
-        y=None,
-    ):
-        X = utils.check_df_input(
-            X,
-            ['filepath'] + preprocess.GEOBOUNDS_COLS,
-            passthrough=self.passthrough
-        )
-
-        # Check if fit had been called
-        check_is_fitted(self, 'dataset_')
-
-        # Loop through and include
-        for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
-
-            row = X.iloc[i]
-
-            # Get data
-            src_img = utils.load_image(
-                fp,
-                dtype=self.dtype,
-            )
-            dst_img = self.get_image(
-                row['x_min'],
-                row['x_max'],
-                row['y_min'],
-                row['y_max'],
-            )
-
-            # Resize the source image
-            src_img_resized = cv2.resize(
-                src_img,
-                (dst_img.shape[1], dst_img.shape[0])
-            )
-
-            # Combine the images
-            blended_img = self.blend_images(
-                src_img=src_img_resized,
-                dst_img=dst_img,
-                fill_value=self.fill_value,
-            )
-
-            # Store the image
-            self.save_image(
-                blended_img,
-                row['x_min'],
-                row['x_max'],
-                row['y_min'],
-                row['y_max'],
-            )
-
-        # Finish by flushing the cache
-        self.dataset_.FlushCache()
-
-        return self.dataset_
-
-    def score(self, X, y=None, template_metric=cv2.TM_CCOEFF_NORMED):
+    def score(self, X, y=None, tm_metric=cv2.TM_CCOEFF_NORMED):
 
         self.scores_ = []
         for i, fp in enumerate(X['filepath']):
@@ -204,7 +146,11 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
                 row['y_max'],
             )
 
-            r = metrics.image_to_image_ccoeff(actual_img, mosaic_img[:, :, :3])
+            r = metrics.image_to_image_ccoeff(
+                actual_img,
+                mosaic_img[:, :, :3],
+                tm_metric=tm_metric,
+            )
             self.scores_.append(r)
 
         score = np.median(self.scores_)
@@ -307,3 +253,64 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
         blended_img = np.array(blended_img).transpose(1, 2, 0)
 
         return blended_img
+
+
+class ReferencedMosaic(Mosaic):
+
+    def transform(
+        self,
+        X: pd.DataFrame,
+        y=None,
+    ):
+        X = utils.check_df_input(
+            X,
+            ['filepath'] + preprocess.GEOBOUNDS_COLS,
+            passthrough=self.passthrough
+        )
+
+        # Check if fit had been called
+        check_is_fitted(self, 'dataset_')
+
+        # Loop through and include
+        for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
+
+            row = X.iloc[i]
+
+            # Get data
+            src_img = utils.load_image(
+                fp,
+                dtype=self.dtype,
+            )
+            dst_img = self.get_image(
+                row['x_min'],
+                row['x_max'],
+                row['y_min'],
+                row['y_max'],
+            )
+
+            # Resize the source image
+            src_img_resized = cv2.resize(
+                src_img,
+                (dst_img.shape[1], dst_img.shape[0])
+            )
+
+            # Combine the images
+            blended_img = self.blend_images(
+                src_img=src_img_resized,
+                dst_img=dst_img,
+                fill_value=self.fill_value,
+            )
+
+            # Store the image
+            self.save_image(
+                blended_img,
+                row['x_min'],
+                row['x_max'],
+                row['y_min'],
+                row['y_max'],
+            )
+
+        # Finish by flushing the cache
+        self.dataset_.FlushCache()
+
+        return self.dataset_
