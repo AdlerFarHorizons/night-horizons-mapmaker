@@ -545,7 +545,7 @@ class BoundsDataset(gdal.Dataset):
         # Initialize an empty dataset
         if isinstance(dataset, str):
             driver = gdal.GetDriverByName('GTiff')
-            self = driver.Create(
+            self.dataset = driver.Create(
                 dataset,
                 xsize=xsize,
                 ysize=ysize,
@@ -553,7 +553,7 @@ class BoundsDataset(gdal.Dataset):
                 options=['TILED=YES']
             )
         else:
-            self = dataset
+            self.dataset = dataset
 
         # Properties
         if isinstance(crs, str):
@@ -571,7 +571,6 @@ class BoundsDataset(gdal.Dataset):
             self.GetRasterBand(4).SetMetadataItem('Alpha', '1')
 
         # Store properties
-        self.filepath = dataset
         self.x_min = x_min
         self.x_max = x_max
         self.y_min = y_min

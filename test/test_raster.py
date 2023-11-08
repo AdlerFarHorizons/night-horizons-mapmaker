@@ -150,22 +150,35 @@ class TestDataset(unittest.TestCase):
 
         assert isinstance(dataset, raster.BoundsDataset)
 
+        # Check properties
+        dataset.x_min
+        dataset.x_max
+        dataset.y_min
+        dataset.y_max
+        dataset.pixel_width
+        dataset.pixel_height
+        dataset.n_bands
+        dataset.crs
+
     def test_bounds_to_offset(self):
 
         dataset = raster.BoundsDataset.open(self.filepath, 'EPSG:3857')
 
         # Bounds for the whole dataset
         (
-            x_offset_count,
-            y_offset_count,
+            x_offset,
+            y_offset,
             x_count,
             y_count,
-        ) = dataset.bounds_to_offset(dataset.x_bounds, dataset.y_bounds)
+        ) = dataset.bounds_to_offset(
+            dataset.x_min, dataset.x_max,
+            dataset.y_min, dataset.y_max,
+        )
 
-        assert x_offset_count == 0
-        assert y_offset_count == 0
-        assert x_count == dataset.dataset.RasterXSize
-        assert y_count == dataset.dataset.RasterYSize
+        assert x_offset == 0
+        assert y_offset == 0
+        assert x_count == dataset.RasterXSize
+        assert y_count == dataset.RasterYSize
 
     def test_get_img(self):
 
