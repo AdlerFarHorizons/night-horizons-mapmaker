@@ -10,6 +10,7 @@ import pyproj
 import scipy
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
+import tqdm
 
 from . import utils
 
@@ -483,7 +484,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
 
         # Loop over and get datasets
         rows = []
-        for i, fp in enumerate(X['filepath']):
+        for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
 
             # Try to load the dataset
             dataset = gdal.Open(fp, gdal.GA_ReadOnly)
