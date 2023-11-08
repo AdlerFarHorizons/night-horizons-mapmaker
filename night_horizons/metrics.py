@@ -16,7 +16,7 @@ def image_to_image_ccoeff(
             raise ValueError('Images must have the same shape.')
         src_img = cv2.resize(src_img, (dst_img.shape[1], dst_img.shape[0]))
 
-    r = cv2.matchTemplate(src_img, dst_img, tm_metric)
+    r = cv2.matchTemplate(src_img, dst_img, tm_metric)[0][0]
 
     return r
 
