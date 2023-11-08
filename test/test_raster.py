@@ -146,13 +146,13 @@ class TestDataset(unittest.TestCase):
 
     def test_open(self):
 
-        dataset = raster.BoundsDataset.Open(self.filepath, 'EPSG:3857')
+        dataset = raster.BoundsDataset.open(self.filepath, 'EPSG:3857')
 
         assert isinstance(dataset, raster.BoundsDataset)
 
     def test_bounds_to_offset(self):
 
-        dataset = raster.BoundsDataset.Open(self.filepath, 'EPSG:3857')
+        dataset = raster.BoundsDataset.open(self.filepath, 'EPSG:3857')
 
         # Bounds for the whole dataset
         (
@@ -169,7 +169,7 @@ class TestDataset(unittest.TestCase):
 
     def test_get_img(self):
 
-        dataset = raster.BoundsDataset.Open(self.filepath, 'EPSG:3857')
+        dataset = raster.BoundsDataset.open(self.filepath, 'EPSG:3857')
         actual_img = dataset.get_img(
             dataset.x_bounds,
             dataset.y_bounds,
@@ -181,7 +181,7 @@ class TestDataset(unittest.TestCase):
     def test_constructors_consistent(self):
 
         # Opened from disk
-        dataset_original = raster.BoundsDataset.Open(self.filepath)
+        dataset_original = raster.BoundsDataset.open(self.filepath)
 
         # Manually constructed
         dataset = raster.Dataset(
@@ -205,7 +205,7 @@ class TestDataset(unittest.TestCase):
     def test_save_img(self):
 
         # Copy, since we'll be editing
-        dataset_original = raster.BoundsDataset.Open(self.filepath)
+        dataset_original = raster.BoundsDataset.open(self.filepath)
 
         # Manually create and save, then check we can open and that it's as
         # expected
@@ -226,7 +226,7 @@ class TestDataset(unittest.TestCase):
         dataset.flush_cache_and_close()
 
         # Reopen, and compare
-        dataset_saved = raster.Dataset.Open(self.copy_filepath)
+        dataset_saved = raster.Dataset.open(self.copy_filepath)
         np.testing.assert_allclose(
             np.array(dataset_original.dataset.GetGeoTransform()),
             np.array(dataset_saved.dataset.GetGeoTransform()),

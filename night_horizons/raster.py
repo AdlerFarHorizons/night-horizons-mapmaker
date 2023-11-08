@@ -521,7 +521,7 @@ class BoundsDataset(gdal.Dataset):
 
     def __init__(
         self,
-        filepath: str,
+        dataset: Union[str, gdal.Dataset],
         x_min: float,
         x_max: float,
         y_min: float,
@@ -542,18 +542,18 @@ class BoundsDataset(gdal.Dataset):
         pixel_width = width / xsize
         pixel_height = -height / ysize
 
-        # Initialize an empty GeoTiff
-        if isinstance(filepath, str):
+        # Initialize an empty dataset
+        if isinstance(dataset, str):
             driver = gdal.GetDriverByName('GTiff')
             self = driver.Create(
-                filepath,
+                dataset,
                 xsize=xsize,
                 ysize=ysize,
                 bands=n_bands,
                 options=['TILED=YES']
             )
         else:
-            self = filepath
+            self = dataset
 
         # Properties
         if isinstance(crs, str):
@@ -571,7 +571,7 @@ class BoundsDataset(gdal.Dataset):
             self.GetRasterBand(4).SetMetadataItem('Alpha', '1')
 
         # Store properties
-        self.filepath = filepath
+        self.filepath = dataset
         self.x_min = x_min
         self.x_max = x_max
         self.y_min = y_min
@@ -582,7 +582,7 @@ class BoundsDataset(gdal.Dataset):
         self.crs = crs
 
     @classmethod
-    def Open(
+    def open(
         cls,
         filename: str,
         crs: Union[str, pyproj.CRS] = None,
@@ -598,25 +598,25 @@ class BoundsDataset(gdal.Dataset):
             crs = pyproj.CRS(crs)
         if crs is None:
             crs = pyproj.CRS(dataset.GetProjection())
-        else:
-            dataset.SetProjection(crs.to_wkt())
-        dataset.crs = crs
-        dataset.filename = filename
 
         # Get bounds
         (
-            dataset.x_min, dataset.x_max,
-            dataset.y_min, dataset.y_max,
-            dataset.pixel_width, dataset.pixel_height
+            x_min, x_max,
+            y_min, y_max,
+            pixel_width, pixel_height
         ) = get_bounds_from_dataset(
             dataset,
             crs,
         )
 
-        # Call this a subclass
-        dataset = dataset.__new__(cls)
-
-        return dataset
+        return cls(
+            dataset,
+            x_min, x_max,
+            y_min, y_max,
+            pixel_width, pixel_height,
+            n_bands=dataset.RasterCount,
+            crs=crs,
+        )
 
     def bounds_to_offset(self, x_min, x_max, y_min, y_max):
 
