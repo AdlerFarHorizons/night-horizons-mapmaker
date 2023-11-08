@@ -9,54 +9,29 @@ import pyproj
 import scipy
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
-import sklearn.pipeline as sk_pipeline
+from sklearn.pipeline import Pipeline
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import preprocess, reference
+from . import preprocess, mosaic
 
 
-class PreprocessingPipelines:
-
-    @staticmethod
-    def referenced_nitelite(
-        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        output_columns: list[str] = ['filepath', 'sensor_x', 'sensor_y'],
-    ):
-
-        pipeline = sk_pipeline.Pipeline([
-            (
-                'nitelite',
-                preprocess.NITELitePreprocesser(
-                    # We choose these columns since they're the ones
-                    # needed for GeoTIFF preprocessing
-                    output_columns=output_columns,
-                    crs=crs,
-                )
-            ),
-            (
-                'geotiff',
-                preprocess.GeoTIFFPreprocesser(crs=crs, passthrough=True),
-            ),
-        ])
-
-        return pipeline
-
-
-class GeoreferencingPipelines:
+class MosaicPipelines:
 
     @staticmethod
-    def sensor_georeferencing(
-        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        preprocessing: BaseEstimator = preprocess.NITELitePreprocesser(
-            output_columns=['sensor_x', 'sensor_y']),
+    def referenced_mosaic(
+        filepath: str,
+        crs: Union[str, pyproj.CRS],
     ):
 
-        pipeline = sk_pipeline.Pipeline([
-            ('preprocessing', preprocessing),
-            ('sensor_georeferencing', reference.SensorGeoreferencer(crs=crs)),
+        pipeline = Pipeline([
+            ('geotiff', preprocess.GeoTIFFPreprocesser(crs=crs)),
+            ('geobounds', preprocess.GeoBoundsPreprocesser(
+                crs=crs, passthrough=['filepath']
+            )),
+            ('mosaic', mosaic.ReferencedMosaic(filepath=filepath, crs=crs))
         ])
 
         return pipeline
