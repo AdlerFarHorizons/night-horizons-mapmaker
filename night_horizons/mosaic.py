@@ -155,7 +155,7 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
                 fp,
                 dtype=self.dtype,
             )
-            dst_img = self.get_img(
+            dst_img = self.get_image(
                 row['x_min'],
                 row['x_max'],
                 row['y_min'],
@@ -176,7 +176,7 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
             )
 
             # Store the image
-            self.save_img(
+            self.save_image(
                 blended_img,
                 row['x_min'],
                 row['x_max'],
@@ -203,7 +203,7 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
 
         return x_offset_count, y_offset_count, xsize, ysize
 
-    def get_img(self, x_min, x_max, y_min, y_max):
+    def get_image(self, x_min, x_max, y_min, y_max):
 
         # Out of bounds
         if (
@@ -238,7 +238,7 @@ class ReferencedMosaic(TransformerMixin, BaseEstimator):
         )
         return img.transpose(1, 2, 0)
 
-    def save_img(self, img, x_min, x_max, y_min, y_max):
+    def save_image(self, img, x_min, x_max, y_min, y_max):
 
         x_offset_count, y_offset_count, xsize, ysize = self.bounds_to_offset(
             x_min, x_max, y_min, y_max
