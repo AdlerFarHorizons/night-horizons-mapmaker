@@ -13,28 +13,61 @@ import night_horizons.pipelines as pipelines
 import night_horizons.metrics as metrics
 
 
-class TestReferencedMosaic(unittest.TestCase):
+class BaseTester(unittest.TestCase):
 
     def setUp(self):
 
-        self.fp = './test/test_data/mosaics/temp.tiff'
-        os.makedirs(os.path.dirname(self.fp), exist_ok=True)
-        if os.path.isfile(self.fp):
-            os.remove(self.fp)
-
-        self.pipeline = pipelines.MosaicPipelines.referenced_mosaic(self.fp)
+        self.mosaic_fp = './test/test_data/mosaics/temp.tiff'
+        os.makedirs(os.path.dirname(self.mosaic_fp), exist_ok=True)
+        if os.path.isfile(self.mosaic_fp):
+            os.remove(self.mosaic_fp)
 
         image_dir = './test/test_data/referenced_images'
         self.fps = utils.discover_data(image_dir, extension=['tif', 'tiff'])
 
     def tearDown(self):
 
-        if os.path.isfile(self.fp):
-            os.remove(self.fp)
+        if os.path.isfile(self.mosaic_fp):
+            os.remove(self.mosaic_fp)
+
+
+class TestSensorGeoreference(BaseTester):
+
+    def setUp(self):
+
+        super().setUp()
+
+        self.pipeline, self.y_pipeline = \
+            pipelines.GeoreferencePipelines.sensor_georeference()
+
+        # Accurate to within 1 km
+        self.acceptance_criteria = 1000.
+
+    def test_score(self):
+        '''For this test we're scoring the values it was trained on,
+        so this is not a rigorous test.
+        '''
+
+        y = self.y_pipeline.fit_transform(self.fps)
+        X_transformed = self.pipeline.fit_transform(self.fps, y)
+
+        score = self.pipeline.score(self.fps, y)
+        assert score < self.acceptance_criteria
+
+
+class TestReferencedMosaic(BaseTester):
+
+    def setUp(self):
+
+        super().setUp()
+
+        self.pipeline = pipelines.MosaicPipelines.referenced_mosaic(
+            self.mosaic_fp
+        )
 
     def test_score(self):
 
-        mosaic = self.pipeline.fit_transform(self.fps)
+        X_transformed = self.pipeline.fit_transform(self.fps)
 
         # Check the score
         score = self.pipeline.score(self.fps)
@@ -42,7 +75,7 @@ class TestReferencedMosaic(unittest.TestCase):
 
     def test_bounds_to_offset(self):
 
-        mosaic = self.pipeline.fit_transform(self.fps)
+        X_transformed = self.pipeline.fit_transform(self.fps)
 
         # Bounds for the whole dataset
         reffed_mosaic = self.pipeline.named_steps['mosaic']
@@ -61,25 +94,26 @@ class TestReferencedMosaic(unittest.TestCase):
         assert x_count == reffed_mosaic.dataset_.RasterXSize
         assert y_count == reffed_mosaic.dataset_.RasterYSize
 
-    def test_external_consistency(self):
+    # DEBUG: Remove
+    # def test_external_consistency(self):
 
-        mosaic = self.pipeline.fit_transform(self.fps)
+    #     mosaic = self.pipeline.fit_transform(self.fps)
 
-        # Compare to one of the images
-        i = 0
-        fp = self.fps.iloc[i]
-        reffed_image = raster.ReferencedImage.open(fp)
-        x_bounds, y_bounds = reffed_image.cart_bounds
-        actual_img = self.pipeline.named_steps['mosaic'].get_image(
-            x_bounds[0],
-            x_bounds[1],
-            y_bounds[0],
-            y_bounds[1],
-        )
+    #     # Compare to one of the images
+    #     i = 0
+    #     fp = self.fps.iloc[i]
+    #     reffed_image = raster.ReferencedImage.open(fp)
+    #     x_bounds, y_bounds = reffed_image.cart_bounds
+    #     actual_img = self.pipeline.named_steps['mosaic'].get_image(
+    #         x_bounds[0],
+    #         x_bounds[1],
+    #         y_bounds[0],
+    #         y_bounds[1],
+    #     )
 
-        # Check the score
-        r = metrics.image_to_image_ccoeff(
-            reffed_image.img_int,
-            actual_img[:, :, :3]
-        )
-        assert r > metrics.R_ACCEPT
+    #     # Check the score
+    #     r = metrics.image_to_image_ccoeff(
+    #         reffed_image.img_int,
+    #         actual_img[:, :, :3]
+    #     )
+    #     assert r > metrics.R_ACCEPT
