@@ -61,7 +61,6 @@ class TestReferencedMosaic(unittest.TestCase):
         assert x_count == reffed_mosaic.dataset_.RasterXSize
         assert y_count == reffed_mosaic.dataset_.RasterYSize
 
-
     def test_external_consistency(self):
 
         mosaic = self.pipeline.fit_transform(self.fps)

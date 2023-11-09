@@ -28,9 +28,6 @@ class MosaicPipelines:
 
         pipeline = Pipeline([
             ('geotiff', preprocess.GeoTIFFPreprocesser(crs=crs)),
-            ('geobounds', preprocess.GeoBoundsPreprocesser(
-                crs=crs, passthrough=['filepath']
-            )),
             ('mosaic', mosaic.ReferencedMosaic(filepath=filepath, crs=crs))
         ])
 
