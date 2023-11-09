@@ -15,7 +15,24 @@ from sklearn.pipeline import Pipeline
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import preprocess, mosaic
+from . import preprocess, reference, mosaic
+
+
+class GeoreferencePipelines:
+
+    @staticmethod
+    def sensor_georeference(
+        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+    ):
+
+        pipeline = Pipeline([
+            ('geotiff', preprocess.GeoTIFFPreprocesser(crs=crs)),
+            ('sensor_georeference', reference.SensorGeoreferencer(crs=crs)),
+        ])
+
+        y_pipeline = preprocess.GeoTIFFPreprocesser(crs=crs)
+
+        return pipeline, y_pipeline
 
 
 class MosaicPipelines:
