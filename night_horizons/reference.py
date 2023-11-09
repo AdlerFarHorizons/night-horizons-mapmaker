@@ -128,6 +128,18 @@ class SensorGeoreferencer(BaseEstimator):
         check_is_fitted(self, 'is_fitted_')
 
         y_pred = self.predict(X)
+        pred_xs = 0.5 * (y_pred['x_min'] + y_pred['x_max'])
+        pred_ys = 0.5 * (y_pred['y_min'] + y_pred['y_max'])
+
+        actual_xs = 0.5 * (y['x_min'] + y['x_max'])
+        actual_ys = 0.5 * (y['y_min'] + y['y_max'])
+
+        self.scores_ = np.sqrt(
+            (pred_xs - actual_xs)**2.
+            + (pred_ys - actual_ys)**2.
+        )
+
+        return self.scores_
 
     def score(self, X, y):
 
