@@ -72,7 +72,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         # Check the input is good.
         X = utils.check_df_input(
             X,
-            ['filepath'] + preprocess.GEOBOUNDS_COLS,
+            ['filepath'] + preprocess.GEOTRANSFORM_COLS,
             passthrough=self.passthrough
         )
         if os.path.isfile(self.filepath):
@@ -279,7 +279,7 @@ class ReferencedMosaic(Mosaic):
     ):
         X = utils.check_df_input(
             X,
-            ['filepath'] + preprocess.GEOBOUNDS_COLS,
+            ['filepath'] + preprocess.GEOTRANSFORM_COLS,
             passthrough=self.passthrough
         )
 
