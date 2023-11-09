@@ -102,26 +102,21 @@ class TestReferencedMosaic(BaseTester):
         assert x_count == reffed_mosaic.dataset_.RasterXSize
         assert y_count == reffed_mosaic.dataset_.RasterYSize
 
-    # DEBUG: Remove
-    # def test_external_consistency(self):
 
-    #     mosaic = self.pipeline.fit_transform(self.fps)
+class TestLessReferencedMosaic(BaseTester):
 
-    #     # Compare to one of the images
-    #     i = 0
-    #     fp = self.fps.iloc[i]
-    #     reffed_image = raster.ReferencedImage.open(fp)
-    #     x_bounds, y_bounds = reffed_image.cart_bounds
-    #     actual_img = self.pipeline.named_steps['mosaic'].get_image(
-    #         x_bounds[0],
-    #         x_bounds[1],
-    #         y_bounds[0],
-    #         y_bounds[1],
-    #     )
+    def setUp(self):
 
-    #     # Check the score
-    #     r = metrics.image_to_image_ccoeff(
-    #         reffed_image.img_int,
-    #         actual_img[:, :, :3]
-    #     )
-    #     assert r > metrics.R_ACCEPT
+        super().setUp()
+
+        self.pipeline = pipelines.MosaicPipelines.less_referenced_mosaic(
+            self.mosaic_fp
+        )
+
+    def test_score(self):
+
+        X_transformed = self.pipeline.fit_transform(self.fps)
+
+        # Check the score
+        score = self.pipeline.score(self.fps)
+        assert score > metrics.R_ACCEPT
