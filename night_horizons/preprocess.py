@@ -20,6 +20,7 @@ GEOTRANSFORM_COLS = [
     'pixel_width', 'pixel_height',
     'x_rot', 'y_rot',
     'xsize', 'ysize',
+    'x_center', 'y_center',
 ]
 
 
@@ -464,6 +465,9 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
                 pixel_height,
             )
 
+            x_center = 0.5 * (x_min + x_max)
+            y_center = 0.5 * (y_min + y_max)
+
             row = pd.Series(
                 [
                     x_min, x_max,
@@ -471,6 +475,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
                     pixel_width, pixel_height,
                     x_rot, y_rot,
                     dataset.RasterXSize, dataset.RasterYSize,
+                    x_center, y_center
                 ],
                 index=GEOTRANSFORM_COLS,
                 name=X.index[i]

@@ -112,14 +112,21 @@ class SensorGeoreferencer(BaseEstimator):
         )
 
         # Calculate properties
+        corners_and_centers = [
+            'x_min', 'x_max',
+            'y_min', 'y_max',
+            'x_center', 'y_center',
+        ]
         for key in preprocess.GEOTRANSFORM_COLS:
-            if key in ['x_min', 'x_max', 'y_min', 'y_max']:
+            if key in corners_and_centers:
                 continue
             X[key] = getattr(self, key + '_')
         X['x_min'] = X['sensor_x'] - 0.5 * self.width_
         X['x_max'] = X['sensor_x'] + 0.5 * self.width_
         X['y_min'] = X['sensor_y'] - 0.5 * self.height_
         X['y_max'] = X['sensor_y'] + 0.5 * self.height_
+        X['x_center'] = X['sensor_x']
+        X['y_center'] = X['sensor_y']
 
         return X
 

@@ -1,6 +1,6 @@
 import glob
 import os
-from typing import Union
+from typing import Tuple, Union
 import warnings
 
 import cv2
@@ -31,6 +31,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
+        center_coords: Tuple[float, float] = None,
         fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
         n_bands: int = 4,
@@ -112,6 +113,15 @@ class Mosaic(TransformerMixin, BaseEstimator):
         # Re-record pixel values to account for rounding
         self.pixel_width_ = width / xsize
         self.pixel_height_ = -height / ysize
+
+        # We'll decide on the iteration order based on proximity to
+        # the central coords
+        self.central_coords_ = X[['x_center', 'y_center']].mean().values
+
+        # Load the dataset if it already exists
+        if os.path.isfile(self.filepath):
+            self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
+            return self
 
         # Initialize an empty GeoTiff
         driver = gdal.GetDriverByName('GTiff')
@@ -382,13 +392,22 @@ class LessReferencedMosaic(Mosaic):
             passthrough=self.passthrough
         )
 
+        d_to_center = np.sqrt(
+            (X['x_center'] - self.central_coords_[0])**2.
+            + (X['y_center'] - self.central_coords_[1])**2.
+        )
+        indices = d_to_center.sort_values().index
+
+        # DEBUG
+        import pdb; pdb.set_trace()
+
         # Check if fit had been called
         check_is_fitted(self, 'dataset_')
 
         # Loop through and include
-        for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
+        for ind in tqdm.tqdm(indices):
 
-            row = X.iloc[i]
+            row = X.loc[ind]
             x_min = row['x_min'] - self.padding
             x_max = row['x_max'] + self.padding
             y_min = row['y_min'] - self.padding
@@ -396,10 +415,12 @@ class LessReferencedMosaic(Mosaic):
 
             # Get data
             src_img = utils.load_image(
-                fp,
+                row['filepath'],
                 dtype=self.dtype,
             )
             dst_img = self.get_image(x_min, x_max, y_min, y_max)
+            assert dst_img.sum() > 0, \
+                f'No image data in the search zone for index {ind}'
 
             # Resize the source image
             src_img_resized = cv2.resize(
@@ -471,6 +492,8 @@ class LessReferencedMosaic(Mosaic):
         dst_kp, dst_des = self.feature_detector.detectAndCompute(dst_img, None)
 
         # Perform match
+        # DEBUG
+        import pdb; pdb.set_trace()
         matches = self.feature_matcher.match(src_des, dst_des)
         # Sort them in the order of their distance.
         matches = sorted(matches, key=lambda x: x.distance)
