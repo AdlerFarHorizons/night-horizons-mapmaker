@@ -18,6 +18,7 @@ GEOTRANSFORM_COLS = [
     'x_min', 'pixel_width', 'x_rot',
     'y_max', 'y_rot', 'pixel_height',
     'xsize', 'ysize',
+    'x_max', 'y_min',
 ]
 
 GEOBOUNDS_COLS = [
@@ -500,6 +501,10 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
             x_min, pixel_width, x_rot, y_max, y_rot, pixel_height = \
                 dataset.GetGeoTransform()
 
+            # Get bounds
+            x_max = x_min + pixel_width * dataset.RasterXSize
+            y_min = y_max + pixel_height * dataset.RasterYSize
+
             # Convert to desired crs.
             dataset_crs = pyproj.CRS(dataset.GetProjection())
             dataset_crs_to_crs = pyproj.Transformer.from_crs(
@@ -507,9 +512,14 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
                 self.crs,
                 always_xy=True
             )
-            x_min, y_max = dataset_crs_to_crs.transform(
-                x_min,
-                y_max,
+            # DEBUG
+            # x_min, y_max = dataset_crs_to_crs.transform(
+            #     x_min,
+            #     y_max,
+            # )
+            (x_min, x_max), (y_min, y_max) = dataset_crs_to_crs.transform(
+                [x_min, x_max],
+                [y_min, y_max],
             )
             pixel_width, pixel_height = dataset_crs_to_crs.transform(
                 pixel_width,
@@ -521,6 +531,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
                     x_min, pixel_width, x_rot,
                     y_max, y_rot, pixel_height,
                     dataset.RasterXSize, dataset.RasterYSize,
+                    x_max, y_min,
                 ],
                 index=GEOTRANSFORM_COLS,
                 name=X.index[i]
@@ -582,6 +593,7 @@ class GeoBoundsPreprocesser(TransformerMixin, BaseEstimator):
 
         # Convert and pad
         X['x_max'] = X['x_min'] + X['pixel_width'] * X['xsize']
+        # DEBUG
         X['y_min'] = X['y_max'] + X['pixel_height'] * X['ysize']
         X['x_min'] -= self.search_padding
         X['x_max'] += self.search_padding
