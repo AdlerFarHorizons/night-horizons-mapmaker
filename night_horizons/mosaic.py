@@ -34,7 +34,9 @@ class Mosaic(TransformerMixin, BaseEstimator):
         fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
         n_bands: int = 4,
+        padding: float = 0.,
         passthrough: Union[bool, list[str]] = False,
+        existing_ok: bool = False,
         outline: int = 0,
     ):
         self.filepath = filepath
@@ -44,7 +46,9 @@ class Mosaic(TransformerMixin, BaseEstimator):
         self.fill_value = fill_value
         self.dtype = dtype
         self.n_bands = n_bands
+        self.padding = padding
         self.passthrough = passthrough
+        self.existing_ok = existing_ok
         self.outline = outline
 
     def fit(
@@ -75,18 +79,19 @@ class Mosaic(TransformerMixin, BaseEstimator):
             ['filepath'] + preprocess.GEOTRANSFORM_COLS,
             passthrough=self.passthrough
         )
-        if os.path.isfile(self.filepath):
-            raise FileExistsError('File already exists at destination.')
+        if not self.existing_ok:
+            if os.path.isfile(self.filepath):
+                raise FileExistsError('File already exists at destination.')
 
         # Convert CRS as needed
         if isinstance(self.crs, str):
             self.crs = pyproj.CRS(self.crs)
 
         # Get bounds
-        self.x_min_ = X['x_min'].min()
-        self.x_max_ = X['x_max'].max()
-        self.y_min_ = X['y_min'].min()
-        self.y_max_ = X['y_max'].max()
+        self.x_min_ = X['x_min'].min() - self.padding
+        self.x_max_ = X['x_max'].max() + self.padding
+        self.y_min_ = X['y_min'].min() - self.padding
+        self.y_max_ = X['y_max'].max() + self.padding
 
         # Pixel resolution
         if self.pixel_width is None:
@@ -221,15 +226,14 @@ class Mosaic(TransformerMixin, BaseEstimator):
             yoff=y_offset_count
         )
 
-    @staticmethod
     def blend_images(
+        self,
         src_img,
         dst_img,
-        fill_value=None,
-        outline: int = 0,
     ):
 
         # Fill value defaults to values that would be opaque
+        fill_value = self.fill_value
         if fill_value is None:
             if np.issubdtype(dst_img.dtype, np.integer):
                 fill_value = 255
@@ -261,11 +265,11 @@ class Mosaic(TransformerMixin, BaseEstimator):
         blended_img = np.array(blended_img).transpose(1, 2, 0)
 
         # Add an outline
-        if outline > 0:
-            blended_img[:outline] = fill_value
-            blended_img[-1 - outline:] = fill_value
-            blended_img[:, :outline] = fill_value
-            blended_img[:, -1 - outline:] = fill_value
+        if self.outline > 0:
+            blended_img[:self.outline] = fill_value
+            blended_img[-1 - self.outline:] = fill_value
+            blended_img[:, :self.outline] = fill_value
+            blended_img[:, -1 - self.outline:] = fill_value
 
         return blended_img
 
@@ -313,8 +317,6 @@ class ReferencedMosaic(Mosaic):
             blended_img = self.blend_images(
                 src_img=src_img_resized,
                 dst_img=dst_img,
-                fill_value=self.fill_value,
-                outline=self.outline,
             )
 
             # Store the image
@@ -330,3 +332,233 @@ class ReferencedMosaic(Mosaic):
         self.dataset_.FlushCache()
 
         return self.dataset_
+
+
+class LessReferencedMosaic(Mosaic):
+
+    def __init__(
+        self,
+        filepath: str,
+        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+        pixel_width: float = None,
+        pixel_height: float = None,
+        fill_value: Union[int, float] = None,
+        dtype: type = np.uint8,
+        n_bands: int = 4,
+        padding: float = 0.,
+        passthrough: Union[bool, list[str]] = False,
+        existing_ok: bool = True,
+        outline: int = 0,
+        homography_det_min=0.6,
+    ):
+
+        super().__init__(
+            filepath=filepath,
+            crs=crs,
+            pixel_width=pixel_width,
+            pixel_height=pixel_height,
+            fill_value=fill_value,
+            dtype=dtype,
+            n_bands=n_bands,
+            padding=padding,
+            passthrough=passthrough,
+            existing_ok=existing_ok,
+            outline=outline,
+        )
+
+        self.homography_det_min = homography_det_min
+
+        self.feature_detector = cv2.ORB_create()
+        self.feature_matcher = cv2.BFMatcher()
+
+    def predict(
+        self,
+        X: pd.DataFrame,
+        y=None,
+    ):
+        X = utils.check_df_input(
+            X,
+            ['filepath'] + preprocess.GEOTRANSFORM_COLS,
+            passthrough=self.passthrough
+        )
+
+        # Check if fit had been called
+        check_is_fitted(self, 'dataset_')
+
+        # Loop through and include
+        for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
+
+            row = X.iloc[i]
+            x_min = row['x_min'] - self.padding
+            x_max = row['x_max'] + self.padding
+            y_min = row['y_min'] - self.padding
+            y_max = row['y_max'] + self.padding
+
+            # Get data
+            src_img = utils.load_image(
+                fp,
+                dtype=self.dtype,
+            )
+            dst_img = self.get_image(x_min, x_max, y_min, y_max)
+
+            # Resize the source image
+            src_img_resized = cv2.resize(
+                src_img,
+                (dst_img.shape[1], dst_img.shape[0])
+            )
+
+            # Combine the images
+            blended_img, return_code = self.blend_images(
+                src_img=src_img_resized,
+                dst_img=dst_img,
+            )
+
+            # Store the image
+            self.save_image(blended_img, x_min, x_max, y_min, y_max)
+
+        # Finish by flushing the cache
+        self.dataset_.FlushCache()
+
+        return self.dataset_
+
+    def blend_images(
+        self,
+        src_img,
+        dst_img,
+    ):
+
+        # # Fill value defaults to values that would be opaque
+        # if fill_value is None:
+        #     if np.issubdtype(dst_img.dtype, np.integer):
+        #         fill_value = 255
+        #     else:
+        #         fill_value = 1.
+
+        # # Doesn't consider zeros in the final channel as empty
+        # n_bands = dst_img.shape[-1]
+        # is_empty = (dst_img[:, :, :n_bands - 1].sum(axis=2) == 0)
+
+        # # Blend
+        # blended_img = []
+        # for j in range(n_bands):
+        #     try:
+        #         blended_img_j = np.where(
+        #             is_empty,
+        #             src_img[:, :, j],
+        #             dst_img[:, :, j]
+        #         )
+        #     # When there's no band information in the one we're blending,
+        #     # fall back to the fill value
+        #     except IndexError:
+        #         blended_img_j = np.full(
+        #             dst_img.shape[:2],
+        #             fill_value,
+        #             dtype=dst_img.dtype
+        #         )
+        #     blended_img.append(blended_img_j)
+        # blended_img = np.array(blended_img).transpose(1, 2, 0)
+
+        # # Add an outline
+        # if outline > 0:
+        #     blended_img[:outline] = fill_value
+        #     blended_img[-1 - outline:] = fill_value
+        #     blended_img[:, :outline] = fill_value
+        #     blended_img[:, -1 - outline:] = fill_value
+
+        # return blended_img
+
+        src_kp, src_des = self.feature_detector.detectAndCompute(src_img, None)
+        dst_kp, dst_des = self.feature_detector.detectAndCompute(dst_img, None)
+
+        # Perform match
+        matches = self.feature_matcher.match(src_des, dst_des)
+        # Sort them in the order of their distance.
+        matches = sorted(matches, key=lambda x: x.distance)
+
+        # Points for the transform
+        src_pts = np.array([src_kp[m.queryIdx].pt for m in matches]).reshape(
+            -1, 1, 2)
+        dst_pts = np.array([dst_kp[m.trainIdx].pt for m in matches]).reshape(
+            -1, 1, 2)
+
+        # Get the transform
+        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.)
+        abs_det_M = np.abs(np.linalg.det(M))
+
+        # DEBUG
+        # if verbose:
+        #     print(abs_det_M)
+
+        # For bad transforms (e.g. small determinant) return as-is
+        if (
+            (abs_det_M < self.homography_det_min)
+            or (abs_det_M > 1. / self.homography_det_min)
+        ):
+            return dst_img, 1
+
+        # # Corners for image
+        # img_height, img_width = src_img.shape[:2]
+        # corners = np.float32([
+        #     [0, 0],
+        #     [0, img_height],
+        #     [img_width, img_height],
+        #     [img_width, 0]
+        # ])
+        # transformed_corners = cv2.perspectiveTransform(
+        #     corners.reshape(-1, 1, 2), M)
+
+        # # Corners for the destination image
+        # dst_height, dst_width = dst_img[:2]
+        # dst_corners = np.float32([
+        #     [0, 0],
+        #     [0, dst_height],
+        #     [dst_width, dst_height],
+        #     [dst_width, 0]
+        # ])
+
+        # # Get dimensions of combined image
+        # all_corners = np.concatenate([transformed_corners.reshape(-1, 2), dst_corners])
+        # px_min, py_min = all_corners.min(axis=0).astype('int')
+        # px_max, py_max = all_corners.max(axis=0).astype('int')
+        # width = px_max - px_min
+        # height = py_max - py_min
+
+        # # Translation matrix to shift the transformed image within the new bounds
+        # translation_matrix = np.array([[1, 0, -px_min], [0, 1, -py_min], [0, 0, 1]]).astype(float)
+
+        # # Update the homography matrix to include the translation
+        # new_M = np.dot(translation_matrix, M)
+
+        # Warp the image being fit
+        height, width = dst_img[:2]
+        warped_img = cv2.warpPerspective(src_img, M, (width, height))
+
+        # # Translate the dst image
+        # translated_dst_img = cv2.warpPerspective(dst_image.img_int, translation_matrix, (width, height))
+
+        # # Make masks for blending. To start we'll want to just overlay images. We can average later.
+        # # Overlaying means we only want to add warped image where the translated image does not exist
+        # dst_img_exists = dst_image.get_nonzero_mask().astype(np.uint8)
+        # translated_dst_img_exists = cv2.warpPerspective(dst_img_exists, translation_matrix, (width, height))
+
+        # Combine
+        blended_img = super().blend_images(warped_img, dst_img)
+
+        return blended_img, 0
+        
+        # # Convert bounds
+        # x_bounds, y_bounds = dst_image.convert_pixel_to_cart(
+        #     np.array([px_min, px_max]),
+        #     np.array([py_max, py_min]),
+        # )
+        
+        # # Output image
+        # out_image = data.ReferencedImage(
+        #     blended_img,
+        #     x_bounds,
+        #     y_bounds,
+        #     cart_crs_code = mm.flight.cart_crs_code,
+        #     latlon_crs_code = mm.flight.latlon_crs_code,
+        # )
+        
+        # return out_image, 0

@@ -78,9 +78,9 @@ class SensorGeoreferencer(BaseEstimator):
         self.xsize_ = np.round(
             self.width_ / self.pixel_width_
         ).astype(int)
-        self.ysize_ = np.round(
+        self.ysize_ = np.round(np.abs(
             self.height_ / self.pixel_height_
-        ).astype(int)
+        )).astype(int)
         self.spatial_offset_ = np.nanpercentile(
             offsets,
             self.q_offset
