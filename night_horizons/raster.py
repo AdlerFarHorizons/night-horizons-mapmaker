@@ -867,7 +867,7 @@ def get_bounds_from_dataset(
         crs,
         always_xy=True
     )
-    (x_min, x_max), (y_min, y_max) = dataset_to_desired.transform(
+    x_bounds, y_bounds = dataset_to_desired.transform(
         [x_min, x_max],
         [y_min, y_max],
     )
@@ -877,8 +877,8 @@ def get_bounds_from_dataset(
     )
 
     return (
-        x_min, x_max,
-        y_min, y_max,
+        x_bounds,
+        y_bounds,
         pixel_width, pixel_height
     )
 
