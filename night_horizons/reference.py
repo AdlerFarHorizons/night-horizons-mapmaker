@@ -7,7 +7,7 @@ import pyproj
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
-from . import preprocess
+from . import utils, preprocess
 
 
 class SensorGeoreferencer(BaseEstimator):
@@ -22,9 +22,11 @@ class SensorGeoreferencer(BaseEstimator):
         self,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         q_offset: float = 0.95,
+        passthrough: Union[bool, list[str]] = False,
     ):
         self.crs = crs
         self.q_offset = q_offset
+        self.passthrough = passthrough
 
     def fit(self, X, y):
         '''A reference implementation of a fitting function.
@@ -47,16 +49,18 @@ class SensorGeoreferencer(BaseEstimator):
         self : object
             Returns self.
         '''
-        # TODO: This check converts y to an array, but we should include some
-        # form of check
-        # X, y = check_X_y(X, y, multi_output=True)
+        utils.check_df_input(
+            X,
+            required_columns=['sensor_x', 'sensor_y'],
+            passthrough=self.passthrough,
+        )
 
         if isinstance(self.crs, str):
             self.crs = pyproj.CRS(self.crs)
 
         # Calculate offsets
         widths = y['pixel_width'] * y['xsize']
-        heights = y['pixel_height'] * y['ysize']
+        heights = -y['pixel_height'] * y['ysize']
         x_centers = y['x_min'] + 0.5 * widths
         y_centers = y['y_max'] + 0.5 * heights
         offsets = np.sqrt(
@@ -99,17 +103,32 @@ class SensorGeoreferencer(BaseEstimator):
         y : ndarray, shape (n_samples,)
             Returns an array of ones.
         '''
-        # TODO: This check converts X to an array, but we should include some
-        # form of check
-        # X = check_array(X, accept_sparse=True)
+
         check_is_fitted(self, 'is_fitted_')
+        utils.check_df_input(
+            X,
+            required_columns=['sensor_x', 'sensor_y'],
+            passthrough=self.passthrough,
+        )
 
         # Calculate properties
         for key in preprocess.GEOTRANSFORM_COLS:
-            if key in ['x_min', 'y_max']:
+            if key in ['x_min', 'x_max', 'y_min', 'y_max']:
                 continue
             X[key] = getattr(self, key + '_')
         X['x_min'] = X['sensor_x'] - 0.5 * self.width_
-        X['y_max'] = X['sensor_y'] - 0.5 * self.height_
+        X['x_max'] = X['sensor_x'] + 0.5 * self.width_
+        X['y_min'] = X['sensor_y'] - 0.5 * self.height_
+        X['y_max'] = X['sensor_y'] + 0.5 * self.height_
 
         return X
+
+    def score_samples(self, X, y):
+
+        check_is_fitted(self, 'is_fitted_')
+
+        y_pred = self.predict(X)
+
+    def score(self, X, y):
+
+        return np.median(self.score_samples(X, y))
