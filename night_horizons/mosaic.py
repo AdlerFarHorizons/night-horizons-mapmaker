@@ -34,7 +34,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
         n_bands: int = 4,
-        passthrough: bool = False,
+        passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
     ):
         self.filepath = filepath
