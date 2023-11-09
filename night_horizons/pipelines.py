@@ -26,7 +26,8 @@ class GeoreferencePipelines:
     ):
 
         pipeline = Pipeline([
-            ('geotiff', preprocess.GeoTIFFPreprocesser(crs=crs)),
+            ('nitelite', preprocess.NITELitePreprocesser(
+                output_columns=['sensor_x', 'sensor_y'])),
             ('sensor_georeference', reference.SensorGeoreferencer(crs=crs)),
         ])
 

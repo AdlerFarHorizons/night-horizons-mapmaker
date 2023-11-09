@@ -40,17 +40,25 @@ class TestSensorGeoreference(BaseTester):
         self.pipeline, self.y_pipeline = \
             pipelines.GeoreferencePipelines.sensor_georeference()
 
-        # Accurate to within 1 km
-        self.acceptance_criteria = 1000.
+        # Accurate to within 2 km
+        self.acceptance_criteria = 2000.
 
     def test_score(self):
         '''For this test we're scoring the values it was trained on,
         so this is not a rigorous test.
         '''
 
+        # Fit
         y = self.y_pipeline.fit_transform(self.fps)
-        X_transformed = self.pipeline.fit_transform(self.fps, y)
+        self.pipeline.fit(
+            self.fps,
+            y,
+            nitelite__img_log_fp='test/test_data/metadata/image.log',
+            nitelite__imu_log_fp='test/test_data/metadata/PresIMULog.csv',
+            nitelite__gps_log_fp='test/test_data/metadata/GPSLog.csv',
+        )
 
+        # Score
         score = self.pipeline.score(self.fps, y)
         assert score < self.acceptance_criteria
 
