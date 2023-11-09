@@ -22,13 +22,6 @@ GEOTRANSFORM_COLS = [
     'xsize', 'ysize',
 ]
 
-# DEBUG
-# GEOBOUNDS_COLS = [
-#     'x_min', 'x_max',
-#     'y_min', 'y_max',
-#     'pixel_width', 'pixel_height',
-# ]
-
 
 class NITELitePreprocesser(TransformerMixin, BaseEstimator):
     '''Transform filepaths into a metadata dataframe.
@@ -56,58 +49,6 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         self.output_columns = output_columns
         self.crs = crs
         self.unhandled_files = unhandled_files
-
-    # DEBUG: Remove commented-out, once we know it works in a scikit-learn
-    #        pipeline.
-    # def fit(self, X, y=None):
-    #     '''A reference implementation of a fitting function for a transformer.
-
-    #     Parameters
-    #     ----------
-    #     X : {array-like, sparse matrix}, shape (n_samples, n_features)
-    #         The training input samples.
-    #     y : None
-    #         There is no need of a target in a transformer, yet the pipeline API
-    #         requires this parameter.
-
-    #     Returns
-    #     -------
-    #     self : object
-    #         Returns self.
-    #     '''
-    #     X = check_array(X, dtype='str')
-
-    #     self.n_features_ = X.shape[1]
-
-    #     # Return the transformer
-    #     return self
-
-    # def transform(self, X):
-    #     ''' A reference implementation of a transform function.
-
-    #     Parameters
-    #     ----------
-    #     X : {array-like, sparse-matrix}, shape (n_samples, n_features)
-    #         The input samples.
-
-    #     Returns
-    #     -------
-    #     X_transformed : array, shape (n_samples, n_features)
-    #         The array containing the element-wise square roots of the values
-    #         in ``X``.
-    #     '''
-    #     # Check is fit had been called
-    #     check_is_fitted(self, 'n_features_')
-
-    #     # Input validation
-    #     X = check_array(X, dtype='str')
-
-    #     # check that the input is of the same shape as the one passed
-    #     # during fit.
-    #     if X.shape[1] != self.n_features_:
-    #         raise ValueError('Shape of input is different from what was seen'
-    #                          'in `fit`')
-    #     return np.sqrt(X)
 
     def fit(
         self,
@@ -514,11 +455,6 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
                 self.crs,
                 always_xy=True
             )
-            # DEBUG
-            # x_min, y_max = dataset_crs_to_crs.transform(
-            #     x_min,
-            #     y_max,
-            # )
             (x_min, x_max), (y_min, y_max) = dataset_crs_to_crs.transform(
                 [x_min, x_max],
                 [y_min, y_max],
@@ -546,69 +482,3 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
         X = pd.concat([X, new_df], axis='columns')
 
         return X
-
-
-# DEBUG
-# class GeoBoundsPreprocesser(TransformerMixin, BaseEstimator):
-# 
-#     def __init__(
-#         self,
-#         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-#         passthrough: bool = False,
-#         search_padding: float = 0.,
-#     ):
-#         self.crs = crs
-#         self.passthrough = passthrough
-#         self.search_padding = search_padding
-# 
-#     def fit(
-#         self,
-#         X: Union[np.ndarray[str], list[str], pd.DataFrame],
-#         y=None,
-#     ):
-# 
-#         # Check the input is good.
-#         X = utils.check_df_input(
-#             X,
-#             GEOTRANSFORM_COLS,
-#             passthrough=self.passthrough
-#         )
-# 
-#         self.is_fitted_ = True
-#         return self
-# 
-#     def transform(
-#         self,
-#         X: Union[np.ndarray[str], list[str], pd.DataFrame],
-#         y=None,
-#     ):
-#         X = utils.check_df_input(
-#             X,
-#             GEOTRANSFORM_COLS,
-#             passthrough=self.passthrough
-#         )
-# 
-#         # Check if fit had been called
-#         check_is_fitted(self, 'is_fitted_')
-# 
-#         # Convert CRS as needed
-#         if isinstance(self.crs, str):
-#             self.crs = pyproj.CRS(self.crs)
-# 
-#         # Convert and pad
-#         X['x_max'] = X['x_min'] + X['pixel_width'] * X['xsize']
-#         # DEBUG
-#         X['y_min'] = X['y_max'] + X['pixel_height'] * X['ysize']
-#         X['x_min'] -= self.search_padding
-#         X['x_max'] += self.search_padding
-#         X['y_min'] -= self.search_padding
-#         X['y_max'] += self.search_padding
-# 
-#         if isinstance(self.passthrough, bool):
-#             if not self.passthrough:
-#                 X = X[GEOBOUNDS_COLS]
-#         else:
-#             X = X[list(self.passthrough) + GEOBOUNDS_COLS]
-# 
-#         return X
-# 

@@ -47,7 +47,7 @@ class SensorGeoreferencer(BaseEstimator):
         self : object
             Returns self.
         '''
-        # DEBUG: This check converts y to an array, but we should include some
+        # TODO: This check converts y to an array, but we should include some
         # form of check
         # X, y = check_X_y(X, y, multi_output=True)
 
@@ -99,7 +99,7 @@ class SensorGeoreferencer(BaseEstimator):
         y : ndarray, shape (n_samples,)
             Returns an array of ones.
         '''
-        # DEBUG: This check converts X to an array, but we should include some
+        # TODO: This check converts X to an array, but we should include some
         # form of check
         # X = check_array(X, accept_sparse=True)
         check_is_fitted(self, 'is_fitted_')
