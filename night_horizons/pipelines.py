@@ -50,3 +50,19 @@ class MosaicPipelines:
         ])
 
         return pipeline
+
+    @staticmethod
+    def less_referenced_mosaic(
+        filepath: str,
+        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+    ):
+
+        pipeline = Pipeline([
+            ('nitelite', preprocess.NITELitePreprocesser(
+                output_columns=['filepath', 'sensor_x', 'sensor_y'])),
+            ('geotiff', preprocess.GeoTIFFPreprocesser(
+                crs=crs, passthrough=True)),
+            ('mosaic', mosaic.LessReferencedMosaic(filepath=filepath, crs=crs))
+        ])
+
+        return pipeline
