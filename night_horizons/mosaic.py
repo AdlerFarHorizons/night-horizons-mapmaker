@@ -31,13 +31,12 @@ class Mosaic(TransformerMixin, BaseEstimator):
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
-        center_coords: Tuple[float, float] = None,
         fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
         n_bands: int = 4,
         padding: float = 0.,
         passthrough: Union[bool, list[str]] = False,
-        existing_ok: bool = False,
+        exist_ok: bool = False,
         outline: int = 0,
     ):
         self.filepath = filepath
@@ -49,7 +48,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         self.n_bands = n_bands
         self.padding = padding
         self.passthrough = passthrough
-        self.existing_ok = existing_ok
+        self.exist_ok = exist_ok
         self.outline = outline
 
     def fit(
@@ -80,7 +79,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
             ['filepath'] + preprocess.GEOTRANSFORM_COLS,
             passthrough=self.passthrough
         )
-        if not self.existing_ok:
+        if not self.exist_ok:
             if os.path.isfile(self.filepath):
                 raise FileExistsError('File already exists at destination.')
 
@@ -357,7 +356,7 @@ class LessReferencedMosaic(Mosaic):
         n_bands: int = 4,
         padding: float = 0.,
         passthrough: Union[bool, list[str]] = False,
-        existing_ok: bool = True,
+        exist_ok: bool = True,
         outline: int = 0,
         homography_det_min=0.6,
     ):
@@ -372,7 +371,7 @@ class LessReferencedMosaic(Mosaic):
             n_bands=n_bands,
             padding=padding,
             passthrough=passthrough,
-            existing_ok=existing_ok,
+            exist_ok=exist_ok,
             outline=outline,
         )
 
@@ -385,6 +384,7 @@ class LessReferencedMosaic(Mosaic):
         self,
         X: pd.DataFrame,
         y=None,
+        iteration_indices: np.ndarray[int] = None,
     ):
         X = utils.check_df_input(
             X,
@@ -392,11 +392,12 @@ class LessReferencedMosaic(Mosaic):
             passthrough=self.passthrough
         )
 
-        d_to_center = np.sqrt(
-            (X['x_center'] - self.central_coords_[0])**2.
-            + (X['y_center'] - self.central_coords_[1])**2.
-        )
-        indices = d_to_center.sort_values().index
+        if iteration_indices is None:
+            d_to_center = np.sqrt(
+                (X['x_center'] - self.central_coords_[0])**2.
+                + (X['y_center'] - self.central_coords_[1])**2.
+            )
+            iteration_indices = d_to_center.sort_values().index
 
         # DEBUG
         import pdb; pdb.set_trace()
@@ -405,7 +406,7 @@ class LessReferencedMosaic(Mosaic):
         check_is_fitted(self, 'dataset_')
 
         # Loop through and include
-        for ind in tqdm.tqdm(indices):
+        for ind in tqdm.tqdm(iteration_indices):
 
             row = X.loc[ind]
             x_min = row['x_min'] - self.padding
