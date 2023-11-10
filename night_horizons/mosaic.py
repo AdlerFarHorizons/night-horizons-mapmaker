@@ -13,7 +13,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 import tqdm
 
-from . import preprocess, metrics, utils
+from . import preprocess, raster, metrics, utils
 
 
 class Mosaic(TransformerMixin, BaseEstimator):
@@ -73,6 +73,26 @@ class Mosaic(TransformerMixin, BaseEstimator):
             Returns self.
         '''
 
+        # We'll decide on the iteration order based on proximity to
+        # the central coords
+        self.central_coords_ = X[['x_center', 'y_center']].mean().values
+
+        # Load the dataset if it already exists
+        if os.path.isfile(self.filepath):
+            self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
+
+            # Get the dataset bounds
+            (
+                (self.x_min_, self.x_max_),
+                (self.y_min_, self.y_max_),
+                self.pixel_width_, self.pixel_height_
+            ) = raster.get_bounds_from_dataset(
+                self.dataset_,
+                self.crs,
+            )
+
+            return self
+
         # Check the input is good.
         X = utils.check_df_input(
             X,
@@ -112,15 +132,6 @@ class Mosaic(TransformerMixin, BaseEstimator):
         # Re-record pixel values to account for rounding
         self.pixel_width_ = width / xsize
         self.pixel_height_ = -height / ysize
-
-        # We'll decide on the iteration order based on proximity to
-        # the central coords
-        self.central_coords_ = X[['x_center', 'y_center']].mean().values
-
-        # Load the dataset if it already exists
-        if os.path.isfile(self.filepath):
-            self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
-            return self
 
         # Initialize an empty GeoTiff
         driver = gdal.GetDriverByName('GTiff')
@@ -386,6 +397,9 @@ class LessReferencedMosaic(Mosaic):
         y=None,
         iteration_indices: np.ndarray[int] = None,
     ):
+        # Useful for debugging
+        self.log = {}
+
         X = utils.check_df_input(
             X,
             ['filepath'] + preprocess.GEOTRANSFORM_COLS,
@@ -398,14 +412,16 @@ class LessReferencedMosaic(Mosaic):
                 + (X['y_center'] - self.central_coords_[1])**2.
             )
             iteration_indices = d_to_center.sort_values().index
+        self.log['iteration_indices'] = iteration_indices
 
         # DEBUG
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
 
         # Check if fit had been called
         check_is_fitted(self, 'dataset_')
 
         # Loop through and include
+        self.log['return_codes'] = []
         for ind in tqdm.tqdm(iteration_indices):
 
             row = X.loc[ind]
@@ -423,22 +439,20 @@ class LessReferencedMosaic(Mosaic):
             assert dst_img.sum() > 0, \
                 f'No image data in the search zone for index {ind}'
 
-            # Resize the source image
-            src_img_resized = cv2.resize(
-                src_img,
-                (dst_img.shape[1], dst_img.shape[0])
-            )
-
             # Combine the images
             blended_img, return_code = self.blend_images(
-                src_img=src_img_resized,
+                src_img=src_img,
                 dst_img=dst_img,
             )
 
+            self.log['return_codes'].append(return_code)
+
             # Store the image
-            self.save_image(blended_img, x_min, x_max, y_min, y_max)
+            if return_code == 0:
+                self.save_image(blended_img, x_min, x_max, y_min, y_max)
 
         # Finish by flushing the cache
+        # TODO: This affects a fitted property, which is bad form.
         self.dataset_.FlushCache()
 
         return self.dataset_
@@ -489,36 +503,9 @@ class LessReferencedMosaic(Mosaic):
 
         # return blended_img
 
-        src_kp, src_des = self.feature_detector.detectAndCompute(src_img, None)
-        dst_kp, dst_des = self.feature_detector.detectAndCompute(dst_img, None)
-
-        # Perform match
-        # DEBUG
-        import pdb; pdb.set_trace()
-        matches = self.feature_matcher.match(src_des, dst_des)
-        # Sort them in the order of their distance.
-        matches = sorted(matches, key=lambda x: x.distance)
-
-        # Points for the transform
-        src_pts = np.array([src_kp[m.queryIdx].pt for m in matches]).reshape(
-            -1, 1, 2)
-        dst_pts = np.array([dst_kp[m.trainIdx].pt for m in matches]).reshape(
-            -1, 1, 2)
-
-        # Get the transform
-        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.)
-        abs_det_M = np.abs(np.linalg.det(M))
-
         # DEBUG
         # if verbose:
         #     print(abs_det_M)
-
-        # For bad transforms (e.g. small determinant) return as-is
-        if (
-            (abs_det_M < self.homography_det_min)
-            or (abs_det_M > 1. / self.homography_det_min)
-        ):
-            return dst_img, 1
 
         # # Corners for image
         # img_height, img_width = src_img.shape[:2]
@@ -553,9 +540,30 @@ class LessReferencedMosaic(Mosaic):
         # # Update the homography matrix to include the translation
         # new_M = np.dot(translation_matrix, M)
 
+        M, mask = utils.calc_warp_transform(
+            src_img,
+            dst_img,
+            self.feature_detector,
+            self.feature_matcher,
+        )
+        abs_det_M = np.abs(np.linalg.det(M))
+
+        # For bad transforms (e.g. small determinant) return as-is
+        if (
+            (abs_det_M < self.homography_det_min)
+            or (abs_det_M > 1. / self.homography_det_min)
+        ):
+            return dst_img, 1
+
         # Warp the image being fit
         height, width = dst_img[:2]
         warped_img = cv2.warpPerspective(src_img, M, (width, height))
+
+        # Resize the source image
+        src_img_resized = cv2.resize(
+            src_img,
+            (dst_img.shape[1], dst_img.shape[0])
+        )
 
         # # Translate the dst image
         # translated_dst_img = cv2.warpPerspective(dst_image.img_int, translation_matrix, (width, height))
