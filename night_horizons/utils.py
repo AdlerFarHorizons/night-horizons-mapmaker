@@ -92,6 +92,52 @@ def load_image(filepath: str, dtype: type = np.uint8):
     return img
 
 
+def calc_warp_transform(
+    src_img,
+    dst_img,
+    feature_detector=None,
+    feature_matcher=None,
+):
+
+    if feature_detector is None:
+        feature_detector = cv2.ORB_create()
+    if feature_matcher is None:
+        feature_matcher = cv2.BFMatcher()
+
+    # Detect features
+    src_kp, src_des = feature_detector.detectAndCompute(src_img, None)
+    dst_kp, dst_des = feature_detector.detectAndCompute(dst_img, None)
+
+    # Perform match
+    matches = feature_matcher.match(src_des, dst_des)
+
+    # Sort matches in the order of their distance.
+    matches = sorted(matches, key=lambda x: x.distance)
+
+    # Points for the transform
+    src_pts = np.array([src_kp[m.queryIdx].pt for m in matches]).reshape(
+        -1, 1, 2)
+    dst_pts = np.array([dst_kp[m.trainIdx].pt for m in matches]).reshape(
+        -1, 1, 2)
+
+    # Get the transform
+    M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.)
+
+    return M, mask
+
+
+def validate_warp_transform(M, det_min=0.5):
+
+    abs_det_M = np.abs(np.linalg.det(M))
+
+    det_in_range = (
+        (abs_det_M > det_min)
+        and (abs_det_M < 1. / det_min)
+    )
+
+    return det_in_range
+
+
 def check_filepaths_input(
     X: Union[np.ndarray[str], list[str], pd.DataFrame],
     required_columns: list[str] = ['filepath'],
