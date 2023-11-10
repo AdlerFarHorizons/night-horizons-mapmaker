@@ -184,6 +184,16 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         return score
 
+    def calc_iteration_indices(self, X):
+
+        d_to_center = np.sqrt(
+            (X['x_center'] - self.central_coords_[0])**2.
+            + (X['y_center'] - self.central_coords_[1])**2.
+        )
+        iteration_indices = d_to_center.sort_values().index
+
+        return iteration_indices
+
     def bounds_to_offset(self, x_min, x_max, y_min, y_max):
 
         # Get offsets
@@ -407,12 +417,7 @@ class LessReferencedMosaic(Mosaic):
         )
 
         if iteration_indices is None:
-            d_to_center = np.sqrt(
-                (X['x_center'] - self.central_coords_[0])**2.
-                + (X['y_center'] - self.central_coords_[1])**2.
-            )
-            iteration_indices = d_to_center.sort_values().index
-        self.log['iteration_indices'] = iteration_indices
+            iteration_indices = self.calc_iteration_indices(X)
 
         # DEBUG
         # import pdb; pdb.set_trace()
