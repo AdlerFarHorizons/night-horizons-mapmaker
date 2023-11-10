@@ -21,11 +21,9 @@ class SensorGeoreferencer(BaseEstimator):
     def __init__(
         self,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        q_offset: float = 0.95,
         passthrough: Union[bool, list[str]] = False,
     ):
         self.crs = crs
-        self.q_offset = q_offset
         self.passthrough = passthrough
 
     def fit(self, X, y):
@@ -61,12 +59,6 @@ class SensorGeoreferencer(BaseEstimator):
         # Calculate offsets
         widths = y['pixel_width'] * y['xsize']
         heights = -y['pixel_height'] * y['ysize']
-        x_centers = y['x_min'] + 0.5 * widths
-        y_centers = y['y_max'] + 0.5 * heights
-        offsets = np.sqrt(
-            (X['sensor_x'] - x_centers)**2.
-            + (X['sensor_y'] - y_centers)**2.
-        )
 
         # Estimate values that are just averages
         self.width_ = np.nanmedian(widths)
@@ -81,10 +73,6 @@ class SensorGeoreferencer(BaseEstimator):
         self.ysize_ = np.round(np.abs(
             self.height_ / self.pixel_height_
         )).astype(int)
-        self.spatial_offset_ = np.nanpercentile(
-            offsets,
-            self.q_offset
-        )
 
         # `fit` should always return `self`
         self.is_fitted_ = True
