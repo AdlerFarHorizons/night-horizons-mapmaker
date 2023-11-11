@@ -145,6 +145,24 @@ def validate_warp_transform(M, det_min=0.5):
     return det_in_range
 
 
+def warp_image(src_img, dst_img, M):
+
+    # Warp the image being fit
+    height, width = dst_img.shape[:2]
+    warped_img = cv2.warpPerspective(src_img, M, (width, height))
+
+    return warped_img
+
+
+# def resize_image(src_img, dst_img):
+# 
+#     # Resize the source image
+#     src_img_resized = cv2.resize(
+#         src_img,
+#         (dst_img.shape[1], dst_img.shape[0])
+#     )
+
+
 def check_filepaths_input(
     X: Union[np.ndarray[str], list[str], pd.DataFrame],
     required_columns: list[str] = ['filepath'],
