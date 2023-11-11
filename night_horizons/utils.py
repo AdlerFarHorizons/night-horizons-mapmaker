@@ -93,20 +93,15 @@ def load_image(filepath: str, dtype: type = np.uint8):
 
 
 def calc_warp_transform(
-    src_img,
-    dst_img,
-    feature_detector=None,
+    src_kp,
+    src_des,
+    dst_kp,
+    dst_des,
     feature_matcher=None,
 ):
 
-    if feature_detector is None:
-        feature_detector = cv2.ORB_create()
     if feature_matcher is None:
         feature_matcher = cv2.BFMatcher()
-
-    # Detect features
-    src_kp, src_des = feature_detector.detectAndCompute(src_img, None)
-    dst_kp, dst_des = feature_detector.detectAndCompute(dst_img, None)
 
     # Perform match
     matches = feature_matcher.match(src_des, dst_des)
@@ -125,8 +120,8 @@ def calc_warp_transform(
 
     # Extra info dictionary
     info = {
-        'src_pts': src_pts,
-        'dst_pts': dst_pts,
+        'matched_src_pts': src_pts,
+        'matched_dst_pts': dst_pts,
         'mask': mask
     }
 
@@ -152,15 +147,6 @@ def warp_image(src_img, dst_img, M):
     warped_img = cv2.warpPerspective(src_img, M, (width, height))
 
     return warped_img
-
-
-# def resize_image(src_img, dst_img):
-# 
-#     # Resize the source image
-#     src_img_resized = cv2.resize(
-#         src_img,
-#         (dst_img.shape[1], dst_img.shape[0])
-#     )
 
 
 def check_filepaths_input(
@@ -265,7 +251,7 @@ def check_columns(
         )
     else:
         assert len(passthrough) + len(required) == len(actual), (
-            f'Expecting columns {list(required) + list(passthrough)}.\n'
+            f'Expected columns {list(required) + list(passthrough)}.\n'
             f'Got columns {list(actual)}.'
         )
 

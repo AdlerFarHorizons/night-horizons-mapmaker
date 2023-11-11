@@ -19,6 +19,12 @@ from . import preprocess, raster, metrics, utils
 class Mosaic(TransformerMixin, BaseEstimator):
     '''Assemble a mosaic from georeferenced images.
 
+    TODO: filepath is a data-dependent parameter, so it really should be
+    called at the time of the fit.
+
+    TODO: convert the coordinates to camera frame as part of a separate loop,
+        not multiple times per image loop
+
     Parameters
     ----------
     Returns
@@ -303,6 +309,18 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         return blended_img
 
+    @staticmethod
+    def check_bounds(coords, x_off, y_off, x_size, y_size):
+
+        in_bounds = (
+            (x_off <= coords[:, 0])
+            & (coords[:, 0] <= x_off + x_size)
+            & (y_off <= coords[:, 1])
+            & (coords[:, 1] <= y_off + y_size)
+        )
+
+        return in_bounds
+
 
 class ReferencedMosaic(Mosaic):
 
@@ -439,29 +457,44 @@ class LessReferencedMosaic(Mosaic):
 
         return self.dataset_
 
-    def incorporate_image(self, row):
+    def incorporate_image(self, row, dsframe_dst_pts, dsframe_dst_des):
 
+        # Get image location
         x_min = row['x_min'] - self.padding
         x_max = row['x_max'] + self.padding
         y_min = row['y_min'] - self.padding
         y_max = row['y_max'] + self.padding
+        x_off, y_off, x_size, y_size = self.bounds_to_offset(
+            x_min, x_max, y_min, y_max)
 
-        # Get data
+        # Get dst features
+        in_bounds = self.check_bounds(
+            dsframe_dst_pts,
+            x_off, y_off, x_size, y_size
+        )
+        assert in_bounds.sum() > 0, \
+            f'No image data in the search zone for index {row.name}'
+        dst_pts = dsframe_dst_pts[in_bounds]
+        dst_kp = cv2.KeyPoint_convert(dst_pts)
+        dst_des = dsframe_dst_des[in_bounds]
+
+        # Get src features
         src_img = utils.load_image(
             row['filepath'],
             dtype=self.dtype,
         )
-        dst_img = self.get_image(x_min, x_max, y_min, y_max)
-        assert dst_img.sum() > 0, \
-            f'No image data in the search zone for index {row.name}'
+        src_kp, src_des = self.feature_detector.detectAndCompute(src_img, None)
 
         # Feature matching
         M, info = utils.calc_warp_transform(
-            src_img,
-            dst_img,
-            self.feature_detector,
+            src_kp,
+            src_des,
+            dst_kp,
+            dst_des,
             self.feature_matcher,
         )
+        info['src_kp'] = src_kp
+        info['src_des'] = src_des
 
         # Exit early if the warp didn't work
         if not utils.validate_warp_transform(M, self.homography_det_min):
@@ -470,9 +503,10 @@ class LessReferencedMosaic(Mosaic):
             return 1, info
 
         # Warp the source image
-        warped_img = utils.warp_image(src_img, dst_img, M)
+        warped_img = cv2.warpPerspective(src_img, M, (x_size, y_size))
 
         # Combine the images
+        dst_img = self.get_image(x_min, x_max, y_min, y_max)
         blended_img = self.blend_images(
             src_img=warped_img,
             dst_img=dst_img,
