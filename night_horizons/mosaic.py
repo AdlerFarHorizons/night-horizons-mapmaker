@@ -430,7 +430,7 @@ class LessReferencedMosaic(Mosaic):
         for ind in tqdm.tqdm(iteration_indices):
 
             row = X.loc[ind]
-            return_code = self.incorporate_image(row)
+            return_code, info = self.incorporate_image(row)
             self.log['return_codes'].append(return_code)
 
         # Finish by flushing the cache
@@ -465,7 +465,9 @@ class LessReferencedMosaic(Mosaic):
 
         # Exit early if the warp didn't work
         if not utils.validate_warp_transform(M, self.homography_det_min):
-            return 1
+            # Return more information on crash
+            info['M'] = M
+            return 1, info
 
         # Warp the source image
         warped_img = utils.warp_image(src_img, dst_img, M)
@@ -479,7 +481,7 @@ class LessReferencedMosaic(Mosaic):
         # Store the image
         self.save_image(blended_img, x_min, x_max, y_min, y_max)
 
-        return 0
+        return 0, info
 
 #     def blend_images(
 #         self,
