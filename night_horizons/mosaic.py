@@ -474,7 +474,7 @@ class LessReferencedMosaic(Mosaic):
         )
         assert in_bounds.sum() > 0, \
             f'No image data in the search zone for index {row.name}'
-        dst_pts = dsframe_dst_pts[in_bounds]
+        dst_pts = dsframe_dst_pts[in_bounds] - np.array([x_off, y_off])
         dst_kp = cv2.KeyPoint_convert(dst_pts)
         dst_des = dsframe_dst_des[in_bounds]
 
@@ -493,7 +493,17 @@ class LessReferencedMosaic(Mosaic):
             dst_des,
             self.feature_matcher,
         )
-        info['src_kp'] = src_kp
+
+        # Convert to the dataset frame
+        src_pts = cv2.KeyPoint_convert(src_kp)
+        dsframe_src_pts = cv2.perspectiveTransform(
+            src_pts.reshape(-1, 1, 2),
+            M,
+        ).reshape(-1, 2)
+        dsframe_src_pts += np.array([x_off, y_off])
+
+        # Store
+        info['dsframe_src_pts'] = dsframe_src_pts
         info['src_des'] = src_des
 
         # Exit early if the warp didn't work
