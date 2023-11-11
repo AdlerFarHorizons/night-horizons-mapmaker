@@ -260,11 +260,13 @@ def check_columns(
 
     if isinstance(passthrough, bool):
         assert passthrough or (len(actual) == len(required)), (
-            f'Expecting *only* columns {required.values}.'
+            f'Expected columns {required}.\n'
+            f'Got columns {list(actual)}.'
         )
     else:
         assert len(passthrough) + len(required) == len(actual), (
-            f'Expecting *only* columns {required.values, passthrough.values}.'
+            f'Expecting columns {list(required) + list(passthrough)}.\n'
+            f'Got columns {list(actual)}.'
         )
 
     return actual
