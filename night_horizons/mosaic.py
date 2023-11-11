@@ -190,6 +190,11 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         return score
 
+    def close(self):
+
+        self.dataset_.FlushCache()
+        self.dataset_ = None
+
     def calc_iteration_indices(self, X):
 
         d_to_center = np.sqrt(
@@ -376,10 +381,8 @@ class ReferencedMosaic(Mosaic):
                 row['y_max'],
             )
 
-        # Finish by flushing the cache
-        self.dataset_.FlushCache()
-
-        return self.dataset_
+        # Finish by closing the database
+        self.close()
 
 
 class LessReferencedMosaic(Mosaic):
@@ -437,25 +440,44 @@ class LessReferencedMosaic(Mosaic):
         if iteration_indices is None:
             iteration_indices = self.calc_iteration_indices(X)
 
-        # DEBUG
-        # import pdb; pdb.set_trace()
-
         # Check if fit had been called
         check_is_fitted(self, 'dataset_')
 
+        # Get the features for the existing mosaic
+        dst_img = self.get_image(
+            self.x_min_, self.x_max_, self.y_min_, self.y_max_)
+        dsframe_dst_kps, dsframe_dst_des = \
+            self.feature_detector.detectAndCompute(dst_img, None)
+        dsframe_dst_pts = cv2.KeyPoint_convert(dsframe_dst_kps)
+
         # Loop through and include
-        self.log['return_codes'] = []
+        self.log_ = {
+            'bad_inds': [],
+        }
         for ind in tqdm.tqdm(iteration_indices):
 
             row = X.loc[ind]
-            return_code, info = self.incorporate_image(row)
-            self.log['return_codes'].append(return_code)
 
-        # Finish by flushing the cache
-        # TODO: This affects a fitted property, which is bad form.
-        self.dataset_.FlushCache()
+            return_code, info = self.incorporate_image(
+                row,
+                dsframe_dst_pts,
+                dsframe_dst_des,
+            )
 
-        return self.dataset_
+            if return_code == 1:
+                self.log_['bad_inds'].append(ind)
+
+            # Store the transformed points for the next loop
+            dsframe_dst_pts = np.append(
+                dsframe_dst_pts,
+                info['dsframe_src_pts'],
+                axis=0
+            )
+            dsframe_dst_des = np.append(
+                dsframe_dst_des,
+                info['src_des'],
+                axis=0
+            )
 
     def incorporate_image(self, row, dsframe_dst_pts, dsframe_dst_des):
 
