@@ -19,6 +19,9 @@ from . import preprocess, raster, metrics, utils
 class Mosaic(TransformerMixin, BaseEstimator):
     '''Assemble a mosaic from georeferenced images.
 
+    TODO: padding is a parameter right now, but in reality it's image
+    dependent, so it would be nice to have it as a column instead.
+
     TODO: filepath is a data-dependent parameter, so it really should be
     called at the time of the fit.
 
