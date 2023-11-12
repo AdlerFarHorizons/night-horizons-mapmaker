@@ -205,19 +205,41 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         return iteration_indices
 
-    def bounds_to_offset(self, x_min, x_max, y_min, y_max):
+    def bounds_to_offset(self, x_min, x_max, y_min, y_max, padding=0):
+        '''
+        TODO: bounds_to_pixels would be more apt
 
-        # Get offsets
-        x_offset = x_min - self.x_min_
-        x_offset_count = int(np.round(x_offset / self.pixel_width_))
-        y_offset = y_max - self.y_max_
-        y_offset_count = int(np.round(y_offset / self.pixel_height_))
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
 
-        # Get width counts
-        xsize = int(np.round((x_max - x_min) / self.pixel_width_))
-        ysize = int(np.round((y_max - y_min) / -self.pixel_height_))
+        # Get physical dimensions
+        x_imgframe = x_min - self.x_min_ - padding
+        y_imgframe = self.y_max_ - y_max - padding
+        width = x_max - x_min + 2 * padding
+        height = y_max - y_min + 2 * padding
 
-        return x_offset_count, y_offset_count, xsize, ysize
+        # Convert to pixels
+        x_off = np.round(x_imgframe / self.pixel_width_)
+        y_off = np.round(y_imgframe / -self.pixel_height_)
+        x_size = np.round(width / self.pixel_width_)
+        y_size = np.round(height / -self.pixel_height_)
+
+        # Change dtypes
+        try:
+            x_off = int(x_off)
+            y_off = int(y_off)
+            x_size = int(x_size)
+            y_size = int(y_size)
+        except TypeError:
+            x_off = x_off.astype(int)
+            y_off = y_off.astype(int)
+            x_size = x_size.astype(int)
+            y_size = y_size.astype(int)
+
+        return x_off, y_off, x_size, y_size
 
     def get_image(self, x_min, x_max, y_min, y_max):
 
@@ -442,6 +464,16 @@ class LessReferencedMosaic(Mosaic):
 
         # Check if fit had been called
         check_is_fitted(self, 'dataset_')
+
+        # Convert to pixels
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.bounds_to_offset(
+            X['x_min'], X['x_max'],
+            X['y_min'], X['y_max'],
+            padding=self.padding,
+        )
 
         # Get the features for the existing mosaic
         dst_img = self.get_image(
