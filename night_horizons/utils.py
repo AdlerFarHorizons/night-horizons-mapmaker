@@ -213,7 +213,7 @@ def check_df_input(
 
     check_columns(X.columns, required_columns, passthrough)
 
-    return X
+    return X.copy()
 
 
 def check_columns(

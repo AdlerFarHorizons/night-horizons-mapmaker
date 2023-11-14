@@ -234,28 +234,27 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         # Change dtypes
         try:
-            x_off = int(x_off)
-            y_off = int(y_off)
-            x_size = int(x_size)
-            y_size = int(y_size)
-        except TypeError:
             x_off = x_off.astype(int)
             y_off = y_off.astype(int)
             x_size = x_size.astype(int)
             y_size = y_size.astype(int)
+        except TypeError:
+            x_off = int(x_off)
+            y_off = int(y_off)
+            x_size = int(x_size)
+            y_size = int(y_size)
 
         return x_off, y_off, x_size, y_size
 
     def get_image(self, x_off, y_off, x_size, y_size):
 
-        # DEBUG
-        import pdb; pdb.set_trace()
-
+        # Note that we cast the input as int, in case we the input was numpy
+        # integers instead of python integers.
         img = self.dataset_.ReadAsArray(
-            xoff=x_off,
-            yoff=y_off,
-            xsize=x_size,
-            ysize=y_size
+            xoff=int(x_off),
+            yoff=int(y_off),
+            xsize=int(x_size),
+            ysize=int(y_size),
         )
         return img.transpose(1, 2, 0)
 
@@ -264,8 +263,8 @@ class Mosaic(TransformerMixin, BaseEstimator):
         img_to_save = img.transpose(2, 0, 1)
         self.dataset_.WriteArray(
             img_to_save,
-            xoff=x_off,
-            yoff=y_off
+            xoff=int(x_off),
+            yoff=int(y_off),
         )
 
     def get_image_with_bounds(self, x_min, x_max, y_min, y_max):
@@ -401,8 +400,6 @@ class ReferencedMosaic(Mosaic):
                 fp,
                 dtype=self.dtype,
             )
-            # DEBUG
-            import pdb; pdb.set_trace()
             dst_img = self.get_image(
                 row['x_off'],
                 row['y_off'],
