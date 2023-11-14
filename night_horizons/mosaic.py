@@ -99,6 +99,8 @@ class Mosaic(TransformerMixin, BaseEstimator):
                 self.dataset_,
                 self.crs,
             )
+            self.x_size_ = self.dataset_.RasterXSize
+            self.y_size_ = self.dataset_.RasterYSize
 
             return self
 
@@ -134,20 +136,20 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         # Get dimensions
         width = self.x_max_ - self.x_min_
-        xsize = int(np.round(width / self.pixel_width_))
+        self.x_size_ = int(np.round(width / self.pixel_width_))
         height = self.y_max_ - self.y_min_
-        ysize = int(np.round(height / -self.pixel_height_))
+        self.y_size_ = int(np.round(height / -self.pixel_height_))
 
         # Re-record pixel values to account for rounding
-        self.pixel_width_ = width / xsize
-        self.pixel_height_ = -height / ysize
+        self.pixel_width_ = width / self.x_size_
+        self.pixel_height_ = -height / self.y_size_
 
         # Initialize an empty GeoTiff
         driver = gdal.GetDriverByName('GTiff')
         self.dataset_ = driver.Create(
             self.filepath,
-            xsize=xsize,
-            ysize=ysize,
+            xsize=self.x_size_,
+            ysize=self.y_size_,
             bands=self.n_bands,
             options=['TILED=YES']
         )
@@ -244,7 +246,29 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         return x_off, y_off, x_size, y_size
 
-    def get_image(self, x_min, x_max, y_min, y_max):
+    def get_image(self, x_off, y_off, x_size, y_size):
+
+        # DEBUG
+        import pdb; pdb.set_trace()
+
+        img = self.dataset_.ReadAsArray(
+            xoff=x_off,
+            yoff=y_off,
+            xsize=x_size,
+            ysize=y_size
+        )
+        return img.transpose(1, 2, 0)
+
+    def save_image(self, img, x_off, y_off):
+
+        img_to_save = img.transpose(2, 0, 1)
+        self.dataset_.WriteArray(
+            img_to_save,
+            xoff=x_off,
+            yoff=y_off
+        )
+
+    def get_image_with_bounds(self, x_min, x_max, y_min, y_max):
 
         # Out of bounds
         if (
@@ -267,30 +291,19 @@ class Mosaic(TransformerMixin, BaseEstimator):
         if y_max > self.y_max_:
             y_max = self.y_max_
 
-        x_offset_count, y_offset_count, xsize, ysize = self.bounds_to_offset(
+        x_off, y_off, x_size, y_size = self.bounds_to_offset(
             x_min, x_max, y_min, y_max
         )
 
-        img = self.dataset_.ReadAsArray(
-            xoff=x_offset_count,
-            yoff=y_offset_count,
-            xsize=xsize,
-            ysize=ysize
-        )
-        return img.transpose(1, 2, 0)
+        return self.get_image(self, x_off, y_off, x_size, y_size)
 
-    def save_image(self, img, x_min, x_max, y_min, y_max):
+    def save_image_with_bounds(self, img, x_min, x_max, y_min, y_max):
 
-        x_offset_count, y_offset_count, xsize, ysize = self.bounds_to_offset(
+        x_off, y_off, _, _ = self.bounds_to_offset(
             x_min, x_max, y_min, y_max
         )
 
-        img_to_save = img.transpose(2, 0, 1)
-        self.dataset_.WriteArray(
-            img_to_save,
-            xoff=x_offset_count,
-            yoff=y_offset_count
-        )
+        self.save_image(img, x_off, y_off)
 
     def blend_images(
         self,
@@ -368,6 +381,16 @@ class ReferencedMosaic(Mosaic):
         # Check if fit had been called
         check_is_fitted(self, 'dataset_')
 
+        # Convert to pixels
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.bounds_to_offset(
+            X['x_min'], X['x_max'],
+            X['y_min'], X['y_max'],
+            padding=self.padding,
+        )
+
         # Loop through and include
         for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
 
@@ -378,11 +401,13 @@ class ReferencedMosaic(Mosaic):
                 fp,
                 dtype=self.dtype,
             )
+            # DEBUG
+            import pdb; pdb.set_trace()
             dst_img = self.get_image(
-                row['x_min'],
-                row['x_max'],
-                row['y_min'],
-                row['y_max'],
+                row['x_off'],
+                row['y_off'],
+                row['x_size'],
+                row['y_size'],
             )
 
             # Resize the source image
@@ -398,13 +423,7 @@ class ReferencedMosaic(Mosaic):
             )
 
             # Store the image
-            self.save_image(
-                blended_img,
-                row['x_min'],
-                row['x_max'],
-                row['y_min'],
-                row['y_max'],
-            )
+            self.save_image(blended_img, row['x_off'], row['y_off'])
 
         # Finish by closing the database
         self.close()
@@ -479,8 +498,7 @@ class LessReferencedMosaic(Mosaic):
         )
 
         # Get the features for the existing mosaic
-        dst_img = self.get_image(
-            self.x_min_, self.x_max_, self.y_min_, self.y_max_)
+        dst_img = self.get_image(0, 0, self.x_size_, self.y_size_)
         dsframe_dst_kps, dsframe_dst_des = \
             self.feature_detector.detectAndCompute(dst_img, None)
         dsframe_dst_pts = cv2.KeyPoint_convert(dsframe_dst_kps)
@@ -517,12 +535,10 @@ class LessReferencedMosaic(Mosaic):
     def incorporate_image(self, row, dsframe_dst_pts, dsframe_dst_des):
 
         # Get image location
-        x_min = row['x_min'] - self.padding
-        x_max = row['x_max'] + self.padding
-        y_min = row['y_min'] - self.padding
-        y_max = row['y_max'] + self.padding
-        x_off, y_off, x_size, y_size = self.bounds_to_offset(
-            x_min, x_max, y_min, y_max)
+        x_off = row['x_off']
+        y_off = row['y_off']
+        x_size = row['x_size']
+        y_size = row['y_size']
 
         # Get dst features
         in_bounds = self.check_bounds(
@@ -573,13 +589,13 @@ class LessReferencedMosaic(Mosaic):
         warped_img = cv2.warpPerspective(src_img, M, (x_size, y_size))
 
         # Combine the images
-        dst_img = self.get_image(x_min, x_max, y_min, y_max)
+        dst_img = self.get_image(x_off, y_off, x_size, y_size)
         blended_img = self.blend_images(
             src_img=warped_img,
             dst_img=dst_img,
         )
 
         # Store the image
-        self.save_image(blended_img, x_min, x_max, y_min, y_max)
+        self.save_image(blended_img, x_off, y_off)
 
         return 0, info
