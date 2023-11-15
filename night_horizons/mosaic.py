@@ -82,10 +82,6 @@ class Mosaic(TransformerMixin, BaseEstimator):
             Returns self.
         '''
 
-        # We'll decide on the iteration order based on proximity to
-        # the central coords
-        self.central_coords_ = X[['x_center', 'y_center']].mean().values
-
         # Load the dataset if it already exists
         if os.path.isfile(self.filepath):
             self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
@@ -202,6 +198,9 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
     def calc_iteration_indices(self, X):
 
+        return X.index
+
+        # TODO: restore decent defaults?
         d_to_center = np.sqrt(
             (X['x_center'] - self.central_coords_[0])**2.
             + (X['y_center'] - self.central_coords_[1])**2.
@@ -442,6 +441,7 @@ class LessReferencedMosaic(Mosaic):
         exist_ok: bool = True,
         outline: int = 0,
         homography_det_min=0.6,
+        feature_detector=None,
     ):
 
         super().__init__(
@@ -460,7 +460,10 @@ class LessReferencedMosaic(Mosaic):
 
         self.homography_det_min = homography_det_min
 
-        self.feature_detector = cv2.ORB_create()
+        if feature_detector is None:
+            self.feature_detector = cv2.ORB_create()
+        else:
+            self.feature_detector = feature_detector
         self.feature_matcher = cv2.BFMatcher()
 
     def predict(
@@ -528,6 +531,9 @@ class LessReferencedMosaic(Mosaic):
                 info['src_des'],
                 axis=0
             )
+
+        self.log_['dsframe_dst_pts'] = dsframe_dst_pts
+        self.log_['dsframe_dst_des'] = dsframe_dst_des
 
     def incorporate_image(self, row, dsframe_dst_pts, dsframe_dst_des):
 
