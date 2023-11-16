@@ -45,7 +45,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         n_bands: int = 4,
         padding: float = 0.,
         passthrough: Union[bool, list[str]] = False,
-        exist_ok: bool = False,
+        file_exists: str = 'error',
         outline: int = 0,
     ):
         self.filepath = filepath
@@ -57,13 +57,14 @@ class Mosaic(TransformerMixin, BaseEstimator):
         self.n_bands = n_bands
         self.padding = padding
         self.passthrough = passthrough
-        self.exist_ok = exist_ok
+        self.file_exists = file_exists
         self.outline = outline
 
     def fit(
         self,
         X: pd.DataFrame,
         y=None,
+        dataset: gdal.Dataset = None,
     ):
         '''The main thing the fitting does is create an empty dataset to hold
         the mosaic.
@@ -82,9 +83,30 @@ class Mosaic(TransformerMixin, BaseEstimator):
             Returns self.
         '''
 
-        # Load the dataset if it already exists
+        # Flexible file-handling. Maybe overkill?
         if os.path.isfile(self.filepath):
-            self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
+            if self.file_exists == 'error':
+                raise FileExistsError('File already exists at destination.')
+            elif self.file_exists == 'pass':
+                pass
+            elif self.file_exists == 'overwrite':
+                os.remove(self.filepath)
+            elif self.file_exists == 'load':
+                if dataset is not None:
+                    raise ValueError(
+                        'Cannot both pass in a dataset and load a file')
+                self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
+            else:
+                raise ValueError(
+                    'Unrecognized value for filepath, '
+                    f'filepath={self.filepath}'
+                )
+
+        if dataset is not None:
+            self.dataset_ = dataset
+
+        # Load the dataset if it already exists
+        if hasattr(self, 'dataset_'):
 
             # Get the dataset bounds
             (
@@ -103,12 +125,9 @@ class Mosaic(TransformerMixin, BaseEstimator):
         # Check the input is good.
         X = utils.check_df_input(
             X,
-            ['filepath'] + preprocess.GEOTRANSFORM_COLS,
+            preprocess.GEOTRANSFORM_COLS,
             passthrough=self.passthrough
         )
-        if not self.exist_ok:
-            if os.path.isfile(self.filepath):
-                raise FileExistsError('File already exists at destination.')
 
         # Convert CRS as needed
         if isinstance(self.crs, str):
@@ -424,12 +443,26 @@ class ReferencedMosaic(Mosaic):
         # Finish by closing the database
         self.close()
 
+    def predict(
+        self,
+        X: pd.DataFrame,
+    ):
+        '''Transform and predict mean the same thing here.
+        Transform is the appropriate term when we're changing the referenced
+        images into a mosaic, and are assuming the mosaic as the ground truth.
+        Predict is the appropriate term when we're assessing the accuracy of
+        the created mosaic.
+        '''
+
+        return self.transform(X)
+
 
 class LessReferencedMosaic(Mosaic):
 
     def __init__(
         self,
         filepath: str,
+        file_exists: str = 'overwrite',
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -438,7 +471,6 @@ class LessReferencedMosaic(Mosaic):
         n_bands: int = 4,
         padding: float = 0.,
         passthrough: Union[bool, list[str]] = False,
-        exist_ok: bool = True,
         outline: int = 0,
         homography_det_min=0.6,
         feature_detector=None,
@@ -446,6 +478,7 @@ class LessReferencedMosaic(Mosaic):
 
         super().__init__(
             filepath=filepath,
+            file_exists=file_exists,
             crs=crs,
             pixel_width=pixel_width,
             pixel_height=pixel_height,
@@ -454,7 +487,19 @@ class LessReferencedMosaic(Mosaic):
             n_bands=n_bands,
             padding=padding,
             passthrough=passthrough,
-            exist_ok=exist_ok,
+            outline=outline,
+        )
+        self.reffed_mosaic = ReferencedMosaic(
+            filepath=filepath,
+            file_exists='pass',
+            crs=crs,
+            pixel_width=pixel_width,
+            pixel_height=pixel_height,
+            fill_value=fill_value,
+            dtype=dtype,
+            n_bands=n_bands,
+            padding=padding,
+            passthrough=passthrough,
             outline=outline,
         )
 
@@ -465,6 +510,26 @@ class LessReferencedMosaic(Mosaic):
         else:
             self.feature_detector = feature_detector
         self.feature_matcher = cv2.BFMatcher()
+
+    def fit(
+        self,
+        X: pd.DataFrame,
+        y=None,
+        approx_geotransforms: pd.DataFrame = None,
+        dataset: gdal.Dataset = None,
+    ):
+
+        assert approx_geotransforms is not None, \
+            'Must pass approx_geotransforms.'
+
+        # Create the dataset
+        super().fit(approx_geotransforms, dataset=dataset)
+
+        # DEBUG
+        # import pdb; pdb.set_trace()
+
+        # Add the existing mosaic
+        self.reffed_mosaic.fit_transform(X, dataset=self.dataset_)
 
     def predict(
         self,
