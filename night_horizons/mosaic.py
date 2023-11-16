@@ -585,6 +585,17 @@ class LessReferencedMosaic(Mosaic):
         # Check if fit had been called
         check_is_fitted(self, 'dataset_')
 
+        # Set up y_pred
+        y_pred = X[preprocess.GEOTRANSFORM_COLS].copy()
+        y_pred[[
+            'x_min', 'x_max',
+            'y_min', 'y_max',
+            'pixel_width', 'pixel_height',
+            'xsize', 'ysize',
+            'x_center', 'y_center',
+            'x_off', 'y_off',
+        ]] = pd.NA
+
         # Convert to pixels
         (
             X['x_off'], X['y_off'],
@@ -639,6 +650,18 @@ class LessReferencedMosaic(Mosaic):
                 axis=0
             )
 
+            # Update y_pred
+            y_pred.loc[ind,['x_off','y_off']]
+
+        # Convert to pixels
+        (
+            y_pred['x_min'], y_pred['x_max'],
+            y_pred['y_min'], y_pred['y_max'],
+        ) = self.pixel_to_crs(
+            y_pred['x_off'], y_pred['y_off'],
+            y_pred['x_size'], y_pred['y_size']
+        )
+
         self.log_['dsframe_dst_pts'] = dsframe_dst_pts
         self.log_['dsframe_dst_des'] = dsframe_dst_des
 
@@ -691,6 +714,25 @@ class LessReferencedMosaic(Mosaic):
             M,
         ).reshape(-1, 2)
         dsframe_src_pts += np.array([x_off, y_off])
+
+        # Convert bounding box (needed for georeferencing)
+        bounds = np.array([
+            [0., 0.],
+            [0., src_img.shape[0]],
+            [src_img.shape[1], src_img.shape[0]],
+            [src_img.shape[1], 0.],
+        ])
+        dsframe_bounds = cv2.perspectiveTransform(
+            bounds.reshape(-1, 1, 2),
+            M,
+        ).reshape(-1, 2)
+        dsframe_bounds += np.array([x_off, y_off])
+        x_off_min, y_off_min = dsframe_bounds.min(axis=1)
+        x_off_max, y_off_max = dsframe_bounds.max(axis=1)
+        info['x_off'] = x_off_min
+        info['y_off'] = y_off_max
+        info['x_size'] = x_off_max - x_off_min
+        info['y_size'] = y_off_max - y_off_min
 
         # Store
         info['dsframe_src_pts'] = dsframe_src_pts
