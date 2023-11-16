@@ -429,7 +429,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
 
         # Loop over and get datasets
         rows = []
-        for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
+        for i, fp in enumerate(tqdm.tqdm(X['filepath'], ncols=80)):
 
             # Try to load the dataset
             dataset = gdal.Open(fp, gdal.GA_ReadOnly)
