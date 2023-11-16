@@ -37,6 +37,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
     def __init__(
         self,
         filepath: str,
+        file_exists: str = 'error',
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -45,10 +46,11 @@ class Mosaic(TransformerMixin, BaseEstimator):
         n_bands: int = 4,
         padding: float = 0.,
         passthrough: Union[bool, list[str]] = False,
-        file_exists: str = 'error',
         outline: int = 0,
+        verbose: bool = True,
     ):
         self.filepath = filepath
+        self.file_exists = file_exists
         self.crs = crs
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height
@@ -57,8 +59,8 @@ class Mosaic(TransformerMixin, BaseEstimator):
         self.n_bands = n_bands
         self.padding = padding
         self.passthrough = passthrough
-        self.file_exists = file_exists
         self.outline = outline
+        self.verbose = verbose
 
     def fit(
         self,
@@ -418,8 +420,12 @@ class ReferencedMosaic(Mosaic):
             padding=self.padding,
         )
 
-        # Loop through and include
-        for i, fp in enumerate(tqdm.tqdm(X['filepath'], ncols=80)):
+        # If verbose, add a progress bar.
+        if self.verbose:
+            iterable = tqdm.tqdm(X['filepath'], ncols=80)
+        else:
+            iterable = X['filepath']
+        for i, fp in enumerate(iterable):
 
             row = X.iloc[i]
 
@@ -590,7 +596,12 @@ class LessReferencedMosaic(Mosaic):
         self.log_ = {
             'bad_inds': [],
         }
-        for ind in tqdm.tqdm(iteration_indices, ncols=80):
+        # If verbose, add a progress bar.
+        if self.verbose:
+            iterable = tqdm.tqdm(iteration_indices, ncols=80)
+        else:
+            iterable = iteration_indices
+        for ind in iterable:
 
             row = X.loc[ind]
 
