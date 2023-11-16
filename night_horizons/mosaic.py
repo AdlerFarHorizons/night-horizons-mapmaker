@@ -485,6 +485,7 @@ class LessReferencedMosaic(Mosaic):
         padding: float = 0.,
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
+        verbose: bool = True,
         homography_det_min=0.6,
         feature_detector: str = 'ORB',
         feature_detector_kwargs: dict = {
@@ -492,7 +493,7 @@ class LessReferencedMosaic(Mosaic):
             'patchSize': 101,
             'nlevels': 4,
             'firstLevel': 4,
-            'WTA_K': 3,
+            'WTA_K': 4,
         },
         feature_matcher: str = 'BFMatcher',
         feature_matcher_kwargs: dict = {},
@@ -510,6 +511,7 @@ class LessReferencedMosaic(Mosaic):
             padding=padding,
             passthrough=passthrough,
             outline=outline,
+            verbose=verbose,
         )
         self.reffed_mosaic = ReferencedMosaic(
             filepath=filepath,
@@ -523,6 +525,7 @@ class LessReferencedMosaic(Mosaic):
             padding=padding,
             passthrough=passthrough,
             outline=outline,
+            verbose=verbose,
         )
 
         self.homography_det_min = homography_det_min
@@ -607,7 +610,10 @@ class LessReferencedMosaic(Mosaic):
             iterable = tqdm.tqdm(iteration_indices, ncols=80)
         else:
             iterable = iteration_indices
-        for ind in iterable:
+        for i, ind in enumerate(iterable):
+
+            self.log_['last_i'] = i
+            self.log_['last_ind'] = ind
 
             row = X.loc[ind]
 
@@ -617,8 +623,9 @@ class LessReferencedMosaic(Mosaic):
                 dsframe_dst_des,
             )
 
-            if return_code == 1:
+            if return_code != 0:
                 self.log_['bad_inds'].append(ind)
+                continue
 
             # Store the transformed points for the next loop
             dsframe_dst_pts = np.append(
@@ -671,6 +678,12 @@ class LessReferencedMosaic(Mosaic):
             self.feature_matcher_,
         )
 
+        # Exit early if the warp didn't work
+        if not utils.validate_warp_transform(M, self.homography_det_min):
+            # Return more information on crash
+            info['M'] = M
+            return 1, info
+
         # Convert to the dataset frame
         src_pts = cv2.KeyPoint_convert(src_kp)
         dsframe_src_pts = cv2.perspectiveTransform(
@@ -682,12 +695,6 @@ class LessReferencedMosaic(Mosaic):
         # Store
         info['dsframe_src_pts'] = dsframe_src_pts
         info['src_des'] = src_des
-
-        # Exit early if the warp didn't work
-        if not utils.validate_warp_transform(M, self.homography_det_min):
-            # Return more information on crash
-            info['M'] = M
-            return 1, info
 
         # Warp the source image
         warped_img = cv2.warpPerspective(src_img, M, (x_size, y_size))
@@ -707,4 +714,4 @@ class LessReferencedMosaic(Mosaic):
     def close(self):
 
         self.reffed_mosaic.close()
-        super().close()
+        super()
