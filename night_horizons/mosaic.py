@@ -197,7 +197,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         )
 
         self.scores_ = []
-        for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
+        for i, fp in enumerate(tqdm.tqdm(X['filepath'], ncols=80)):
 
             row = X.iloc[i]
 
@@ -419,7 +419,7 @@ class ReferencedMosaic(Mosaic):
         )
 
         # Loop through and include
-        for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
+        for i, fp in enumerate(tqdm.tqdm(X['filepath'], ncols=80)):
 
             row = X.iloc[i]
 
@@ -590,7 +590,7 @@ class LessReferencedMosaic(Mosaic):
         self.log_ = {
             'bad_inds': [],
         }
-        for ind in tqdm.tqdm(iteration_indices):
+        for ind in tqdm.tqdm(iteration_indices, ncols=80):
 
             row = X.loc[ind]
 
