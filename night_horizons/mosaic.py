@@ -591,7 +591,7 @@ class LessReferencedMosaic(Mosaic):
             'x_min', 'x_max',
             'y_min', 'y_max',
             'pixel_width', 'pixel_height',
-            'xsize', 'ysize',
+            'x_size', 'y_size',
             'x_center', 'y_center',
             'x_off', 'y_off',
         ]] = pd.NA

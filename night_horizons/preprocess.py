@@ -19,7 +19,7 @@ GEOTRANSFORM_COLS = [
     'y_min', 'y_max',
     'pixel_width', 'pixel_height',
     'x_rot', 'y_rot',
-    'xsize', 'ysize',
+    'x_size', 'y_size',
     'x_center', 'y_center',
 ]
 
