@@ -125,7 +125,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         # Check the input is good.
         X = utils.check_df_input(
             X,
-            preprocess.GEOTRANSFORM_COLS,
+            ['filepath'] + preprocess.GEOTRANSFORM_COLS,
             passthrough=self.passthrough
         )
 
@@ -186,6 +186,16 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
     def score(self, X, y=None, tm_metric=cv2.TM_CCOEFF_NORMED):
 
+        # Convert to pixels
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.bounds_to_offset(
+            X['x_min'], X['x_max'],
+            X['y_min'], X['y_max'],
+            padding=self.padding,
+        )
+
         self.scores_ = []
         for i, fp in enumerate(tqdm.tqdm(X['filepath'])):
 
@@ -193,10 +203,10 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
             actual_img = utils.load_image(fp, dtype=self.dtype)
             mosaic_img = self.get_image(
-                row['x_min'],
-                row['x_max'],
-                row['y_min'],
-                row['y_max'],
+                row['x_off'],
+                row['y_off'],
+                row['x_size'],
+                row['y_size'],
             )
 
             r = metrics.image_to_image_ccoeff(
@@ -440,9 +450,6 @@ class ReferencedMosaic(Mosaic):
             # Store the image
             self.save_image(blended_img, row['x_off'], row['y_off'])
 
-        # Finish by closing the database
-        self.close()
-
     def predict(
         self,
         X: pd.DataFrame,
@@ -473,7 +480,10 @@ class LessReferencedMosaic(Mosaic):
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         homography_det_min=0.6,
-        feature_detector=None,
+        feature_detector: str = 'ORB',
+        feature_detector_kwargs: dict = {},
+        feature_matcher: str = 'BFMatcher',
+        feature_matcher_kwargs: dict = {},
     ):
 
         super().__init__(
@@ -505,11 +515,10 @@ class LessReferencedMosaic(Mosaic):
 
         self.homography_det_min = homography_det_min
 
-        if feature_detector is None:
-            self.feature_detector = cv2.ORB_create()
-        else:
-            self.feature_detector = feature_detector
-        self.feature_matcher = cv2.BFMatcher()
+        self.feature_detector = feature_detector
+        self.feature_detector_kwargs = feature_detector_kwargs
+        self.feature_matcher = feature_matcher
+        self.feature_matcher_kwargs = feature_matcher_kwargs
 
     def fit(
         self,
@@ -530,6 +539,15 @@ class LessReferencedMosaic(Mosaic):
 
         # Add the existing mosaic
         self.reffed_mosaic.fit_transform(X, dataset=self.dataset_)
+
+        # Make the feature detector and matcher
+        # We do the somewhat circuitous rout of passing in the name of
+        # the feature detector and the arguments separately, as opposed to
+        # passing in a class. This is because cv2 classes can't be pickled.
+        constructor = getattr(cv2, f'{self.feature_detector}_create')
+        self.feature_detector_ = constructor(**self.feature_detector_kwargs)
+        constructor = getattr(cv2, self.feature_matcher)
+        self.feature_matcher_ = constructor(**self.feature_matcher_kwargs)
 
     def predict(
         self,
@@ -565,7 +583,7 @@ class LessReferencedMosaic(Mosaic):
         # Get the features for the existing mosaic
         dst_img = self.get_image(0, 0, self.x_size_, self.y_size_)
         dsframe_dst_kps, dsframe_dst_des = \
-            self.feature_detector.detectAndCompute(dst_img, None)
+            self.feature_detector_.detectAndCompute(dst_img, None)
         dsframe_dst_pts = cv2.KeyPoint_convert(dsframe_dst_kps)
 
         # Loop through and include
@@ -624,7 +642,8 @@ class LessReferencedMosaic(Mosaic):
             row['filepath'],
             dtype=self.dtype,
         )
-        src_kp, src_des = self.feature_detector.detectAndCompute(src_img, None)
+        src_kp, src_des = self.feature_detector_.detectAndCompute(
+            src_img, None)
 
         # Feature matching
         M, info = utils.calc_warp_transform(
@@ -632,7 +651,7 @@ class LessReferencedMosaic(Mosaic):
             src_des,
             dst_kp,
             dst_des,
-            self.feature_matcher,
+            self.feature_matcher_,
         )
 
         # Convert to the dataset frame
