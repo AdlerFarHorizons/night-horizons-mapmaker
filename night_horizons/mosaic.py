@@ -276,6 +276,22 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         return x_off, y_off, x_size, y_size
 
+    def pixel_to_physical(self, x_off, y_off, x_size, y_size):
+
+        # Convert to physical units.
+        x_imgframe = x_off * self.pixel_width_
+        y_imgframe = y_off * -self.pixel_height_
+        width = x_size * self.pixel_width_
+        height = y_size * -self.pixel_height_
+
+        # Convert to bounds
+        x_min = x_imgframe + self.x_min_
+        y_max = self.y_max_ - y_imgframe
+        x_max = x_min + width
+        y_min = y_max - height
+
+        return x_min, x_max, y_min, y_max
+
     def get_image(self, x_off, y_off, x_size, y_size):
 
         # Note that we cast the input as int, in case we the input was numpy
@@ -594,7 +610,7 @@ class LessReferencedMosaic(Mosaic):
             'x_size', 'y_size',
             'x_center', 'y_center',
             'x_off', 'y_off',
-        ]] = pd.NA
+        ]] = np.nan
 
         # Convert to pixels
         (
@@ -651,19 +667,27 @@ class LessReferencedMosaic(Mosaic):
             )
 
             # Update y_pred
-            y_pred.loc[ind,['x_off','y_off']]
+            y_pred.loc[ind, ['x_off', 'y_off', 'x_size', 'y_size']] = [
+                info['x_off'], info['y_off'], info['x_size'], info['y_size']
+            ]
 
         # Convert to pixels
         (
             y_pred['x_min'], y_pred['x_max'],
             y_pred['y_min'], y_pred['y_max'],
-        ) = self.pixel_to_crs(
+        ) = self.pixel_to_physical(
             y_pred['x_off'], y_pred['y_off'],
             y_pred['x_size'], y_pred['y_size']
         )
+        y_pred['pixel_width'] = self.pixel_width_
+        y_pred['pixel_height'] = self.pixel_height_
+        y_pred['x_center'] = 0.5 * (y_pred['x_min'] + y_pred['x_max'])
+        y_pred['y_center'] = 0.5 * (y_pred['y_min'] + y_pred['y_max'])
 
         self.log_['dsframe_dst_pts'] = dsframe_dst_pts
         self.log_['dsframe_dst_des'] = dsframe_dst_des
+
+        return y_pred[preprocess.GEOTRANSFORM_COLS]
 
     def incorporate_image(self, row, dsframe_dst_pts, dsframe_dst_des):
 
@@ -727,8 +751,8 @@ class LessReferencedMosaic(Mosaic):
             M,
         ).reshape(-1, 2)
         dsframe_bounds += np.array([x_off, y_off])
-        x_off_min, y_off_min = dsframe_bounds.min(axis=1)
-        x_off_max, y_off_max = dsframe_bounds.max(axis=1)
+        x_off_min, y_off_min = dsframe_bounds.min(axis=0)
+        x_off_max, y_off_max = dsframe_bounds.max(axis=0)
         info['x_off'] = x_off_min
         info['y_off'] = y_off_max
         info['x_size'] = x_off_max - x_off_min
@@ -756,4 +780,4 @@ class LessReferencedMosaic(Mosaic):
     def close(self):
 
         self.reffed_mosaic.close()
-        super()
+        super().close()
