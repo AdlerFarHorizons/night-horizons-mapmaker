@@ -57,8 +57,8 @@ class SensorGeoreferencer(BaseEstimator):
             self.crs = pyproj.CRS(self.crs)
 
         # Calculate offsets
-        widths = y['pixel_width'] * y['xsize']
-        heights = -y['pixel_height'] * y['ysize']
+        widths = y['pixel_width'] * y['x_size']
+        heights = -y['pixel_height'] * y['y_size']
 
         # Estimate values that are just averages
         self.width_ = np.nanmedian(widths)
@@ -67,10 +67,10 @@ class SensorGeoreferencer(BaseEstimator):
         self.pixel_height_ = np.nanmedian(y['pixel_height'])
         self.x_rot_ = np.nanmedian(y['x_rot'])
         self.y_rot_ = np.nanmedian(y['y_rot'])
-        self.xsize_ = np.round(
+        self.x_size_ = np.round(
             self.width_ / self.pixel_width_
         ).astype(int)
-        self.ysize_ = np.round(np.abs(
+        self.y_size_ = np.round(np.abs(
             self.height_ / self.pixel_height_
         )).astype(int)
 
