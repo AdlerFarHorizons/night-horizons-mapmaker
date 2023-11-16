@@ -487,7 +487,13 @@ class LessReferencedMosaic(Mosaic):
         outline: int = 0,
         homography_det_min=0.6,
         feature_detector: str = 'ORB',
-        feature_detector_kwargs: dict = {},
+        feature_detector_kwargs: dict = {
+            'nfeatures': 500,
+            'patchSize': 101,
+            'nlevels': 4,
+            'firstLevel': 4,
+            'WTA_K': 3,
+        },
         feature_matcher: str = 'BFMatcher',
         feature_matcher_kwargs: dict = {},
     ):
@@ -697,3 +703,8 @@ class LessReferencedMosaic(Mosaic):
         self.save_image(blended_img, x_off, y_off)
 
         return 0, info
+
+    def close(self):
+
+        self.reffed_mosaic.close()
+        super().close()
