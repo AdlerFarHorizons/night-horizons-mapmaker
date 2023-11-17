@@ -192,7 +192,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         (
             X['x_off'], X['y_off'],
             X['x_size'], X['y_size']
-        ) = self.bounds_to_offset(
+        ) = self.physical_to_pixel(
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
             padding=self.padding,
@@ -240,7 +240,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         return iteration_indices
 
-    def bounds_to_offset(self, x_min, x_max, y_min, y_max, padding=0):
+    def physical_to_pixel(self, x_min, x_max, y_min, y_max, padding=0):
         '''
         TODO: bounds_to_pixels would be more apt
 
@@ -336,7 +336,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         if y_max > self.y_max_:
             y_max = self.y_max_
 
-        x_off, y_off, x_size, y_size = self.bounds_to_offset(
+        x_off, y_off, x_size, y_size = self.physical_to_pixel(
             x_min, x_max, y_min, y_max
         )
 
@@ -344,7 +344,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
     def save_image_with_bounds(self, img, x_min, x_max, y_min, y_max):
 
-        x_off, y_off, _, _ = self.bounds_to_offset(
+        x_off, y_off, _, _ = self.physical_to_pixel(
             x_min, x_max, y_min, y_max
         )
 
@@ -430,7 +430,7 @@ class ReferencedMosaic(Mosaic):
         (
             X['x_off'], X['y_off'],
             X['x_size'], X['y_size']
-        ) = self.bounds_to_offset(
+        ) = self.physical_to_pixel(
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
             padding=self.padding,
@@ -616,7 +616,7 @@ class LessReferencedMosaic(Mosaic):
         (
             X['x_off'], X['y_off'],
             X['x_size'], X['y_size']
-        ) = self.bounds_to_offset(
+        ) = self.physical_to_pixel(
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
             padding=self.padding,

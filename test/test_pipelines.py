@@ -81,7 +81,7 @@ class TestReferencedMosaic(BaseTester):
         score = self.pipeline.score(self.fps)
         assert score > metrics.R_ACCEPT
 
-    def test_bounds_to_offset(self):
+    def test_physical_to_pixel(self):
 
         X_transformed = self.pipeline.fit_transform(self.fps)
 
@@ -92,7 +92,7 @@ class TestReferencedMosaic(BaseTester):
             y_offset,
             x_count,
             y_count,
-        ) = reffed_mosaic.bounds_to_offset(
+        ) = reffed_mosaic.physical_to_pixel(
             reffed_mosaic.x_min_, reffed_mosaic.x_max_,
             reffed_mosaic.y_min_, reffed_mosaic.y_max_,
         )
