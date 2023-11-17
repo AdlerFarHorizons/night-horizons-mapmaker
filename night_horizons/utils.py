@@ -149,6 +149,32 @@ def warp_image(src_img, dst_img, M):
     return warped_img
 
 
+def warp_bounds(src_img, M):
+
+    bounds = np.array([
+        [0., 0.],
+        [0., src_img.shape[0]],
+        [src_img.shape[1], src_img.shape[0]],
+        [src_img.shape[1], 0.],
+    ])
+    dsframe_bounds = cv2.perspectiveTransform(
+        bounds.reshape(-1, 1, 2),
+        M,
+    ).reshape(-1, 2)
+
+    # Get the new mins and maxs
+    px_min, py_min = dsframe_bounds.min(axis=0)
+    px_max, py_max = dsframe_bounds.max(axis=0)
+
+    # Put in terms of offset and size
+    x_off = px_min
+    y_off = py_min
+    x_size = px_max - px_min
+    y_size = py_max - py_min
+
+    return x_off, y_off, x_size, y_size
+
+
 def check_filepaths_input(
     X: Union[np.ndarray[str], list[str], pd.DataFrame],
     required_columns: list[str] = ['filepath'],
