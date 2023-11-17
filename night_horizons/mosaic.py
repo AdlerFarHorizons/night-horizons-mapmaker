@@ -740,23 +740,12 @@ class LessReferencedMosaic(Mosaic):
         dsframe_src_pts += np.array([x_off, y_off])
 
         # Convert bounding box (needed for georeferencing)
-        bounds = np.array([
-            [0., 0.],
-            [0., src_img.shape[0]],
-            [src_img.shape[1], src_img.shape[0]],
-            [src_img.shape[1], 0.],
-        ])
-        dsframe_bounds = cv2.perspectiveTransform(
-            bounds.reshape(-1, 1, 2),
-            M,
-        ).reshape(-1, 2)
-        dsframe_bounds += np.array([x_off, y_off])
-        x_off_min, y_off_min = dsframe_bounds.min(axis=0)
-        x_off_max, y_off_max = dsframe_bounds.max(axis=0)
-        info['x_off'] = x_off_min
-        info['y_off'] = y_off_max
-        info['x_size'] = x_off_max - x_off_min
-        info['y_size'] = y_off_max - y_off_min
+        (
+            info['x_off'], info['y_off'],
+            info['x_size'], info['y_size']
+        ) = utils.warp_bounds(src_img, M)
+        info['x_off'] += x_off
+        info['y_off'] += y_off
 
         # Store
         info['dsframe_src_pts'] = dsframe_src_pts
