@@ -233,6 +233,8 @@ class Image:
         )
 
         ax.set_aspect('equal')
+        ax.set_xlim(pxs[0], pxs[-1])
+        ax.set_ylim(pys[-1], pxs[0])
 
 
 class ReferencedImage(Image):
