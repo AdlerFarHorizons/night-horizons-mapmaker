@@ -73,7 +73,7 @@ class TestNITELitePreprocesser(unittest.TestCase):
         image_dir = './test/test_data/referenced_images'
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
-        fps = pd.concat([fps, pd.Series(['not_a_file'])], ignore_index=True)
+        fps = pd.concat([pd.Series(['not_a_file']), fps], ignore_index=True)
 
         metadata = self.transformer.fit_transform(
             fps,
@@ -87,6 +87,7 @@ class TestNITELitePreprocesser(unittest.TestCase):
 
         # Check that the order is not garbled.
         assert (metadata['filepath'] != fps).sum() == 0
+        np.testing.assert_allclose(metadata.index, fps.index)
 
 
 class TestGeoTIFFPreprocesser(unittest.TestCase):
