@@ -200,6 +200,9 @@ def check_filepaths_input(
 
     if isinstance(X, pd.DataFrame):
         return check_df_input(X, required_columns, passthrough)
+    elif isinstance(X, pd.Series):
+        X = pd.DataFrame(X, columns=['filepath'])
+        return X
 
     # We offer some minor reshaping to be compatible with common
     # expectations that a single list of features doesn't need to be 2D.

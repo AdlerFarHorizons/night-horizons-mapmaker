@@ -63,7 +63,7 @@ class TestNITELitePreprocesser(unittest.TestCase):
         assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
         assert metadata['sensor_x'].isna().sum() == 0
 
-    def test_output_no_file_found(self):
+    def test_output_no_file_found_but_keep_it_around(self):
         '''The output prior to any form of georeferencing.
         '''
 
@@ -74,6 +74,11 @@ class TestNITELitePreprocesser(unittest.TestCase):
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
         fps = pd.concat([pd.Series(['not_a_file']), fps], ignore_index=True)
+
+        # Scramble the indices, so we know this works regardless of the input
+        rng = np.random.default_rng(15213)
+        new_index = rng.choice(np.arange(100), size=len(fps), replace=False)
+        fps.index = new_index
 
         metadata = self.transformer.fit_transform(
             fps,
