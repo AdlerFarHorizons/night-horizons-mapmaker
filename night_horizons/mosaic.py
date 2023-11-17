@@ -538,7 +538,7 @@ class LessReferencedMosaic(Mosaic):
             fill_value=fill_value,
             dtype=dtype,
             n_bands=n_bands,
-            padding=padding,
+            padding=0.,
             passthrough=passthrough,
             outline=outline,
             verbose=verbose,
