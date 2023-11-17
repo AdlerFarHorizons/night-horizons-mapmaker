@@ -555,15 +555,15 @@ class LessReferencedMosaic(Mosaic):
         self,
         X: pd.DataFrame,
         y=None,
-        approx_geotransforms: pd.DataFrame = None,
+        approx_y: pd.DataFrame = None,
         dataset: gdal.Dataset = None,
     ):
 
-        assert approx_geotransforms is not None, \
-            'Must pass approx_geotransforms.'
+        assert approx_y is not None, \
+            'Must pass approx_y.'
 
         # Create the dataset
-        super().fit(approx_geotransforms, dataset=dataset)
+        super().fit(approx_y, dataset=dataset)
 
         # DEBUG
         # import pdb; pdb.set_trace()
