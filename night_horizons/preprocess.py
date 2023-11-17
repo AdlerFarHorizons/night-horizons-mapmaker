@@ -106,20 +106,26 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
             on='filename'
         )
         # Leftovers
-        X = X.loc[~X.index.isin(X_trans.index)]
+        X_out = X.loc[~X.index.isin(X_trans.index)]
 
         # Secondary merge attempt, using a common pattern
         pattern = r'(\d+)_\d.tif'
-        X['timestamp_id'] = X['filename'].str.findall(
+        X_out['timestamp_id'] = X['filename'].str.findall(
             pattern
         ).str[-1].astype('Int64')
         X_trans2 = pd.merge(
-            X,
+            X_out,
             log_df,
             how='inner',
             on='timestamp_id'
         )
-        n_uncorrelated = (~X.index.isin(X_trans2.index)).sum()
+
+        # Recombine
+        X_out = pd.concat([X_trans, X_trans2], axis='rows', ignore_index=False)
+
+        # At the end, what are we still missing?
+        is_missing = ~X.index.isin(X_out.index)
+        n_uncorrelated = is_missing.sum()
         w_message = (
             'Did not successfully correlate all filepaths. '
             f'n_uncorrelated = {n_uncorrelated}'
@@ -131,16 +137,17 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
                 warnings.warn(w_message)
             elif self.unhandled_files == 'drop':
                 pass
+            elif self.unhandled_files == 'warn and passthrough':
+                warnings.warn(w_message)
+                X_missing = X.index[is_missing]
+                X_out = X_out.join(X_missing, how='cross')
             else:
                 raise ValueError('Unrecognized method for unhandled files.')
 
-        # Recombine
-        X = pd.concat([X_trans, X_trans2], axis='rows')
-
         # Select only the desired columns
-        X = X[self.output_columns]
+        X_out = X_out[self.output_columns]
 
-        return X
+        return X_out
 
     def get_logs(
         self,
