@@ -45,7 +45,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         self,
         output_columns: list[str] = None,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        unhandled_files: str = 'warn and drop',
+        unhandled_files: str = 'warn and passthrough',
     ):
         self.output_columns = output_columns
         self.crs = crs
@@ -98,30 +98,31 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         )
 
         # Merge, assuming filenames remain the same.
+        X['original_index'] = X.index
         X['filename'] = X['filepath'].apply(os.path.basename)
-        X_trans = pd.merge(
+        X_corr = pd.merge(
             X,
             log_df,
             how='inner',
             on='filename'
         )
         # Leftovers
-        X_out = X.loc[~X.index.isin(X_trans.index)]
+        X_remain = X.loc[~X.index.isin(X_corr.index)]
 
         # Secondary merge attempt, using a common pattern
         pattern = r'(\d+)_\d.tif'
-        X_out['timestamp_id'] = X['filename'].str.findall(
+        X_remain['timestamp_id'] = X['filename'].str.findall(
             pattern
         ).str[-1].astype('Int64')
-        X_trans2 = pd.merge(
-            X_out,
+        X_corr2 = pd.merge(
+            X_remain,
             log_df,
             how='inner',
             on='timestamp_id'
         )
 
         # Recombine
-        X_out = pd.concat([X_trans, X_trans2], axis='rows', ignore_index=False)
+        X_out = pd.concat([X_corr, X_corr2], axis='rows')
 
         # At the end, what are we still missing?
         is_missing = ~X.index.isin(X_out.index)
@@ -133,16 +134,21 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         if n_uncorrelated > 0:
             if self.unhandled_files == 'error':
                 assert False, w_message
-            elif self.unhandled_files == 'warn and drop':
-                warnings.warn(w_message)
-            elif self.unhandled_files == 'drop':
+            elif 'drop' in self.unhandled_files:
+                if 'warn' in self.unhandled_files:
+                    warnings.warn(w_message)
                 pass
-            elif self.unhandled_files == 'warn and passthrough':
-                warnings.warn(w_message)
-                X_missing = X.index[is_missing]
-                X_out = X_out.join(X_missing, how='cross')
+            elif 'passthrough' in self.unhandled_files:
+                if 'warn' in self.unhandled_files:
+                    warnings.warn(w_message)
+                X_missing = X.loc[is_missing]
+                X_out = pd.concat([X_out, X_missing])
             else:
                 raise ValueError('Unrecognized method for unhandled files.')
+
+        # Organize the index
+        X_out.set_index('original_index', inplace=True)
+        X_out.sort_index(inplace=True)
 
         # Select only the desired columns
         X_out = X_out[self.output_columns]
