@@ -125,7 +125,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         X_out = pd.concat([X_corr, X_corr2], axis='rows')
 
         # At the end, what are we still missing?
-        is_missing = ~X.index.isin(X_out.index)
+        is_missing = ~X.index.isin(X_out['original_index'])
         n_uncorrelated = is_missing.sum()
         w_message = (
             'Did not successfully correlate all filepaths. '
