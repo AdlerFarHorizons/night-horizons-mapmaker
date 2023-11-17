@@ -160,7 +160,7 @@ class TestDataset(unittest.TestCase):
         dataset.n_bands
         dataset.crs
 
-    def test_bounds_to_offset(self):
+    def test_physical_to_pixel(self):
 
         dataset = raster.BoundsDataset.open(self.filepath, 'EPSG:3857')
 
@@ -170,7 +170,7 @@ class TestDataset(unittest.TestCase):
             y_offset,
             x_count,
             y_count,
-        ) = dataset.bounds_to_offset(
+        ) = dataset.physical_to_pixel(
             dataset.x_min, dataset.x_max,
             dataset.y_min, dataset.y_max,
         )

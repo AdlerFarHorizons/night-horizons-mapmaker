@@ -617,7 +617,7 @@ class BoundsDataset(gdal.Dataset):
             crs=crs,
         )
 
-    def bounds_to_offset(self, x_min, x_max, y_min, y_max):
+    def physical_to_pixel(self, x_min, x_max, y_min, y_max):
 
         # Get offsets
         x_offset = x_min - self.x_min_
@@ -654,7 +654,7 @@ class BoundsDataset(gdal.Dataset):
         if y_max > self.y_max_:
             y_max = self.y_max_
 
-        x_offset_count, y_offset_count, xsize, ysize = self.bounds_to_offset(
+        x_offset_count, y_offset_count, xsize, ysize = self.physical_to_pixel(
             x_min, x_max, y_min, y_max
         )
 
@@ -668,7 +668,7 @@ class BoundsDataset(gdal.Dataset):
 
     def save_image(self, img, x_min, x_max, y_min, y_max):
 
-        x_offset_count, y_offset_count, xsize, ysize = self.bounds_to_offset(
+        x_offset_count, y_offset_count, xsize, ysize = self.physical_to_pixel(
             x_min, x_max, y_min, y_max
         )
 
@@ -754,7 +754,7 @@ class BoundsDataset(gdal.Dataset):
 #
 #        return dataset
 #
-#    def bounds_to_offset(self, x_bounds, y_bounds):
+#    def physical_to_pixel(self, x_bounds, y_bounds):
 #
 #        # Get offsets
 #        x_offset = x_bounds[0] - self.x_bounds[0]
@@ -791,7 +791,7 @@ class BoundsDataset(gdal.Dataset):
 #        if y_bounds[1] > self.y_bounds[1]:
 #            y_bounds[1] = self.y_bounds[1]
 #
-#        x_offset_count, y_offset_count, xsize, ysize = self.bounds_to_offset(
+#        x_offset_count, y_offset_count, xsize, ysize = self.physical_to_pixel(
 #            x_bounds,
 #            y_bounds,
 #        )
@@ -827,7 +827,7 @@ class BoundsDataset(gdal.Dataset):
 #        NOTE: You must call self.flush_cache_and_close to finish saving to disk.
 #        '''
 #
-#        x_offset_count, y_offset_count, xsize, ysize = self.bounds_to_offset(
+#        x_offset_count, y_offset_count, xsize, ysize = self.physical_to_pixel(
 #            x_bounds,
 #            y_bounds,
 #        )
