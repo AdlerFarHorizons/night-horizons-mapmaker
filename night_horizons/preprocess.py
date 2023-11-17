@@ -148,7 +148,9 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
 
         # Organize the index
         X_out.set_index('original_index', inplace=True)
-        X_out.sort_index(inplace=True)
+        # Don't try to sort by indices X_out does not have
+        sort_inds = X.index[X.index.isin(X_out.index)]
+        X_out = X_out.loc[sort_inds]
 
         # Select only the desired columns
         X_out = X_out[self.output_columns]
