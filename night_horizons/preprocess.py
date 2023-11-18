@@ -83,6 +83,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         self.is_fitted_ = True
         return self
 
+    @utils.enable_passthrough
     def transform(
         self,
         X: Union[np.ndarray[str], list[str], pd.DataFrame],
@@ -95,7 +96,6 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         # Check the input is good.
         X = utils.check_filepaths_input(
             X,
-            passthrough=self.passthrough,
         )
 
         # Get the raw metadata
@@ -161,7 +161,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         X_out = X_out.loc[sort_inds]
 
         # Select only the desired columns
-        X_out = X_out[self.output_columns + self.passthrough]
+        X_out = X_out[self.output_columns]
 
         return X_out
 

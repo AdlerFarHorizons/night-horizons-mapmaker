@@ -285,3 +285,20 @@ def check_columns(
         )
 
     return actual
+
+
+def enable_passthrough(func):
+    def wrapper(self, X, *args, **kwargs):
+
+        # Split off passthrough columns
+        X_split = X[self.passthrough]
+        X = X.drop(columns=self.passthrough)
+
+        # Call function
+        X_out = func(self, X, *args, **kwargs)
+
+        # Re-add passthrough columns
+        X_out = X_out.join(X_split)
+
+        return X_out
+    return wrapper
