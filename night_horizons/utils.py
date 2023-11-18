@@ -1,6 +1,6 @@
 import glob
 import os
-from typing import Union
+from typing import Tuple, Union
 
 import cv2
 import numpy as np
@@ -62,7 +62,11 @@ def discover_data(
     return fps
 
 
-def load_image(filepath: str, dtype: type = np.uint8):
+def load_image(
+        filepath: str,
+        dtype: type = np.uint8,
+        img_shape: Tuple = (1200, 1920),
+    ):
     '''Load an image from disk.
 
     Parameters
@@ -75,11 +79,27 @@ def load_image(filepath: str, dtype: type = np.uint8):
     -------
     '''
 
-    # Load
-    img = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+    ext = os.path.splitext(filepath)[1]
 
-    # Format
-    img = img[:, :, ::-1]
+    # Load and reshape raw image data.
+    if ext == '.raw':
+
+        raw_img = np.fromfile(filepath, dtype=np.uint16)
+        raw_img = raw_img.reshape(img_shape)
+
+        img = cv2.cvtColor(raw_img, cv2.COLOR_BAYER_BG2RGB)
+
+    elif ext in ['.tiff', '.tif']:
+        img = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+
+        # CV2 defaults to BGR, but RGB is more standard for our purposes
+        img = img[:, :, ::-1]
+
+    else:
+        raise IOError('Cannot read filetype {}'.format(ext))
+
+    if img is None:
+        return img
 
     # When no conversion needs to be done
     if img.dtype == dtype:
