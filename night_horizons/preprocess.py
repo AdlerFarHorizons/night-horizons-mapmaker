@@ -46,10 +46,12 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         output_columns: list[str] = None,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         unhandled_files: str = 'warn and passthrough',
+        passthrough: list[str] = [],
     ):
         self.output_columns = output_columns
         self.crs = crs
         self.unhandled_files = unhandled_files
+        self.passthrough = passthrough
 
     def fit(
         self,
@@ -61,7 +63,10 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
     ):
 
         # Check the input is good.
-        X = utils.check_filepaths_input(X)
+        X = utils.check_filepaths_input(
+            X,
+            passthrough=self.passthrough,
+        )
 
         # Convert CRS as needed
         if isinstance(self.crs, str):
@@ -88,7 +93,10 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         check_is_fitted(self, 'is_fitted_')
 
         # Check the input is good.
-        X = utils.check_filepaths_input(X)
+        X = utils.check_filepaths_input(
+            X,
+            passthrough=self.passthrough,
+        )
 
         # Get the raw metadata
         log_df = self.get_logs(
@@ -153,7 +161,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         X_out = X_out.loc[sort_inds]
 
         # Select only the desired columns
-        X_out = X_out[self.output_columns]
+        X_out = X_out[self.output_columns + self.passthrough]
 
         return X_out
 
