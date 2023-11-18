@@ -587,6 +587,14 @@ class LessReferencedMosaic(Mosaic):
         y=None,
         iteration_indices: np.ndarray[int] = None,
     ):
+        ''' TODO: Deprecate iteration_indices. Just have the user order their
+        dataframe prior to input.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
         # Useful for debugging
         self.log = {}
 
