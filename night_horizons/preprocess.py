@@ -164,7 +164,8 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         X_out = X_out.loc[sort_inds]
 
         # Select only the desired columns
-        X_out = X_out[self.output_columns]
+        if self.output_columns is not None:
+            X_out = X_out[self.output_columns]
 
         return X_out
 

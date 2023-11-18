@@ -310,6 +310,10 @@ def check_columns(
 
 def enable_passthrough(func):
     '''
+    TODO: Deprecate this....
+    I forgot that the better method is to make use of
+    sklearn.compose.ColumnTransformer.
+
     Consider a column `A` that is in self.passthrough,
     an input dataframe X, and an output dataframe X_out.
 

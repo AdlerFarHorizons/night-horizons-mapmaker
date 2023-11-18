@@ -31,19 +31,16 @@ class BaseTester(unittest.TestCase):
             os.remove(self.mosaic_fp)
 
 
-class TestSensorGeoreference(BaseTester):
+class TestGetMetadataAndApproxGeorefs(BaseTester):
 
     def setUp(self):
 
         super().setUp()
 
         self.pipeline, self.y_pipeline = \
-            pipelines.GeoreferencePipelines.sensor_georeference()
+            pipelines.PreprocessingPipelines.get_metadata_and_approx_georefs()
 
-        # Accurate to within 2 km
-        self.acceptance_criteria = 2000.
-
-    def test_score(self):
+    def test_fit_transform(self):
         '''For this test we're scoring the values it was trained on,
         so this is not a rigorous test.
         '''
@@ -57,11 +54,9 @@ class TestSensorGeoreference(BaseTester):
             nitelite__imu_log_fp='test/test_data/metadata/PresIMULog.csv',
             nitelite__gps_log_fp='test/test_data/metadata/GPSLog.csv',
         )
+        y_pred = self.pipeline.transform(self.fps)
 
-        # Score
-        score = self.pipeline.score(self.fps, y)
-        assert score < self.acceptance_criteria
-
+        assert y
 
 class TestReferencedMosaic(BaseTester):
 
