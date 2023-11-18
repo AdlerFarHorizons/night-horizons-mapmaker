@@ -88,12 +88,14 @@ def load_image(
         raw_img = raw_img.reshape(img_shape)
 
         img = cv2.cvtColor(raw_img, cv2.COLOR_BAYER_BG2RGB)
+        img_max = 2**12 - 1
 
     elif ext in ['.tiff', '.tif']:
         img = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
 
         # CV2 defaults to BGR, but RGB is more standard for our purposes
         img = img[:, :, ::-1]
+        img_max = np.iinfo(img.dtype).max 
 
     else:
         raise IOError('Cannot read filetype {}'.format(ext))
@@ -106,7 +108,7 @@ def load_image(
         return img
 
     # Rescale
-    img = img / np.iinfo(img.dtype).max
+    img = img / img_max
     img = (img * np.iinfo(dtype).max).astype(dtype)
 
     return img
