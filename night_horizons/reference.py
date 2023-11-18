@@ -78,6 +78,7 @@ class SensorGeoreferencer(BaseEstimator):
         self.is_fitted_ = True
         return self
 
+    @utils.enable_passthrough
     def predict(self, X):
         ''' A reference implementation of a predicting function.
 
@@ -96,7 +97,6 @@ class SensorGeoreferencer(BaseEstimator):
         utils.check_df_input(
             X,
             required_columns=['sensor_x', 'sensor_y'],
-            passthrough=self.passthrough,
         )
 
         # Calculate properties
