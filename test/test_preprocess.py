@@ -36,6 +36,11 @@ class TestNITELitePreprocesser(unittest.TestCase):
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
+        # Add a test column to passthrough
+        fps = utils.check_filepaths_input(fps)
+        fps['test_column'] = 1
+        self.transformer.passthrough = ['test_column']
+
         metadata = self.transformer.fit_transform(
             fps,
             img_log_fp=self.img_log_fp,
@@ -43,6 +48,11 @@ class TestNITELitePreprocesser(unittest.TestCase):
             gps_log_fp=self.gps_log_fp,
         )
         assert len(metadata) == n_files
+        utils.check_columns(
+            actual=metadata.columns,
+            required=self.expected_cols,
+            passthrough=self.transformer.passthrough,
+        )
         assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
         assert metadata['sensor_x'].isna().sum() == 0
 
