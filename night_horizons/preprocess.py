@@ -115,12 +115,15 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
             on='filename'
         )
         # Leftovers
-        X_remain = X.loc[~X.index.isin(X_corr.index)]
+        X_remain = (X.loc[~X.index.isin(X_corr.index)]).copy()
+
+        # DEBUG
+        # import pdb; pdb.set_trace()
 
         if len(X_remain) > 0:
             # Secondary merge attempt, using a common pattern
             pattern = r'(\d+)_\d.tif'
-            X_remain['timestamp_id'] = X['filename'].str.findall(
+            X_remain['timestamp_id'] = X_remain['filename'].str.findall(
                 pattern
             ).str[-1].astype('Int64')
             X_corr2 = pd.merge(
@@ -449,7 +452,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
     ):
 
         # Check the input is good.
-        X = utils.check_filepaths_input(X, passthrough=self.passthrough)
+        X = utils.check_filepaths_input(X)
 
         # Check is fit had been called
         check_is_fitted(self, 'is_fitted_')
