@@ -18,22 +18,27 @@ from sklearn.pipeline import Pipeline
 from . import preprocess, reference, mosaic
 
 
-class GeoreferencePipelines:
+class PreprocessingPipelines:
 
     @staticmethod
-    def sensor_georeference(
+    def get_metadata_and_approx_georefs(
+        passthrough: list[str] = ['filepath', 'camera_num'],
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
     ):
 
         pipeline = Pipeline([
-            ('nitelite', preprocess.NITELitePreprocesser(
-                output_columns=['sensor_x', 'sensor_y'])),
-            ('sensor_georeference', reference.SensorGeoreferencer(crs=crs)),
+            ('nitelite', preprocess.NITELitePreprocesser(crs=crs)),
+            ('georeference', ColumnTransformer(
+                transformers=[
+                    ('georeference', reference.SensorGeoreferencer(crs=crs),
+                     ['sensor_x', 'sensor_y']),
+                    ('passthrough', 'passthrough', passthrough)
+                ],
+                remainder='drop',
+            )),
         ])
 
-        y_pipeline = preprocess.GeoTIFFPreprocesser(crs=crs)
-
-        return pipeline, y_pipeline
+        return pipeline
 
 
 class MosaicPipelines:
