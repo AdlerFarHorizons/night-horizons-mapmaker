@@ -1,0 +1,19 @@
+###############################################################################
+# Evaluation Configuration File
+###############################################################################
+
+data_dir: /Users/Shared/data/nitelite/220513-FH135
+
+# Relative to data_dir
+paths_relative_to_data_dir:
+  referenced_images_dir: images/referenced
+  img_log_fp: metadata/image.log
+  imu_log_fp: metadata/PresIMULog.csv
+  gps_log_fp: metadata/GPSLog.csv
+
+# Coordinate reference-system employed
+crs: 'EPSG:3857'
+
+# Aesthetics
+color_palette: deep
+
