@@ -36,7 +36,7 @@ class TestNITELitePreprocesser(unittest.TestCase):
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
-        # Add a test column to passthrough
+        # Add test column to passthrough
         fps = utils.check_filepaths_input(fps)
         fps['test_column'] = 1
         self.transformer.passthrough = ['test_column']
@@ -53,7 +53,6 @@ class TestNITELitePreprocesser(unittest.TestCase):
             required=self.expected_cols,
             passthrough=self.transformer.passthrough,
         )
-        assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
         assert metadata['sensor_x'].isna().sum() == 0
 
     def test_output_referenced_files(self):

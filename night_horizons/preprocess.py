@@ -117,20 +117,23 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         # Leftovers
         X_remain = X.loc[~X.index.isin(X_corr.index)]
 
-        # Secondary merge attempt, using a common pattern
-        pattern = r'(\d+)_\d.tif'
-        X_remain['timestamp_id'] = X['filename'].str.findall(
-            pattern
-        ).str[-1].astype('Int64')
-        X_corr2 = pd.merge(
-            X_remain,
-            log_df,
-            how='inner',
-            on='timestamp_id'
-        )
+        if len(X_remain) > 0:
+            # Secondary merge attempt, using a common pattern
+            pattern = r'(\d+)_\d.tif'
+            X_remain['timestamp_id'] = X['filename'].str.findall(
+                pattern
+            ).str[-1].astype('Int64')
+            X_corr2 = pd.merge(
+                X_remain,
+                log_df,
+                how='inner',
+                on='timestamp_id'
+            )
 
-        # Recombine
-        X_out = pd.concat([X_corr, X_corr2], axis='rows')
+            # Recombine
+            X_out = pd.concat([X_corr, X_corr2], axis='rows')
+        else:
+            X_out = X_corr
 
         # At the end, what are we still missing?
         is_missing = ~X.index.isin(X_out['original_index'])
