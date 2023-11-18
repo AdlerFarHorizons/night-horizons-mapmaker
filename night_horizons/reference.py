@@ -26,6 +26,7 @@ class SensorGeoreferencer(BaseEstimator):
         self.crs = crs
         self.passthrough = passthrough
 
+    @utils.enable_passthrough
     def fit(self, X, y):
         '''A reference implementation of a fitting function.
 
@@ -50,7 +51,6 @@ class SensorGeoreferencer(BaseEstimator):
         utils.check_df_input(
             X,
             required_columns=['sensor_x', 'sensor_y'],
-            passthrough=self.passthrough,
         )
 
         if isinstance(self.crs, str):

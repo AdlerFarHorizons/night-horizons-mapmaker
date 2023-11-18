@@ -279,7 +279,7 @@ def check_columns(
             f'Got columns {list(actual)}.'
         )
     else:
-        expected = pd.unique(list(expected) + list(passthrough))
+        expected = pd.unique(pd.concat([expected, passthrough]))
         assert len(expected) == len(actual), (
             f'Expected columns {expected}.\n'
             f'Got columns {list(actual)}.'
@@ -325,6 +325,10 @@ def enable_passthrough(func):
 
         # Call function
         X_out = func(self, X, *args, **kwargs)
+
+        # Don't try to add columns to something that is not a dataframe
+        if not isinstance(X_out, pd.DataFrame):
+            return X_out
 
         # Re-add passthrough columns
         is_in_X_out = X_split.columns.isin(X_out.columns)
