@@ -441,6 +441,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
         self.is_fitted_ = True
         return self
 
+    @utils.enable_passthrough
     def transform(
         self,
         X: Union[np.ndarray[str], list[str], pd.DataFrame],

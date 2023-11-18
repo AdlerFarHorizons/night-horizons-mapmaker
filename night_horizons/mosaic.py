@@ -412,6 +412,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
 class ReferencedMosaic(Mosaic):
 
+    @utils.enable_passthrough
     def transform(
         self,
         X: pd.DataFrame,
@@ -420,7 +421,6 @@ class ReferencedMosaic(Mosaic):
         X = utils.check_df_input(
             X,
             ['filepath'] + preprocess.GEOTRANSFORM_COLS,
-            passthrough=self.passthrough
         )
 
         # Check if fit had been called
@@ -580,6 +580,7 @@ class LessReferencedMosaic(Mosaic):
         constructor = getattr(cv2, self.feature_matcher)
         self.feature_matcher_ = constructor(**self.feature_matcher_kwargs)
 
+    @utils.enable_passthrough
     def predict(
         self,
         X: pd.DataFrame,
@@ -592,7 +593,6 @@ class LessReferencedMosaic(Mosaic):
         X = utils.check_df_input(
             X,
             ['filepath'] + preprocess.GEOTRANSFORM_COLS,
-            passthrough=self.passthrough
         )
 
         if iteration_indices is None:
