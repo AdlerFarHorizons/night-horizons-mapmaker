@@ -10,6 +10,24 @@ import pandas as pd
 import night_horizons.utils as utils
 
 
+class TestLoadImage(unittest.TestCase):
+
+    def test_tiff(self):
+
+        fp = './test/test_data/referenced_images/Geo 843083290_1.tif'
+        img = utils.load_image(fp)
+
+        assert len(img.shape) == 3
+
+    def test_raw(self):
+
+        fp = ('./test/test_data/images/23085686/'
+              '20220413_221313_1020286912_0_50_3.raw')
+        img = utils.load_image(fp)
+
+        assert len(img.shape) == 3
+
+
 class TestDiscoverData(unittest.TestCase):
 
     def test_discover_data(self):
