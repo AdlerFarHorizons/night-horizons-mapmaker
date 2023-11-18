@@ -289,11 +289,39 @@ def check_columns(
 
 
 def enable_passthrough(func):
+    '''
+    Consider a column `A` that is in self.passthrough,
+    an input dataframe X, and an output dataframe X_out.
+
+    Rules:
+    1. If `A` is in X.columns and is not in X_out.columns,
+        include the original `A` in X_out.
+    2. If `A` is in X.columns and is also in X_out.columns,
+        keep `A` from X_out unaltered.
+    3. If `A` is not in X.columns, ignore it.
+
+    Parameters
+    ----------
+    Returns
+    -------
+    '''
+
     def wrapper(self, X, *args, **kwargs):
 
+        if isinstance(X, pd.Series):
+            return func(self, X, *args, **kwargs)
+
+        # Get the columns to pass through
+        passthrough = pd.Series(self.passthrough)
+        is_in_X = pd.Series(passthrough).isin(X.columns)
+        passthrough = passthrough[is_in_X]
+
+        if len(passthrough) == 0:
+            return func(self, X, *args, **kwargs)
+
         # Split off passthrough columns
-        X_split = X[self.passthrough]
-        X = X.drop(columns=self.passthrough)
+        X_split = X[passthrough]
+        X = X.drop(columns=passthrough)
 
         # Call function
         X_out = func(self, X, *args, **kwargs)
