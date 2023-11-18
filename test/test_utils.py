@@ -27,6 +27,9 @@ class TestLoadImage(unittest.TestCase):
 
         assert len(img.shape) == 3
 
+        # Max should be close to 255
+        assert img.max() > 250
+
 
 class TestDiscoverData(unittest.TestCase):
 
