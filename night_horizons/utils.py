@@ -246,8 +246,8 @@ def check_df_input(
 
 
 def check_columns(
-    actual: pd.Series,
-    expected: list[str],
+    actual: Union[pd.Series, list[str]],
+    expected: Union[pd.Series, list[str]],
     passthrough: Union[bool, list[str]] = False
 ):
     '''Check that the columns of a dataframe are as required.
@@ -279,7 +279,7 @@ def check_columns(
             f'Got columns {list(actual)}.'
         )
     else:
-        expected = pd.unique(pd.concat([expected, passthrough]))
+        expected = pd.unique(pd.Series(list(expected) + list(passthrough)))
         assert len(expected) == len(actual), (
             f'Expected columns {expected}.\n'
             f'Got columns {list(actual)}.'
@@ -306,7 +306,7 @@ def enable_passthrough(func):
     -------
     '''
 
-    def wrapper(self, X, *args, **kwargs):
+    def wrapper(self, X: Union[pd.DataFrame, pd.Series], *args, **kwargs):
 
         if isinstance(X, pd.Series):
             return func(self, X, *args, **kwargs)

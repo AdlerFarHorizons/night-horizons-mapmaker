@@ -115,10 +115,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
             on='filename'
         )
         # Leftovers
-        X_remain = (X.loc[~X.index.isin(X_corr.index)]).copy()
-
-        # DEBUG
-        # import pdb; pdb.set_trace()
+        X_remain = (X.loc[~X.index.isin(X_corr['original_index'])]).copy()
 
         if len(X_remain) > 0:
             # Secondary merge attempt, using a common pattern
