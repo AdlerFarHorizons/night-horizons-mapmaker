@@ -247,7 +247,7 @@ def check_df_input(
 
 def check_columns(
     actual: pd.Series,
-    required: list[str],
+    expected: list[str],
     passthrough: Union[bool, list[str]] = False
 ):
     '''Check that the columns of a dataframe are as required.
@@ -267,20 +267,21 @@ def check_columns(
             The validated columns.
     '''
 
-    required = pd.Series(required)
-    required_not_in_actual = ~required.isin(actual)
+    expected = pd.Series(expected)
+    required_not_in_actual = ~expected.isin(actual)
     assert required_not_in_actual.sum() == 0, (
-        f'Missing columns {required.loc[required_not_in_actual]}'
+        f'Missing columns {expected.loc[required_not_in_actual]}'
     )
 
     if isinstance(passthrough, bool):
-        assert passthrough or (len(actual) == len(required)), (
-            f'Expected columns {list(required)}.\n'
+        assert passthrough or (len(actual) == len(expected)), (
+            f'Expected columns {list(expected)}.\n'
             f'Got columns {list(actual)}.'
         )
     else:
-        assert len(passthrough) + len(required) == len(actual), (
-            f'Expected columns {list(required) + list(passthrough)}.\n'
+        expected = pd.unique(list(expected) + list(passthrough))
+        assert len(expected) == len(actual), (
+            f'Expected columns {expected}.\n'
             f'Got columns {list(actual)}.'
         )
 
@@ -298,7 +299,9 @@ def enable_passthrough(func):
         X_out = func(self, X, *args, **kwargs)
 
         # Re-add passthrough columns
-        X_out = X_out.join(X_split)
+        is_in_X_out = X_split.columns.isin(X_out.columns)
+        passthrough_cols = X_split.columns[~is_in_X_out]
+        X_out = X_out.join(X_split[passthrough_cols])
 
         return X_out
     return wrapper
