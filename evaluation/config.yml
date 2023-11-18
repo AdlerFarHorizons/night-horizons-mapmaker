@@ -6,6 +6,7 @@ data_dir: /Users/Shared/data/nitelite/220513-FH135
 
 # Relative to data_dir
 paths_relative_to_data_dir:
+  images_dir: images/raw
   referenced_images_dir: images/referenced
   img_log_fp: metadata/image.log
   imu_log_fp: metadata/PresIMULog.csv
