@@ -402,6 +402,37 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         return gps_log_df
 
 
+class Filter(TransformerMixin, BaseEstimator):
+    '''Simple estimator to implement easy filtering of rows.
+
+    Parameters
+    ----------
+    Returns
+    -------
+    '''
+
+    def __init__(self, condition):
+        self.condition = condition
+
+    def fit(self, X, y=None):
+        self.is_fitted_ = True
+        return self
+
+    def transform(self, X):
+        meets_condition = self.condition(X)
+        return X.loc[meets_condition]
+
+
+class AltitudeFilter(Filter):
+
+    def __init__(self, column, cruising_altitude=15000.):
+
+        def condition(X):
+            return X[column] > cruising_altitude
+
+        super().__init__(condition)
+
+
 class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
     '''Transform filepaths into geotransform properties.
 
