@@ -63,10 +63,10 @@ def discover_data(
 
 
 def load_image(
-        filepath: str,
-        dtype: type = np.uint8,
-        img_shape: Tuple = (1200, 1920),
-    ):
+    filepath: str,
+    dtype: type = np.uint8,
+    img_shape: Tuple = (1200, 1920),
+):
     '''Load an image from disk.
 
     Parameters
@@ -95,7 +95,7 @@ def load_image(
 
         # CV2 defaults to BGR, but RGB is more standard for our purposes
         img = img[:, :, ::-1]
-        img_max = np.iinfo(img.dtype).max 
+        img_max = np.iinfo(img.dtype).max
 
     else:
         raise IOError('Cannot read filetype {}'.format(ext))
@@ -316,6 +316,9 @@ def enable_passthrough(func):
     I forgot that the possibly better method is to make use of
     sklearn.compose.ColumnTransformer.
 
+    Columns that are neither in self.passthrough or self.required_columns
+    are dropped.
+
     Consider a column `A` that is in self.passthrough,
     an input dataframe X, and an output dataframe X_out.
 
@@ -348,26 +351,23 @@ def enable_passthrough(func):
         passthrough = passthrough[is_in_X]
 
         # Select the columns to pass in
-        X_in = X[self.required_columns]
-
-        if len(passthrough) == 0:
-            return func(self, X_in, *args, **kwargs)
-
-        # Split off passthrough columns
-        X_split = X[passthrough]
-        X = X.drop(columns=passthrough)
+        X_in = X[self.required_columns].copy()
 
         # Call function
-        X_out = func(self, X, *args, **kwargs)
+        X_out = func(self, X_in, *args, **kwargs)
+
+        # When there's nothing to passthrough
+        if len(passthrough) == 0:
+            return X_out
 
         # Don't try to add columns to something that is not a dataframe
         if not isinstance(X_out, pd.DataFrame):
             return X_out
 
         # Re-add passthrough columns
-        is_in_X_out = X_split.columns.isin(X_out.columns)
-        passthrough_cols = X_split.columns[~is_in_X_out]
-        X_out = X_out.join(X_split[passthrough_cols])
+        is_in_X_out = passthrough.isin(X_out.columns)
+        passthrough_cols = passthrough[~is_in_X_out]
+        X_out = X_out.join(X[passthrough_cols])
 
         return X_out
     return wrapper

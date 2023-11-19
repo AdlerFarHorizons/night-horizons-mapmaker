@@ -119,6 +119,9 @@ class SensorGeoreferencer(BaseEstimator):
 
         return X
 
+    def transform(self, X):
+        return self.predict(X)
+
     def score_samples(self, X, y):
 
         check_is_fitted(self, 'is_fitted_')
