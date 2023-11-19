@@ -638,7 +638,7 @@ class LessReferencedMosaic(Mosaic):
 
         # Loop through and include
         self.log_ = {
-            'bad_inds': [],
+            'return_codes': [],
         }
         # If verbose, add a progress bar.
         if self.verbose:
@@ -659,10 +659,11 @@ class LessReferencedMosaic(Mosaic):
                     dsframe_dst_des,
                 )
             except cv2.error:
-                return_code = 1
+                return_code = 2
 
+            # Store return code and continue, if failed
+            self.log_['return_codes'].append(return_code)
             if return_code != 0:
-                self.log_['bad_inds'].append(ind)
                 continue
 
             # Store the transformed points for the next loop
@@ -708,13 +709,15 @@ class LessReferencedMosaic(Mosaic):
         x_size = row['x_size']
         y_size = row['y_size']
 
-        # Get dst features
+        # Check what's in bounds, exit if nothing
         in_bounds = self.check_bounds(
             dsframe_dst_pts,
             x_off, y_off, x_size, y_size
         )
-        assert in_bounds.sum() > 0, \
-            f'No image data in the search zone for index {row.name}'
+        if in_bounds.sum() == 0:
+            return 3, {}
+
+        # Get dst features
         dst_pts = dsframe_dst_pts[in_bounds] - np.array([x_off, y_off])
         dst_kp = cv2.KeyPoint_convert(dst_pts)
         dst_des = dsframe_dst_des[in_bounds]
