@@ -25,6 +25,7 @@ class SensorGeoreferencer(BaseEstimator):
     ):
         self.crs = crs
         self.passthrough = passthrough
+        self.required_columns = ['sensor_x', 'sensor_y']
 
     @utils.enable_passthrough
     def fit(self, X, y):
@@ -50,7 +51,7 @@ class SensorGeoreferencer(BaseEstimator):
         '''
         utils.check_df_input(
             X,
-            required_columns=['sensor_x', 'sensor_y'],
+            self.required_columns,
         )
 
         if isinstance(self.crs, str):
@@ -96,7 +97,7 @@ class SensorGeoreferencer(BaseEstimator):
         check_is_fitted(self, 'is_fitted_')
         utils.check_df_input(
             X,
-            required_columns=['sensor_x', 'sensor_y'],
+            self.required_columns,
         )
 
         # Calculate properties

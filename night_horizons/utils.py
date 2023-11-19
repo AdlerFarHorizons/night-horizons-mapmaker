@@ -312,8 +312,8 @@ def check_columns(
 
 def enable_passthrough(func):
     '''
-    TODO: Deprecate this....
-    I forgot that the better method is to make use of
+    TODO: Maybe deprecate this....
+    I forgot that the possibly better method is to make use of
     sklearn.compose.ColumnTransformer.
 
     Consider a column `A` that is in self.passthrough,
@@ -332,7 +332,12 @@ def enable_passthrough(func):
     -------
     '''
 
-    def wrapper(self, X: Union[pd.DataFrame, pd.Series], *args, **kwargs):
+    def wrapper(
+        self,
+        X: Union[pd.DataFrame, pd.Series],
+        *args,
+        **kwargs
+    ):
 
         if isinstance(X, pd.Series):
             return func(self, X, *args, **kwargs)
@@ -342,8 +347,11 @@ def enable_passthrough(func):
         is_in_X = pd.Series(passthrough).isin(X.columns)
         passthrough = passthrough[is_in_X]
 
+        # Select the columns to pass in
+        X_in = X[self.required_columns]
+
         if len(passthrough) == 0:
-            return func(self, X, *args, **kwargs)
+            return func(self, X_in, *args, **kwargs)
 
         # Split off passthrough columns
         X_split = X[passthrough]
