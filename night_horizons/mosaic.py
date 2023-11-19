@@ -61,7 +61,9 @@ class Mosaic(TransformerMixin, BaseEstimator):
         self.passthrough = passthrough
         self.outline = outline
         self.verbose = verbose
+        self.required_columns = ['filepath'] + preprocess.GEOTRANSFORM_COLS
 
+    @utils.enable_passthrough
     def fit(
         self,
         X: pd.DataFrame,
@@ -125,10 +127,11 @@ class Mosaic(TransformerMixin, BaseEstimator):
             return self
 
         # Check the input is good.
+        # TODO: For functions decorated by enable_passthrough this is
+        #       degenerate
         X = utils.check_df_input(
             X,
-            ['filepath'] + preprocess.GEOTRANSFORM_COLS,
-            passthrough=self.passthrough
+            self.required_columns,
         )
 
         # Convert CRS as needed
@@ -420,7 +423,7 @@ class ReferencedMosaic(Mosaic):
     ):
         X = utils.check_df_input(
             X,
-            ['filepath'] + preprocess.GEOTRANSFORM_COLS,
+            self.required_columns,
         )
 
         # Check if fit had been called
@@ -600,7 +603,7 @@ class LessReferencedMosaic(Mosaic):
 
         X = utils.check_df_input(
             X,
-            ['filepath'] + preprocess.GEOTRANSFORM_COLS,
+            self.required_columns,
         )
 
         if iteration_indices is None:

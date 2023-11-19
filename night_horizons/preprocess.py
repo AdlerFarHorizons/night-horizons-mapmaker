@@ -52,6 +52,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         self.crs = crs
         self.unhandled_files = unhandled_files
         self.passthrough = passthrough
+        self.required_columns = ['filepath']
 
     def fit(
         self,
@@ -425,10 +426,27 @@ class Filter(TransformerMixin, BaseEstimator):
 
 class AltitudeFilter(Filter):
 
-    def __init__(self, column, cruising_altitude=15000.):
+    def __init__(self, column, cruising_altitude=13000.):
+
+        self.column = column
+        self.cruising_altitude = cruising_altitude
 
         def condition(X):
             return X[column] > cruising_altitude
+
+        super().__init__(condition)
+
+
+class SteadyFilter(Filter):
+
+    def __init__(self, columns, max_gyro=0.075):
+
+        self.columns = columns
+        self.max_gyro = max_gyro
+
+        def condition(X):
+            mag = np.linalg.norm(X[columns], axis=1)
+            return mag < max_gyro
 
         super().__init__(condition)
 
@@ -457,6 +475,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
     ):
         self.crs = crs
         self.passthrough = passthrough
+        self.required_columns = ['filepath']
 
     def fit(
         self,
