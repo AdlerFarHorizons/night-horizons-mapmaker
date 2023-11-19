@@ -652,11 +652,14 @@ class LessReferencedMosaic(Mosaic):
 
             row = X.loc[ind]
 
-            return_code, info = self.incorporate_image(
-                row,
-                dsframe_dst_pts,
-                dsframe_dst_des,
-            )
+            try:
+                return_code, info = self.incorporate_image(
+                    row,
+                    dsframe_dst_pts,
+                    dsframe_dst_des,
+                )
+            except cv2.error:
+                return_code = 1
 
             if return_code != 0:
                 self.log_['bad_inds'].append(ind)
