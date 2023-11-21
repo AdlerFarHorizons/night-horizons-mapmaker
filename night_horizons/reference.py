@@ -25,7 +25,7 @@ class SensorGeoreferencer(BaseEstimator):
         passthrough: Union[bool, list[str]] = False,
         use_direct_estimate: bool = True,
         camera_angles: dict[float] = {0: 30., 1: 0., 2: 30.},
-        angle_error: float = 10.,
+        angle_error: float = 5.,
     ):
         self.crs = crs
         self.passthrough = passthrough
