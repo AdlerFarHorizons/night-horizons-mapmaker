@@ -41,6 +41,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
+        dataset_padding: float = 1e5,
         fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
         n_bands: int = 4,
@@ -54,6 +55,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         self.crs = crs
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height
+        self.dataset_padding = dataset_padding
         self.fill_value = fill_value
         self.dtype = dtype
         self.n_bands = n_bands
@@ -139,10 +141,10 @@ class Mosaic(TransformerMixin, BaseEstimator):
             self.crs = pyproj.CRS(self.crs)
 
         # Get bounds
-        self.x_min_ = X['x_min'].min() - self.padding
-        self.x_max_ = X['x_max'].max() + self.padding
-        self.y_min_ = X['y_min'].min() - self.padding
-        self.y_max_ = X['y_max'].max() + self.padding
+        self.x_min_ = X['x_min'].min() - self.dataset_padding
+        self.x_max_ = X['x_max'].max() + self.dataset_padding
+        self.y_min_ = X['y_min'].min() - self.dataset_padding
+        self.y_max_ = X['y_max'].max() + self.dataset_padding
 
         # Pixel resolution
         if self.pixel_width is None:
