@@ -23,7 +23,7 @@ class PreprocessingPipelines:
     @staticmethod
     def nitelite_preprocessing_pipeline(
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        use_approximate_georeferencinuse_approximate_georeferencingg: bool = True,
+        use_approximate_georeferencing: bool = True,
         altitude_column: str = 'mAltitude',
         gyro_columns: list[str] = ['imuGyroX', 'imuGyroY', 'imuGyroZ'],
     ):
@@ -58,22 +58,22 @@ class PreprocessingPipelines:
 
         return preprocessing_pipeline
 
+
+class GeoreferencePipelines:
+
     @staticmethod
-    def get_metadata_and_approx_georefs(
-        passthrough: list[str] = ['filepath', 'camera_num'],
+    def sensor_georeferencing(
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
     ):
 
+        # Choose the preprocesser for getting the bulk of the metadata
+        metadata_preprocesser = preprocess.NITELitePreprocesser(
+            crs=crs,
+            unhandled_files='warn and drop',
+        )
         pipeline = Pipeline([
-            ('nitelite', preprocess.NITELitePreprocesser(crs=crs)),
-            ('georeference', ColumnTransformer(
-                transformers=[
-                    ('georeference', reference.SensorGeoreferencer(crs=crs),
-                     ['sensor_x', 'sensor_y']),
-                    ('passthrough', 'passthrough', passthrough)
-                ],
-                remainder='drop',
-            )),
+            ('nitelite', metadata_preprocesser),
+            ('georeference', reference.SensorGeoreferencer(crs=crs)),
         ])
 
         return pipeline

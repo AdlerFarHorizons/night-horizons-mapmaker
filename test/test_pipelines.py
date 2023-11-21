@@ -8,6 +8,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 import night_horizons.utils as utils
+import night_horizons.preprocess as preprocess
 import night_horizons.raster as raster
 import night_horizons.pipelines as pipelines
 import night_horizons.metrics as metrics
@@ -31,14 +32,16 @@ class BaseTester(unittest.TestCase):
             os.remove(self.mosaic_fp)
 
 
-class TestGetMetadataAndApproxGeorefs(BaseTester):
+class TestSensorGeoreferencing(BaseTester):
 
     def setUp(self):
 
         super().setUp()
 
-        self.pipeline, self.y_pipeline = \
-            pipelines.PreprocessingPipelines.get_metadata_and_approx_georefs()
+        self.y_pipeline = preprocess.GeoTIFFPreprocesser()
+
+        self.pipeline = \
+            pipelines.GeoreferencePipelines.sensor_georeferencing()
 
     def test_fit_transform(self):
         '''For this test we're scoring the values it was trained on,
@@ -56,7 +59,10 @@ class TestGetMetadataAndApproxGeorefs(BaseTester):
         )
         y_pred = self.pipeline.transform(self.fps)
 
-        assert y
+        # We want to ensure that we get different estimated offsets for
+        # different cameras
+        assert np.std(y_pred['spatial_error']) > 0.
+
 
 class TestReferencedMosaic(BaseTester):
 
