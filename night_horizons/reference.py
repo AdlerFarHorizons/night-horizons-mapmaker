@@ -25,7 +25,11 @@ class SensorGeoreferencer(BaseEstimator):
     ):
         self.crs = crs
         self.passthrough = passthrough
-        self.required_columns = ['sensor_x', 'sensor_y']
+        self.required_columns = [
+            'sensor_x',
+            'sensor_y',
+            'camera_num',
+        ]
 
     @utils.enable_passthrough
     def fit(self, X, y):
@@ -75,6 +79,14 @@ class SensorGeoreferencer(BaseEstimator):
             self.height_ / self.pixel_height_
         )).astype(int)
 
+        # Estimate spatial error
+        X['offset'] = np.sqrt(
+            (X['sensor_x'] - y['x_center'])**2.
+            + (X['sensor_y'] - y['y_center'])**2.
+        )
+        X_cam = X.groupby('camera_num')
+        self.spatial_error_ = X_cam['offset'].mean()
+
         # `fit` should always return `self`
         self.is_fitted_ = True
         return self
@@ -116,6 +128,9 @@ class SensorGeoreferencer(BaseEstimator):
         X['y_max'] = X['sensor_y'] + 0.5 * self.height_
         X['x_center'] = X['sensor_x']
         X['y_center'] = X['sensor_y']
+
+        # Estimate the spatial error
+        X['spatial_error'] = self.spatial_error_.loc[X['camera_num']].values
 
         return X
 
