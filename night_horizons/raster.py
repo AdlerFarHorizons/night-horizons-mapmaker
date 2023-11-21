@@ -293,16 +293,21 @@ class ReferencedImage(Image):
         latlon_crs_code: str = 'EPSG:4326',
     ):
 
-        reffed_image = ReferencedImage.__new__(cls)
+        # Get image
+        dataset = gdal.Open(filename, gdal.GA_ReadOnly)
+        img = dataset.ReadAsArray().transpose(1, 2, 0)
 
-        reffed_image.dataset = gdal.Open(filename, gdal.GA_Update)
-        img = reffed_image.dataset.ReadAsArray().transpose(1, 2, 0)
-        super(ReferencedImage, reffed_image).__init__(img)
+        # Get bounds
+        cart_crs = pyproj.CRS(cart_crs_code)
+        x_bounds, y_bounds, _, _ = get_bounds_from_dataset(dataset, cart_crs)
 
-        # Set CRS properties
-        reffed_image.set_projections(cart_crs_code, latlon_crs_code)
-
-        return reffed_image
+        return ReferencedImage(
+            img,
+            x_bounds,
+            y_bounds,
+            cart_crs_code=cart_crs_code,
+            latlon_crs_code=latlon_crs_code
+        )
 
     @property
     def latlon_bounds(self):
