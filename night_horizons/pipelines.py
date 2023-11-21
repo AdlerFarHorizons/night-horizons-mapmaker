@@ -21,6 +21,44 @@ from . import preprocess, reference, mosaic
 class PreprocessingPipelines:
 
     @staticmethod
+    def nitelite_preprocessing_pipeline(
+        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+        use_approximate_georeferencinuse_approximate_georeferencingg: bool = True,
+        altitude_column: str = 'mAltitude',
+        gyro_columns: list[str] = ['imuGyroX', 'imuGyroY', 'imuGyroZ'],
+    ):
+
+        # Choose the preprocesser for getting the bulk of the metadata
+        metadata_preprocesser = preprocess.NITELitePreprocesser(
+            crs=crs,
+            unhandled_files='warn and drop',
+        )
+
+        # Choose the georeferencing
+        if use_approximate_georeferencing:
+            georeferencer = reference.SensorGeoreferencer(
+                crs=crs, passthrough=['filepath', 'camera_num'])
+        else:
+            georeferencer = preprocess.GeoTIFFPreprocesser(
+                crs=crs, passthrough=['camera_num'])
+
+        # Build the steps
+        preprocessing_steps = [
+            ('metadata',
+             metadata_preprocesser),
+            ('select_deployment_phase',
+             preprocess.AltitudeFilter(column=altitude_column)),
+            ('select_steady',
+             preprocess.SteadyFilter(columns=gyro_columns)),
+            ('georeference',
+             georeferencer),
+        ]
+
+        preprocessing_pipeline = Pipeline(preprocessing_steps)
+
+        return preprocessing_pipeline
+
+    @staticmethod
     def get_metadata_and_approx_georefs(
         passthrough: list[str] = ['filepath', 'camera_num'],
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
