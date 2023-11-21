@@ -515,13 +515,14 @@ class LessReferencedMosaic(Mosaic):
         verbose: bool = True,
         homography_det_min=0.6,
         feature_detector: str = 'ORB',
-        feature_detector_kwargs: dict = {
-            'nfeatures': 500,
-            'patchSize': 101,
-            'nlevels': 4,
-            'firstLevel': 4,
-            'WTA_K': 4,
-        },
+        feature_detector_kwargs: dict = {'patchSize': 101,},
+        # DEBUG
+        #     'nfeatures': 500,
+        #     'patchSize': 101,
+        #     'nlevels': 4,
+        #     'firstLevel': 4,
+        #     'WTA_K': 4,
+        # },
         feature_matcher: str = 'BFMatcher',
         feature_matcher_kwargs: dict = {},
     ):
