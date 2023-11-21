@@ -41,11 +41,11 @@ class Mosaic(TransformerMixin, BaseEstimator):
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
-        dataset_padding: float = 1e5,
         fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
         n_bands: int = 4,
         padding: float = 0.,
+        dataset_padding: float = 0.,
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         verbose: bool = True,
@@ -55,11 +55,11 @@ class Mosaic(TransformerMixin, BaseEstimator):
         self.crs = crs
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height
-        self.dataset_padding = dataset_padding
         self.fill_value = fill_value
         self.dtype = dtype
         self.n_bands = n_bands
         self.padding = padding
+        self.dataset_padding = dataset_padding
         self.passthrough = passthrough
         self.outline = outline
         self.verbose = verbose
@@ -509,6 +509,7 @@ class LessReferencedMosaic(Mosaic):
         dtype: type = np.uint8,
         n_bands: int = 4,
         padding: float = 0.,
+        dataset_padding: float = 5000.,
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         verbose: bool = True,
@@ -535,6 +536,7 @@ class LessReferencedMosaic(Mosaic):
             dtype=dtype,
             n_bands=n_bands,
             padding=padding,
+            dataset_padding=dataset_padding,
             passthrough=passthrough,
             outline=outline,
             verbose=verbose,
@@ -549,6 +551,7 @@ class LessReferencedMosaic(Mosaic):
             dtype=dtype,
             n_bands=n_bands,
             padding=0.,
+            dataset_padding=0.,
             passthrough=passthrough,
             outline=outline,
             verbose=verbose,

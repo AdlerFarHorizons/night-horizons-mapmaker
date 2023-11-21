@@ -21,6 +21,7 @@ GEOTRANSFORM_COLS = [
     'x_rot', 'y_rot',
     'x_size', 'y_size',
     'x_center', 'y_center',
+    'spatial_error',
 ]
 
 
@@ -403,54 +404,6 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         return gps_log_df
 
 
-class Filter(TransformerMixin, BaseEstimator):
-    '''Simple estimator to implement easy filtering of rows.
-
-    Parameters
-    ----------
-    Returns
-    -------
-    '''
-
-    def __init__(self, condition):
-        self.condition = condition
-
-    def fit(self, X, y=None):
-        self.is_fitted_ = True
-        return self
-
-    def transform(self, X):
-        meets_condition = self.condition(X)
-        return X.loc[meets_condition]
-
-
-class AltitudeFilter(Filter):
-
-    def __init__(self, column, cruising_altitude=13000.):
-
-        self.column = column
-        self.cruising_altitude = cruising_altitude
-
-        def condition(X):
-            return X[column] > cruising_altitude
-
-        super().__init__(condition)
-
-
-class SteadyFilter(Filter):
-
-    def __init__(self, columns, max_gyro=0.075):
-
-        self.columns = columns
-        self.max_gyro = max_gyro
-
-        def condition(X):
-            mag = np.linalg.norm(X[columns], axis=1)
-            return mag < max_gyro
-
-        super().__init__(condition)
-
-
 class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
     '''Transform filepaths into geotransform properties.
 
@@ -472,10 +425,12 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
         self,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         passthrough: bool = False,
+        spatial_error: float = 0.,
     ):
         self.crs = crs
         self.passthrough = passthrough
         self.required_columns = ['filepath']
+        self.spatial_error = spatial_error
 
     def fit(
         self,
@@ -546,6 +501,8 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
             x_center = 0.5 * (x_min + x_max)
             y_center = 0.5 * (y_min + y_max)
 
+            spatial_error = self.spatial_error
+
             row = pd.Series(
                 [
                     x_min, x_max,
@@ -553,7 +510,8 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
                     pixel_width, pixel_height,
                     x_rot, y_rot,
                     dataset.RasterXSize, dataset.RasterYSize,
-                    x_center, y_center
+                    x_center, y_center,
+                    spatial_error,
                 ],
                 index=GEOTRANSFORM_COLS,
                 name=X.index[i]
@@ -565,3 +523,51 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
         X = pd.concat([X, new_df], axis='columns')
 
         return X
+
+
+class Filter(TransformerMixin, BaseEstimator):
+    '''Simple estimator to implement easy filtering of rows.
+
+    Parameters
+    ----------
+    Returns
+    -------
+    '''
+
+    def __init__(self, condition):
+        self.condition = condition
+
+    def fit(self, X, y=None):
+        self.is_fitted_ = True
+        return self
+
+    def transform(self, X):
+        meets_condition = self.condition(X)
+        return X.loc[meets_condition]
+
+
+class AltitudeFilter(Filter):
+
+    def __init__(self, column, cruising_altitude=13000.):
+
+        self.column = column
+        self.cruising_altitude = cruising_altitude
+
+        def condition(X):
+            return X[column] > cruising_altitude
+
+        super().__init__(condition)
+
+
+class SteadyFilter(Filter):
+
+    def __init__(self, columns, max_gyro=0.075):
+
+        self.columns = columns
+        self.max_gyro = max_gyro
+
+        def condition(X):
+            mag = np.linalg.norm(X[columns], axis=1)
+            return mag < max_gyro
+
+        super().__init__(condition)
