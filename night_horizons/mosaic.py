@@ -243,10 +243,15 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         return iteration_indices
 
-    def physical_to_pixel(self, x_min, x_max, y_min, y_max, padding=0):
+    def physical_to_pixel(
+        self,
+        x_min,
+        x_max,
+        y_min,
+        y_max,
+        padding=0
+    ):
         '''
-        TODO: bounds_to_pixels would be more apt
-
         Parameters
         ----------
         Returns
@@ -630,7 +635,7 @@ class LessReferencedMosaic(Mosaic):
         ) = self.physical_to_pixel(
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
-            padding=self.padding,
+            padding=self.padding * X['spatial_error'],
         )
 
         # Get the features for the existing mosaic

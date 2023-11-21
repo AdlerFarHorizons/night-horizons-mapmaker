@@ -3,6 +3,7 @@
 from typing import Union
 
 import numpy as np
+import pandas as pd
 import pyproj
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
@@ -22,6 +23,9 @@ class SensorGeoreferencer(BaseEstimator):
         self,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         passthrough: Union[bool, list[str]] = False,
+        use_direct_estimate: bool = True,
+        camera_angles: dict[float] = {0: 30., 1: 0., 2: 30.},
+        angle_error: float = 10.,
     ):
         self.crs = crs
         self.passthrough = passthrough
@@ -29,7 +33,11 @@ class SensorGeoreferencer(BaseEstimator):
             'sensor_x',
             'sensor_y',
             'camera_num',
+            'mAltitude',
         ]
+        self.use_direct_estimate = use_direct_estimate
+        self.camera_angles = camera_angles
+        self.angle_error = angle_error
 
     @utils.enable_passthrough
     def fit(self, X, y):
@@ -129,8 +137,22 @@ class SensorGeoreferencer(BaseEstimator):
         X['x_center'] = X['sensor_x']
         X['y_center'] = X['sensor_y']
 
-        # Estimate the spatial error
-        X['spatial_error'] = self.spatial_error_.loc[X['camera_num']].values
+        # Estimate spatial error
+        X['spatial_error'] = np.nan
+        # First, we identify what cameras we can use a direct inference for.
+        if hasattr(self, 'spatial_error_') and self.use_direct_estimate:
+            has_direct_estimate = X['camera_num'].isin(
+                self.spatial_error_.index)
+            X.loc[has_direct_estimate, 'spatial_error'] = \
+                self.spatial_error_.loc[
+                    X.loc[has_direct_estimate, 'camera_num']].values
+        # Second, fall-back to expected values based on camera angles
+        is_na = X['spatial_error'].isna()
+        if is_na.sum() > 0:
+            camera_angles = X['camera_num'].map(self.camera_angles)
+            X.loc[is_na, 'spatial_error'] = X.loc[is_na, 'mAltitude'] * np.tan(
+                (camera_angles + self.angle_error) * np.pi / 180.
+            )
 
         return X
 
