@@ -360,53 +360,6 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         self.save_image(img, x_off, y_off)
 
-    def blend_images(
-        self,
-        src_img,
-        dst_img,
-    ):
-
-        # Fill value defaults to values that would be opaque
-        fill_value = self.fill_value
-        if fill_value is None:
-            if np.issubdtype(dst_img.dtype, np.integer):
-                fill_value = 255
-            else:
-                fill_value = 1.
-
-        # Doesn't consider zeros in the final channel as empty
-        n_bands = dst_img.shape[-1]
-        is_empty = (dst_img[:, :, :n_bands - 1].sum(axis=2) == 0)
-
-        # Blend
-        blended_img = []
-        for j in range(n_bands):
-            try:
-                blended_img_j = np.where(
-                    is_empty,
-                    src_img[:, :, j],
-                    dst_img[:, :, j]
-                )
-            # When there's no band information in the one we're blending,
-            # fall back to the fill value
-            except IndexError:
-                blended_img_j = np.full(
-                    dst_img.shape[:2],
-                    fill_value,
-                    dtype=dst_img.dtype
-                )
-            blended_img.append(blended_img_j)
-        blended_img = np.array(blended_img).transpose(1, 2, 0)
-
-        # Add an outline
-        if self.outline > 0:
-            blended_img[:self.outline] = fill_value
-            blended_img[-1 - self.outline:] = fill_value
-            blended_img[:, :self.outline] = fill_value
-            blended_img[:, -1 - self.outline:] = fill_value
-
-        return blended_img
-
     @staticmethod
     def check_bounds(coords, x_off, y_off, x_size, y_size):
 
@@ -474,9 +427,11 @@ class ReferencedMosaic(Mosaic):
             )
 
             # Combine the images
-            blended_img = self.blend_images(
+            blended_img = utils.blend_images(
                 src_img=src_img_resized,
                 dst_img=dst_img,
+                fill_value=self.fill_value,
+                outline=self.outline,
             )
 
             # Store the image
@@ -754,7 +709,9 @@ class LessReferencedMosaic(Mosaic):
         )
 
         # Exit early if the warp didn't work
-        if not utils.validate_warp_transform(M, self.homography_det_min):
+        valid_M, abs_det_M = utils.validate_warp_transform(
+            M, self.homography_det_min)
+        if not valid_M:
             # Return more information on crash
             info['M'] = M
             return 1, info
@@ -784,9 +741,11 @@ class LessReferencedMosaic(Mosaic):
 
         # Combine the images
         dst_img = self.get_image(x_off, y_off, x_size, y_size)
-        blended_img = self.blend_images(
+        blended_img = utils.blend_images(
             src_img=warped_img,
             dst_img=dst_img,
+            fill_value=self.fill_value,
+            outline=self.outline,
         )
 
         # Store the image
