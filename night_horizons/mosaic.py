@@ -476,12 +476,13 @@ class LessReferencedMosaic(Mosaic):
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         verbose: bool = True,
-        homography_det_min=0.6,
+        homography_det_min=0.5,
         feature_detector: str = 'AKAZE',
         feature_detector_kwargs: dict = {},
         feature_matcher: str = 'BFMatcher',
         feature_matcher_kwargs: dict = {},
         feature_mode: str = 'recompute',
+        log_keys: list[str] = ['abs_det_M'],
     ):
 
         super().__init__(
@@ -522,6 +523,7 @@ class LessReferencedMosaic(Mosaic):
         self.feature_matcher = feature_matcher
         self.feature_matcher_kwargs = feature_matcher_kwargs
         self.feature_mode = feature_mode
+        self.log_keys = log_keys
 
     def fit(
         self,
@@ -622,6 +624,8 @@ class LessReferencedMosaic(Mosaic):
         self.log_ = {
             'return_codes': [],
         }
+        for log_key in self.log_keys:
+            self.log_[log_key] = []
         # If verbose, add a progress bar.
         if self.verbose:
             iterable = tqdm.tqdm(iteration_indices, ncols=80)
@@ -641,7 +645,15 @@ class LessReferencedMosaic(Mosaic):
                     dsframe_dst_des,
                 )
             except cv2.error:
+                info = {}
                 return_code = 2
+
+            # Logging
+            for log_key in self.log_keys:
+                if log_key in info:
+                    self.log_[log_key].append(info[log_key])
+                else:
+                    self.log_[log_key].append(np.nan)
 
             # Store return code and continue, if failed
             self.log_['return_codes'].append(return_code)
@@ -739,6 +751,7 @@ class LessReferencedMosaic(Mosaic):
         # Exit early if the warp didn't work
         valid_M, abs_det_M = utils.validate_warp_transform(
             M, self.homography_det_min)
+        info['abs_det_M'] = abs_det_M
         if not valid_M:
             # Return more information on crash
             info['M'] = M
