@@ -28,7 +28,7 @@ class Image:
 
     def __init__(self, img):
         if np.issubdtype(img.dtype, np.floating):
-            self.img = img
+            self.img = img.astype('float32')
         elif np.issubdtype(img.dtype, np.integer):
             max_val = np.iinfo(img.dtype).max
             # Convert to uint8, the expected type
@@ -39,10 +39,15 @@ class Image:
     def open(cls, fp):
 
         img = cv2.imread(fp, cv2.IMREAD_UNCHANGED)
-        max_val = np.iinfo(img.dtype).max
-        img = img[:, :, ::-1] / max_val  # Formatting
+        img = img[:, :, ::-1]
 
         return Image(img)
+
+    def save(self, fp, img='img_int'):
+
+        img_arr = getattr(self, img)
+        img_arr = img_arr[:, :, ::-1]
+        cv2.imwrite(fp, img_arr)
 
     @property
     def img(self):

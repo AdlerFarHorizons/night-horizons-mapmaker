@@ -13,6 +13,11 @@ class TestImage(unittest.TestCase):
     def setUp(self):
 
         self.rng = np.random.default_rng(10326)
+        self.temp_fp = './test/test_data/other/temp.tiff'
+
+    def tearDown(self):
+        if os.path.isfile(self.temp_fp):
+            os.remove(self.temp_fp)
 
     def test_open(self):
 
@@ -20,6 +25,26 @@ class TestImage(unittest.TestCase):
         image = raster.Image.open(example_fp)
 
         assert image.img is not None
+
+    def test_save_and_open(self):
+
+        # Create a test image
+        img = self.rng.uniform(
+            low=0, high=255, size=(100, 80, 3)).astype(np.uint8)
+        image = raster.Image(img)
+
+        # Save and open
+        image.save(self.temp_fp)
+        new_image = raster.Image.open(self.temp_fp)
+
+        np.testing.assert_allclose(
+            image.img_int,
+            new_image.img_int,
+        )
+        np.testing.assert_allclose(
+            image.img,
+            new_image.img,
+        )
 
     def test_consistent_input_given_float(self):
 
