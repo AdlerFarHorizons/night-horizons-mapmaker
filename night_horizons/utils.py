@@ -143,14 +143,7 @@ def calc_warp_transform(
     # Get the transform
     M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.)
 
-    # Extra info dictionary
-    info = {
-        'matched_src_pts': src_pts,
-        'matched_dst_pts': dst_pts,
-        'mask': mask
-    }
-
-    return M, info
+    return M
 
 
 def validate_warp_transform(M, det_min=0.5):
