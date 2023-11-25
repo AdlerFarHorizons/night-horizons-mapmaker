@@ -1,3 +1,6 @@
+'''
+TODO: Refactor into classes with @staticmethod. Will be more clean.
+'''
 import glob
 import os
 from typing import Tuple, Union
@@ -159,7 +162,7 @@ def validate_warp_transform(M, det_min=0.5):
         and (abs_det_M < 1. / det_min)
     )
 
-    return det_in_range
+    return det_in_range, abs_det_M
 
 
 def warp_image(src_img, dst_img, M):
@@ -195,6 +198,54 @@ def warp_bounds(src_img, M):
     y_size = py_max - py_min
 
     return x_off, y_off, x_size, y_size
+
+
+def blend_images(
+    src_img,
+    dst_img,
+    fill_value: Union[float, int] = None,
+    outline: int = 0,
+):
+
+    # Fill value defaults to values that would be opaque
+    if fill_value is None:
+        if np.issubdtype(dst_img.dtype, np.integer):
+            fill_value = 255
+        else:
+            fill_value = 1.
+
+    # Doesn't consider zeros in the final channel as empty
+    n_bands = dst_img.shape[-1]
+    is_empty = (dst_img[:, :, :n_bands - 1].sum(axis=2) == 0)
+
+    # Blend
+    blended_img = []
+    for j in range(n_bands):
+        try:
+            blended_img_j = np.where(
+                is_empty,
+                src_img[:, :, j],
+                dst_img[:, :, j]
+            )
+        # When there's no band information in the one we're blending,
+        # fall back to the fill value
+        except IndexError:
+            blended_img_j = np.full(
+                dst_img.shape[:2],
+                fill_value,
+                dtype=dst_img.dtype
+            )
+        blended_img.append(blended_img_j)
+    blended_img = np.array(blended_img).transpose(1, 2, 0)
+
+    # Add an outline
+    if outline > 0:
+        blended_img[:outline] = fill_value
+        blended_img[-1 - outline:] = fill_value
+        blended_img[:, :outline] = fill_value
+        blended_img[:, -1 - outline:] = fill_value
+
+    return blended_img
 
 
 def check_filepaths_input(
