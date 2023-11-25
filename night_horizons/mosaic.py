@@ -16,6 +16,14 @@ import tqdm
 from . import preprocess, raster, metrics, utils
 
 
+ERROR_CODE_MAP = {
+    0: 'Success',
+    1: 'Extreme homography (large determinant)',
+    2: 'OpenCV error',
+    3: 'No in-bounds image data to match with',
+}
+
+
 class Mosaic(TransformerMixin, BaseEstimator):
     '''Assemble a mosaic from georeferenced images.
 
@@ -469,7 +477,7 @@ class LessReferencedMosaic(Mosaic):
         outline: int = 0,
         verbose: bool = True,
         homography_det_min=0.6,
-        feature_detector: str = 'SIFT',
+        feature_detector: str = 'AKAZE',
         feature_detector_kwargs: dict = {},
         feature_matcher: str = 'BFMatcher',
         feature_matcher_kwargs: dict = {},
@@ -641,16 +649,17 @@ class LessReferencedMosaic(Mosaic):
                 continue
 
             # Store the transformed points for the next loop
-            dsframe_dst_pts = np.append(
-                dsframe_dst_pts,
-                info['dsframe_src_pts'],
-                axis=0
-            )
-            dsframe_dst_des = np.append(
-                dsframe_dst_des,
-                info['src_des'],
-                axis=0
-            )
+            if self.feature_mode == 'store':
+                dsframe_dst_pts = np.append(
+                    dsframe_dst_pts,
+                    info['dsframe_src_pts'],
+                    axis=0
+                )
+                dsframe_dst_des = np.append(
+                    dsframe_dst_des,
+                    info['src_des'],
+                    axis=0
+                )
 
             # Update y_pred
             y_pred.loc[ind, ['x_off', 'y_off', 'x_size', 'y_size']] = [
@@ -682,7 +691,6 @@ class LessReferencedMosaic(Mosaic):
         y_off = row['y_off']
         x_size = row['x_size']
         y_size = row['y_size']
-
 
         # Get dst features
         # TODO: When dst pts are provided, this step could be made faster by
