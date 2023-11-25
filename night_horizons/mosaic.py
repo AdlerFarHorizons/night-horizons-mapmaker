@@ -473,6 +473,7 @@ class LessReferencedMosaic(Mosaic):
         feature_detector_kwargs: dict = {},
         feature_matcher: str = 'BFMatcher',
         feature_matcher_kwargs: dict = {},
+        feature_mode: str = 'recompute',
     ):
 
         super().__init__(
@@ -512,6 +513,7 @@ class LessReferencedMosaic(Mosaic):
         self.feature_detector_kwargs = feature_detector_kwargs
         self.feature_matcher = feature_matcher
         self.feature_matcher_kwargs = feature_matcher_kwargs
+        self.feature_mode = feature_mode
 
     def fit(
         self,
@@ -593,10 +595,15 @@ class LessReferencedMosaic(Mosaic):
         )
 
         # Get the features for the existing mosaic
-        dst_img = self.get_image(0, 0, self.x_size_, self.y_size_)
-        dsframe_dst_kps, dsframe_dst_des = \
-            self.feature_detector_.detectAndCompute(dst_img, None)
-        dsframe_dst_pts = cv2.KeyPoint_convert(dsframe_dst_kps)
+        if self.feature_mode == 'store':
+            dst_img = self.get_image(0, 0, self.x_size_, self.y_size_)
+            dsframe_dst_kps, dsframe_dst_des = \
+                self.feature_detector_.detectAndCompute(dst_img, None)
+            dsframe_dst_pts = cv2.KeyPoint_convert(dsframe_dst_kps)
+        # Or indicate we will not be passing those in.
+        else:
+            dsframe_dst_pts = None
+            dsframe_dst_des = None
 
         # Loop through and include
         self.log_ = {
@@ -680,9 +687,16 @@ class LessReferencedMosaic(Mosaic):
             return 3, {}
 
         # Get dst features
-        dst_pts = dsframe_dst_pts[in_bounds] - np.array([x_off, y_off])
-        dst_kp = cv2.KeyPoint_convert(dst_pts)
-        dst_des = dsframe_dst_des[in_bounds]
+        # TODO: When dst pts are provided, this step could be made faster by
+        #       not loading dst_img at this time.
+        dst_img = self.get_image(x_off, y_off, x_size, y_size)
+        if (dsframe_dst_pts is not None) and (dsframe_dst_des is not None):
+            dst_pts = dsframe_dst_pts[in_bounds] - np.array([x_off, y_off])
+            dst_kp = cv2.KeyPoint_convert(dst_pts)
+            dst_des = dsframe_dst_des[in_bounds]
+        else:
+            dst_kp, dst_des = self.feature_detector_.detectAndCompute(
+                dst_img, None)
 
         # Get src features
         src_img = utils.load_image(
@@ -709,31 +723,10 @@ class LessReferencedMosaic(Mosaic):
             info['M'] = M
             return 1, info
 
-        # Convert to the dataset frame
-        src_pts = cv2.KeyPoint_convert(src_kp)
-        dsframe_src_pts = cv2.perspectiveTransform(
-            src_pts.reshape(-1, 1, 2),
-            M,
-        ).reshape(-1, 2)
-        dsframe_src_pts += np.array([x_off, y_off])
-
-        # Convert bounding box (needed for georeferencing)
-        (
-            info['x_off'], info['y_off'],
-            info['x_size'], info['y_size']
-        ) = utils.warp_bounds(src_img, M)
-        info['x_off'] += x_off
-        info['y_off'] += y_off
-
-        # Store
-        info['dsframe_src_pts'] = dsframe_src_pts
-        info['src_des'] = src_des
-
         # Warp the source image
         warped_img = cv2.warpPerspective(src_img, M, (x_size, y_size))
 
         # Combine the images
-        dst_img = self.get_image(x_off, y_off, x_size, y_size)
         blended_img = utils.blend_images(
             src_img=warped_img,
             dst_img=dst_img,
@@ -743,6 +736,24 @@ class LessReferencedMosaic(Mosaic):
 
         # Store the image
         self.save_image(blended_img, x_off, y_off)
+
+        # Auxiliary: Convert to the dataset frame
+        src_pts = cv2.KeyPoint_convert(src_kp)
+        dsframe_src_pts = cv2.perspectiveTransform(
+            src_pts.reshape(-1, 1, 2),
+            M,
+        ).reshape(-1, 2)
+        dsframe_src_pts += np.array([x_off, y_off])
+        info['dsframe_src_pts'] = dsframe_src_pts
+        info['src_des'] = src_des
+
+        # Auxiliary: Convert bounding box (needed for georeferencing)
+        (
+            info['x_off'], info['y_off'],
+            info['x_size'], info['y_size']
+        ) = utils.warp_bounds(src_img, M)
+        info['x_off'] += x_off
+        info['y_off'] += y_off
 
         return 0, info
 
