@@ -748,10 +748,16 @@ class LessReferencedMosaic(Mosaic):
             self.feature_matcher_,
         )
 
-        # Exit early if the warp didn't work
+        # Check transform
         valid_M, abs_det_M = utils.validate_warp_transform(
             M, self.homography_det_min)
+
+        # Store info
+        info['dst_kp'] = dst_kp
+        info['src_kp'] = src_kp
         info['abs_det_M'] = abs_det_M
+
+        # Exit early if the warp didn't work
         if not valid_M:
             # Return more information on crash
             info['M'] = M
