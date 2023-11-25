@@ -57,6 +57,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         verbose: bool = True,
+        debug: bool = False,
     ):
         self.filepath = filepath
         self.file_exists = file_exists
@@ -72,6 +73,7 @@ class Mosaic(TransformerMixin, BaseEstimator):
         self.outline = outline
         self.verbose = verbose
         self.required_columns = ['filepath'] + preprocess.GEOTRANSFORM_COLS
+        self.debug = debug
 
     @utils.enable_passthrough
     def fit(
@@ -639,19 +641,19 @@ class LessReferencedMosaic(Mosaic):
             row = X.loc[ind]
 
             try:
-                return_code, info = self.incorporate_image(
+                return_code, results, log_i = self.incorporate_image(
                     row,
                     dsframe_dst_pts,
                     dsframe_dst_des,
                 )
             except cv2.error:
-                info = {}
+                log_i = {}
                 return_code = 2
 
             # Logging
             for log_key in self.log_keys:
-                if log_key in info:
-                    self.log_[log_key].append(info[log_key])
+                if log_key in log_i:
+                    self.log_[log_key].append(log_i[log_key])
                 else:
                     self.log_[log_key].append(np.nan)
 
@@ -664,18 +666,19 @@ class LessReferencedMosaic(Mosaic):
             if self.feature_mode == 'store':
                 dsframe_dst_pts = np.append(
                     dsframe_dst_pts,
-                    info['dsframe_src_pts'],
+                    results['dsframe_src_pts'],
                     axis=0
                 )
                 dsframe_dst_des = np.append(
                     dsframe_dst_des,
-                    info['src_des'],
+                    results['src_des'],
                     axis=0
                 )
 
             # Update y_pred
             y_pred.loc[ind, ['x_off', 'y_off', 'x_size', 'y_size']] = [
-                info['x_off'], info['y_off'], info['x_size'], info['y_size']
+                results['x_off'], results['y_off'],
+                results['x_size'], results['y_size']
             ]
 
         # Convert to pixels
@@ -696,7 +699,15 @@ class LessReferencedMosaic(Mosaic):
 
         return y_pred[preprocess.GEOTRANSFORM_COLS]
 
-    def incorporate_image(self, row, dsframe_dst_pts, dsframe_dst_des):
+    def incorporate_image(
+        self,
+        row: pd.Series,
+        dsframe_dst_pts: np.ndarray,
+        dsframe_dst_des: np.ndarray,
+    ):
+
+        results = {}
+        log = {}
 
         # Get image location
         x_off = row['x_off']
@@ -716,7 +727,13 @@ class LessReferencedMosaic(Mosaic):
                 x_off, y_off, x_size, y_size
             )
             if in_bounds.sum() == 0:
-                return 3, {}
+                if self.debug:
+                    log = {
+                        log_key: locals()[log_key]
+                        for log_key in self.log_keys
+                        if log_key in locals()
+                    }
+                return 3, results, log
 
             # Get pts in the local frame
             dst_pts = dsframe_dst_pts[in_bounds] - np.array([x_off, y_off])
@@ -725,7 +742,13 @@ class LessReferencedMosaic(Mosaic):
         else:
             # Check what's in bounds, exit if nothing
             if dst_img.sum() == 0:
-                return 3, {}
+                if self.debug:
+                    log = {
+                        log_key: locals()[log_key]
+                        for log_key in self.log_keys
+                        if log_key in locals()
+                    }
+                return 3, results, log
 
             # Get the pts
             dst_kp, dst_des = self.feature_detector_.detectAndCompute(
@@ -738,9 +761,10 @@ class LessReferencedMosaic(Mosaic):
         )
         src_kp, src_des = self.feature_detector_.detectAndCompute(
             src_img, None)
+        results['src_des'] = src_des
 
         # Feature matching
-        M, info = utils.calc_warp_transform(
+        M = utils.calc_warp_transform(
             src_kp,
             src_des,
             dst_kp,
@@ -752,16 +776,16 @@ class LessReferencedMosaic(Mosaic):
         valid_M, abs_det_M = utils.validate_warp_transform(
             M, self.homography_det_min)
 
-        # Store info
-        info['dst_kp'] = dst_kp
-        info['src_kp'] = src_kp
-        info['abs_det_M'] = abs_det_M
-
         # Exit early if the warp didn't work
         if not valid_M:
             # Return more information on crash
-            info['M'] = M
-            return 1, info
+            if self.debug:
+                log = {
+                    log_key: locals()[log_key]
+                    for log_key in self.log_keys
+                    if log_key in locals()
+                }
+            return 1, results, log
 
         # Warp the source image
         warped_img = cv2.warpPerspective(src_img, M, (x_size, y_size))
@@ -784,18 +808,23 @@ class LessReferencedMosaic(Mosaic):
             M,
         ).reshape(-1, 2)
         dsframe_src_pts += np.array([x_off, y_off])
-        info['dsframe_src_pts'] = dsframe_src_pts
-        info['src_des'] = src_des
+        results['dsframe_src_pts'] = dsframe_src_pts
 
         # Auxiliary: Convert bounding box (needed for georeferencing)
         (
-            info['x_off'], info['y_off'],
-            info['x_size'], info['y_size']
+            results['x_off'], results['y_off'],
+            results['x_size'], results['y_size']
         ) = utils.warp_bounds(src_img, M)
-        info['x_off'] += x_off
-        info['y_off'] += y_off
+        results['x_off'] += x_off
+        results['y_off'] += y_off
 
-        return 0, info
+        if self.debug:
+            log = {
+                log_key: locals()[log_key]
+                for log_key in self.log_keys
+                if log_key in locals()
+            }
+        return 0, results, log
 
     def close(self):
 
