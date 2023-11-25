@@ -601,9 +601,14 @@ class LessReferencedMosaic(Mosaic):
                 self.feature_detector_.detectAndCompute(dst_img, None)
             dsframe_dst_pts = cv2.KeyPoint_convert(dsframe_dst_kps)
         # Or indicate we will not be passing those in.
-        else:
+        elif self.feature_mode == 'recompute':
             dsframe_dst_pts = None
             dsframe_dst_des = None
+        else:
+            raise ValueError(
+                f'feature_mode = {self.feature_mode} is not a valid option. '
+                "Valid options are ['store', 'recompute']."
+            )
 
         # Loop through and include
         self.log_ = {
@@ -678,23 +683,31 @@ class LessReferencedMosaic(Mosaic):
         x_size = row['x_size']
         y_size = row['y_size']
 
-        # Check what's in bounds, exit if nothing
-        in_bounds = self.check_bounds(
-            dsframe_dst_pts,
-            x_off, y_off, x_size, y_size
-        )
-        if in_bounds.sum() == 0:
-            return 3, {}
 
         # Get dst features
         # TODO: When dst pts are provided, this step could be made faster by
         #       not loading dst_img at this time.
         dst_img = self.get_image(x_off, y_off, x_size, y_size)
         if (dsframe_dst_pts is not None) and (dsframe_dst_des is not None):
+
+            # Check what's in bounds, exit if nothing
+            in_bounds = self.check_bounds(
+                dsframe_dst_pts,
+                x_off, y_off, x_size, y_size
+            )
+            if in_bounds.sum() == 0:
+                return 3, {}
+
+            # Get pts in the local frame
             dst_pts = dsframe_dst_pts[in_bounds] - np.array([x_off, y_off])
             dst_kp = cv2.KeyPoint_convert(dst_pts)
             dst_des = dsframe_dst_des[in_bounds]
         else:
+            # Check what's in bounds, exit if nothing
+            if dst_img.sum() == 0:
+                return 3, {}
+
+            # Get the pts
             dst_kp, dst_des = self.feature_detector_.detectAndCompute(
                 dst_img, None)
 
