@@ -57,7 +57,8 @@ class Mosaic(TransformerMixin, BaseEstimator):
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         verbose: bool = True,
-        debug: bool = False,
+        debug_mode: bool = False,
+        log_keys: list[str] = [],
     ):
         self.filepath = filepath
         self.file_exists = file_exists
@@ -73,7 +74,8 @@ class Mosaic(TransformerMixin, BaseEstimator):
         self.outline = outline
         self.verbose = verbose
         self.required_columns = ['filepath'] + preprocess.GEOTRANSFORM_COLS
-        self.debug = debug
+        self.debug_mode = debug_mode
+        self.log_keys = log_keys
 
     @utils.enable_passthrough
     def fit(
@@ -382,6 +384,17 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         return in_bounds
 
+    def debug_log(self, locals_dict):
+
+        if not self.debug:
+            return {}
+        else:
+            log = {
+                log_key: item
+                for log_key, item in locals_dict.items()
+                if log_key in self.log_keys
+            }
+            return log
 
 class ReferencedMosaic(Mosaic):
 
@@ -484,6 +497,7 @@ class LessReferencedMosaic(Mosaic):
         feature_matcher: str = 'BFMatcher',
         feature_matcher_kwargs: dict = {},
         feature_mode: str = 'recompute',
+        debug_mode: bool = True,
         log_keys: list[str] = ['abs_det_M'],
     ):
 
@@ -501,6 +515,8 @@ class LessReferencedMosaic(Mosaic):
             passthrough=passthrough,
             outline=outline,
             verbose=verbose,
+            debug_mode=debug_mode,
+            log_keys=log_keys,
         )
         self.reffed_mosaic = ReferencedMosaic(
             filepath=filepath,
@@ -516,6 +532,7 @@ class LessReferencedMosaic(Mosaic):
             passthrough=passthrough,
             outline=outline,
             verbose=verbose,
+            debug_mode=False,
         )
 
         self.homography_det_min = homography_det_min
@@ -525,7 +542,6 @@ class LessReferencedMosaic(Mosaic):
         self.feature_matcher = feature_matcher
         self.feature_matcher_kwargs = feature_matcher_kwargs
         self.feature_mode = feature_mode
-        self.log_keys = log_keys
 
     def fit(
         self,
@@ -727,12 +743,7 @@ class LessReferencedMosaic(Mosaic):
                 x_off, y_off, x_size, y_size
             )
             if in_bounds.sum() == 0:
-                if self.debug:
-                    log = {
-                        log_key: locals()[log_key]
-                        for log_key in self.log_keys
-                        if log_key in locals()
-                    }
+                log = self.debug_log(locals())
                 return 3, results, log
 
             # Get pts in the local frame
@@ -742,12 +753,7 @@ class LessReferencedMosaic(Mosaic):
         else:
             # Check what's in bounds, exit if nothing
             if dst_img.sum() == 0:
-                if self.debug:
-                    log = {
-                        log_key: locals()[log_key]
-                        for log_key in self.log_keys
-                        if log_key in locals()
-                    }
+                log = self.debug_log(locals())
                 return 3, results, log
 
             # Get the pts
@@ -764,7 +770,7 @@ class LessReferencedMosaic(Mosaic):
         results['src_des'] = src_des
 
         # Feature matching
-        M = utils.calc_warp_transform(
+        M, _ = utils.calc_warp_transform(
             src_kp,
             src_des,
             dst_kp,
@@ -778,13 +784,7 @@ class LessReferencedMosaic(Mosaic):
 
         # Exit early if the warp didn't work
         if not valid_M:
-            # Return more information on crash
-            if self.debug:
-                log = {
-                    log_key: locals()[log_key]
-                    for log_key in self.log_keys
-                    if log_key in locals()
-                }
+            log = self.debug_log(locals())
             return 1, results, log
 
         # Warp the source image
@@ -818,12 +818,7 @@ class LessReferencedMosaic(Mosaic):
         results['x_off'] += x_off
         results['y_off'] += y_off
 
-        if self.debug:
-            log = {
-                log_key: locals()[log_key]
-                for log_key in self.log_keys
-                if log_key in locals()
-            }
+        log = self.debug_log(locals())
         return 0, results, log
 
     def close(self):
