@@ -151,6 +151,7 @@ def calc_warp_transform(
         dst_pts,
         method=method,
         ransacReprojThreshold=ransacReprojThreshold,
+        *args,
         **kwargs
     )
 
