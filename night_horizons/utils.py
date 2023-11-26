@@ -123,11 +123,11 @@ def calc_warp_transform(
     dst_kp,
     dst_des,
     feature_matcher=None,
-    find_homography_kwargs: dict = {
-        'method': cv2.RANSAC,
-        'ransacReprojThreshold': 5.,
-    },
+    method=cv2.RANSAC,
+    ransacReprojThreshold=5.,
     log_keys: list[str] = [],
+    *args,
+    **kwargs
 ):
 
     if feature_matcher is None:
@@ -146,7 +146,13 @@ def calc_warp_transform(
         -1, 1, 2)
 
     # Get the transform
-    M, mask = cv2.findHomography(src_pts, dst_pts, **find_homography_kwargs)
+    M, mask = cv2.findHomography(
+        src_pts,
+        dst_pts,
+        method=method,
+        ransacReprojThreshold=ransacReprojThreshold,
+        **kwargs
+    )
 
     log = {}
     for log_key in log_keys:
