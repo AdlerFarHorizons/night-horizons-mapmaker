@@ -386,15 +386,16 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
     def debug_log(self, locals_dict):
 
-        if not self.debug:
+        if not self.debug_mode:
             return {}
-        else:
-            log = {
-                log_key: item
-                for log_key, item in locals_dict.items()
-                if log_key in self.log_keys
-            }
-            return log
+
+        log = {
+            log_key: item
+            for log_key, item in locals_dict.items()
+            if log_key in self.log_keys
+        }
+        return log
+
 
 class ReferencedMosaic(Mosaic):
 
