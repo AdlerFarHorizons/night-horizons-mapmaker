@@ -123,6 +123,7 @@ def calc_warp_transform(
     dst_kp,
     dst_des,
     feature_matcher=None,
+    n_matches_used=500,
     method=cv2.RANSAC,
     ransacReprojThreshold=5.,
     log_keys: list[str] = [],
@@ -138,6 +139,9 @@ def calc_warp_transform(
 
     # Sort matches in the order of their distance.
     matches = sorted(matches, key=lambda x: x.distance)
+
+    # Take only n_matches_used matches
+    matches = matches[:n_matches_used]
 
     # Points for the transform
     src_pts = np.array([src_kp[m.queryIdx].pt for m in matches]).reshape(
