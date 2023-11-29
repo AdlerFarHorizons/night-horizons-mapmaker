@@ -16,6 +16,14 @@ from sklearn.utils.validation import check_array
 # TODO: Remove this when the draft is done.
 
 
+ERROR_CODE_MAP = {
+    'success': 'Success',
+    'bad_det': 'Extreme homography (bad determinant)',
+    'opencv_err': 'OpenCV error',
+    'out_of_bounds': 'No in-bounds image data to match with',
+}
+
+
 def discover_data(
     directory: str,
     extension: Union[str, list[str]] = None,
@@ -436,3 +444,22 @@ def enable_passthrough(func):
 
         return X_out
     return wrapper
+
+
+class LoggerMixin:
+
+    def __init__(self, debug_mode=False, log_keys=[]):
+        self.debug_mode = debug_mode
+        self.log_keys = log_keys
+
+    def debug_log(self, locals_dict):
+
+        if not self.debug_mode:
+            return {}
+
+        log = {
+            log_key: item
+            for log_key, item in locals_dict.items()
+            if log_key in self.log_keys
+        }
+        return log
