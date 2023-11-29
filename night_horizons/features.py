@@ -265,7 +265,8 @@ class ImageJoinerQueue:
         for var in variations:
             options = copy.deepcopy(defaults)
             options.update(var)
-            ImageJoiner(**options)
+            image_joiner = ImageJoiner(**options)
+            self.image_joiners.append(image_joiner)
 
     def join(self, src_img, dst_img):
 
