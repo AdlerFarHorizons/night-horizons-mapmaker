@@ -13,18 +13,10 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 import tqdm
 
-from . import preprocess, raster, metrics, utils
+from . import utils, raster, preprocess, features, metrics
 
 
-ERROR_CODE_MAP = {
-    0: 'Success',
-    1: 'Extreme homography (large determinant)',
-    2: 'OpenCV error',
-    3: 'No in-bounds image data to match with',
-}
-
-
-class Mosaic(TransformerMixin, BaseEstimator):
+class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
     '''Assemble a mosaic from georeferenced images.
 
     TODO: padding is a parameter right now, but in reality it's image
@@ -384,18 +376,6 @@ class Mosaic(TransformerMixin, BaseEstimator):
 
         return in_bounds
 
-    def debug_log(self, locals_dict):
-
-        if not self.debug_mode:
-            return {}
-
-        log = {
-            log_key: item
-            for log_key, item in locals_dict.items()
-            if log_key in self.log_keys
-        }
-        return log
-
 
 class ReferencedMosaic(Mosaic):
 
@@ -493,10 +473,9 @@ class LessReferencedMosaic(Mosaic):
         outline: int = 0,
         verbose: bool = True,
         homography_det_min=0.5,
-        feature_detector: str = 'AKAZE',
-        feature_detector_kwargs: dict = {},
-        feature_matcher: str = 'BFMatcher',
-        feature_matcher_kwargs: dict = {},
+        image_joiner: Union[
+            features.ImageJoiner, features.ImageJoinerQueue
+        ] = None,
         feature_mode: str = 'recompute',
         debug_mode: bool = True,
         log_keys: list[str] = ['abs_det_M'],
@@ -538,10 +517,7 @@ class LessReferencedMosaic(Mosaic):
 
         self.homography_det_min = homography_det_min
 
-        self.feature_detector = feature_detector
-        self.feature_detector_kwargs = feature_detector_kwargs
-        self.feature_matcher = feature_matcher
-        self.feature_matcher_kwargs = feature_matcher_kwargs
+        self.image_joiner = image_joiner
         self.feature_mode = feature_mode
 
     def fit(
@@ -558,20 +534,8 @@ class LessReferencedMosaic(Mosaic):
         # Create the dataset
         super().fit(approx_y, dataset=dataset)
 
-        # DEBUG
-        # import pdb; pdb.set_trace()
-
         # Add the existing mosaic
         self.reffed_mosaic.fit_transform(X, dataset=self.dataset_)
-
-        # Make the feature detector and matcher
-        # We do the somewhat circuitous rout of passing in the name of
-        # the feature detector and the arguments separately, as opposed to
-        # passing in a class. This is because cv2 classes can't be pickled.
-        constructor = getattr(cv2, f'{self.feature_detector}_create')
-        self.feature_detector_ = constructor(**self.feature_detector_kwargs)
-        constructor = getattr(cv2, self.feature_matcher)
-        self.feature_matcher_ = constructor(**self.feature_matcher_kwargs)
 
     @utils.enable_passthrough
     def predict(
@@ -724,7 +688,7 @@ class LessReferencedMosaic(Mosaic):
     ):
 
         results = {}
-        log = {}
+        debug_log = {}
 
         # Get image location
         x_off = row['x_off']
@@ -736,7 +700,8 @@ class LessReferencedMosaic(Mosaic):
         # TODO: When dst pts are provided, this step could be made faster by
         #       not loading dst_img at this time.
         dst_img = self.get_image(x_off, y_off, x_size, y_size)
-        if (dsframe_dst_pts is not None) and (dsframe_dst_des is not None):
+        if self.feature_mode == 'store':
+            raise NotImplementedError('Removed this functionality for now.')
 
             # Check what's in bounds, exit if nothing
             in_bounds = self.check_bounds(
@@ -744,8 +709,8 @@ class LessReferencedMosaic(Mosaic):
                 x_off, y_off, x_size, y_size
             )
             if in_bounds.sum() == 0:
-                log = self.debug_log(locals())
-                return 3, results, log
+                debug_log = self.debug_log(locals())
+                return 'out_of_bounds', results, debug_log
 
             # Get pts in the local frame
             dst_pts = dsframe_dst_pts[in_bounds] - np.array([x_off, y_off])
@@ -754,73 +719,44 @@ class LessReferencedMosaic(Mosaic):
         else:
             # Check what's in bounds, exit if nothing
             if dst_img.sum() == 0:
-                log = self.debug_log(locals())
-                return 3, results, log
+                debug_log = self.debug_log(locals())
+                return 'out_of_bounds', results, debug_log
 
-            # Get the pts
-            dst_kp, dst_des = self.feature_detector_.detectAndCompute(
-                dst_img, None)
-
-        # Get src features
+        # Get src image
         src_img = utils.load_image(
             row['filepath'],
             dtype=self.dtype,
         )
-        src_kp, src_des = self.feature_detector_.detectAndCompute(
-            src_img, None)
-        results['src_des'] = src_des
 
-        # Feature matching
-        M, _ = utils.calc_warp_transform(
-            src_kp,
-            src_des,
-            dst_kp,
-            dst_des,
-            self.feature_matcher_,
-        )
+        # Main function
+        result_code, result, join_debug_log = self.image_joiner(
+            src_img, dst_img)
 
-        # Check transform
-        valid_M, abs_det_M = utils.validate_warp_transform(
-            M, self.homography_det_min)
+        # TODO: Clean this up
+        if result_code == 'success':
+            # Store the image
+            self.save_image(result['blended_img'], x_off, y_off)
 
-        # Exit early if the warp didn't work
-        if not valid_M:
-            log = self.debug_log(locals())
-            return 1, results, log
+            # Auxiliary: Convert to the dataset frame
+            src_pts = cv2.KeyPoint_convert(result['src_kp'])
+            dsframe_src_pts = cv2.perspectiveTransform(
+                src_pts.reshape(-1, 1, 2),
+                result['M'],
+            ).reshape(-1, 2)
+            dsframe_src_pts += np.array([x_off, y_off])
+            results['dsframe_src_pts'] = dsframe_src_pts
 
-        # Warp the source image
-        warped_img = cv2.warpPerspective(src_img, M, (x_size, y_size))
+            # Auxiliary: Convert bounding box (needed for georeferencing)
+            (
+                results['x_off'], results['y_off'],
+                results['x_size'], results['y_size']
+            ) = utils.warp_bounds(src_img, result['M'])
+            results['x_off'] += x_off
+            results['y_off'] += y_off
 
-        # Combine the images
-        blended_img = utils.blend_images(
-            src_img=warped_img,
-            dst_img=dst_img,
-            fill_value=self.fill_value,
-            outline=self.outline,
-        )
-
-        # Store the image
-        self.save_image(blended_img, x_off, y_off)
-
-        # Auxiliary: Convert to the dataset frame
-        src_pts = cv2.KeyPoint_convert(src_kp)
-        dsframe_src_pts = cv2.perspectiveTransform(
-            src_pts.reshape(-1, 1, 2),
-            M,
-        ).reshape(-1, 2)
-        dsframe_src_pts += np.array([x_off, y_off])
-        results['dsframe_src_pts'] = dsframe_src_pts
-
-        # Auxiliary: Convert bounding box (needed for georeferencing)
-        (
-            results['x_off'], results['y_off'],
-            results['x_size'], results['y_size']
-        ) = utils.warp_bounds(src_img, M)
-        results['x_off'] += x_off
-        results['y_off'] += y_off
-
-        log = self.debug_log(locals())
-        return 0, results, log
+        debug_log = self.debug_log(locals())
+        debug_log.update(join_debug_log)
+        return result_code, results, debug_log
 
     def close(self):
 
