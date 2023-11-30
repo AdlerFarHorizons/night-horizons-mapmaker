@@ -447,15 +447,22 @@ def enable_passthrough(func):
 
 
 class LoggerMixin:
+    '''
+    Note that a decorator is not possible because we're interested in locals()
+    Parameters
+    ----------
+    Returns
+    -------
+    '''
 
     def __init__(self, debug_mode=False, log_keys=[]):
         self.debug_mode = debug_mode
         self.log_keys = log_keys
 
-    def debug_log(self, locals_dict):
+    def log_locals(self, locals_dict):
 
         if not self.debug_mode:
-            return {}
+            return
 
         log = {
             log_key: item
@@ -463,3 +470,24 @@ class LoggerMixin:
             if log_key in self.log_keys
         }
         return log
+
+    def update_log(self, locals_dict):
+
+        # Get the local values
+        locals_log = self.log_locals(locals_dict)
+        if locals_log is None:
+            return
+
+        # Make the log, if necessary
+        if not hasattr(self, 'log'):
+            self.log = {}
+
+        # Loop through, saving previous versions if they exist.
+        for log_key, item in locals_log.items():
+            if log_key in self.log:
+                if not isinstance(self.log[log_key], list):
+                    self.log[log_key] = [self.log[log_key], ]
+                self.log[log_key].append(item)
+            else:
+                self.log[log_key] = item
+

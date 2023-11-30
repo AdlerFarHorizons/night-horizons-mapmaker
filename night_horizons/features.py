@@ -74,42 +74,11 @@ class ImageJoiner(utils.LoggerMixin):
 
     def join(self, src_img, dst_img):
 
-        results = {}
-        debug_log = {}
         start = time.time()
 
         try:
-            # Check for a dark frame
-            valid_brightness, dark_frac = self.validate_image_brightness(
-                src_img
-            )
-            if not valid_brightness:
-                raise DarkFrameError(
-                    f'Dark frame, dark_frac = {dark_frac:.3g}'
-                )
-
-            # Get keypoints
-            src_kp, src_des = self.detect_and_compute(src_img)
-            dst_kp, dst_des = self.detect_and_compute(dst_img)
-            results['src_kp'] = src_kp
-            results['src_des'] = src_des
-
-            # Get transform
-            M, warp_debug_log = self.calc_warp_transform(
-                src_kp,
-                src_des,
-                dst_kp,
-                dst_des,
-            )
-            results['M'] = M
-            debug_log.update(warp_debug_log)
-
-            # Check transform
-            valid_M, abs_det_M = self.validate_warp_transform(M)
-            if not valid_M:
-                raise HomographyTransformError(
-                    f'Bad determinant, abs_det_M = {abs_det_M:.2g}'
-                )
+            # Try to get a valid homography
+            M, results = self.find_valid_homography(src_img, dst_img)
 
             # Warp image
             warped_img = self.warp(src_img, dst_img, M)
@@ -129,10 +98,42 @@ class ImageJoiner(utils.LoggerMixin):
             duration = time.time() - start
             results['duration'] = duration
 
-            debug_log = self.debug_log(locals())
-            return return_code, results, debug_log
+            # Log
+            self.update_log(locals())
 
-    def validate_brightness(self, img):
+            return return_code, results, self.log
+
+    def find_valid_homography(self, src_img, dst_img):
+
+        results = {}
+
+        # Check for a dark frame
+        self.validate_image_brightness(src_img)
+
+        # Get keypoints
+        src_kp, src_des = self.detect_and_compute(src_img)
+        dst_kp, dst_des = self.detect_and_compute(dst_img)
+        results['src_kp'] = src_kp
+        results['src_des'] = src_des
+
+        # Get transform
+        M = self.find_homography(
+            src_kp,
+            src_des,
+            dst_kp,
+            dst_des,
+        )
+        results['M'] = M
+
+        # Check transform
+        self.validate_warp_transform(M)
+
+        # Log
+        self.update_log(locals())
+
+        return results
+
+    def validate_brightness(self, img, log={}):
 
         # Get values as fraction of max possible
         values = img.flatten()
@@ -140,13 +141,23 @@ class ImageJoiner(utils.LoggerMixin):
             values = values / np.iinfo(img.dtype).max
 
         dark_frac = (values < self.dark_frame_brightness) / values.size
-        return dark_frac < self.dark_frame_percentile, dark_frac
+
+        valid_brightness = dark_frac < self.dark_frame_percentile
+        if not valid_brightness:
+            raise DarkFrameError(
+                f'Dark frame, dark_frac = {dark_frac:.3g}'
+            )
+
+        # Log
+        self.update_log(locals())
+
+        return dark_frac
 
     def detect_and_compute(self, img):
 
         return self.feature_detector.detectAndCompute(img, None)
 
-    def calc_warp_transform(
+    def find_homography(
         self,
         src_kp,
         src_des,
@@ -178,7 +189,10 @@ class ImageJoiner(utils.LoggerMixin):
             **self.find_homography_options
         )
 
-        return M, self.debug_log(locals())
+        # Log
+        self.update_log(locals())
+
+        return M
 
     def validate_warp_transform(self, M):
 
@@ -189,6 +203,14 @@ class ImageJoiner(utils.LoggerMixin):
             and (abs_det_M < self.det_max)
         )
 
+        if not det_in_range:
+            raise HomographyTransformError(
+                f'Bad determinant, abs_det_M = {abs_det_M:.2g}'
+            )
+
+        # Log
+        self.update_log(locals())
+
         return det_in_range, abs_det_M
 
     def warp(self, src_img, dst_img, M):
@@ -196,6 +218,9 @@ class ImageJoiner(utils.LoggerMixin):
         # Warp the image being fit
         height, width = dst_img.shape[:2]
         warped_img = cv2.warpPerspective(src_img, M, (width, height))
+
+        # Log
+        self.update_log(locals())
 
         return warped_img
 
@@ -221,6 +246,9 @@ class ImageJoiner(utils.LoggerMixin):
         y_off = py_min
         x_size = px_max - px_min
         y_size = py_max - py_min
+
+        # Log
+        self.update_log(locals())
 
         return x_off, y_off, x_size, y_size
 
@@ -268,6 +296,9 @@ class ImageJoiner(utils.LoggerMixin):
             blended_img[-1 - self.outline:] = fill_value
             blended_img[:, :self.outline] = fill_value
             blended_img[:, -1 - self.outline:] = fill_value
+
+        # Log
+        self.update_log(locals())
 
         return blended_img
 
