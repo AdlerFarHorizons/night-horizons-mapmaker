@@ -473,7 +473,6 @@ class LessReferencedMosaic(Mosaic):
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         verbose: bool = True,
-        homography_det_min=0.5,
         image_joiner: Union[
             features.ImageJoiner, features.ImageJoinerQueue
         ] = None,
@@ -516,8 +515,6 @@ class LessReferencedMosaic(Mosaic):
             verbose=verbose,
             debug_mode=False,
         )
-
-        self.homography_det_min = homography_det_min
 
         self.image_joiner = image_joiner
         self.feature_mode = feature_mode
@@ -712,7 +709,7 @@ class LessReferencedMosaic(Mosaic):
                 x_off, y_off, x_size, y_size
             )
             if in_bounds.sum() == 0:
-                debug_log = self.debug_log(locals())
+                debug_log = self.log_locals(locals())
                 return 'out_of_bounds', results, debug_log
 
             # Get pts in the local frame
@@ -722,7 +719,7 @@ class LessReferencedMosaic(Mosaic):
         else:
             # Check what's in bounds, exit if nothing
             if dst_img.sum() == 0:
-                debug_log = self.debug_log(locals())
+                debug_log = self.log_locals(locals())
                 return 'out_of_bounds', results, debug_log
 
         # Get src image
@@ -774,7 +771,7 @@ class LessReferencedMosaic(Mosaic):
                 raster.Image(dst_img).save(dst_fp)
                 shutil.copy(row['filepath'], src_fp)
 
-        debug_log = self.debug_log(locals())
+        debug_log = self.log_locals(locals())
         debug_log.update(join_debug_log)
         return return_code, results, debug_log
 
