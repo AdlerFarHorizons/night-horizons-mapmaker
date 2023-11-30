@@ -30,6 +30,7 @@ class ImageJoiner(utils.LoggerMixin):
         feature_detector_options={},
         feature_matcher_options={},
         det_min=0.6,
+        det_max=2.0,
         n_matches_used=500,
         homography_method=cv2.RANSAC,
         reproj_threshold=5.,
@@ -58,6 +59,7 @@ class ImageJoiner(utils.LoggerMixin):
         self.feature_detector = feature_detector
         self.feature_matcher = feature_matcher
         self.det_min = det_min
+        self.det_max = det_max
         self.n_matches_used = n_matches_used
         self.homography_method = homography_method
         self.reproj_threshold = reproj_threshold
@@ -159,7 +161,7 @@ class ImageJoiner(utils.LoggerMixin):
 
         det_in_range = (
             (abs_det_M > self.det_min)
-            and (abs_det_M < 1. / self.det_min)
+            and (abs_det_M < self.det_max)
         )
 
         return det_in_range, abs_det_M
