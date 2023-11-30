@@ -1,5 +1,6 @@
 import glob
 import os
+import shutil
 from typing import Tuple, Union
 import warnings
 
@@ -479,6 +480,7 @@ class LessReferencedMosaic(Mosaic):
         feature_mode: str = 'recompute',
         debug_mode: bool = True,
         log_keys: list[str] = ['abs_det_M'],
+        bad_images_dir: str = None,
     ):
 
         super().__init__(
@@ -519,6 +521,7 @@ class LessReferencedMosaic(Mosaic):
 
         self.image_joiner = image_joiner
         self.feature_mode = feature_mode
+        self.bad_images_dir = bad_images_dir
 
     def fit(
         self,
@@ -736,6 +739,7 @@ class LessReferencedMosaic(Mosaic):
         return_code, result, join_debug_log = self.image_joiner.join(
             src_img, dst_img)
 
+
         # TODO: Clean this up
         if return_code == 'success':
             # Store the image
@@ -757,6 +761,18 @@ class LessReferencedMosaic(Mosaic):
             ) = utils.warp_bounds(src_img, result['M'])
             results['x_off'] += x_off
             results['y_off'] += y_off
+        # Save failed images for later debugging
+        else:
+            if self.bad_images_dir is not None:
+                n_tests_existing = len(glob.glob(os.path.join(
+                    self.bad_images_dir, 'dst_*.tiff')))
+                dst_fp = os.path.join(
+                    self.bad_images_dir, f'dst_{n_tests_existing:03d}.tiff')
+                src_fp = os.path.join(
+                    self.bad_images_dir, f'src_{n_tests_existing:03d}.tiff')
+
+                raster.Image(dst_img).save(dst_fp)
+                shutil.copy(row['filepath'], src_fp)
 
         debug_log = self.debug_log(locals())
         debug_log.update(join_debug_log)
