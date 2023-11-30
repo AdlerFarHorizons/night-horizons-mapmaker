@@ -31,6 +31,8 @@ class ImageJoiner(utils.LoggerMixin):
         feature_matcher_options={},
         det_min=0.6,
         det_max=2.0,
+        dark_frame_brightness=0.03,
+        dark_frame_percentile=0.95,
         n_matches_used=500,
         homography_method=cv2.RANSAC,
         reproj_threshold=5.,
@@ -60,6 +62,8 @@ class ImageJoiner(utils.LoggerMixin):
         self.feature_matcher = feature_matcher
         self.det_min = det_min
         self.det_max = det_max
+        self.dark_frame_brightness = dark_frame_brightness
+        self.dark_frame_percentile = dark_frame_percentile
         self.n_matches_used = n_matches_used
         self.homography_method = homography_method
         self.reproj_threshold = reproj_threshold
@@ -75,6 +79,15 @@ class ImageJoiner(utils.LoggerMixin):
         start = time.time()
 
         try:
+            # Check for a dark frame
+            valid_brightness, dark_frac = self.validate_image_brightness(
+                src_img
+            )
+            if not valid_brightness:
+                raise DarkFrameError(
+                    f'Dark frame, dark_frac = {dark_frac:.3g}'
+                )
+
             # Get keypoints
             src_kp, src_des = self.detect_and_compute(src_img)
             dst_kp, dst_des = self.detect_and_compute(dst_img)
@@ -94,7 +107,7 @@ class ImageJoiner(utils.LoggerMixin):
             # Check transform
             valid_M, abs_det_M = self.validate_warp_transform(M)
             if not valid_M:
-                raise ValueError(
+                raise HomographyTransformError(
                     f'Bad determinant, abs_det_M = {abs_det_M:.2g}'
                 )
 
@@ -108,14 +121,26 @@ class ImageJoiner(utils.LoggerMixin):
             results['blended_img'] = blended_img
         except cv2.error:
             return_code = 'opencv_err'
-        except ValueError:
+        except HomographyTransformError:
             return_code = 'bad_det'
+        except DarkFrameError:
+            return_code = 'dark_frame'
         finally:
             duration = time.time() - start
             results['duration'] = duration
 
             debug_log = self.debug_log(locals())
             return return_code, results, debug_log
+
+    def validate_brightness(self, img):
+
+        # Get values as fraction of max possible
+        values = img.flatten()
+        if np.issubdtype(img.dtype, np.integer):
+            values = values / np.iinfo(img.dtype).max
+
+        dark_frac = (values < self.dark_frame_brightness) / values.size
+        return dark_frac < self.dark_frame_percentile, dark_frac
 
     def detect_and_compute(self, img):
 
@@ -283,3 +308,11 @@ class ImageJoinerQueue:
 
         debug_log['i_image_joiner'] = i
         return result_code, result, debug_log
+
+
+class HomographyTransformError(ValueError):
+    pass
+
+
+class DarkFrameError(ValueError):
+    pass
