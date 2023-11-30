@@ -153,13 +153,13 @@ class ImageJoiner(utils.LoggerMixin):
 
         return M, self.debug_log(locals())
 
-    def validate_warp_transform(M, det_min=0.5):
+    def validate_warp_transform(self, M):
 
         abs_det_M = np.abs(np.linalg.det(M))
 
         det_in_range = (
-            (abs_det_M > det_min)
-            and (abs_det_M < 1. / det_min)
+            (abs_det_M > self.det_min)
+            and (abs_det_M < 1. / self.det_min)
         )
 
         return det_in_range, abs_det_M

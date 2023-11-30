@@ -729,11 +729,15 @@ class LessReferencedMosaic(Mosaic):
         )
 
         # Main function
-        result_code, result, join_debug_log = self.image_joiner(
+        # TODO: Return codes may not actually be particularly Pythonic.
+        #    However, we need to track *how* the failures happened somehow,
+        #    so we need some sort of flag, which is basically a return code.
+        #    That said, there may be a better alternative to this.
+        return_code, result, join_debug_log = self.image_joiner.join(
             src_img, dst_img)
 
         # TODO: Clean this up
-        if result_code == 'success':
+        if return_code == 'success':
             # Store the image
             self.save_image(result['blended_img'], x_off, y_off)
 
@@ -756,7 +760,7 @@ class LessReferencedMosaic(Mosaic):
 
         debug_log = self.debug_log(locals())
         debug_log.update(join_debug_log)
-        return result_code, results, debug_log
+        return return_code, results, debug_log
 
     def close(self):
 
