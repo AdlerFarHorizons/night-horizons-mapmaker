@@ -458,6 +458,7 @@ class LoggerMixin:
     def __init__(self, debug_mode=False, log_keys=[]):
         self.debug_mode = debug_mode
         self.log_keys = log_keys
+        self.log = None
 
     def log_locals(self, locals_dict):
 
@@ -479,7 +480,7 @@ class LoggerMixin:
             return
 
         # Make the log, if necessary
-        if not hasattr(self, 'log'):
+        if self.log is None:
             self.log = {}
 
         # Loop through, saving previous versions if they exist.

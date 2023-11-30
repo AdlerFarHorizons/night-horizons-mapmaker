@@ -69,25 +69,31 @@ class ImageJoiner(utils.LoggerMixin):
         self.reproj_threshold = reproj_threshold
         self.find_homography_options = find_homography_options
         self.outline = outline
-        self.debug_mode = debug_mode
-        self.log_keys = log_keys
 
-    def join(self, src_img, dst_img):
+        # Initialize the log
+        super().__init__(debug_mode, log_keys)
+
+    def join(self, src_img, dst_img, warp_and_blend=True):
 
         start = time.time()
 
+        results = {}
         try:
             # Try to get a valid homography
-            M, results = self.find_valid_homography(src_img, dst_img)
+            results = self.find_valid_homography(src_img, dst_img)
 
-            # Warp image
-            warped_img = self.warp(src_img, dst_img, M)
+            if warp_and_blend:
 
-            # Blend images
-            blended_img = self.blend(warped_img, dst_img)
+                # Warp image
+                warped_img = self.warp(src_img, dst_img, results['M'])
+
+                # Blend images
+                blended_img = self.blend(
+                    warped_img, dst_img, outline=self.outline)
+
+                results['blended_img'] = blended_img
 
             return_code = 'success'
-            results['blended_img'] = blended_img
         except cv2.error:
             return_code = 'opencv_err'
         except HomographyTransformError:
@@ -108,7 +114,7 @@ class ImageJoiner(utils.LoggerMixin):
         results = {}
 
         # Check for a dark frame
-        self.validate_image_brightness(src_img)
+        self.validate_brightness(src_img)
 
         # Get keypoints
         src_kp, src_des = self.detect_and_compute(src_img)
@@ -126,32 +132,12 @@ class ImageJoiner(utils.LoggerMixin):
         results['M'] = M
 
         # Check transform
-        self.validate_warp_transform(M)
+        self.validate_homography(M)
 
         # Log
         self.update_log(locals())
 
         return results
-
-    def validate_brightness(self, img, log={}):
-
-        # Get values as fraction of max possible
-        values = img.flatten()
-        if np.issubdtype(img.dtype, np.integer):
-            values = values / np.iinfo(img.dtype).max
-
-        dark_frac = (values < self.dark_frame_brightness) / values.size
-
-        valid_brightness = dark_frac < self.dark_frame_percentile
-        if not valid_brightness:
-            raise DarkFrameError(
-                f'Dark frame, dark_frac = {dark_frac:.3g}'
-            )
-
-        # Log
-        self.update_log(locals())
-
-        return dark_frac
 
     def detect_and_compute(self, img):
 
@@ -194,37 +180,17 @@ class ImageJoiner(utils.LoggerMixin):
 
         return M
 
-    def validate_warp_transform(self, M):
-
-        abs_det_M = np.abs(np.linalg.det(M))
-
-        det_in_range = (
-            (abs_det_M > self.det_min)
-            and (abs_det_M < self.det_max)
-        )
-
-        if not det_in_range:
-            raise HomographyTransformError(
-                f'Bad determinant, abs_det_M = {abs_det_M:.2g}'
-            )
-
-        # Log
-        self.update_log(locals())
-
-        return det_in_range, abs_det_M
-
-    def warp(self, src_img, dst_img, M):
+    @staticmethod
+    def warp(src_img, dst_img, M):
 
         # Warp the image being fit
         height, width = dst_img.shape[:2]
         warped_img = cv2.warpPerspective(src_img, M, (width, height))
 
-        # Log
-        self.update_log(locals())
-
         return warped_img
 
-    def warp_bounds(self, src_img, M):
+    @staticmethod
+    def warp_bounds(src_img, M):
 
         bounds = np.array([
             [0., 0.],
@@ -247,16 +213,14 @@ class ImageJoiner(utils.LoggerMixin):
         x_size = px_max - px_min
         y_size = py_max - py_min
 
-        # Log
-        self.update_log(locals())
-
         return x_off, y_off, x_size, y_size
 
+    @staticmethod
     def blend(
-        self,
         src_img,
         dst_img,
         fill_value: Union[float, int] = None,
+        outline: int = 0.,
     ):
 
         # Fill value defaults to values that would be opaque
@@ -291,16 +255,47 @@ class ImageJoiner(utils.LoggerMixin):
         blended_img = np.array(blended_img).transpose(1, 2, 0)
 
         # Add an outline
-        if self.outline > 0:
-            blended_img[:self.outline] = fill_value
-            blended_img[-1 - self.outline:] = fill_value
-            blended_img[:, :self.outline] = fill_value
-            blended_img[:, -1 - self.outline:] = fill_value
+        if outline > 0:
+            blended_img[:outline] = fill_value
+            blended_img[-1 - outline:] = fill_value
+            blended_img[:, :outline] = fill_value
+            blended_img[:, -1 - outline:] = fill_value
+
+        return blended_img
+
+    def validate_brightness(self, img):
+
+        # Get values as fraction of max possible
+        values = img.flatten()
+        if np.issubdtype(img.dtype, np.integer):
+            values = values / np.iinfo(img.dtype).max
+
+        dark_frac = (values < self.dark_frame_brightness).sum() / values.size
+
+        if dark_frac > self.dark_frame_percentile:
+            raise DarkFrameError(
+                f'Dark frame, dark_frac = {dark_frac:.3g}'
+            )
 
         # Log
         self.update_log(locals())
 
-        return blended_img
+    def validate_homography(self, M):
+
+        abs_det_M = np.abs(np.linalg.det(M))
+
+        det_in_range = (
+            (abs_det_M > self.det_min)
+            and (abs_det_M < self.det_max)
+        )
+
+        if not det_in_range:
+            raise HomographyTransformError(
+                f'Bad determinant, abs_det_M = {abs_det_M:.2g}'
+            )
+
+        # Log
+        self.update_log(locals())
 
 
 class ImageJoinerQueue:
