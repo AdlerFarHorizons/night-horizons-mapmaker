@@ -355,7 +355,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             x_min, x_max, y_min, y_max
         )
 
-        return self.get_image(self, x_off, y_off, x_size, y_size)
+        return self.get_image(x_off, y_off, x_size, y_size)
 
     def save_image_with_bounds(self, img, x_min, x_max, y_min, y_max):
 
