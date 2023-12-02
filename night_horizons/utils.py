@@ -455,15 +455,10 @@ class LoggerMixin:
     -------
     '''
 
-    def __init__(self, debug_mode=False, log_keys=[], fill_empty=False):
+    def __init__(self, debug_mode=False, log_keys=[]):
         self.debug_mode = debug_mode
         self.log_keys = log_keys
-        self.fill_empty = fill_empty
-
-        if relf.fill_empty:
-            self.log = {key: np.nan for key in log_keys}
-        else:
-            self.log = None
+        self.log = None
 
     def log_locals(self, locals_dict):
 

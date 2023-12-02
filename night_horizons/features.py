@@ -40,7 +40,6 @@ class ImageJoiner(utils.LoggerMixin):
         outline: int = 0,
         debug_mode: bool = False,
         log_keys: list[str] = [],
-        fill_empty: bool = False,
     ):
 
         # Handle feature detector object creation
@@ -72,7 +71,7 @@ class ImageJoiner(utils.LoggerMixin):
         self.outline = outline
 
         # Initialize the log
-        super().__init__(debug_mode, log_keys, fill_empty)
+        super().__init__(debug_mode, log_keys)
 
     def join(self, src_img, dst_img, warp_and_blend=True):
 
@@ -107,9 +106,6 @@ class ImageJoiner(utils.LoggerMixin):
 
             # Log
             self.update_log(locals())
-
-            # DEBUG
-            import pdb; pdb.set_trace()
 
             return return_code, results, self.log
 
