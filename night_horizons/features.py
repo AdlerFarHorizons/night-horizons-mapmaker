@@ -74,6 +74,18 @@ class ImageJoiner(utils.LoggerMixin):
         super().__init__(debug_mode, log_keys)
 
     def join(self, src_img, dst_img, warp_and_blend=True):
+        '''
+        Parameters
+        ----------
+        Returns
+        -------
+            results:
+                blended_img: Combined image. Not always returned.
+                M: Homography transform. Not always returned.
+                src_kp: Keypoints for the src image. Not always returned.
+                src_des: KP descriptors for the src image. Not always returned.
+                duration: Time spent.
+        '''
 
         start = time.time()
 
@@ -110,6 +122,16 @@ class ImageJoiner(utils.LoggerMixin):
             return return_code, results, self.log
 
     def find_valid_homography(self, src_img, dst_img):
+        '''
+        Parameters
+        ----------
+        Returns
+        -------
+            results:
+                M: Homography transform.
+                src_kp: Keypoints for the src image.
+                src_des: Keypoint descriptors for the src image.
+        '''
 
         results = {}
 
