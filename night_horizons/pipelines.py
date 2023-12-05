@@ -21,7 +21,7 @@ from . import preprocess, reference, mosaic
 class PreprocessingPipelines:
 
     @staticmethod
-    def nitelite_preprocessing_pipeline(
+    def nitelite_preprocessing_steps(
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         use_approximate_georeferencing: bool = True,
         altitude_column: str = 'mAltitude',
@@ -62,12 +62,9 @@ class PreprocessingPipelines:
              preprocess.SteadyFilter(columns=gyro_columns)),
             ('georeference', georeferencer),
             ('order', preprocess.SensorAndDistanceOrder()),
-            ('apply_filter_and_order', preprocess.ApplyFilterAndOrder()),
         ]
 
-        preprocessing_pipeline = Pipeline(preprocessing_steps)
-
-        return preprocessing_pipeline
+        return preprocessing_steps
 
 
 class GeoreferencePipelines:
