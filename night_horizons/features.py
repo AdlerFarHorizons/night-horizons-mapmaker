@@ -295,13 +295,13 @@ class ImageJoiner(utils.LoggerMixin):
 
         dark_frac = (values < self.dark_frame_brightness).sum() / values.size
 
+        # Log
+        self.update_log(locals())
+
         if dark_frac > self.dark_frame_percentile:
             raise DarkFrameError(
                 f'Dark frame, dark_frac = {dark_frac:.3g}'
             )
-
-        # Log
-        self.update_log(locals())
 
     def validate_homography(self, M):
 
@@ -312,13 +312,13 @@ class ImageJoiner(utils.LoggerMixin):
             and (abs_det_M < self.det_max)
         )
 
+        # Log
+        self.update_log(locals())
+
         if not det_in_range:
             raise HomographyTransformError(
                 f'Bad determinant, abs_det_M = {abs_det_M:.2g}'
             )
-
-        # Log
-        self.update_log(locals())
 
 
 class ImageJoinerQueue:
