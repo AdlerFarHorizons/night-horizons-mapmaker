@@ -154,6 +154,10 @@ class SensorGeoreferencer(BaseEstimator):
                 (camera_angles + self.angle_error) * np.pi / 180.
             )
 
+        # Ensure correct type
+        X[preprocess.GEOTRANSFORM_COLS] = \
+            X[preprocess.GEOTRANSFORM_COLS].astype(float)
+
         return X
 
     def transform(self, X):

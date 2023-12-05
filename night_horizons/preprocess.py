@@ -46,7 +46,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         self,
         output_columns: list[str] = None,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        unhandled_files: str = 'warn and passthrough',
+        unhandled_files: str = 'passthrough',
         passthrough: list[str] = [],
     ):
         self.output_columns = output_columns
@@ -155,6 +155,8 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
                 if 'warn' in self.unhandled_files:
                     warnings.warn(w_message)
                 X_missing = X.loc[is_missing]
+                X_missing['selected'] = False
+                X_out['selected'] = True
                 X_out = pd.concat([X_out, X_missing])
             else:
                 raise ValueError('Unrecognized method for unhandled files.')
@@ -527,6 +529,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
 
 class Filter(TransformerMixin, BaseEstimator):
     '''Simple estimator to implement easy filtering of rows.
+    Does not actually remove rows, but instead adds a `selected` column.
 
     Parameters
     ----------
@@ -543,7 +546,11 @@ class Filter(TransformerMixin, BaseEstimator):
 
     def transform(self, X):
         meets_condition = self.condition(X)
-        return X.loc[meets_condition]
+        if 'selected' in X.columns:
+            X['selected'] = X['selected'] & meets_condition
+        else:
+            X['selected'] = meets_condition
+        return X
 
 
 class AltitudeFilter(Filter):
@@ -571,3 +578,73 @@ class SteadyFilter(Filter):
             return mag < max_gyro
 
         super().__init__(condition)
+
+
+class SensorAndDistanceOrder(TransformerMixin, BaseEstimator):
+    '''Simple estimator to implement ordering of data.
+    For consistency with other transformers, does not actually rearrange data.
+    Instead, adds a column `order` that indicates the order to take.
+
+    The center defaults to that of the first training sample.
+
+    TODO: Breaking this up into multiple individual transforms makes sense,
+        if this is something the user is expected to experiment with.
+
+    Parameters
+    ----------
+    Returns
+    -------
+    '''
+
+    def __init__(
+        self,
+        sensor_order_col='camera_num',
+        sensor_order_map={0: 1, 1: 0, 2: 2},
+        coords_cols=['x_center', 'y_center']
+    ):
+        self.sensor_order_col = sensor_order_col
+        self.sensor_order_map = sensor_order_map
+        self.coords_cols = coords_cols
+
+    def fit(self, X, y=None):
+
+        # Center defaults to the first training sample
+        self.center_ = X[self.coords_cols].iloc[0]
+        self.is_fitted_ = True
+        return self
+
+    def transform(self, X):
+        X['sensor_order'] = X[self.sensor_order_col].map(self.sensor_order_map)
+
+        offset = X[self.coords_cols] - self.center_
+        X['d_to_center'] = np.linalg.norm(offset, axis=1)
+
+        # Actual sort
+        X_iter = X.sort_values(['sensor_order', 'd_to_center'])
+        X_iter['order'] = np.arange(len(X_iter))
+        X['order'] = X_iter.loc[X.index, 'order']
+
+        return X
+
+
+class ApplyFilterAndOrder(TransformerMixin, BaseEstimator):
+    '''Simple estimator to implement easy filtering of rows.
+    Does not actually remove rows, but instead adds a `selected` column.
+
+    Parameters
+    ----------
+    Returns
+    -------
+    '''
+
+    def fit(self, X, y=None):
+        self.is_fitted_ = True
+        return self
+
+    # TODO: Replace all X_out with Xt (consistent name in sklearn).
+    def transform(self, X):
+
+        X_valid = X.loc[X['selected']]
+        X_out = X_valid.sort_values('order')
+
+        return X_out
