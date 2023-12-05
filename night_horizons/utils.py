@@ -455,10 +455,16 @@ class LoggerMixin:
     -------
     '''
 
-    def __init__(self, debug_mode=False, log_keys=[]):
+    def __init__(
+        self,
+        debug_mode=False,
+        log_keys=[],
+        value_exists='overwrite'
+    ):
         self.debug_mode = debug_mode
         self.log_keys = log_keys
         self.log = None
+        self.value_exists = value_exists
 
     def log_locals(self, locals_dict):
 
@@ -483,12 +489,22 @@ class LoggerMixin:
         if self.log is None:
             self.log = {}
 
+        if self.value_exists == 'overwrite':
+            self.log.update(locals_log)
         # Loop through, saving previous versions if they exist.
-        for log_key, item in locals_log.items():
-            if log_key in self.log:
-                if not isinstance(self.log[log_key], list):
-                    self.log[log_key] = [self.log[log_key], ]
-                self.log[log_key].append(item)
-            else:
-                self.log[log_key] = item
+        elif self.value_exists == 'append':
+            for log_key, item in locals_log.items():
+                if log_key in self.log:
+                    if not isinstance(self.log[log_key], list):
+                        self.log[log_key] = [self.log[log_key], ]
+                    self.log[log_key].append(item)
+                else:
+                    self.log[log_key] = item
+        else:
+            raise ValueError(
+                'Invalid value for value_exists. '
+                f'Received value_exists={self.value_exists}. '
+                f"Valid options are ['overwrite', 'append']."
+            )
 
+        return self.log

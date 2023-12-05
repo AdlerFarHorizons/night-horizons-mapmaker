@@ -52,6 +52,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         verbose: bool = True,
         debug_mode: bool = False,
         log_keys: list[str] = [],
+        value_exists: str = 'append',
     ):
         self.filepath = filepath
         self.file_exists = file_exists
@@ -67,8 +68,8 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         self.outline = outline
         self.verbose = verbose
         self.required_columns = ['filepath'] + preprocess.GEOTRANSFORM_COLS
-        self.debug_mode = debug_mode
-        self.log_keys = log_keys
+
+        super().__init__(debug_mode, log_keys, value_exists)
 
     @utils.enable_passthrough
     def fit(
@@ -478,7 +479,8 @@ class LessReferencedMosaic(Mosaic):
         ] = None,
         feature_mode: str = 'recompute',
         debug_mode: bool = True,
-        log_keys: list[str] = ['abs_det_M'],
+        log_keys: list[str] = ['abs_det_M', 'i', 'ind'],
+        value_exists: str = 'append',
         bad_images_dir: str = None,
     ):
 
@@ -498,6 +500,7 @@ class LessReferencedMosaic(Mosaic):
             verbose=verbose,
             debug_mode=debug_mode,
             log_keys=log_keys,
+            value_exists=value_exists,
         )
         self.reffed_mosaic = ReferencedMosaic(
             filepath=filepath,
@@ -603,12 +606,6 @@ class LessReferencedMosaic(Mosaic):
                 "Valid options are ['store', 'recompute']."
             )
 
-        # Loop through and include
-        self.log_ = {
-            'return_codes': [],
-        }
-        for log_key in self.log_keys:
-            self.log_[log_key] = []
         # If verbose, add a progress bar.
         if self.verbose:
             iterable = tqdm.tqdm(iteration_indices, ncols=80)
@@ -616,31 +613,17 @@ class LessReferencedMosaic(Mosaic):
             iterable = iteration_indices
         for i, ind in enumerate(iterable):
 
-            self.log_['last_i'] = i
-            self.log_['last_ind'] = ind
-
             row = X.loc[ind]
 
-            try:
-                return_code, results, log_i = self.incorporate_image(
-                    row,
-                    dsframe_dst_pts,
-                    dsframe_dst_des,
-                )
-            except cv2.error:
-                log_i = {}
-                return_code = 2
-
-            # Logging
-            for log_key in self.log_keys:
-                if log_key in log_i:
-                    self.log_[log_key].append(log_i[log_key])
-                else:
-                    self.log_[log_key].append(np.nan)
+            return_code, results = self.incorporate_image(
+                row,
+                dsframe_dst_pts,
+                dsframe_dst_des,
+            )
 
             # Store return code and continue, if failed
-            self.log_['return_codes'].append(return_code)
-            if return_code != 0:
+            if return_code != 'success':
+                self.update_log(locals())
                 continue
 
             # Store the transformed points for the next loop
@@ -661,6 +644,7 @@ class LessReferencedMosaic(Mosaic):
                 results['x_off'], results['y_off'],
                 results['x_size'], results['y_size']
             ]
+            self.update_log(locals())
 
         # Convert to pixels
         (
@@ -675,9 +659,6 @@ class LessReferencedMosaic(Mosaic):
         y_pred['x_center'] = 0.5 * (y_pred['x_min'] + y_pred['x_max'])
         y_pred['y_center'] = 0.5 * (y_pred['y_min'] + y_pred['y_max'])
 
-        self.log_['dsframe_dst_pts'] = dsframe_dst_pts
-        self.log_['dsframe_dst_des'] = dsframe_dst_des
-
         return y_pred[preprocess.GEOTRANSFORM_COLS]
 
     def incorporate_image(
@@ -688,7 +669,6 @@ class LessReferencedMosaic(Mosaic):
     ):
 
         results = {}
-        debug_log = {}
 
         # Get image location
         x_off = row['x_off']
@@ -719,8 +699,8 @@ class LessReferencedMosaic(Mosaic):
         else:
             # Check what's in bounds, exit if nothing
             if dst_img.sum() == 0:
-                debug_log = self.log_locals(locals())
-                return 'out_of_bounds', results, debug_log
+                self.update_log(locals())
+                return 'out_of_bounds', results
 
         # Get src image
         src_img = utils.load_image(
@@ -733,9 +713,9 @@ class LessReferencedMosaic(Mosaic):
         #    However, we need to track *how* the failures happened somehow,
         #    so we need some sort of flag, which is basically a return code.
         #    That said, there may be a better alternative to this.
-        return_code, result, join_debug_log = self.image_joiner.join(
+        return_code, result, log = self.image_joiner.join(
             src_img, dst_img)
-
+        self.update_log(log)
 
         # TODO: Clean this up
         if return_code == 'success':
@@ -771,9 +751,8 @@ class LessReferencedMosaic(Mosaic):
                 raster.Image(dst_img).save(dst_fp)
                 shutil.copy(row['filepath'], src_fp)
 
-        debug_log = self.log_locals(locals())
-        debug_log.update(join_debug_log)
-        return return_code, results, debug_log
+        self.update_log(locals())
+        return return_code, results
 
     def close(self):
 
