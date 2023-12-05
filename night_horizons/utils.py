@@ -388,6 +388,7 @@ def enable_passthrough(func):
     TODO: Maybe deprecate this....
     I forgot that the possibly better method is to make use of
     sklearn.compose.ColumnTransformer.
+    There's also stuff built into pipeline, I think...
 
     Columns that are neither in self.passthrough or self.required_columns
     are dropped.

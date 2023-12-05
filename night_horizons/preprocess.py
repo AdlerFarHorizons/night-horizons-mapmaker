@@ -46,7 +46,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         self,
         output_columns: list[str] = None,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        unhandled_files: str = 'passthrough',
+        unhandled_files: str = 'warn and drop',
         passthrough: list[str] = [],
     ):
         self.output_columns = output_columns
@@ -434,13 +434,15 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
         self.required_columns = ['filepath']
         self.spatial_error = spatial_error
 
+    @utils.enable_passthrough
     def fit(
         self,
         X: Union[np.ndarray[str], list[str], pd.DataFrame],
         y=None,
     ):
 
-        X = utils.check_filepaths_input(X, passthrough=self.passthrough)
+        X = utils.check_filepaths_input(
+            X, required_columns=self.required_columns)
 
         # Convert CRS as needed
         if isinstance(self.crs, str):
@@ -537,8 +539,9 @@ class Filter(TransformerMixin, BaseEstimator):
     -------
     '''
 
-    def __init__(self, condition):
+    def __init__(self, condition, apply=True):
         self.condition = condition
+        self.apply = apply
 
     def fit(self, X, y=None):
         self.is_fitted_ = True
@@ -546,6 +549,10 @@ class Filter(TransformerMixin, BaseEstimator):
 
     def transform(self, X):
         meets_condition = self.condition(X)
+
+        if self.apply:
+            return X.loc[meets_condition]
+
         if 'selected' in X.columns:
             X['selected'] = X['selected'] & meets_condition
         else:
@@ -598,10 +605,12 @@ class SensorAndDistanceOrder(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
+        apply=True,
         sensor_order_col='camera_num',
         sensor_order_map={0: 1, 1: 0, 2: 2},
-        coords_cols=['x_center', 'y_center']
+        coords_cols=['x_center', 'y_center'],
     ):
+        self.apply = apply
         self.sensor_order_col = sensor_order_col
         self.sensor_order_map = sensor_order_map
         self.coords_cols = coords_cols
@@ -622,6 +631,10 @@ class SensorAndDistanceOrder(TransformerMixin, BaseEstimator):
         # Actual sort
         X_iter = X.sort_values(['sensor_order', 'd_to_center'])
         X_iter['order'] = np.arange(len(X_iter))
+
+        if self.apply:
+            return X_iter
+
         X['order'] = X_iter.loc[X.index, 'order']
 
         return X
@@ -630,6 +643,7 @@ class SensorAndDistanceOrder(TransformerMixin, BaseEstimator):
 class ApplyFilterAndOrder(TransformerMixin, BaseEstimator):
     '''Simple estimator to implement easy filtering of rows.
     Does not actually remove rows, but instead adds a `selected` column.
+    TODO: Consider deleting this, since we have the option to apply on the fly.
 
     Parameters
     ----------
