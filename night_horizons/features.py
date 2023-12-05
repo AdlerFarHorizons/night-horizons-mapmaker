@@ -32,7 +32,7 @@ class ImageJoiner(utils.LoggerMixin):
         det_min=0.6,
         det_max=2.0,
         dark_frame_brightness=0.03,
-        dark_frame_percentile=0.95,
+        dark_frame_percentile=0.97,
         n_matches_used=500,
         homography_method=cv2.RANSAC,
         reproj_threshold=5.,
