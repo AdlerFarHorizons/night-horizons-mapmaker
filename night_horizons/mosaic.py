@@ -623,7 +623,6 @@ class LessReferencedMosaic(Mosaic):
 
             # Store return code and continue, if failed
             if return_code != 'success':
-                self.update_log(locals())
                 continue
 
             # Store the transformed points for the next loop
@@ -644,7 +643,6 @@ class LessReferencedMosaic(Mosaic):
                 results['x_off'], results['y_off'],
                 results['x_size'], results['y_size']
             ]
-            self.update_log(locals())
 
         # Convert to pixels
         (
@@ -715,7 +713,10 @@ class LessReferencedMosaic(Mosaic):
         #    That said, there may be a better alternative to this.
         return_code, result, log = self.image_joiner.join(
             src_img, dst_img)
-        self.update_log(log)
+
+        # DEBUG
+        if not isinstance(return_code, str):
+            import pdb; pdb.set_trace()
 
         # TODO: Clean this up
         if return_code == 'success':
@@ -751,7 +752,13 @@ class LessReferencedMosaic(Mosaic):
                 raster.Image(dst_img).save(dst_fp)
                 shutil.copy(row['filepath'], src_fp)
 
-        self.update_log(locals())
+        # Log
+        # TODO: This is such a fragile way to log.
+        #       It requires careful knowledge of the state of the log,
+        #       and whether or not it has been called already.
+        log.update(locals())
+        self.update_log(log)
+
         return return_code, results
 
     def close(self):
