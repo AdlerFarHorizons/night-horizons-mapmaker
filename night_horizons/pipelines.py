@@ -27,12 +27,20 @@ class PreprocessingPipelines:
         altitude_column: str = 'mAltitude',
         gyro_columns: list[str] = ['imuGyroX', 'imuGyroY', 'imuGyroZ'],
     ):
+        '''
+        TODO: Remove parameters from nitelite_preprocessing.
+        This should be a ready-to-go pipeline. If the user really wants to
+        tweak parameters it should either be done in post or they should
+        make their own pipeline.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
 
         # Choose the preprocesser for getting the bulk of the metadata
-        metadata_preprocesser = preprocess.NITELitePreprocesser(
-            crs=crs,
-            unhandled_files='warn and drop',
-        )
+        metadata_preprocesser = preprocess.NITELitePreprocesser(crs=crs)
 
         # Choose the georeferencing
         if use_approximate_georeferencing:
@@ -43,6 +51,8 @@ class PreprocessingPipelines:
                 crs=crs, passthrough=['camera_num'])
 
         # Build the steps
+        # TODO: It would be nice if the filtering and ordering was clumped
+        #       together.
         preprocessing_steps = [
             ('metadata',
              metadata_preprocesser),
@@ -50,8 +60,9 @@ class PreprocessingPipelines:
              preprocess.AltitudeFilter(column=altitude_column)),
             ('select_steady',
              preprocess.SteadyFilter(columns=gyro_columns)),
-            ('georeference',
-             georeferencer),
+            ('georeference', georeferencer),
+            ('order', preprocess.SensorAndDistanceOrder()),
+            ('apply_filter_and_order', preprocess.ApplyFilterAndOrder()),
         ]
 
         preprocessing_pipeline = Pipeline(preprocessing_steps)
