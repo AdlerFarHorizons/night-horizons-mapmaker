@@ -16,17 +16,6 @@ from sklearn.utils.validation import check_array
 # TODO: Remove this when the draft is done.
 
 
-# TODO: Maybe get rid of this.
-#       It's not necessary with sufficiently descriptive errors.
-ERROR_CODE_MAP = {
-    'success': 'Success',
-    'dark_frame': 'Image is too dark.',
-    'bad_det': 'Extreme homography (bad determinant)',
-    'opencv_err': 'OpenCV error',
-    'out_of_bounds': 'No in-bounds image data to match with',
-}
-
-
 def discover_data(
     directory: str,
     extension: Union[str, list[str]] = None,
