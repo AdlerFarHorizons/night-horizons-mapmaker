@@ -32,7 +32,7 @@ class ImageJoiner(utils.LoggerMixin):
         det_min=0.6,
         det_max=2.0,
         dark_frame_brightness=0.03,
-        dark_frame_percentile=0.97,
+        dark_frame_percentile=0.99,
         n_matches_used=500,
         homography_method=cv2.RANSAC,
         reproj_threshold=5.,
@@ -113,6 +113,8 @@ class ImageJoiner(utils.LoggerMixin):
             return_code = 'bad_det'
         except DarkFrameError:
             return_code = 'dark_frame'
+        except np.linalg.LinAlgError:
+            return_code = 'linalg_err'
         finally:
             duration = time.time() - start
             results['duration'] = duration
