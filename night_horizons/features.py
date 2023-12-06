@@ -31,8 +31,8 @@ class ImageJoiner(utils.LoggerMixin):
         feature_matcher_options={},
         det_min=0.6,
         det_max=2.0,
-        dark_frame_brightness=0.03,
-        dark_frame_percentile=0.99,
+        required_brightness=0.03,
+        required_bright_pixel_area=50000,
         n_matches_used=500,
         homography_method=cv2.RANSAC,
         reproj_threshold=5.,
@@ -63,8 +63,8 @@ class ImageJoiner(utils.LoggerMixin):
         self.feature_matcher = feature_matcher
         self.det_min = det_min
         self.det_max = det_max
-        self.dark_frame_brightness = dark_frame_brightness
-        self.dark_frame_percentile = dark_frame_percentile
+        self.required_brightness = required_brightness
+        self.required_bright_pixel_area = required_bright_pixel_area
         self.n_matches_used = n_matches_used
         self.homography_method = homography_method
         self.reproj_threshold = reproj_threshold
@@ -111,8 +111,10 @@ class ImageJoiner(utils.LoggerMixin):
             return_code = 'opencv_err'
         except HomographyTransformError:
             return_code = 'bad_det'
-        except DarkFrameError:
+        except SrcDarkFrameError:
             return_code = 'dark_frame'
+        except DstDarkFrameError:
+            return_code = 'dst_dark_frame'
         except np.linalg.LinAlgError:
             return_code = 'linalg_err'
         finally:
@@ -140,6 +142,7 @@ class ImageJoiner(utils.LoggerMixin):
 
         # Check for a dark frame
         self.validate_brightness(src_img)
+        self.validate_brightness(dst_img, error_type='dst')
 
         # Get keypoints
         src_kp, src_des = self.detect_and_compute(src_img)
@@ -288,21 +291,35 @@ class ImageJoiner(utils.LoggerMixin):
 
         return blended_img
 
-    def validate_brightness(self, img):
+    def validate_brightness(self, img, error_type='src'):
 
         # Get values as fraction of max possible
         values = img.flatten()
         if np.issubdtype(img.dtype, np.integer):
             values = values / np.iinfo(img.dtype).max
 
-        dark_frac = (values < self.dark_frame_brightness).sum() / values.size
+        bright_area = (values > self.required_brightness).sum()
 
         # Log
+        bright_frac = bright_area / values.size
+        req_bright_frac = bright_area / values.size
         self.update_log(locals())
 
-        if dark_frac > self.dark_frame_percentile:
-            raise DarkFrameError(
-                f'Dark frame, dark_frac = {dark_frac:.3g}'
+        if bright_area < self.required_bright_pixel_area:
+            if error_type == 'src':
+                error_type = SrcDarkFrameError
+            elif error_type == 'dst':
+                error_type == DstDarkFrameError
+            else:
+                raise KeyError(
+                    'Unrecognized error type in validate_brightness')
+
+            raise error_type(
+                'Insufficient bright pixels to calculate features. '
+                f'Have {bright_area} pixels^2, '
+                f'i.e. a bright frac of {bright_frac:.3g}. '
+                f'Need {self.required_bright_pixel_area} pixels^2, '
+                f'i.e. a bright frac of {req_bright_frac:.3g}.'
             )
 
     def validate_homography(self, M):
@@ -365,5 +382,9 @@ class HomographyTransformError(ValueError):
     pass
 
 
-class DarkFrameError(ValueError):
+class SrcDarkFrameError(ValueError):
+    pass
+
+
+class DstDarkFrameError(ValueError):
     pass
