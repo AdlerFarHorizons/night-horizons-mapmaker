@@ -482,6 +482,7 @@ class LessReferencedMosaic(Mosaic):
         log_keys: list[str] = ['abs_det_M', 'i', 'ind'],
         value_exists: str = 'append',
         bad_images_dir: str = None,
+        save_return_codes: list[str] = [],
     ):
 
         super().__init__(
@@ -522,6 +523,7 @@ class LessReferencedMosaic(Mosaic):
         self.image_joiner = image_joiner
         self.feature_mode = feature_mode
         self.bad_images_dir = bad_images_dir
+        self.save_return_codes = save_return_codes
 
     def fit(
         self,
@@ -714,10 +716,6 @@ class LessReferencedMosaic(Mosaic):
         return_code, result, log = self.image_joiner.join(
             src_img, dst_img)
 
-        # DEBUG
-        if not isinstance(return_code, str):
-            import pdb; pdb.set_trace()
-
         # TODO: Clean this up
         if return_code == 'success':
             # Store the image
@@ -740,7 +738,7 @@ class LessReferencedMosaic(Mosaic):
             results['x_off'] += x_off
             results['y_off'] += y_off
         # Save failed images for later debugging
-        else:
+        elif return_code in self.save_return_codes:
             if self.bad_images_dir is not None:
                 n_tests_existing = len(glob.glob(os.path.join(
                     self.bad_images_dir, 'dst_*.tiff')))
