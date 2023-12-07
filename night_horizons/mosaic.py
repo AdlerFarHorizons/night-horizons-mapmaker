@@ -26,9 +26,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
     TODO: filepath is a data-dependent parameter, so it really should be
     called at the time of the fit.
 
-    TODO: convert the coordinates to camera frame as part of a separate loop,
-        not multiple times per image loop
-
     Parameters
     ----------
     Returns
@@ -39,6 +36,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         self,
         filepath: str,
         file_exists: str = 'error',
+        checkpoint_freq: int = 100,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -56,6 +54,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
     ):
         self.filepath = filepath
         self.file_exists = file_exists
+        self.checkpoint_freq = checkpoint_freq
         self.crs = crs
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height
@@ -634,6 +633,9 @@ class LessReferencedMosaic(Mosaic):
         else:
             iterable = iteration_indices
         for i, ind in enumerate(iterable):
+
+            if i % self.checkpoint_freq:
+                self.dataset_.FlushCache()
 
             row = X.loc[ind]
 
