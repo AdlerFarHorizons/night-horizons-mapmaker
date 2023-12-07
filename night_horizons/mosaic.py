@@ -275,8 +275,9 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
     def close(self):
 
-        self.dataset_.FlushCache()
-        self.dataset_ = None
+        if self.dataset_ is not None:
+            self.dataset_.FlushCache()
+            self.dataset_ = None
 
     def reopen(self):
 
@@ -666,8 +667,8 @@ class LessReferencedMosaic(Mosaic):
             'x_size', 'y_size',
             'x_center', 'y_center',
             'x_off', 'y_off',
-            'return_code'
         ]] = np.nan
+        y_pred['return_code'] = 'TBD'
 
         # Convert to pixels
         (
@@ -709,7 +710,7 @@ class LessReferencedMosaic(Mosaic):
                 dsframe_dst_pts,
                 dsframe_dst_des,
             )
-            y_pred.loc[ind, 'return_code'] = 'success'
+            y_pred.loc[ind, 'return_code'] = return_code
 
             if return_code == 'success':
 
@@ -759,7 +760,7 @@ class LessReferencedMosaic(Mosaic):
         self.close()
         y_pred.to_csv(self.y_pred_filepath_)
 
-        return y_pred[preprocess.GEOTRANSFORM_COLS]
+        return y_pred
 
     def incorporate_image(
         self,
