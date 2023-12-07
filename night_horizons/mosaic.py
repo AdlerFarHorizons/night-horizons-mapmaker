@@ -1,4 +1,5 @@
 import glob
+import inspect
 import os
 import shutil
 from typing import Tuple, Union
@@ -13,6 +14,7 @@ import scipy
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 import tqdm
+import yaml
 
 from . import utils, raster, preprocess, features, metrics
 
@@ -66,6 +68,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         self.passthrough = passthrough
         self.outline = outline
         self.verbose = verbose
+
         self.required_columns = ['filepath'] + preprocess.GEOTRANSFORM_COLS
 
         super().__init__(debug_mode, log_keys, value_exists)
@@ -95,7 +98,8 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         '''
 
         # Flexible file-handling. Maybe overkill?
-        if os.path.isfile(self.filepath):
+        self.filepath_ = self.filepath
+        if os.path.isfile(self.filepath_):
             if self.file_exists == 'error':
                 raise FileExistsError('File already exists at destination.')
             elif self.file_exists == 'pass':
@@ -107,11 +111,33 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
                     raise ValueError(
                         'Cannot both pass in a dataset and load a file')
                 self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
+            # Create a new file with a new number appended
+            elif self.file_exists == 'new':
+                base, ext = os.path.splitext(self.filepath)
+                new_fp_format = base + '({:03d})' + ext
+                self.filepath_ = new_fp_format.format(0)
+                while os.path.isfile(self.filepath_):
+                    self.filepath_ = new_fp_format.format(0)
             else:
                 raise ValueError(
                     'Unrecognized value for filepath, '
-                    f'filepath={self.filepath}'
+                    f'filepath={self.filepath_}'
                 )
+
+        # Filepaths for auxiliary products
+        base, ext = os.path.splitext(self.filepath_)
+        self.y_pred_filepath_ = base + '_y_pred.csv'
+        self.settings_filepath_ = base + '_settings.yaml'
+
+        # Save settings
+        fullargspec = inspect.getfullargspec(self.__init__)
+        settings = {}
+        for setting in fullargspec.args:
+            if setting == 'self':
+                continue
+            settings[setting] = getattr(self, setting)
+        with open(self.settings_filepath_, 'w') as file:
+            yaml.dump(settings, file)
 
         if dataset is not None:
             self.dataset_ = dataset
@@ -236,6 +262,10 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         self.dataset_.FlushCache()
         self.dataset_ = None
+
+    def reopen(self):
+
+        self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
 
     def calc_iteration_indices(self, X):
 
@@ -599,6 +629,7 @@ class LessReferencedMosaic(Mosaic):
             'x_size', 'y_size',
             'x_center', 'y_center',
             'x_off', 'y_off',
+            'return_code'
         ]] = np.nan
 
         # Convert to pixels
@@ -634,9 +665,6 @@ class LessReferencedMosaic(Mosaic):
             iterable = iteration_indices
         for i, ind in enumerate(iterable):
 
-            if i % self.checkpoint_freq:
-                self.dataset_.FlushCache()
-
             row = X.loc[ind]
 
             return_code, results = self.incorporate_image(
@@ -644,29 +672,38 @@ class LessReferencedMosaic(Mosaic):
                 dsframe_dst_pts,
                 dsframe_dst_des,
             )
+            y_pred.loc[ind, 'return_code'] = 'success'
 
-            # Store return code and continue, if failed
-            if return_code != 'success':
-                continue
+            if return_code == 'success':
 
-            # Store the transformed points for the next loop
-            if self.feature_mode == 'store':
-                dsframe_dst_pts = np.append(
-                    dsframe_dst_pts,
-                    results['dsframe_src_pts'],
-                    axis=0
-                )
-                dsframe_dst_des = np.append(
-                    dsframe_dst_des,
-                    results['src_des'],
-                    axis=0
-                )
+                # Store the transformed points for the next loop
+                if self.feature_mode == 'store':
+                    dsframe_dst_pts = np.append(
+                        dsframe_dst_pts,
+                        results['dsframe_src_pts'],
+                        axis=0
+                    )
+                    dsframe_dst_des = np.append(
+                        dsframe_dst_des,
+                        results['src_des'],
+                        axis=0
+                    )
 
-            # Update y_pred
-            y_pred.loc[ind, ['x_off', 'y_off', 'x_size', 'y_size']] = [
-                results['x_off'], results['y_off'],
-                results['x_size'], results['y_size']
-            ]
+                # Update y_pred
+                y_pred.loc[ind, ['x_off', 'y_off', 'x_size', 'y_size']] = [
+                    results['x_off'], results['y_off'],
+                    results['x_size'], results['y_size']
+                ]
+
+            # Checkpoint
+            if i % self.checkpoint_freq == 0:
+
+                # Flush data to disk
+                self.close()
+                y_pred.to_csv(self.y_pred_filepath_)
+
+                # Re-open dataset
+                self.reopen()
 
         # Convert to pixels
         (
@@ -680,6 +717,10 @@ class LessReferencedMosaic(Mosaic):
         y_pred['pixel_height'] = self.pixel_height_
         y_pred['x_center'] = 0.5 * (y_pred['x_min'] + y_pred['x_max'])
         y_pred['y_center'] = 0.5 * (y_pred['y_min'] + y_pred['y_max'])
+
+        # Flush data to disk
+        self.close()
+        y_pred.to_csv(self.y_pred_filepath_)
 
         return y_pred[preprocess.GEOTRANSFORM_COLS]
 
