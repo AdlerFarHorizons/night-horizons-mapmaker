@@ -1,6 +1,7 @@
 import glob
 import inspect
 import os
+import pickle
 import shutil
 from typing import Tuple, Union
 import warnings
@@ -37,7 +38,10 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
     def __init__(
         self,
         filepath: str,
+        settings_filepath_ext: str = '_settings.yaml',
+        y_pred_filepath_ext: str = '_y_pred.csv',
         file_exists: str = 'error',
+        save_aux_files: bool = True,
         checkpoint_freq: int = 100,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
@@ -55,7 +59,10 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         value_exists: str = 'append',
     ):
         self.filepath = filepath
+        self.settings_filepath_ext = settings_filepath_ext
+        self.y_pred_filepath_ext = y_pred_filepath_ext
         self.file_exists = file_exists
+        self.save_aux_files = save_aux_files
         self.checkpoint_freq = checkpoint_freq
         self.crs = crs
         self.pixel_width = pixel_width
@@ -94,50 +101,58 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         Returns
         -------
         self
-            Returns self.
+            Returns self
         '''
 
-        # Flexible file-handling. Maybe overkill?
+        # Filepaths
         self.filepath_ = self.filepath
+        base, ext = os.path.splitext(self.filepath_)
+        self.settings_filepath_ = base + self.settings_filepath_ext
+        self.y_pred_filepath_ = base + self.y_pred_filepath_ext
+
+        # Flexible file-handling. Maybe overkill?
         if os.path.isfile(self.filepath_):
+
+            # Standard, simple options
             if self.file_exists == 'error':
                 raise FileExistsError('File already exists at destination.')
             elif self.file_exists == 'pass':
                 pass
             elif self.file_exists == 'overwrite':
-                os.remove(self.filepath)
+                os.remove(self.filepath_)
             elif self.file_exists == 'load':
                 if dataset is not None:
                     raise ValueError(
                         'Cannot both pass in a dataset and load a file')
                 self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
+
             # Create a new file with a new number appended
             elif self.file_exists == 'new':
                 base, ext = os.path.splitext(self.filepath)
                 new_fp_format = base + '({:03d})' + ext
                 self.filepath_ = new_fp_format.format(0)
+                i = 0
                 while os.path.isfile(self.filepath_):
-                    self.filepath_ = new_fp_format.format(0)
+                    self.filepath_ = new_fp_format.format(i)
+                    i += 1
+
+                # Change auxiliary files too
+                base, ext = os.path.splitext(self.filepath_)
+                self.y_pred_filepath_ = base + '_y_pred.csv'
+                self.settings_filepath_ = base + '_settings.yaml'
+
             else:
                 raise ValueError(
                     'Unrecognized value for filepath, '
                     f'filepath={self.filepath_}'
                 )
 
-        # Filepaths for auxiliary products
-        base, ext = os.path.splitext(self.filepath_)
-        self.y_pred_filepath_ = base + '_y_pred.csv'
-        self.settings_filepath_ = base + '_settings.yaml'
+        # We always remove the auxiliary files, if they already exist
+        for fp in [self.y_pred_filepath_, self.settings_filepath_]:
+            if os.path.isfile(fp):
+                os.remove(fp)
 
-        # Save settings
-        fullargspec = inspect.getfullargspec(self.__init__)
-        settings = {}
-        for setting in fullargspec.args:
-            if setting == 'self':
-                continue
-            settings[setting] = getattr(self, setting)
-        with open(self.settings_filepath_, 'w') as file:
-            yaml.dump(settings, file)
+        self.save_settings()
 
         if dataset is not None:
             self.dataset_ = dataset
@@ -266,6 +281,22 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
     def reopen(self):
 
         self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
+
+    def save_settings(self):
+
+        fullargspec = inspect.getfullargspec(type(self))
+        settings = {}
+        for setting in fullargspec.args:
+            if setting == 'self':
+                continue
+            value = getattr(self, setting)
+            try:
+                pickle.dumps(value)
+            except TypeError:
+                value = 'no string repr'
+            settings[setting] = value
+        with open(self.settings_filepath_, 'w') as file:
+            yaml.dump(settings, file)
 
     def calc_iteration_indices(self, X):
 
@@ -511,6 +542,8 @@ class LessReferencedMosaic(Mosaic):
     def __init__(
         self,
         filepath: str,
+        settings_filepath_ext: str = '_settings.yaml',
+        y_pred_filepath_ext: str = '_y_pred.csv',
         file_exists: str = 'overwrite',
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
@@ -537,6 +570,8 @@ class LessReferencedMosaic(Mosaic):
         super().__init__(
             filepath=filepath,
             file_exists=file_exists,
+            settings_filepath_ext=settings_filepath_ext,
+            y_pred_filepath_ext=y_pred_filepath_ext,
             crs=crs,
             pixel_width=pixel_width,
             pixel_height=pixel_height,
@@ -554,6 +589,8 @@ class LessReferencedMosaic(Mosaic):
         )
         self.reffed_mosaic = ReferencedMosaic(
             filepath=filepath,
+            settings_filepath_ext='_reffed' + settings_filepath_ext,
+            y_pred_filepath_ext='_reffed' + y_pred_filepath_ext,
             file_exists='pass',
             crs=crs,
             pixel_width=pixel_width,
