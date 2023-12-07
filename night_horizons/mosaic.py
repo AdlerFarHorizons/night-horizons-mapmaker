@@ -278,17 +278,36 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         x_size = np.round(width / self.pixel_width_)
         y_size = np.round(height / -self.pixel_height_)
 
-        # Change dtypes
         try:
+            # Change dtypes
             x_off = x_off.astype(int)
             y_off = y_off.astype(int)
             x_size = x_size.astype(int)
             y_size = y_size.astype(int)
+
+            # Handle out-of-bounds
+            x_off[x_off < 0] = 0
+            y_off[y_off < 0] = 0
+            x_off[x_off + x_size >= self.x_size_] = self.x_size_ - 1 - x_off
+            y_off[y_off + y_size >= self.y_size_] = self.y_size_ - 1 - y_off
+
+        # When we're passing in single values.
         except TypeError:
+            # Change dtypes
             x_off = int(x_off)
             y_off = int(y_off)
             x_size = int(x_size)
             y_size = int(y_size)
+
+            # Handle out-of-bounds
+            if x_off < 0:
+                x_off = 0
+            elif x_off + x_size >= self.x_size_:
+                x_off = self.x_size_ - 1 - x_off
+            if y_off < 0:
+                y_off = 0
+            elif y_off + y_size >= self.y_size_:
+                y_off = self.y_size_ - 1 - y_off
 
         return x_off, y_off, x_size, y_size
 
@@ -395,6 +414,7 @@ class ReferencedMosaic(Mosaic):
         # Check if fit had been called
         check_is_fitted(self, 'dataset_')
 
+        # DEBUG: Some x_offs can be negative, probably due to padding
         # Convert to pixels
         (
             X['x_off'], X['y_off'],
