@@ -481,7 +481,7 @@ class ReferencedMosaic(Mosaic):
         )
 
         # Check if fit had been called
-        check_is_fitted(self, 'dataset_')
+        check_is_fitted(self, 'filepath_')
 
         # DEBUG: Some x_offs can be negative, probably due to padding
         # Convert to pixels
@@ -698,13 +698,15 @@ class LessReferencedMosaic(Mosaic):
             # one after
             i_start += 1
 
-            # Load the log
-            filename = possible_files[j]
+            # Copy over dataset
+            filename = possible_files[j_filename]
+            filepath = os.path.join(checkpoint_dir, filename)
+            shutil.copy(filepath, self.filepath_)
 
         iteration_indices = X.index[i_start:]
 
         # Check if fit had been called
-        check_is_fitted(self, 'dataset_')
+        check_is_fitted(self, 'filepath_')
 
         # Set up y_pred
         y_pred = X[preprocess.GEOTRANSFORM_COLS].copy()
@@ -795,7 +797,8 @@ class LessReferencedMosaic(Mosaic):
             if i % self.checkpoint_freq == 0:
 
                 # Flush data to disk
-                self.close()
+                dataset.FlushCache()
+                dataset = None
                 y_pred.to_csv(self.y_pred_filepath_)
 
                 # Make checkpoint file by copying dataset
@@ -813,7 +816,7 @@ class LessReferencedMosaic(Mosaic):
                 log_df.to_csv(self.log_filepath_)
 
                 # Re-open dataset
-                self.reopen()
+                dataset = self.open_dataset()
 
             # Snapshot the memory usage
             if 'snapshot' in self.log_keys:
@@ -835,7 +838,8 @@ class LessReferencedMosaic(Mosaic):
         y_pred['y_center'] = 0.5 * (y_pred['y_min'] + y_pred['y_max'])
 
         # Flush data to disk
-        self.close()
+        dataset.FlushCache()
+        dataset = None
         y_pred.to_csv(self.y_pred_filepath_)
 
         # Store log
@@ -950,8 +954,3 @@ class LessReferencedMosaic(Mosaic):
         self.update_log(log)
 
         return return_code, results
-
-    def close(self):
-
-        self.reffed_mosaic.close()
-        super().close()
