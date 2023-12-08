@@ -767,16 +767,16 @@ class LessReferencedMosaic(Mosaic):
                     if isinstance(value, list)
                 })
                 log_df.index = iteration_indices[:i + 1]
-                log_fp = base + i_tag + self.log_filepath_ext
-                log_df.to_csv(log_fp)
+                log_df.to_csv(self.log_filepath_)
 
                 # Re-open dataset
                 self.reopen()
 
             # Snapshot the memory usage
-            if i % self.memory_snapshot_freq == 0:
-                snapshot = tracemalloc.take_snapshot()
-                self.update_log({'snapshot': snapshot})
+            if 'snapshot' in self.log_keys:
+                if i % self.memory_snapshot_freq == 0:
+                    snapshot = tracemalloc.take_snapshot()
+                    self.update_log({'snapshot': snapshot})
 
         # Convert to pixels
         (
@@ -794,6 +794,14 @@ class LessReferencedMosaic(Mosaic):
         # Flush data to disk
         self.close()
         y_pred.to_csv(self.y_pred_filepath_)
+
+        # Store log
+        log_df = pd.DataFrame({
+            key: value for key, value in self.log.items()
+            if isinstance(value, list)
+        })
+        log_df.index = iteration_indices
+        log_df.to_csv(self.log_filepath_)
 
         # Stop memory tracing
         if 'snapshot' in self.log_keys:
