@@ -128,7 +128,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
                 if dataset is not None:
                     raise ValueError(
                         'Cannot both pass in a dataset and load a file')
-                self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
+                dataset = gdal.Open(self.filepath, gdal.GA_Update)
 
             # Create a new file with a new number appended
             elif self.file_exists == 'new':
@@ -159,11 +159,8 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         self.save_settings()
 
+        # Use the dataset if it already exists
         if dataset is not None:
-            self.dataset_ = dataset
-
-        # Load the dataset if it already exists
-        if hasattr(self, 'dataset_'):
 
             # Get the dataset bounds
             (
@@ -171,11 +168,15 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
                 (self.y_min_, self.y_max_),
                 self.pixel_width_, self.pixel_height_
             ) = raster.get_bounds_from_dataset(
-                self.dataset_,
+                dataset,
                 self.crs,
             )
-            self.x_size_ = self.dataset_.RasterXSize
-            self.y_size_ = self.dataset_.RasterYSize
+            self.x_size_ = dataset.RasterXSize
+            self.y_size_ = dataset.RasterYSize
+
+            # Close out the dataset for now. (Reduces likelihood of mem leaks.)
+            dataset.FlushCache()
+            dataset = None
 
             return self
 
@@ -219,7 +220,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         # Initialize an empty GeoTiff
         driver = gdal.GetDriverByName('GTiff')
-        self.dataset_ = driver.Create(
+        dataset = driver.Create(
             self.filepath_,
             xsize=self.x_size_,
             ysize=self.y_size_,
@@ -228,8 +229,8 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         )
 
         # Properties
-        self.dataset_.SetProjection(self.crs.to_wkt())
-        self.dataset_.SetGeoTransform([
+        dataset.SetProjection(self.crs.to_wkt())
+        dataset.SetGeoTransform([
             self.x_min_,
             self.pixel_width_,
             0.,
@@ -238,7 +239,11 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             self.pixel_height_,
         ])
         if self.n_bands == 4:
-            self.dataset_.GetRasterBand(4).SetMetadataItem('Alpha', '1')
+            dataset.GetRasterBand(4).SetMetadataItem('Alpha', '1')
+
+        # Close out the dataset for now. (Reduces likelihood of mem leaks.)
+        dataset.FlushCache()
+        dataset = None
 
         return self
 
@@ -254,6 +259,9 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             padding=self.padding,
         )
 
+        # Open the dataset
+        dataset = self.open_dataset()
+
         self.scores_ = []
         for i, fp in enumerate(tqdm.tqdm(X['filepath'], ncols=80)):
 
@@ -261,6 +269,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
             actual_img = utils.load_image(fp, dtype=self.dtype)
             mosaic_img = self.get_image(
+                dataset,
                 row['x_off'],
                 row['y_off'],
                 row['x_size'],
@@ -278,15 +287,9 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         return score
 
-    def close(self):
+    def open_dataset(self):
 
-        if self.dataset_ is not None:
-            self.dataset_.FlushCache()
-            self.dataset_ = None
-
-    def reopen(self):
-
-        self.dataset_ = gdal.Open(self.filepath_, gdal.GA_Update)
+        return gdal.Open(self.filepath_, gdal.GA_Update)
 
     def save_settings(self):
 
@@ -393,11 +396,11 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         return x_min, x_max, y_min, y_max
 
-    def get_image(self, x_off, y_off, x_size, y_size):
+    def get_image(self, dataset, x_off, y_off, x_size, y_size):
 
         # Note that we cast the input as int, in case we the input was numpy
         # integers instead of python integers.
-        img = self.dataset_.ReadAsArray(
+        img = dataset.ReadAsArray(
             xoff=int(x_off),
             yoff=int(y_off),
             xsize=int(x_size),
@@ -405,16 +408,16 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         )
         return img.transpose(1, 2, 0)
 
-    def save_image(self, img, x_off, y_off):
+    def save_image(self, dataset, img, x_off, y_off):
 
         img_to_save = img.transpose(2, 0, 1)
-        self.dataset_.WriteArray(
+        dataset.WriteArray(
             img_to_save,
             xoff=int(x_off),
             yoff=int(y_off),
         )
 
-    def get_image_with_bounds(self, x_min, x_max, y_min, y_max):
+    def get_image_with_bounds(self, dataset, x_min, x_max, y_min, y_max):
 
         # Out of bounds
         if (
@@ -441,15 +444,15 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             x_min, x_max, y_min, y_max
         )
 
-        return self.get_image(x_off, y_off, x_size, y_size)
+        return self.get_image(dataset, x_off, y_off, x_size, y_size)
 
-    def save_image_with_bounds(self, img, x_min, x_max, y_min, y_max):
+    def save_image_with_bounds(self, dataset, img, x_min, x_max, y_min, y_max):
 
         x_off, y_off, _, _ = self.physical_to_pixel(
             x_min, x_max, y_min, y_max
         )
 
-        self.save_image(img, x_off, y_off)
+        self.save_image(dataset, img, x_off, y_off)
 
     @staticmethod
     def check_bounds(coords, x_off, y_off, x_size, y_size):
@@ -491,6 +494,9 @@ class ReferencedMosaic(Mosaic):
             padding=self.padding,
         )
 
+        # Get the dataset
+        dataset = self.open_dataset()
+
         # If verbose, add a progress bar.
         if self.verbose:
             iterable = tqdm.tqdm(X['filepath'], ncols=80)
@@ -506,6 +512,7 @@ class ReferencedMosaic(Mosaic):
                 dtype=self.dtype,
             )
             dst_img = self.get_image(
+                dataset,
                 row['x_off'],
                 row['y_off'],
                 row['x_size'],
@@ -527,7 +534,7 @@ class ReferencedMosaic(Mosaic):
             )
 
             # Store the image
-            self.save_image(blended_img, row['x_off'], row['y_off'])
+            self.save_image(dataset, blended_img, row['x_off'], row['y_off'])
 
     def predict(
         self,
@@ -638,7 +645,8 @@ class LessReferencedMosaic(Mosaic):
         super().fit(approx_y, dataset=dataset)
 
         # Add the existing mosaic
-        self.reffed_mosaic.fit_transform(X, dataset=self.dataset_)
+        dataset = self.open_dataset()
+        self.reffed_mosaic.fit_transform(X, dataset=dataset)
 
     @utils.enable_passthrough
     def predict(
@@ -690,8 +698,6 @@ class LessReferencedMosaic(Mosaic):
             # one after
             i_start += 1
 
-            # Copy the dataset over
-
             # Load the log
             filename = possible_files[j]
 
@@ -722,9 +728,11 @@ class LessReferencedMosaic(Mosaic):
             padding=self.padding * X['spatial_error'],
         )
 
+        dataset = self.open_dataset()
+
         # Get the features for the existing mosaic
         if self.feature_mode == 'store':
-            dst_img = self.get_image(0, 0, self.x_size_, self.y_size_)
+            dst_img = self.get_image(dataset, 0, 0, self.x_size_, self.y_size_)
             dsframe_dst_kps, dsframe_dst_des = \
                 self.feature_detector_.detectAndCompute(dst_img, None)
             dsframe_dst_pts = cv2.KeyPoint_convert(dsframe_dst_kps)
@@ -755,6 +763,7 @@ class LessReferencedMosaic(Mosaic):
             row = X.loc[ind]
 
             return_code, results = self.incorporate_image(
+                dataset,
                 row,
                 dsframe_dst_pts,
                 dsframe_dst_des,
@@ -845,6 +854,7 @@ class LessReferencedMosaic(Mosaic):
 
     def incorporate_image(
         self,
+        dataset,
         row: pd.Series,
         dsframe_dst_pts: np.ndarray,
         dsframe_dst_des: np.ndarray,
@@ -861,7 +871,7 @@ class LessReferencedMosaic(Mosaic):
         # Get dst features
         # TODO: When dst pts are provided, this step could be made faster by
         #       not loading dst_img at this time.
-        dst_img = self.get_image(x_off, y_off, x_size, y_size)
+        dst_img = self.get_image(dataset, x_off, y_off, x_size, y_size)
         if self.feature_mode == 'store':
             raise NotImplementedError('Removed this functionality for now.')
 
@@ -901,7 +911,7 @@ class LessReferencedMosaic(Mosaic):
         # TODO: Clean this up
         if return_code == 'success':
             # Store the image
-            self.save_image(result['blended_img'], x_off, y_off)
+            self.save_image(dataset, result['blended_img'], x_off, y_off)
 
             # Auxiliary: Convert to the dataset frame
             src_pts = cv2.KeyPoint_convert(result['src_kp'])
