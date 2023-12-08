@@ -1,8 +1,10 @@
+import gc
 import glob
 import inspect
 import os
 import pickle
 import shutil
+import tracemalloc
 from typing import Tuple, Union
 import warnings
 
@@ -42,7 +44,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         y_pred_filepath_ext: str = '_y_pred.csv',
         file_exists: str = 'error',
         save_aux_files: bool = True,
-        checkpoint_freq: int = 100,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -63,7 +64,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         self.y_pred_filepath_ext = y_pred_filepath_ext
         self.file_exists = file_exists
         self.save_aux_files = save_aux_files
-        self.checkpoint_freq = checkpoint_freq
         self.crs = crs
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height
@@ -546,6 +546,7 @@ class LessReferencedMosaic(Mosaic):
         settings_filepath_ext: str = '_settings.yaml',
         y_pred_filepath_ext: str = '_y_pred.csv',
         file_exists: str = 'overwrite',
+        checkpoint_freq: int = 100,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -565,6 +566,7 @@ class LessReferencedMosaic(Mosaic):
         log_keys: list[str] = ['abs_det_M', 'i', 'ind'],
         value_exists: str = 'append',
         bad_images_dir: str = None,
+        memory_snapshot_freq: int = 10,
         save_return_codes: list[str] = [],
     ):
 
@@ -607,9 +609,11 @@ class LessReferencedMosaic(Mosaic):
             debug_mode=False,
         )
 
+        self.checkpoint_freq = checkpoint_freq
         self.image_joiner = image_joiner
         self.feature_mode = feature_mode
         self.bad_images_dir = bad_images_dir
+        self.memory_snapshot_freq = memory_snapshot_freq
         self.save_return_codes = save_return_codes
 
     def fit(
@@ -644,8 +648,6 @@ class LessReferencedMosaic(Mosaic):
         Returns
         -------
         '''
-        # Useful for debugging
-        self.log = {}
 
         X = utils.check_df_input(
             X,
@@ -696,6 +698,10 @@ class LessReferencedMosaic(Mosaic):
                 "Valid options are ['store', 'recompute']."
             )
 
+        # Start memory tracing
+        if 'snapshot' in self.log_keys:
+            tracemalloc.start()
+
         # If verbose, add a progress bar.
         if self.verbose:
             iterable = tqdm.tqdm(iteration_indices, ncols=80)
@@ -740,8 +746,15 @@ class LessReferencedMosaic(Mosaic):
                 self.close()
                 y_pred.to_csv(self.y_pred_filepath_)
 
+                gc.collect()
+
                 # Re-open dataset
                 self.reopen()
+
+            # Snapshot the memory usage
+            if i % self.memory_snapshot_freq == 0:
+                snapshot = tracemalloc.take_snapshot()
+                self.update_log({'snapshot': snapshot})
 
         # Convert to pixels
         (
@@ -759,6 +772,10 @@ class LessReferencedMosaic(Mosaic):
         # Flush data to disk
         self.close()
         y_pred.to_csv(self.y_pred_filepath_)
+
+        # Stop memory tracing
+        if 'snapshot' in self.log_keys:
+            tracemalloc.stop()
 
         return y_pred
 
