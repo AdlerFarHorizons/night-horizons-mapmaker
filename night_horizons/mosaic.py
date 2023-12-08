@@ -3,6 +3,7 @@ import glob
 import inspect
 import os
 import pickle
+import re
 import shutil
 import tracemalloc
 from typing import Tuple, Union
@@ -644,7 +645,7 @@ class LessReferencedMosaic(Mosaic):
         self,
         X: pd.DataFrame,
         y=None,
-        iteration_indices: np.ndarray[int] = None,
+        i_start: Union[int, str] = 'checkpoint',
     ):
         ''' TODO: Deprecate iteration_indices. Just have the user order their
         dataframe prior to input.
@@ -660,8 +661,41 @@ class LessReferencedMosaic(Mosaic):
             self.required_columns,
         )
 
-        if iteration_indices is None:
-            iteration_indices = self.calc_iteration_indices(X)
+        # TODO: Change to providing a directory directly, instead of inferring
+        #       from the filepath?
+        if i_start == 'checkpoint':
+
+            # Determine what to look for, for checkpoint files
+            checkpoint_dir, filename = os.path.split(self.filepath_)
+            base, ext = os.path.splitext(filename)
+            i_tag = r'_i(\d+)'
+            checkpoint_pattern = base + i_tag + ext
+            pattern = re.compile(checkpoint_pattern)
+
+            # Look for checkpoint files
+            i_start = -1
+            j_filename = None
+            possible_files = os.listdir(checkpoint_dir)
+            for j, filename in enumerate(possible_files):
+                match = pattern.search(filename)
+                if not match:
+                    continue
+
+                number = int(match.group(1))
+                if number > i_start:
+                    i_start = number
+                    j_filename = j
+
+            # We don't want to start on the same loop that was saved, but the
+            # one after
+            i_start += 1
+
+            # Copy the dataset over
+
+            # Load the log
+            filename = possible_files[j]
+
+        iteration_indices = X.index[i_start:]
 
         # Check if fit had been called
         check_is_fitted(self, 'dataset_')
