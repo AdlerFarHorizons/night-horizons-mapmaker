@@ -664,6 +664,9 @@ class LessReferencedMosaic(Mosaic):
         -------
         '''
 
+        # Start with a fresh log
+        self.log = {}
+
         X = utils.check_df_input(
             X,
             self.required_columns,
@@ -694,16 +697,33 @@ class LessReferencedMosaic(Mosaic):
                     i_start = number
                     j_filename = j
 
+            if i_start != -1:
+
+                print(
+                    'Found checkpoint file. '
+                    f'Will fast forward to i={i_start + 1}'
+                )
+
+                # Copy over dataset
+                filename = possible_files[j_filename]
+                filepath = os.path.join(checkpoint_dir, filename)
+                shutil.copy(filepath, self.filepath_)
+
+                # Open the log
+                base, ext = os.path.splitext(filepath)
+                log_filepath = base + self.log_filepath_ext
+                log_df = pd.read_csv(log_filepath)
+
+                # Store the log in the right place
+                for log_key in self.log_keys:
+                    if log_key in log_df.columns:
+                        self.log[log_key] = list(log_df[log_key].values)
+                    else:
+                        self.log[log_key] = [np.nan, ] * (i_start + 2)
+
             # We don't want to start on the same loop that was saved, but the
             # one after
             i_start += 1
-
-            # Copy over dataset
-            filename = possible_files[j_filename]
-            filepath = os.path.join(checkpoint_dir, filename)
-            shutil.copy(filepath, self.filepath_)
-
-        iteration_indices = X.index[i_start:]
 
         # Check if fit had been called
         check_is_fitted(self, 'filepath_')
@@ -750,9 +770,9 @@ class LessReferencedMosaic(Mosaic):
 
         # If verbose, add a progress bar.
         if self.verbose:
-            iterable = tqdm.tqdm(iteration_indices, ncols=80)
+            iterable = tqdm.tqdm(X.index, ncols=80)
         else:
-            iterable = iteration_indices
+            iterable = X.index
 
         # Start memory tracing
         if 'snapshot' in self.log_keys:
@@ -761,6 +781,9 @@ class LessReferencedMosaic(Mosaic):
             self.update_log({'starting_snapshot': start})
 
         for i, ind in enumerate(iterable):
+
+            if i < i_start:
+                continue
 
             row = X.loc[ind]
 
@@ -812,7 +835,7 @@ class LessReferencedMosaic(Mosaic):
                     key: value for key, value in self.log.items()
                     if isinstance(value, list)
                 })
-                log_df.index = iteration_indices[:i + 1]
+                log_df.index = X.index[:i + 1]
                 log_df.to_csv(self.log_filepath_)
 
                 # Re-open dataset
@@ -847,7 +870,7 @@ class LessReferencedMosaic(Mosaic):
             key: value for key, value in self.log.items()
             if isinstance(value, list)
         })
-        log_df.index = iteration_indices
+        log_df.index = X.index
         log_df.to_csv(self.log_filepath_)
 
         # Stop memory tracing
