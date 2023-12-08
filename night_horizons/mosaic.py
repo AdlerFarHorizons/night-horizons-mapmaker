@@ -40,8 +40,9 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
     def __init__(
         self,
         filepath: str,
-        settings_filepath_ext: str = '_settings.yaml',
         y_pred_filepath_ext: str = '_y_pred.csv',
+        settings_filepath_ext: str = '_settings.yaml',
+        log_filepath_ext: str = '_log.csv',
         file_exists: str = 'error',
         save_aux_files: bool = True,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
@@ -60,8 +61,9 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         value_exists: str = 'append',
     ):
         self.filepath = filepath
-        self.settings_filepath_ext = settings_filepath_ext
         self.y_pred_filepath_ext = y_pred_filepath_ext
+        self.settings_filepath_ext = settings_filepath_ext
+        self.log_filepath_ext = log_filepath_ext
         self.file_exists = file_exists
         self.save_aux_files = save_aux_files
         self.crs = crs
@@ -107,8 +109,9 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         # Filepaths
         self.filepath_ = self.filepath
         base, ext = os.path.splitext(self.filepath_)
-        self.settings_filepath_ = base + self.settings_filepath_ext
         self.y_pred_filepath_ = base + self.y_pred_filepath_ext
+        self.settings_filepath_ = base + self.settings_filepath_ext
+        self.log_filepath_ = base + self.log_filepath_ext
 
         # Flexible file-handling. Maybe overkill?
         if os.path.isfile(self.filepath_):
@@ -129,7 +132,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             # Create a new file with a new number appended
             elif self.file_exists == 'new':
                 base, ext = os.path.splitext(self.filepath)
-                new_fp_format = base + '({:03d})' + ext
+                new_fp_format = base + '_v{:03d}' + ext
                 self.filepath_ = new_fp_format.format(0)
                 i = 0
                 while os.path.isfile(self.filepath_):
@@ -138,8 +141,9 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
                 # Change auxiliary files too
                 base, ext = os.path.splitext(self.filepath_)
-                self.y_pred_filepath_ = base + '_y_pred.csv'
-                self.settings_filepath_ = base + '_settings.yaml'
+                self.y_pred_filepath_ = base + self.y_pred_filepath_ext
+                self.settings_filepath_ = base + self.settings_filepath_ext
+                self.log_filepath_ = base + self.log_filepath_ext
 
             else:
                 raise ValueError(
@@ -215,7 +219,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         # Initialize an empty GeoTiff
         driver = gdal.GetDriverByName('GTiff')
         self.dataset_ = driver.Create(
-            self.filepath,
+            self.filepath_,
             xsize=self.x_size_,
             ysize=self.y_size_,
             bands=self.n_bands,
@@ -281,7 +285,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
     def reopen(self):
 
-        self.dataset_ = gdal.Open(self.filepath, gdal.GA_Update)
+        self.dataset_ = gdal.Open(self.filepath_, gdal.GA_Update)
 
     def save_settings(self):
 
@@ -543,8 +547,9 @@ class LessReferencedMosaic(Mosaic):
     def __init__(
         self,
         filepath: str,
-        settings_filepath_ext: str = '_settings.yaml',
         y_pred_filepath_ext: str = '_y_pred.csv',
+        settings_filepath_ext: str = '_settings.yaml',
+        log_filepath_ext: str = '_log.csv',
         file_exists: str = 'overwrite',
         checkpoint_freq: int = 100,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
@@ -573,8 +578,9 @@ class LessReferencedMosaic(Mosaic):
         super().__init__(
             filepath=filepath,
             file_exists=file_exists,
-            settings_filepath_ext=settings_filepath_ext,
             y_pred_filepath_ext=y_pred_filepath_ext,
+            settings_filepath_ext=settings_filepath_ext,
+            log_filepath_ext=log_filepath_ext,
             crs=crs,
             pixel_width=pixel_width,
             pixel_height=pixel_height,
@@ -698,15 +704,18 @@ class LessReferencedMosaic(Mosaic):
                 "Valid options are ['store', 'recompute']."
             )
 
-        # Start memory tracing
-        if 'snapshot' in self.log_keys:
-            tracemalloc.start()
-
         # If verbose, add a progress bar.
         if self.verbose:
             iterable = tqdm.tqdm(iteration_indices, ncols=80)
         else:
             iterable = iteration_indices
+
+        # Start memory tracing
+        if 'snapshot' in self.log_keys:
+            tracemalloc.start()
+            start = tracemalloc.take_snapshot()
+            self.update_log({'starting_snapshot': start})
+
         for i, ind in enumerate(iterable):
 
             row = X.loc[ind]
@@ -746,7 +755,20 @@ class LessReferencedMosaic(Mosaic):
                 self.close()
                 y_pred.to_csv(self.y_pred_filepath_)
 
-                gc.collect()
+                # Make checkpoint file by copying dataset
+                base, ext = os.path.splitext(self.filepath_)
+                i_tag = f'_i{i:06d}'
+                checkpoint_fp = base + i_tag + ext
+                shutil.copy(self.filepath_, checkpoint_fp)
+
+                # Store log
+                log_df = pd.DataFrame({
+                    key: value for key, value in self.log.items()
+                    if isinstance(value, list)
+                })
+                log_df.index = iteration_indices[:i + 1]
+                log_fp = base + i_tag + self.log_filepath_ext
+                log_df.to_csv(log_fp)
 
                 # Re-open dataset
                 self.reopen()
