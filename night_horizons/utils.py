@@ -450,54 +450,22 @@ class LoggerMixin:
 
     def __init__(
         self,
-        debug_mode=False,
         log_keys=[],
-        value_exists='overwrite'
     ):
-        self.debug_mode = debug_mode
         self.log_keys = log_keys
-        self.log = None
-        self.value_exists = value_exists
+        self.log = {}
 
-    def log_locals(self, locals_dict):
+    def update_log(self, new_dict, target=None):
 
-        if not self.debug_mode:
-            return
+        if target is None:
+            target = self.log
 
-        log = {
+        # Filter out values that aren't being tracked
+        new_dict = {
             log_key: item
-            for log_key, item in locals_dict.items()
+            for log_key, item in new_dict.items()
             if log_key in self.log_keys
         }
-        return log
+        target.update(new_dict)
 
-    def update_log(self, locals_dict):
-
-        # Get the local values
-        locals_log = self.log_locals(locals_dict)
-        if locals_log is None:
-            return
-
-        # Make the log, if necessary
-        if self.log is None:
-            self.log = {}
-
-        if self.value_exists == 'overwrite':
-            self.log.update(locals_log)
-        # Loop through, saving previous versions if they exist.
-        elif self.value_exists == 'append':
-            for log_key, item in locals_log.items():
-                if log_key in self.log:
-                    if not isinstance(self.log[log_key], list):
-                        self.log[log_key] = [self.log[log_key], ]
-                    self.log[log_key].append(item)
-                else:
-                    self.log[log_key] = item
-        else:
-            raise ValueError(
-                'Invalid value for value_exists. '
-                f'Received value_exists={self.value_exists}. '
-                f"Valid options are ['overwrite', 'append']."
-            )
-
-        return self.log
+        return target
