@@ -57,7 +57,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         verbose: bool = True,
-        log_keys: list[str] = [],
+        log_keys: list[str] = ['ind', 'return_code'],
     ):
         self.filepath = filepath
         self.y_pred_filepath_ext = y_pred_filepath_ext
@@ -573,7 +573,7 @@ class LessReferencedMosaic(Mosaic):
             features.ImageJoiner, features.ImageJoinerQueue
         ] = None,
         feature_mode: str = 'recompute',
-        log_keys: list[str] = ['abs_det_M', 'i', 'ind'],
+        log_keys: list[str] = ['i', 'ind', 'return_code', 'abs_det_M'],
         bad_images_dir: str = None,
         memory_snapshot_freq: int = 10,
         save_return_codes: list[str] = [],
@@ -634,6 +634,7 @@ class LessReferencedMosaic(Mosaic):
 
         # Start with a fresh log
         self.log = {}
+        self.logs = []
 
         assert approx_y is not None, \
             'Must pass approx_y.'
@@ -689,7 +690,6 @@ class LessReferencedMosaic(Mosaic):
                 log_df = log_df[self.log_keys]
 
                 # Format the stored logs
-                self.logs = []
                 for i, ind in enumerate(log_df.index):
                     if i > i_start:
                         break
@@ -776,7 +776,6 @@ class LessReferencedMosaic(Mosaic):
             start = tracemalloc.take_snapshot()
             self.update_log({'starting_snapshot': start})
 
-        self.logs = []
         for i, ind in enumerate(iterable):
 
             if i < self.i_start_:
@@ -790,10 +789,6 @@ class LessReferencedMosaic(Mosaic):
                 dsframe_dst_pts,
                 dsframe_dst_des,
             )
-
-            # Store metadata
-            log['index'] = ind
-            y_pred.loc[ind, 'return_code'] = return_code
 
             if return_code == 'success':
 
@@ -842,6 +837,9 @@ class LessReferencedMosaic(Mosaic):
                 if i % self.memory_snapshot_freq == 0:
                     log['snapshot'] = tracemalloc.take_snapshot()
 
+            # Store metadata
+            y_pred.loc[ind, 'return_code'] = return_code
+            log = self.update_log(locals(), target=log)
             self.logs.append(log)
 
         # Convert to pixels
