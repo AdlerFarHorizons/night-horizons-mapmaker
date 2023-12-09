@@ -648,6 +648,8 @@ class LessReferencedMosaic(Mosaic):
 
             # Determine what to look for, for checkpoint files
             checkpoint_dir, filename = os.path.split(self.filepath_)
+            checkpoint_dir = os.path.join(checkpoint_dir, 'checkpoints')
+            os.makedirs(checkpoint_dir, exist_ok=True)
             base, ext = os.path.splitext(filename)
             i_tag = r'_i(\d+)'
             checkpoint_pattern = base + i_tag + ext
@@ -812,6 +814,11 @@ class LessReferencedMosaic(Mosaic):
                     results['x_size'], results['y_size']
                 ]
 
+            # Snapshot the memory usage
+            if 'snapshot' in self.log_keys:
+                if i % self.memory_snapshot_freq == 0:
+                    log['snapshot'] = tracemalloc.take_snapshot()
+
             # Checkpoint
             if (i % self.checkpoint_freq == 0) and (i != 0):
 
@@ -820,10 +827,14 @@ class LessReferencedMosaic(Mosaic):
                 dataset = None
                 y_pred.to_csv(self.y_pred_filepath_)
 
+                # TODO: Clean up filepath manipulations
                 # Make checkpoint file by copying dataset
-                base, ext = os.path.splitext(self.filepath_)
+                checkpoint_dir, filename = os.path.split(self.filepath_)
+                base, ext = os.path.splitext(filename)
                 i_tag = f'_i{i:06d}'
-                checkpoint_fp = base + i_tag + ext
+                filename = base + i_tag + ext
+                checkpoint_dir = os.path.join(checkpoint_dir, 'checkpoints')
+                checkpoint_fp = os.path.join(checkpoint_dir, filename)
                 shutil.copy(self.filepath_, checkpoint_fp)
 
                 # Store log
@@ -832,11 +843,6 @@ class LessReferencedMosaic(Mosaic):
 
                 # Re-open dataset
                 dataset = self.open_dataset()
-
-            # Snapshot the memory usage
-            if 'snapshot' in self.log_keys:
-                if i % self.memory_snapshot_freq == 0:
-                    log['snapshot'] = tracemalloc.take_snapshot()
 
             # Store metadata
             y_pred.loc[ind, 'return_code'] = return_code
@@ -950,6 +956,7 @@ class LessReferencedMosaic(Mosaic):
             ) = utils.warp_bounds(src_img, result['M'])
             results['x_off'] += x_off
             results['y_off'] += y_off
+
         # Save failed images for later debugging
         elif return_code in self.save_return_codes:
             if self.bad_images_dir is not None:
@@ -960,13 +967,10 @@ class LessReferencedMosaic(Mosaic):
                 src_fp = os.path.join(
                     self.bad_images_dir, f'src_{n_tests_existing:03d}.tiff')
 
-                raster.Image(dst_img).save(dst_fp)
-                shutil.copy(row['filepath'], src_fp)
+                cv2.imwrite(src_fp, src_img[:, :, ::-1])
+                cv2.imwrite(dst_fp, dst_img[:, :, ::-1])
 
         # Log
-        # TODO: This is such a fragile way to log.
-        #       It requires careful knowledge of the state of the log,
-        #       and whether or not it has been called already.
         log = self.update_log(locals(), target=log)
 
         return return_code, results, log
