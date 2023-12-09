@@ -636,7 +636,11 @@ class LessReferencedMosaic(Mosaic):
         y=None,
         approx_y: pd.DataFrame = None,
         dataset: gdal.Dataset = None,
+        i_start: Union[int, str] = 'checkpoint',
     ):
+
+        # Start with a fresh log
+        self.log = {}
 
         assert approx_y is not None, \
             'Must pass approx_y.'
@@ -647,30 +651,6 @@ class LessReferencedMosaic(Mosaic):
         # Add the existing mosaic
         dataset = self.open_dataset()
         self.reffed_mosaic.fit_transform(X, dataset=dataset)
-
-    @utils.enable_passthrough
-    def predict(
-        self,
-        X: pd.DataFrame,
-        y=None,
-        i_start: Union[int, str] = 'checkpoint',
-    ):
-        ''' TODO: Deprecate iteration_indices. Just have the user order their
-        dataframe prior to input.
-
-        Parameters
-        ----------
-        Returns
-        -------
-        '''
-
-        # Start with a fresh log
-        self.log = {}
-
-        X = utils.check_df_input(
-            X,
-            self.required_columns,
-        )
 
         # TODO: Change to providing a directory directly, instead of inferring
         #       from the filepath?
@@ -710,7 +690,7 @@ class LessReferencedMosaic(Mosaic):
                 shutil.copy(filepath, self.filepath_)
 
                 # Open the log
-                base, ext = os.path.splitext(filepath)
+                base, ext = os.path.splitext(self.filepath_)
                 log_filepath = base + self.log_filepath_ext
                 log_df = pd.read_csv(log_filepath)
 
@@ -724,6 +704,27 @@ class LessReferencedMosaic(Mosaic):
             # We don't want to start on the same loop that was saved, but the
             # one after
             i_start += 1
+        self.i_start_ = i_start
+
+    @utils.enable_passthrough
+    def predict(
+        self,
+        X: pd.DataFrame,
+        y=None,
+    ):
+        ''' TODO: Deprecate iteration_indices. Just have the user order their
+        dataframe prior to input.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        X = utils.check_df_input(
+            X,
+            self.required_columns,
+        )
 
         # Check if fit had been called
         check_is_fitted(self, 'filepath_')
@@ -782,7 +783,7 @@ class LessReferencedMosaic(Mosaic):
 
         for i, ind in enumerate(iterable):
 
-            if i < i_start:
+            if i < self.i_start_:
                 continue
 
             row = X.loc[ind]
@@ -835,7 +836,7 @@ class LessReferencedMosaic(Mosaic):
                     key: value for key, value in self.log.items()
                     if isinstance(value, list)
                 })
-                log_df.index = X.index[:i + 1]
+                log_df['index'] = X.index[:i + 1]
                 log_df.to_csv(self.log_filepath_)
 
                 # Re-open dataset
@@ -870,7 +871,7 @@ class LessReferencedMosaic(Mosaic):
             key: value for key, value in self.log.items()
             if isinstance(value, list)
         })
-        log_df.index = X.index
+        log_df['index'] = X.index[:i + 1]
         log_df.to_csv(self.log_filepath_)
 
         # Stop memory tracing
