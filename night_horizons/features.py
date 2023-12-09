@@ -38,8 +38,7 @@ class ImageJoiner(utils.LoggerMixin):
         reproj_threshold=5.,
         find_homography_options={},
         outline: int = 0,
-        log_keys: list[str] = [],
-        value_exists: str = 'overwrite',
+        log_keys: list[str] = ['abs_det_M'],
     ):
 
         # Handle feature detector object creation
