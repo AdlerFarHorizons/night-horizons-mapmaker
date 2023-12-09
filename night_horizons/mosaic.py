@@ -57,9 +57,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         verbose: bool = True,
-        debug_mode: bool = False,
         log_keys: list[str] = [],
-        value_exists: str = 'append',
     ):
         self.filepath = filepath
         self.y_pred_filepath_ext = y_pred_filepath_ext
@@ -81,7 +79,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         self.required_columns = ['filepath'] + preprocess.GEOTRANSFORM_COLS
 
-        super().__init__(debug_mode, log_keys, value_exists)
+        super().__init__(log_keys)
 
     @utils.enable_passthrough
     def fit(
@@ -575,9 +573,7 @@ class LessReferencedMosaic(Mosaic):
             features.ImageJoiner, features.ImageJoinerQueue
         ] = None,
         feature_mode: str = 'recompute',
-        debug_mode: bool = True,
         log_keys: list[str] = ['abs_det_M', 'i', 'ind'],
-        value_exists: str = 'append',
         bad_images_dir: str = None,
         memory_snapshot_freq: int = 10,
         save_return_codes: list[str] = [],
@@ -600,9 +596,7 @@ class LessReferencedMosaic(Mosaic):
             passthrough=passthrough,
             outline=outline,
             verbose=verbose,
-            debug_mode=debug_mode,
             log_keys=log_keys,
-            value_exists=value_exists,
         )
         self.reffed_mosaic = ReferencedMosaic(
             filepath=filepath,
@@ -620,7 +614,6 @@ class LessReferencedMosaic(Mosaic):
             passthrough=passthrough,
             outline=outline,
             verbose=verbose,
-            debug_mode=False,
         )
 
         self.checkpoint_freq = checkpoint_freq
@@ -781,6 +774,7 @@ class LessReferencedMosaic(Mosaic):
             start = tracemalloc.take_snapshot()
             self.update_log({'starting_snapshot': start})
 
+        self.logs = []
         for i, ind in enumerate(iterable):
 
             if i < self.i_start_:
@@ -788,12 +782,15 @@ class LessReferencedMosaic(Mosaic):
 
             row = X.loc[ind]
 
-            return_code, results = self.incorporate_image(
+            return_code, results, log = self.incorporate_image(
                 dataset,
                 row,
                 dsframe_dst_pts,
                 dsframe_dst_des,
             )
+
+            # Store metadata
+            log['index'] = ind
             y_pred.loc[ind, 'return_code'] = return_code
 
             if return_code == 'success':
@@ -832,11 +829,7 @@ class LessReferencedMosaic(Mosaic):
                 shutil.copy(self.filepath_, checkpoint_fp)
 
                 # Store log
-                log_df = pd.DataFrame({
-                    key: value for key, value in self.log.items()
-                    if isinstance(value, list)
-                })
-                log_df['index'] = X.index[:i + 1]
+                log_df = pd.DataFrame(self.logs)
                 log_df.to_csv(self.log_filepath_)
 
                 # Re-open dataset
@@ -845,8 +838,9 @@ class LessReferencedMosaic(Mosaic):
             # Snapshot the memory usage
             if 'snapshot' in self.log_keys:
                 if i % self.memory_snapshot_freq == 0:
-                    snapshot = tracemalloc.take_snapshot()
-                    self.update_log({'snapshot': snapshot})
+                    log['snapshot'] = tracemalloc.take_snapshot()
+
+            self.logs.append(log)
 
         # Convert to pixels
         (
@@ -867,11 +861,7 @@ class LessReferencedMosaic(Mosaic):
         y_pred.to_csv(self.y_pred_filepath_)
 
         # Store log
-        log_df = pd.DataFrame({
-            key: value for key, value in self.log.items()
-            if isinstance(value, list)
-        })
-        log_df['index'] = X.index[:i + 1]
+        log_df = pd.DataFrame(self.logs)
         log_df.to_csv(self.log_filepath_)
 
         # Stop memory tracing
@@ -889,6 +879,7 @@ class LessReferencedMosaic(Mosaic):
     ):
 
         results = {}
+        log = {}
 
         # Get image location
         x_off = row['x_off']
@@ -919,8 +910,8 @@ class LessReferencedMosaic(Mosaic):
         else:
             # Check what's in bounds, exit if nothing
             if dst_img.sum() == 0:
-                self.update_log(locals())
-                return 'out_of_bounds', results
+                log = self.update_log(locals(), target=log)
+                return 'out_of_bounds', results, log
 
         # Get src image
         src_img = utils.load_image(
@@ -933,8 +924,9 @@ class LessReferencedMosaic(Mosaic):
         #    However, we need to track *how* the failures happened somehow,
         #    so we need some sort of flag, which is basically a return code.
         #    That said, there may be a better alternative to this.
-        return_code, result, log = self.image_joiner.join(
+        return_code, result, image_joiner_log = self.image_joiner.join(
             src_img, dst_img)
+        log = self.update_log(image_joiner_log, target=log)
 
         # TODO: Clean this up
         if return_code == 'success':
@@ -974,7 +966,6 @@ class LessReferencedMosaic(Mosaic):
         # TODO: This is such a fragile way to log.
         #       It requires careful knowledge of the state of the log,
         #       and whether or not it has been called already.
-        log.update(locals())
-        self.update_log(log)
+        log = self.update_log(locals(), target=log)
 
-        return return_code, results
+        return return_code, results, log

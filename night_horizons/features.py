@@ -38,7 +38,6 @@ class ImageJoiner(utils.LoggerMixin):
         reproj_threshold=5.,
         find_homography_options={},
         outline: int = 0,
-        debug_mode: bool = False,
         log_keys: list[str] = [],
         value_exists: str = 'overwrite',
     ):
@@ -72,7 +71,7 @@ class ImageJoiner(utils.LoggerMixin):
         self.outline = outline
 
         # Initialize the log
-        super().__init__(debug_mode, log_keys, value_exists)
+        super().__init__(log_keys)
 
     def join(self, src_img, dst_img, warp_and_blend=True):
         '''
@@ -367,15 +366,15 @@ class ImageJoinerQueue:
 
         for i, image_joiner in enumerate(self.image_joiners):
 
-            result_code, result, debug_log = image_joiner.join(
+            result_code, result, log = image_joiner.join(
                 src_img,
                 dst_img
             )
             if result_code == 'success':
                 break
 
-        debug_log['i_image_joiner'] = i
-        return result_code, result, debug_log
+        log['i_image_joiner'] = i
+        return result_code, result, log
 
 
 class HomographyTransformError(ValueError):
