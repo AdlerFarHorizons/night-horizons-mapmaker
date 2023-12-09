@@ -686,13 +686,15 @@ class LessReferencedMosaic(Mosaic):
                 base, ext = os.path.splitext(self.filepath_)
                 log_filepath = base + self.log_filepath_ext
                 log_df = pd.read_csv(log_filepath)
+                log_df = log_df[self.log_keys]
 
-                # Store the log in the right place
-                for log_key in self.log_keys:
-                    if log_key in log_df.columns:
-                        self.log[log_key] = list(log_df[log_key].values)
-                    else:
-                        self.log[log_key] = [np.nan, ] * (i_start + 2)
+                # Format the stored logs
+                self.logs = []
+                for i, ind in enumerate(log_df.index):
+                    if i > i_start:
+                        break
+                    log = dict(log_df.loc[ind])
+                    self.logs.append(log)
 
             # We don't want to start on the same loop that was saved, but the
             # one after
@@ -815,7 +817,7 @@ class LessReferencedMosaic(Mosaic):
                 ]
 
             # Checkpoint
-            if i % self.checkpoint_freq == 0:
+            if (i % self.checkpoint_freq == 0) and (i != 0):
 
                 # Flush data to disk
                 dataset.FlushCache()
