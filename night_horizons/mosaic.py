@@ -642,10 +642,6 @@ class LessReferencedMosaic(Mosaic):
         # Create the dataset
         super().fit(approx_y, dataset=dataset)
 
-        # Add the existing mosaic
-        dataset = self.open_dataset()
-        self.reffed_mosaic.fit_transform(X, dataset=dataset)
-
         # TODO: Change to providing a directory directly, instead of inferring
         #       from the filepath?
         if i_start == 'checkpoint':
@@ -700,6 +696,11 @@ class LessReferencedMosaic(Mosaic):
             # one after
             i_start += 1
         self.i_start_ = i_start
+
+        # Create the initial mosaic, if not starting from a checkpoint file
+        if self.i_start_ == 0:
+            dataset = self.open_dataset()
+            self.reffed_mosaic.fit_transform(X, dataset=dataset)
 
     @utils.enable_passthrough
     def predict(
@@ -774,7 +775,7 @@ class LessReferencedMosaic(Mosaic):
         if 'snapshot' in self.log_keys:
             tracemalloc.start()
             start = tracemalloc.take_snapshot()
-            self.update_log({'starting_snapshot': start})
+            self.log['starting_snapshot'] = start
 
         for i, ind in enumerate(iterable):
 
