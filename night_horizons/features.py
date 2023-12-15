@@ -37,6 +37,7 @@ class ImageJoiner(utils.LoggerMixin):
         homography_method=cv2.RANSAC,
         reproj_threshold=5.,
         find_homography_options={},
+        img_transform=None,
         outline: int = 0,
         log_keys: list[str] = ['abs_det_M'],
     ):
@@ -67,6 +68,7 @@ class ImageJoiner(utils.LoggerMixin):
         self.homography_method = homography_method
         self.reproj_threshold = reproj_threshold
         self.find_homography_options = find_homography_options
+        self.img_transform = img_transform
         self.outline = outline
 
         # Initialize the log
@@ -90,8 +92,11 @@ class ImageJoiner(utils.LoggerMixin):
 
         results = {}
         try:
+            src_img_t = self.apply_img_transform(src_img)
+            dst_img_t = self.apply_img_transform(dst_img)
+
             # Try to get a valid homography
-            results = self.find_valid_homography(src_img, dst_img)
+            results = self.find_valid_homography(src_img_t, dst_img_t)
 
             if warp_and_blend:
 
@@ -123,6 +128,13 @@ class ImageJoiner(utils.LoggerMixin):
             self.update_log(locals())
 
             return return_code, results, self.log
+
+    def apply_img_transform(self, img):
+
+        if self.img_transform is None:
+            return img
+
+        return self.img_transform(img)
 
     def find_valid_homography(self, src_img, dst_img):
         '''
@@ -374,6 +386,47 @@ class ImageJoinerQueue:
 
         log['i_image_joiner'] = i
         return result_code, result, log
+
+
+class ImageTransforms:
+
+    @staticmethod
+    def logscale(img):
+
+        assert np.issubdtype(img.dtype, np.integer), \
+            'logscale_img_transform not implemented for imgs with float dtype.'
+
+        # Transform the image
+        # We add 1 because log(0) = nan.
+        # We have to convert the image first because otherwise max values
+        # roll over
+        logscale_img = np.log10(img.astype(np.float32) + 1)
+
+        # Scale
+        dtype_max = np.iinfo(img.dtype).max
+        logscale_img *= dtype_max / np.log10(dtype_max + 1)
+
+        return logscale_img.astype(img.dtype)
+
+    @staticmethod
+    def floor(img, fraction=0.03):
+
+        img = copy.copy(img)
+
+        assert np.issubdtype(img.dtype, np.integer), \
+            'floor not implemented for imgs with float dtype.'
+
+        value = int(fraction * np.iinfo(img.dtype).max)
+        img[img <= value] = 0
+
+        return img
+
+    @staticmethod
+    def floor_logscale(img, fraction=0.03):
+
+        floor_img = ImageTransforms.floor(img, fraction)
+
+        return ImageTransforms.logscale(floor_img)
 
 
 class HomographyTransformError(ValueError):

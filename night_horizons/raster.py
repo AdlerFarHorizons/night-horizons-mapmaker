@@ -211,7 +211,7 @@ class Image:
 
         return s
 
-    def show(self, ax=None, img='img', *args, **kwargs):
+    def show(self, ax=None, img='img', transform=None, *args, **kwargs):
         '''
             NOTE: This will not be consistent with imshow, because with imshow
         the y-axis increases downwards, consistent with old image
@@ -229,10 +229,14 @@ class Image:
 
         pxs, pys = self.get_pixel_coordinates()
 
+        img = getattr(self, img)
+        if transform is not None:
+            img = transform(img)
+
         ax.pcolormesh(
             pxs,
             pys,
-            getattr(self, img),
+            img,
             *args,
             **kwargs
         )
