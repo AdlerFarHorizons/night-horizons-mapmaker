@@ -355,8 +355,8 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             # Handle out-of-bounds
             x_off[x_off < 0] = 0
             y_off[y_off < 0] = 0
-            x_off[x_off + x_size >= self.x_size_] = self.x_size_ - 1 - x_off
-            y_off[y_off + y_size >= self.y_size_] = self.y_size_ - 1 - y_off
+            x_size[x_off + x_size > self.x_size_] = self.x_size_ - x_off
+            y_size[y_off + y_size > self.y_size_] = self.y_size_ - y_off
 
         # When we're passing in single values.
         except TypeError:
@@ -395,6 +395,13 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         return x_min, x_max, y_min, y_max
 
     def get_image(self, dataset, x_off, y_off, x_size, y_size):
+
+        assert x_off >= 0, 'x_off cannot be less than 0'
+        assert x_off + x_size <= self.x_size_, \
+            'x_off + x_size cannot be greater than self.x_size_'
+        assert y_off >= 0, 'y_off cannot be less than 0'
+        assert y_off + y_size <= self.y_size_, \
+            'y_off + y_size cannot be greater than self.y_size_'
 
         # Note that we cast the input as int, in case we the input was numpy
         # integers instead of python integers.
