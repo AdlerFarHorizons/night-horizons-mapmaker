@@ -28,7 +28,7 @@ class ImageJoiner(utils.LoggerMixin):
         image_transformer='PassImageTransformer',
         feature_detector_options={},
         feature_matcher_options={},
-        img_transformer_options={},
+        image_transformer_options={},
         det_min=0.6,
         det_max=2.0,
         required_brightness=0.03,
@@ -62,13 +62,13 @@ class ImageJoiner(utils.LoggerMixin):
             img_transformer_fn = getattr(preprocess, image_transformer)
             if callable(img_transformer_fn):
                 image_transformer = img_transformer_fn(
-                    **img_transformer_options)
+                    **image_transformer_options)
             else:
                 image_transformer = img_transformer_fn
-                assert img_transformer_options == {}, \
+                assert image_transformer_options == {}, \
                     'Cannot pass options to an image transformer pipeline.'
         else:
-            assert img_transformer_options == {}, \
+            assert image_transformer_options == {}, \
                 'Can only pass options if `img_transformer` is a str'
 
         self.feature_detector = feature_detector
