@@ -11,14 +11,12 @@ import cv2
 import numpy as np
 import pandas as pd
 import scipy
-from sklearn.utils.validation import check_array
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import utils
-from . import raster
+from . import utils, preprocess
 
 
 class ImageJoiner(utils.LoggerMixin):
@@ -27,8 +25,10 @@ class ImageJoiner(utils.LoggerMixin):
         self,
         feature_detector,
         feature_matcher,
+        image_transformer='PassImageTransformer',
         feature_detector_options={},
         feature_matcher_options={},
+        img_transformer_options={},
         det_min=0.6,
         det_max=2.0,
         required_brightness=0.03,
@@ -37,7 +37,6 @@ class ImageJoiner(utils.LoggerMixin):
         homography_method=cv2.RANSAC,
         reproj_threshold=5.,
         find_homography_options={},
-        img_transform=None,
         outline: int = 0,
         log_keys: list[str] = ['abs_det_M'],
     ):
@@ -58,8 +57,23 @@ class ImageJoiner(utils.LoggerMixin):
             assert feature_matcher_options == {}, \
                 'Can only pass options if `feature_matcher` is a str'
 
+        # Handle image transformer object creation
+        if isinstance(image_transformer, str):
+            img_transformer_fn = getattr(preprocess, image_transformer)
+            if callable(img_transformer_fn):
+                image_transformer = img_transformer_fn(
+                    **img_transformer_options)
+            else:
+                image_transformer = img_transformer_fn
+                assert img_transformer_options == {}, \
+                    'Cannot pass options to an image transformer pipeline.'
+        else:
+            assert img_transformer_options == {}, \
+                'Can only pass options if `img_transformer` is a str'
+
         self.feature_detector = feature_detector
         self.feature_matcher = feature_matcher
+        self.image_transformer = image_transformer
         self.det_min = det_min
         self.det_max = det_max
         self.required_brightness = required_brightness
@@ -68,7 +82,6 @@ class ImageJoiner(utils.LoggerMixin):
         self.homography_method = homography_method
         self.reproj_threshold = reproj_threshold
         self.find_homography_options = find_homography_options
-        self.img_transform = img_transform
         self.outline = outline
 
         # Initialize the log
@@ -92,8 +105,8 @@ class ImageJoiner(utils.LoggerMixin):
 
         results = {}
         try:
-            src_img_t = self.apply_img_transform(src_img)
-            dst_img_t = self.apply_img_transform(dst_img)
+            src_img_t, dst_img_t = self.image_transformer.fit_transform(
+                [src_img, dst_img])
 
             # Try to get a valid homography
             results = self.find_valid_homography(src_img_t, dst_img_t)
@@ -386,47 +399,6 @@ class ImageJoinerQueue:
 
         log['i_image_joiner'] = i
         return result_code, result, log
-
-
-class ImageTransforms:
-
-    @staticmethod
-    def logscale(img):
-
-        assert np.issubdtype(img.dtype, np.integer), \
-            'logscale_img_transform not implemented for imgs with float dtype.'
-
-        # Transform the image
-        # We add 1 because log(0) = nan.
-        # We have to convert the image first because otherwise max values
-        # roll over
-        logscale_img = np.log10(img.astype(np.float32) + 1)
-
-        # Scale
-        dtype_max = np.iinfo(img.dtype).max
-        logscale_img *= dtype_max / np.log10(dtype_max + 1)
-
-        return logscale_img.astype(img.dtype)
-
-    @staticmethod
-    def floor(img, fraction=0.03):
-
-        img = copy.copy(img)
-
-        assert np.issubdtype(img.dtype, np.integer), \
-            'floor not implemented for imgs with float dtype.'
-
-        value = int(fraction * np.iinfo(img.dtype).max)
-        img[img <= value] = 0
-
-        return img
-
-    @staticmethod
-    def floor_logscale(img, fraction=0.03):
-
-        floor_img = ImageTransforms.floor(img, fraction)
-
-        return ImageTransforms.logscale(floor_img)
 
 
 class HomographyTransformError(ValueError):

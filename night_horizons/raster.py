@@ -211,7 +211,15 @@ class Image:
 
         return s
 
-    def show(self, ax=None, img='img', transform=None, *args, **kwargs):
+    def show(
+        self,
+        ax=None,
+        img='img',
+        img_transformer=None,
+        downsample=240.,
+        *args,
+        **kwargs
+    ):
         '''
             NOTE: This will not be consistent with imshow, because with imshow
         the y-axis increases downwards, consistent with old image
@@ -224,14 +232,14 @@ class Image:
         '''
 
         if ax is None:
-            fig = plt.figure(figsize=np.array(self.img_shape) / 60.)
+            fig = plt.figure(figsize=np.array(self.img_shape) / downsample)
             ax = plt.gca()
 
         pxs, pys = self.get_pixel_coordinates()
 
         img = getattr(self, img)
-        if transform is not None:
-            img = transform(img)
+        if img_transformer is not None:
+            img = img_transformer.fit_transform([img, ])[0]
 
         ax.pcolormesh(
             pxs,
