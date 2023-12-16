@@ -563,7 +563,7 @@ class LessReferencedMosaic(Mosaic):
         y_pred_filepath_ext: str = '_y_pred.csv',
         settings_filepath_ext: str = '_settings.yaml',
         log_filepath_ext: str = '_log.csv',
-        file_exists: str = 'overwrite',
+        file_exists: str = 'new',
         checkpoint_freq: int = 100,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
@@ -607,8 +607,8 @@ class LessReferencedMosaic(Mosaic):
         )
         self.reffed_mosaic = ReferencedMosaic(
             filepath=filepath,
-            settings_filepath_ext='_reffed' + settings_filepath_ext,
-            y_pred_filepath_ext='_reffed' + y_pred_filepath_ext,
+            settings_filepath_ext='_initial' + settings_filepath_ext,
+            y_pred_filepath_ext='_initial' + y_pred_filepath_ext,
             file_exists='pass',
             crs=crs,
             pixel_width=pixel_width,
@@ -709,6 +709,7 @@ class LessReferencedMosaic(Mosaic):
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
             dataset = self.open_dataset()
+            self.reffed_mosaic.filepath = self.filepath_
             self.reffed_mosaic.fit_transform(X, dataset=dataset)
 
     @utils.enable_passthrough
