@@ -104,6 +104,7 @@ class ImageJoiner(utils.LoggerMixin):
         start = time.time()
 
         results = {}
+        return_code = 'not_set'
         try:
             src_img_t, dst_img_t = self.image_transformer.fit_transform(
                 [src_img, dst_img])
