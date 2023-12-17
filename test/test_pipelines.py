@@ -103,6 +103,35 @@ class TestReferencedMosaic(BaseTester):
         assert x_count == reffed_mosaic.x_size_
         assert y_count == reffed_mosaic.y_size_
 
+    def test_physical_to_pixel_and_back(self):
+
+        self.pipeline.fit_transform(self.fps)
+        X_t = self.pipeline.named_steps['geotiff'].fit_transform(self.fps)
+
+        # Bounds for the whole dataset
+        reffed_mosaic = self.pipeline.named_steps['mosaic']
+        (
+            X_t['x_off'], X_t['y_off'],
+            X_t['x_size'], X_t['y_size']
+        ) = reffed_mosaic.physical_to_pixel(
+            X_t['x_min'], X_t['x_max'],
+            X_t['y_min'], X_t['y_max'],
+            padding=X_t['padding'],
+        )
+        physical_recovered = np.array(reffed_mosaic.pixel_to_physical(
+            X_t['x_off'], X_t['y_off'],
+            X_t['x_size'], X_t['y_size']
+        ))
+        physical_recovered[0] -= X_t['padding']
+        physical_recovered[1] += X_t['padding']
+        physical_recovered[2] -= X_t['padding']
+        physical_recovered[3] += X_t['padding']
+        np.testing.assert_allclose(
+            X_t[['x_min', 'x_max', 'y_min', 'y_max']].values.transpose(),
+            physical_recovered,
+            rtol=1e-6,
+        )
+
 
 class TestLessReferencedMosaic(BaseTester):
 

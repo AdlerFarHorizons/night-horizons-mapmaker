@@ -49,7 +49,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
         n_bands: int = 4,
-        dataset_padding: float = 0.,
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         verbose: bool = True,
@@ -67,7 +66,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         self.fill_value = fill_value
         self.dtype = dtype
         self.n_bands = n_bands
-        self.dataset_padding = dataset_padding
         self.passthrough = passthrough
         self.outline = outline
         self.verbose = verbose
@@ -186,10 +184,11 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             self.crs = pyproj.CRS(self.crs)
 
         # Get bounds
-        self.x_min_ = X['x_min'].min() - self.dataset_padding
-        self.x_max_ = X['x_max'].max() + self.dataset_padding
-        self.y_min_ = X['y_min'].min() - self.dataset_padding
-        self.y_max_ = X['y_max'].max() + self.dataset_padding
+        max_padding = X['padding'].max()
+        self.x_min_ = X['x_min'].min() - max_padding
+        self.x_max_ = X['x_max'].max() + max_padding
+        self.y_min_ = X['y_min'].min() - max_padding
+        self.y_max_ = X['y_max'].max() + max_padding
 
         # Pixel resolution
         if self.pixel_width is None:
@@ -319,7 +318,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         x_max,
         y_min,
         y_max,
-        padding=0
+        padding=0,
     ):
         '''
         Parameters
@@ -347,12 +346,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             x_size = x_size.astype(int)
             y_size = y_size.astype(int)
 
-            # Handle out-of-bounds
-            x_off[x_off < 0] = 0
-            y_off[y_off < 0] = 0
-            x_size[x_off + x_size > self.x_size_] = self.x_size_ - x_off
-            y_size[y_off + y_size > self.y_size_] = self.y_size_ - y_off
-
         # When we're passing in single values.
         except TypeError:
             # Change dtypes
@@ -360,16 +353,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             y_off = int(y_off)
             x_size = int(x_size)
             y_size = int(y_size)
-
-            # Handle out-of-bounds
-            if x_off < 0:
-                x_off = 0
-            elif x_off + x_size >= self.x_size_:
-                x_size = self.x_size_ - x_off
-            if y_off < 0:
-                y_off = 0
-            elif y_off + y_size >= self.y_size_:
-                y_size = self.y_size_ - y_off
 
         return x_off, y_off, x_size, y_size
 
@@ -389,6 +372,28 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         return x_min, x_max, y_min, y_max
 
+    def trim_out_of_bounds(self, x_off, y_off, x_size, y_size):
+
+        try:
+            # Handle out-of-bounds
+            x_off[x_off < 0] = 0
+            y_off[y_off < 0] = 0
+            x_size[x_off + x_size > self.x_size_] = self.x_size_ - x_off
+            y_size[y_off + y_size > self.y_size_] = self.y_size_ - y_off
+
+        except TypeError:
+            # Handle out-of-bounds
+            if x_off < 0:
+                x_off = 0
+            elif x_off + x_size >= self.x_size_:
+                x_size = self.x_size_ - x_off
+            if y_off < 0:
+                y_off = 0
+            elif y_off + y_size >= self.y_size_:
+                y_size = self.y_size_ - y_off
+
+        return x_off, y_off, x_size, y_size
+
     def get_image(self, dataset, x_off, y_off, x_size, y_size):
 
         assert x_off >= 0, 'x_off cannot be less than 0'
@@ -406,7 +411,9 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             xsize=int(x_size),
             ysize=int(y_size),
         )
-        return img.transpose(1, 2, 0)
+        img = img.transpose(1, 2, 0)
+
+        return img
 
     def save_image(self, dataset, img, x_off, y_off):
 
@@ -565,7 +572,6 @@ class LessReferencedMosaic(Mosaic):
         fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
         n_bands: int = 4,
-        dataset_padding: float = 5000.,
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         verbose: bool = True,
@@ -591,7 +597,6 @@ class LessReferencedMosaic(Mosaic):
             fill_value=fill_value,
             dtype=dtype,
             n_bands=n_bands,
-            dataset_padding=dataset_padding,
             passthrough=passthrough,
             outline=outline,
             verbose=verbose,
@@ -608,7 +613,6 @@ class LessReferencedMosaic(Mosaic):
             fill_value=fill_value,
             dtype=dtype,
             n_bands=n_bands,
-            dataset_padding=0.,
             passthrough=passthrough,
             outline=outline,
             verbose=verbose,
@@ -746,6 +750,16 @@ class LessReferencedMosaic(Mosaic):
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
             padding=X['padding'],
+        )
+
+        # Limit search regions to within the mosaic.
+        # Note that this shouldn't be an issue if the fit is done.
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.trim_out_of_bounds(
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
         )
 
         dataset = self.open_dataset()
