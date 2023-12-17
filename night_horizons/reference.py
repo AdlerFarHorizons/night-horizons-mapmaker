@@ -26,6 +26,7 @@ class SensorGeoreferencer(BaseEstimator):
         use_direct_estimate: bool = True,
         camera_angles: dict[float] = {0: 30., 1: 0., 2: 30.},
         angle_error: float = 5.,
+        padding_fraction: float = 1.0,
     ):
         self.crs = crs
         self.passthrough = passthrough
@@ -38,6 +39,7 @@ class SensorGeoreferencer(BaseEstimator):
         self.use_direct_estimate = use_direct_estimate
         self.camera_angles = camera_angles
         self.angle_error = angle_error
+        self.padding_fraction = padding_fraction
 
     @utils.enable_passthrough
     def fit(self, X, y):
@@ -153,6 +155,9 @@ class SensorGeoreferencer(BaseEstimator):
             X.loc[is_na, 'spatial_error'] = X.loc[is_na, 'mAltitude'] * np.tan(
                 (camera_angles + self.angle_error) * np.pi / 180.
             )
+
+        # Add padding
+        X['padding'] = self.padding_fraction * X['spatial_error']
 
         # Ensure correct type
         X[preprocess.GEOTRANSFORM_COLS] = \
