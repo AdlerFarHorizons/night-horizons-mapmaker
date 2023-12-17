@@ -100,8 +100,8 @@ class TestReferencedMosaic(BaseTester):
 
         assert x_offset == 0
         assert y_offset == 0
-        assert x_count == reffed_mosaic.dataset_.RasterXSize
-        assert y_count == reffed_mosaic.dataset_.RasterYSize
+        assert x_count == reffed_mosaic.x_size_
+        assert y_count == reffed_mosaic.y_size_
 
 
 class TestLessReferencedMosaic(BaseTester):
