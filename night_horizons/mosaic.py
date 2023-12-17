@@ -365,11 +365,11 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             if x_off < 0:
                 x_off = 0
             elif x_off + x_size >= self.x_size_:
-                x_off = self.x_size_ - 1 - x_off
+                x_size = self.x_size_ - x_off
             if y_off < 0:
                 y_off = 0
             elif y_off + y_size >= self.y_size_:
-                y_off = self.y_size_ - 1 - y_off
+                y_size = self.y_size_ - y_off
 
         return x_off, y_off, x_size, y_size
 
