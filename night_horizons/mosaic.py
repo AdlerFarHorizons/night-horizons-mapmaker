@@ -249,7 +249,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         ) = self.physical_to_pixel(
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
-            padding=self.padding,
+            padding=X['padding'],
         )
 
         # Open the dataset
