@@ -26,9 +26,6 @@ from . import utils, raster, preprocess, features, metrics
 class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
     '''Assemble a mosaic from georeferenced images.
 
-    TODO: padding is a parameter right now, but in reality it's image
-    dependent, so it would be nice to have it as a column instead.
-
     TODO: filepath is a data-dependent parameter, so it really should be
     called at the time of the fit.
 
@@ -52,7 +49,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
         n_bands: int = 4,
-        padding: float = 0.,
         dataset_padding: float = 0.,
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
@@ -71,7 +67,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         self.fill_value = fill_value
         self.dtype = dtype
         self.n_bands = n_bands
-        self.padding = padding
         self.dataset_padding = dataset_padding
         self.passthrough = passthrough
         self.outline = outline
@@ -488,7 +483,6 @@ class ReferencedMosaic(Mosaic):
         # Check if fit had been called
         check_is_fitted(self, 'filepath_')
 
-        # DEBUG: Some x_offs can be negative, probably due to padding
         # Convert to pixels
         (
             X['x_off'], X['y_off'],
@@ -496,7 +490,7 @@ class ReferencedMosaic(Mosaic):
         ) = self.physical_to_pixel(
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
-            padding=self.padding,
+            padding=X['padding'],
         )
 
         # Get the dataset
@@ -571,7 +565,6 @@ class LessReferencedMosaic(Mosaic):
         fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
         n_bands: int = 4,
-        padding: float = 0.,
         dataset_padding: float = 5000.,
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
@@ -598,7 +591,6 @@ class LessReferencedMosaic(Mosaic):
             fill_value=fill_value,
             dtype=dtype,
             n_bands=n_bands,
-            padding=padding,
             dataset_padding=dataset_padding,
             passthrough=passthrough,
             outline=outline,
@@ -616,7 +608,6 @@ class LessReferencedMosaic(Mosaic):
             fill_value=fill_value,
             dtype=dtype,
             n_bands=n_bands,
-            padding=0.,
             dataset_padding=0.,
             passthrough=passthrough,
             outline=outline,
@@ -754,7 +745,7 @@ class LessReferencedMosaic(Mosaic):
         ) = self.physical_to_pixel(
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
-            padding=self.padding * X['spatial_error'],
+            padding=X['padding'],
         )
 
         dataset = self.open_dataset()
