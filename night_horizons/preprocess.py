@@ -23,7 +23,7 @@ GEOTRANSFORM_COLS = [
     'x_rot', 'y_rot',
     'x_size', 'y_size',
     'x_center', 'y_center',
-    'spatial_error',
+    'spatial_error', 'padding',
 ]
 
 
@@ -430,11 +430,13 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         passthrough: bool = False,
         spatial_error: float = 0.,
+        padding_fraction: float = 0.1,
     ):
         self.crs = crs
         self.passthrough = passthrough
         self.required_columns = ['filepath']
         self.spatial_error = spatial_error
+        self.padding_fraction = padding_fraction
 
     @utils.enable_passthrough
     def fit(
@@ -508,6 +510,8 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
             y_center = 0.5 * (y_min + y_max)
 
             spatial_error = self.spatial_error
+            hypotenuse = np.sqrt((x_max - x_min)**2. + (y_max - y_min)**2.)
+            padding = self.padding_fraction * hypotenuse
 
             row = pd.Series(
                 [
@@ -517,7 +521,7 @@ class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
                     x_rot, y_rot,
                     dataset.RasterXSize, dataset.RasterYSize,
                     x_center, y_center,
-                    spatial_error,
+                    spatial_error, padding,
                 ],
                 index=GEOTRANSFORM_COLS,
                 name=X.index[i]

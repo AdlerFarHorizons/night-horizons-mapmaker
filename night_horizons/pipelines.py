@@ -26,6 +26,7 @@ class PreprocessingPipelines:
         use_approximate_georeferencing: bool = True,
         altitude_column: str = 'mAltitude',
         gyro_columns: list[str] = ['imuGyroX', 'imuGyroY', 'imuGyroZ'],
+        padding_fraction: float = 0.5,
     ):
         '''
         TODO: Remove parameters from nitelite_preprocessing.
@@ -45,14 +46,18 @@ class PreprocessingPipelines:
         # Choose the georeferencing
         if use_approximate_georeferencing:
             georeferencer = reference.SensorGeoreferencer(
-                crs=crs, passthrough=['filepath', 'camera_num'])
+                crs=crs,
+                passthrough=['filepath', 'camera_num'],
+                padding_fraction=padding_fraction,
+            )
         else:
             georeferencer = preprocess.GeoTIFFPreprocesser(
-                crs=crs, passthrough=['camera_num'])
+                crs=crs,
+                passthrough=['camera_num'],
+                padding_fraction=padding_fraction,
+            )
 
         # Build the steps
-        # TODO: It would be nice if the filtering and ordering was clumped
-        #       together.
         preprocessing_steps = [
             ('metadata',
              metadata_preprocesser),
