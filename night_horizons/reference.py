@@ -123,13 +123,14 @@ class SensorGeoreferencer(BaseEstimator):
         )
 
         # Calculate properties
-        corners_and_centers = [
+        set_manually = [
             'x_min', 'x_max',
             'y_min', 'y_max',
             'x_center', 'y_center',
+            'spatial_error', 'padding',
         ]
         for key in preprocess.GEOTRANSFORM_COLS:
-            if key in corners_and_centers:
+            if key in set_manually:
                 continue
             X[key] = getattr(self, key + '_')
         X['x_min'] = X['sensor_x'] - 0.5 * self.width_
