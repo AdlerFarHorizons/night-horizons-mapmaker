@@ -5,6 +5,7 @@ import os
 import pickle
 import re
 import shutil
+import time
 import tracemalloc
 from typing import Tuple, Union
 import warnings
@@ -99,6 +100,8 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         '''
 
         # Filepaths
+        # TODO: Make a new directory and put everything inside,
+        # including compatibility with y_train, y_test, etc.
         self.filepath_ = self.filepath
         base, ext = os.path.splitext(self.filepath_)
         self.y_pred_filepath_ = base + self.y_pred_filepath_ext
@@ -820,12 +823,17 @@ class LessReferencedMosaic(Mosaic):
 
             row = X.loc[ind]
 
+            if 'iter_duration' in self.log_keys:
+                start = time.time()
             return_code, results, log = self.incorporate_image(
                 dataset,
                 row,
                 dsframe_dst_pts,
                 dsframe_dst_des,
             )
+            # Time it
+            if 'iter_duration' in self.log_keys:
+                iter_duration = time.time() - start
 
             if return_code == 'success':
 
