@@ -502,7 +502,7 @@ class ReferencedMosaic(Mosaic):
         ) = self.physical_to_pixel(
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
-            padding=X['padding'],
+            padding=0,
         )
 
         # Get the dataset
