@@ -1,4 +1,4 @@
-import gc
+import copy
 import glob
 import inspect
 import os
@@ -374,6 +374,11 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
     def trim_out_of_bounds(self, x_off, y_off, x_size, y_size):
 
+        x_off = copy.copy(x_off)
+        y_off = copy.copy(y_off)
+        x_size = copy.copy(x_size)
+        y_size = copy.copy(y_size)
+
         try:
             # Handle out-of-bounds
             x_off[x_off < 0] = 0
@@ -706,6 +711,12 @@ class LessReferencedMosaic(Mosaic):
             dataset = self.open_dataset()
             self.reffed_mosaic.filepath = self.filepath_
             self.reffed_mosaic.fit_transform(X, dataset=dataset)
+
+            # Close, to be safe
+            dataset.FlushCache()
+            dataset = None
+
+        return self
 
     @utils.enable_passthrough
     def predict(
