@@ -251,6 +251,16 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             padding=X['padding'],
         )
 
+        # Limit search regions to within the mosaic.
+        # Note that this shouldn't be an issue if the fit is done.
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.trim_out_of_bounds(
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        )
+
         # Open the dataset
         dataset = self.open_dataset()
 
