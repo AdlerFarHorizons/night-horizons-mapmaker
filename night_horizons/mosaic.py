@@ -38,12 +38,17 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        filepath: str,
-        y_pred_filepath_ext: str = '_y_pred.csv',
-        settings_filepath_ext: str = '_settings.yaml',
-        log_filepath_ext: str = '_log.csv',
+        out_dir: str,
+        filename: str = 'mosaic.tiff',
         file_exists: str = 'error',
         save_aux_files: bool = True,
+        aux_files: dict[str] = {
+            'settings': 'settings.yaml',
+            'log': 'log.csv',
+            'y_pred': 'y_pred.csv',
+        },
+        checkpoint_freq: int = 100,
+        checkpoint_subdir: str = 'checkpoints',
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -55,12 +60,13 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         verbose: bool = True,
         log_keys: list[str] = ['ind', 'return_code'],
     ):
-        self.filepath = filepath
-        self.y_pred_filepath_ext = y_pred_filepath_ext
-        self.settings_filepath_ext = settings_filepath_ext
-        self.log_filepath_ext = log_filepath_ext
+        self.out_dir = out_dir
+        self.filename = filename
         self.file_exists = file_exists
         self.save_aux_files = save_aux_files
+        self.aux_files = aux_files
+        self.checkpoint_freq = checkpoint_freq
+        self.checkpoint_subdir = checkpoint_subdir
         self.crs = crs
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height
@@ -81,6 +87,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         X: pd.DataFrame,
         y=None,
         dataset: gdal.Dataset = None,
+        i_start: Union[int, str] = 'checkpoint',
     ):
         '''The main thing the fitting does is create an empty dataset to hold
         the mosaic.
@@ -99,61 +106,20 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             Returns self
         '''
 
-        # Filepaths
-        # TODO: Make a new directory and put everything inside,
-        # including compatibility with y_train, y_test, etc.
-        self.filepath_ = self.filepath
-        base, ext = os.path.splitext(self.filepath_)
-        self.y_pred_filepath_ = base + self.y_pred_filepath_ext
-        self.settings_filepath_ = base + self.settings_filepath_ext
-        self.log_filepath_ = base + self.log_filepath_ext
-
-        # Flexible file-handling. Maybe overkill?
-        if os.path.isfile(self.filepath_):
-
-            # Standard, simple options
-            if self.file_exists == 'error':
-                raise FileExistsError('File already exists at destination.')
-            elif self.file_exists == 'pass':
-                pass
-            elif self.file_exists == 'overwrite':
-                os.remove(self.filepath_)
-            elif self.file_exists == 'load':
-                if dataset is not None:
-                    raise ValueError(
-                        'Cannot both pass in a dataset and load a file')
-                dataset = gdal.Open(self.filepath, gdal.GA_Update)
-
-            # Create a new file with a new number appended
-            elif self.file_exists == 'new':
-                base, ext = os.path.splitext(self.filepath)
-                new_fp_format = base + '_v{:03d}' + ext
-                self.filepath_ = new_fp_format.format(0)
-                i = 0
-                while os.path.isfile(self.filepath_):
-                    self.filepath_ = new_fp_format.format(i)
-                    i += 1
-
-                # Change auxiliary files too
-                base, ext = os.path.splitext(self.filepath_)
-                self.y_pred_filepath_ = base + self.y_pred_filepath_ext
-                self.settings_filepath_ = base + self.settings_filepath_ext
-                self.log_filepath_ = base + self.log_filepath_ext
-
-            else:
-                raise ValueError(
-                    'Unrecognized value for filepath, '
-                    f'filepath={self.filepath_}'
-                )
-
-        # We always remove the auxiliary files, if they already exist
-        for fp in [self.y_pred_filepath_, self.settings_filepath_]:
-            if os.path.isfile(fp):
-                os.remove(fp)
-
+        # Save the settings used for fitting
         self.save_settings()
 
-        # Use the dataset if it already exists
+        # Make output directories, get filepaths, load dataset (if applicable)
+        dataset = self.prepare_filetree(dataset=dataset)
+
+        # Find out what iteration we'll start with
+        self.i_start_ = self.get_starting_iter(i_start=i_start)
+
+        # Convert CRS as needed
+        if isinstance(self.crs, str):
+            self.crs = pyproj.CRS(self.crs)
+
+        # Get fit properties from the dataset if it already exists
         if dataset is not None:
 
             # Get the dataset bounds
@@ -174,17 +140,127 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
             return self
 
-        # Check the input is good.
-        # TODO: For functions decorated by enable_passthrough this is
-        #       degenerate
-        X = utils.check_df_input(
-            X,
-            self.required_columns,
+        # Otherwise, make a new dataset
+        else:
+            assert self.i_start_ == 0, (
+                'Creating a new dataset, but the starting iteration is not 0. '
+                'If creating a new dataset, should start with i = 0.'
+            )
+
+            self.create_containing_dataset(X)
+
+        return self
+
+    def score(self, X, y=None, tm_metric=cv2.TM_CCOEFF_NORMED):
+
+        # Convert to pixels
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.physical_to_pixel(
+            X['x_min'], X['x_max'],
+            X['y_min'], X['y_max'],
+            padding=X['padding'],
         )
 
-        # Convert CRS as needed
-        if isinstance(self.crs, str):
-            self.crs = pyproj.CRS(self.crs)
+        # Limit search regions to within the mosaic.
+        # Note that this shouldn't be an issue if the fit is done.
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.trim_out_of_bounds(
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        )
+
+        # Open the dataset
+        dataset = self.open_dataset()
+
+        self.scores_ = []
+        for i, fp in enumerate(tqdm.tqdm(X['filepath'], ncols=80)):
+
+            row = X.iloc[i]
+
+            actual_img = utils.load_image(fp, dtype=self.dtype)
+            mosaic_img = self.get_image(
+                dataset,
+                row['x_off'],
+                row['y_off'],
+                row['x_size'],
+                row['y_size'],
+            )
+
+            r = metrics.image_to_image_ccoeff(
+                actual_img,
+                mosaic_img[:, :, :3],
+                tm_metric=tm_metric,
+            )
+            self.scores_.append(r)
+
+        score = np.median(self.scores_)
+
+        return score
+
+    def prepare_filetree(self, dataset):
+
+        # Main filepath parameters
+        self.out_dir_ = self.out_dir
+        self.filepath_ = os.path.join(self.out_dir_, self.filename)
+
+        # Flexible file-handling. TODO: Maybe overkill?
+        if os.path.isfile(self.filepath_):
+
+            # Standard, simple options
+            if self.file_exists == 'error':
+                raise FileExistsError('File already exists at destination.')
+            elif self.file_exists == 'pass':
+                pass
+            elif self.file_exists == 'overwrite':
+                os.remove(self.filepath_)
+            elif self.file_exists == 'load':
+                if dataset is not None:
+                    raise ValueError(
+                        'Cannot both pass in a dataset and load a file')
+                dataset = gdal.Open(self.filepath_, gdal.GA_Update)
+            # Create a new file with a new number appended
+            elif self.file_exists == 'new':
+                out_dir_pattern = self.out_dir_ + '_v{:03d}'
+                i = 0
+                while os.path.isfile(self.filepath_):
+                    self.out_dir_ = out_dir_pattern.format(i),
+                    self.filepath_ = os.path.join(self.out_dir_, self.filename)
+                    i += 1
+            else:
+                raise ValueError(
+                    'Unrecognized value for filepath, '
+                    f'filepath={self.filepath_}'
+                )
+
+        # Auxiliary files
+        self.aux_filepaths_ = {}
+        for key, filename in self.aux_files.items():
+            self.aux_filepaths_[key] = os.path.join(self.out_dir_, filename)
+
+        # Checkpoints file handling
+        self.checkpoint_subdir_ = os.path.join(
+            self.out_dir_, self.checkpoint_subdir)
+        base, ext = os.path.splitext(self.filename)
+        i_tag = '_i{:06d}'
+        self.checkpoint_filepattern_ = base + i_tag + ext
+
+        # Remove the auxiliary files, if they already exist
+        # TODO: Better would be checkpointing these
+        for key, fp in self.aux_filepaths_.items():
+            if os.path.isfile(fp):
+                os.remove(fp)
+
+        # Ensure directories exist
+        os.makedirs(self.out_dir_, exist_ok=True)
+        os.makedirs(self.checkpoint_subdir_, exist_ok=True)
+
+        return dataset
+
+    def create_containing_dataset(self, X):
 
         # Get bounds
         max_padding = X['padding'].max()
@@ -240,58 +316,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         dataset.FlushCache()
         dataset = None
 
-        return self
-
-    def score(self, X, y=None, tm_metric=cv2.TM_CCOEFF_NORMED):
-
-        # Convert to pixels
-        (
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
-        ) = self.physical_to_pixel(
-            X['x_min'], X['x_max'],
-            X['y_min'], X['y_max'],
-            padding=X['padding'],
-        )
-
-        # Limit search regions to within the mosaic.
-        # Note that this shouldn't be an issue if the fit is done.
-        (
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
-        ) = self.trim_out_of_bounds(
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
-        )
-
-        # Open the dataset
-        dataset = self.open_dataset()
-
-        self.scores_ = []
-        for i, fp in enumerate(tqdm.tqdm(X['filepath'], ncols=80)):
-
-            row = X.iloc[i]
-
-            actual_img = utils.load_image(fp, dtype=self.dtype)
-            mosaic_img = self.get_image(
-                dataset,
-                row['x_off'],
-                row['y_off'],
-                row['x_size'],
-                row['y_size'],
-            )
-
-            r = metrics.image_to_image_ccoeff(
-                actual_img,
-                mosaic_img[:, :, :3],
-                tm_metric=tm_metric,
-            )
-            self.scores_.append(r)
-
-        score = np.median(self.scores_)
-
-        return score
-
     def open_dataset(self):
 
         return gdal.Open(self.filepath_, gdal.GA_Update)
@@ -309,8 +333,80 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             except TypeError:
                 value = 'no string repr'
             settings[setting] = value
-        with open(self.settings_filepath_, 'w') as file:
+        with open(self.aux_filepaths_['settings'], 'w') as file:
             yaml.dump(settings, file)
+
+    def get_starting_iter(self, i_start):
+
+        # Skip if i_start is provided
+        if isinstance(i_start, int):
+            return i_start
+
+        # Look for checkpoint files
+        i_start = -1
+        j_filename = None
+        pattern = re.compile(self.checkpoint_filepattern_)
+        possible_files = os.listdir(self.checkpoint_subdir_)
+        for j, filename in enumerate(possible_files):
+            match = pattern.search(filename)
+            if not match:
+                continue
+
+            number = int(match.group(1))
+            if number > i_start:
+                i_start = number
+                j_filename = j
+
+        if i_start != -1:
+
+            print(
+                'Found checkpoint file. '
+                f'Will fast forward to i={i_start + 1}'
+            )
+
+            # Copy over dataset
+            filename = possible_files[j_filename]
+            filepath = os.path.join(self.checkpoint_subdir_, filename)
+            shutil.copy(filepath, self.filepath_)
+
+            # Open the log
+            log_df = pd.read_csv(self.aux_filepaths_['log'])
+            log_df = log_df[self.log_keys]
+
+            # Format the stored logs
+            for i, ind in enumerate(log_df.index):
+                if i > i_start:
+                    break
+                log = dict(log_df.loc[ind])
+                self.logs.append(log)
+
+        # We don't want to start on the same loop that was saved, but the
+        # one after
+        i_start += 1
+
+        return i_start
+
+    def checkpoint(self, i, dataset):
+
+        # Conditions for normal return
+        if (i % self.checkpoint_freq != 0) or (i == 0):
+            return dataset
+
+        # Flush data to disk
+        dataset.FlushCache()
+        dataset = None
+
+        # Make checkpoint file by copying the dataset
+        checkpoint_fp = os.path.join(
+            self.checkpoint_subdir_,
+            self.checkpoint_filepattern_.format(i),
+        )
+        shutil.copy(self.filepath_, checkpoint_fp)
+
+        # Re-open dataset
+        dataset = self.open_dataset()
+
+        return dataset
 
     def calc_iteration_indices(self, X):
 
@@ -560,6 +656,9 @@ class ReferencedMosaic(Mosaic):
             # Store the image
             self.save_image(dataset, blended_img, row['x_off'], row['y_off'])
 
+            # Checkpoint
+            dataset = self.checkpoint(i, dataset)
+
     def predict(
         self,
         X: pd.DataFrame,
@@ -662,63 +761,6 @@ class LessReferencedMosaic(Mosaic):
         # Create the dataset
         super().fit(approx_y, dataset=dataset)
 
-        # TODO: Change to providing a directory directly, instead of inferring
-        #       from the filepath?
-        if i_start == 'checkpoint':
-
-            # Determine what to look for, for checkpoint files
-            checkpoint_dir, filename = os.path.split(self.filepath_)
-            checkpoint_dir = os.path.join(checkpoint_dir, 'checkpoints')
-            os.makedirs(checkpoint_dir, exist_ok=True)
-            base, ext = os.path.splitext(filename)
-            i_tag = r'_i(\d+)'
-            checkpoint_pattern = base + i_tag + ext
-            pattern = re.compile(checkpoint_pattern)
-
-            # Look for checkpoint files
-            i_start = -1
-            j_filename = None
-            possible_files = os.listdir(checkpoint_dir)
-            for j, filename in enumerate(possible_files):
-                match = pattern.search(filename)
-                if not match:
-                    continue
-
-                number = int(match.group(1))
-                if number > i_start:
-                    i_start = number
-                    j_filename = j
-
-            if i_start != -1:
-
-                print(
-                    'Found checkpoint file. '
-                    f'Will fast forward to i={i_start + 1}'
-                )
-
-                # Copy over dataset
-                filename = possible_files[j_filename]
-                filepath = os.path.join(checkpoint_dir, filename)
-                shutil.copy(filepath, self.filepath_)
-
-                # Open the log
-                base, ext = os.path.splitext(self.filepath_)
-                log_filepath = base + self.log_filepath_ext
-                log_df = pd.read_csv(log_filepath)
-                log_df = log_df[self.log_keys]
-
-                # Format the stored logs
-                for i, ind in enumerate(log_df.index):
-                    if i > i_start:
-                        break
-                    log = dict(log_df.loc[ind])
-                    self.logs.append(log)
-
-            # We don't want to start on the same loop that was saved, but the
-            # one after
-            i_start += 1
-        self.i_start_ = i_start
-
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
             dataset = self.open_dataset()
@@ -728,6 +770,11 @@ class LessReferencedMosaic(Mosaic):
             # Close, to be safe
             dataset.FlushCache()
             dataset = None
+
+            # TODO: This is optional
+            # Copy the referenced mosaic to the checkpoint folder
+            # for optional inspection
+            shutil.copy()
 
         return self
 
@@ -861,35 +908,13 @@ class LessReferencedMosaic(Mosaic):
                 if i % self.memory_snapshot_freq == 0:
                     log['snapshot'] = tracemalloc.take_snapshot()
 
-            # Checkpoint
-            if (i % self.checkpoint_freq == 0) and (i != 0):
-
-                # Flush data to disk
-                dataset.FlushCache()
-                dataset = None
-                y_pred.to_csv(self.y_pred_filepath_)
-
-                # TODO: Clean up filepath manipulations
-                # Make checkpoint file by copying dataset
-                checkpoint_dir, filename = os.path.split(self.filepath_)
-                base, ext = os.path.splitext(filename)
-                i_tag = f'_i{i:06d}'
-                filename = base + i_tag + ext
-                checkpoint_dir = os.path.join(checkpoint_dir, 'checkpoints')
-                checkpoint_fp = os.path.join(checkpoint_dir, filename)
-                shutil.copy(self.filepath_, checkpoint_fp)
-
-                # Store log
-                log_df = pd.DataFrame(self.logs)
-                log_df.to_csv(self.log_filepath_)
-
-                # Re-open dataset
-                dataset = self.open_dataset()
-
             # Store metadata
             y_pred.loc[ind, 'return_code'] = return_code
             log = self.update_log(locals(), target=log)
             self.logs.append(log)
+
+            # Checkpoint
+            dataset = self.checkpoint(i, dataset, y_pred)
 
         # Convert to pixels
         (
@@ -1000,30 +1025,47 @@ class LessReferencedMosaic(Mosaic):
             results['y_off'] += y_off
 
         # Save failed images for later debugging
-        elif return_code in self.save_return_codes:
-            if self.progress_images_dir is not None:
-                n_tests_existing = len(glob.glob(os.path.join(
-                    self.progress_images_dir, 'dst_*.tiff')))
-                dst_fp = os.path.join(
-                    self.progress_images_dir,
-                    f'dst_{n_tests_existing:03d}.tiff'
-                )
-                src_fp = os.path.join(
-                    self.progress_images_dir,
-                    f'src_{n_tests_existing:03d}.tiff'
-                )
+        if (
+            (self.progress_images_dir is not None)
+            and (return_code in self.save_return_codes)
+        ):
+            n_tests_existing = len(glob.glob(os.path.join(
+                self.progress_images_dir, 'dst_*.tiff')))
+            dst_fp = os.path.join(
+                self.progress_images_dir,
+                f'dst_{n_tests_existing:03d}.tiff'
+            )
+            src_fp = os.path.join(
+                self.progress_images_dir,
+                f'src_{n_tests_existing:03d}.tiff'
+            )
 
-                cv2.imwrite(src_fp, src_img[:, :, ::-1])
-                cv2.imwrite(dst_fp, dst_img[:, :, ::-1])
+            cv2.imwrite(src_fp, src_img[:, :, ::-1])
+            cv2.imwrite(dst_fp, dst_img[:, :, ::-1])
 
-                if 'blended_img' in result:
-                    blended_fp = os.path.join(
-                        self.progress_images_dir,
-                        f'blended_{n_tests_existing:03d}.tiff'
-                    )
-                    cv2.imwrite(blended_fp, result['blended_img'][:, :, ::-1])
+            if 'blended_img' in result:
+                blended_fp = os.path.join(
+                    self.progress_images_dir,
+                    f'blended_{n_tests_existing:03d}.tiff'
+                )
+                cv2.imwrite(blended_fp, result['blended_img'][:, :, ::-1])
 
         # Log
         log = self.update_log(locals(), target=log)
 
         return return_code, results, log
+
+    def checkpoint(self, i, dataset, y_pred):
+
+        # Conditions for normal return
+        if (i % self.checkpoint_freq != 0) or (i == 0):
+            return dataset
+
+        dataset = super().checkpoint(i, dataset)
+
+        # Store auxiliary files
+        y_pred.to_csv(self.y_pred_filepath_)
+        log_df = pd.DataFrame(self.logs)
+        log_df.to_csv(self.log_filepath_)
+
+        return dataset
