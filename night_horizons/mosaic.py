@@ -408,19 +408,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         return dataset
 
-    def calc_iteration_indices(self, X):
-
-        return X.index
-
-        # TODO: restore decent defaults?
-        d_to_center = np.sqrt(
-            (X['x_center'] - self.central_coords_[0])**2.
-            + (X['y_center'] - self.central_coords_[1])**2.
-        )
-        iteration_indices = d_to_center.sort_values().index
-
-        return iteration_indices
-
     def physical_to_pixel(
         self,
         x_min,
