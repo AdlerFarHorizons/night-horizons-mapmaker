@@ -682,6 +682,8 @@ class LessReferencedMosaic(Mosaic):
         },
         checkpoint_freq: int = 100,
         checkpoint_subdir: str = 'checkpoints',
+        progress_images_subdir: str = 'progress_images',
+        save_return_codes: list[str] = [],
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -698,7 +700,6 @@ class LessReferencedMosaic(Mosaic):
         log_keys: list[str] = ['i', 'ind', 'return_code', 'abs_det_M'],
         progress_images_dir: str = None,
         memory_snapshot_freq: int = 10,
-        save_return_codes: list[str] = [],
     ):
 
         super().__init__(
@@ -741,7 +742,7 @@ class LessReferencedMosaic(Mosaic):
 
         self.image_joiner = image_joiner
         self.feature_mode = feature_mode
-        self.progress_images_dir = progress_images_dir
+        self.progress_images_subdir = progress_images_subdir
         self.memory_snapshot_freq = memory_snapshot_freq
         self.save_return_codes = save_return_codes
 
@@ -757,8 +758,13 @@ class LessReferencedMosaic(Mosaic):
         assert approx_y is not None, \
             'Must pass approx_y.'
 
-        # Create the dataset
+        # General fitting
         super().fit(approx_y, dataset=dataset, i_start=i_start)
+
+        # Make a progress images dir
+        self.progress_images_subdir_ = os.path.join(
+            self.out_dir, self.progress_images_subdir)
+        os.makedirs(self.progress_images_subdir_, exist_ok=True)
 
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
@@ -770,11 +776,10 @@ class LessReferencedMosaic(Mosaic):
             dataset.FlushCache()
             dataset = None
 
-            # Copy the referenced mosaic to the checkpoint folder
-            # for optional inspection
+            # Save the fit mosaic, pre-prediction
             shutil.copy(
                 self.filepath_,
-                os.path.join(self.checkpoint_subdir_, 'initial.tiff')
+                self.filepath_.replace('.tiff', '_fit.tiff'),
             )
 
         return self
