@@ -41,7 +41,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         out_dir: str,
         filename: str = 'mosaic.tiff',
         file_exists: str = 'error',
-        save_aux_files: bool = True,
         aux_files: dict[str] = {
             'settings': 'settings.yaml',
             'log': 'log.csv',
@@ -63,7 +62,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         self.out_dir = out_dir
         self.filename = filename
         self.file_exists = file_exists
-        self.save_aux_files = save_aux_files
         self.aux_files = aux_files
         self.checkpoint_freq = checkpoint_freq
         self.checkpoint_subdir = checkpoint_subdir
@@ -390,6 +388,8 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
     def checkpoint(self, i, dataset):
 
         # Conditions for normal return
+        if self.checkpoint_freq is None:
+            return dataset
         if (i % self.checkpoint_freq != 0) or (i == 0):
             return dataset
 
@@ -675,7 +675,6 @@ class LessReferencedMosaic(Mosaic):
         out_dir: str,
         filename: str = 'mosaic.tiff',
         file_exists: str = 'error',
-        save_aux_files: bool = True,
         aux_files: dict[str] = {
             'settings': 'settings.yaml',
             'log': 'log.csv',
@@ -699,7 +698,6 @@ class LessReferencedMosaic(Mosaic):
         ] = None,
         feature_mode: str = 'recompute',
         log_keys: list[str] = ['i', 'ind', 'return_code', 'abs_det_M'],
-        progress_images_dir: str = None,
         memory_snapshot_freq: int = 10,
     ):
 
@@ -707,7 +705,6 @@ class LessReferencedMosaic(Mosaic):
             out_dir=out_dir,
             filename=filename,
             file_exists=file_exists,
-            save_aux_files=save_aux_files,
             aux_files=aux_files,
             checkpoint_freq=checkpoint_freq,
             checkpoint_subdir=checkpoint_subdir,
@@ -726,8 +723,7 @@ class LessReferencedMosaic(Mosaic):
             out_dir=out_dir,
             filename=filename,
             file_exists='pass',
-            save_aux_files=False,
-            aux_files=aux_files,
+            aux_files={'settings': 'settings_initial.yaml'},
             checkpoint_freq=None,
             checkpoint_subdir=checkpoint_subdir,
             crs=crs,
@@ -942,11 +938,11 @@ class LessReferencedMosaic(Mosaic):
         # Flush data to disk
         dataset.FlushCache()
         dataset = None
-        y_pred.to_csv(self.y_pred_filepath_)
+        y_pred.to_csv(self.aux_filepaths_['y_pred'])
 
         # Store log
         log_df = pd.DataFrame(self.logs)
-        log_df.to_csv(self.log_filepath_)
+        log_df.to_csv(self.aux_filepaths_['log'])
 
         # Stop memory tracing
         if 'snapshot' in self.log_keys:
@@ -1036,17 +1032,17 @@ class LessReferencedMosaic(Mosaic):
 
         # Save failed images for later debugging
         if (
-            (self.progress_images_dir is not None)
+            (self.progress_images_subdir_ is not None)
             and (return_code in self.save_return_codes)
         ):
             n_tests_existing = len(glob.glob(os.path.join(
-                self.progress_images_dir, 'dst_*.tiff')))
+                self.progress_images_subdir_, 'dst_*.tiff')))
             dst_fp = os.path.join(
-                self.progress_images_dir,
+                self.progress_images_subdir_,
                 f'dst_{n_tests_existing:03d}.tiff'
             )
             src_fp = os.path.join(
-                self.progress_images_dir,
+                self.progress_images_subdir_,
                 f'src_{n_tests_existing:03d}.tiff'
             )
 
@@ -1055,7 +1051,7 @@ class LessReferencedMosaic(Mosaic):
 
             if 'blended_img' in result:
                 blended_fp = os.path.join(
-                    self.progress_images_dir,
+                    self.progress_images_subdir_,
                     f'blended_{n_tests_existing:03d}.tiff'
                 )
                 cv2.imwrite(blended_fp, result['blended_img'][:, :, ::-1])
@@ -1076,8 +1072,8 @@ class LessReferencedMosaic(Mosaic):
         dataset = super().checkpoint(i, dataset)
 
         # Store auxiliary files
-        y_pred.to_csv(self.y_pred_filepath_)
+        y_pred.to_csv(self.aux_filepaths_['y_pred'])
         log_df = pd.DataFrame(self.logs)
-        log_df.to_csv(self.log_filepath_)
+        log_df.to_csv(self.aux_filepaths_['log'])
 
         return dataset
