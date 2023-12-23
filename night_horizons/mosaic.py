@@ -598,7 +598,7 @@ class LessReferencedMosaic(Mosaic):
         ] = None,
         feature_mode: str = 'recompute',
         log_keys: list[str] = ['i', 'ind', 'return_code', 'abs_det_M'],
-        bad_images_dir: str = None,
+        progress_images_dir: str = None,
         memory_snapshot_freq: int = 10,
         save_return_codes: list[str] = [],
     ):
@@ -639,7 +639,7 @@ class LessReferencedMosaic(Mosaic):
         self.checkpoint_freq = checkpoint_freq
         self.image_joiner = image_joiner
         self.feature_mode = feature_mode
-        self.bad_images_dir = bad_images_dir
+        self.progress_images_dir = progress_images_dir
         self.memory_snapshot_freq = memory_snapshot_freq
         self.save_return_codes = save_return_codes
 
@@ -1001,16 +1001,27 @@ class LessReferencedMosaic(Mosaic):
 
         # Save failed images for later debugging
         elif return_code in self.save_return_codes:
-            if self.bad_images_dir is not None:
+            if self.progress_images_dir is not None:
                 n_tests_existing = len(glob.glob(os.path.join(
-                    self.bad_images_dir, 'dst_*.tiff')))
+                    self.progress_images_dir, 'dst_*.tiff')))
                 dst_fp = os.path.join(
-                    self.bad_images_dir, f'dst_{n_tests_existing:03d}.tiff')
+                    self.progress_images_dir,
+                    f'dst_{n_tests_existing:03d}.tiff'
+                )
                 src_fp = os.path.join(
-                    self.bad_images_dir, f'src_{n_tests_existing:03d}.tiff')
+                    self.progress_images_dir,
+                    f'src_{n_tests_existing:03d}.tiff'
+                )
 
                 cv2.imwrite(src_fp, src_img[:, :, ::-1])
                 cv2.imwrite(dst_fp, dst_img[:, :, ::-1])
+
+                if 'blended_img' in result:
+                    blended_fp = os.path.join(
+                        self.progress_images_dir,
+                        f'blended_{n_tests_existing:03d}.tiff'
+                    )
+                    cv2.imwrite(blended_fp, result['blended_img'][:, :, ::-1])
 
         # Log
         log = self.update_log(locals(), target=log)
