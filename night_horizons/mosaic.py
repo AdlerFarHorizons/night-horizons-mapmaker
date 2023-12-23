@@ -583,6 +583,8 @@ class ReferencedMosaic(Mosaic):
         X: pd.DataFrame,
         y=None,
     ):
+        self.log = {}
+
         X = utils.check_df_input(
             X,
             self.required_columns,
@@ -609,6 +611,7 @@ class ReferencedMosaic(Mosaic):
             iterable = tqdm.tqdm(X['filepath'], ncols=80)
         else:
             iterable = X['filepath']
+        self.logs = []
         for i, fp in enumerate(iterable):
 
             row = X.iloc[i]
@@ -643,6 +646,10 @@ class ReferencedMosaic(Mosaic):
             # Store the image
             self.save_image(dataset, blended_img, row['x_off'], row['y_off'])
 
+            # Update the log
+            log = self.update_log(locals(), target={})
+            self.logs.append(log)
+
             # Checkpoint
             dataset = self.checkpoint(i, dataset)
 
@@ -664,12 +671,17 @@ class LessReferencedMosaic(Mosaic):
 
     def __init__(
         self,
-        filepath: str,
-        y_pred_filepath_ext: str = '_y_pred.csv',
-        settings_filepath_ext: str = '_settings.yaml',
-        log_filepath_ext: str = '_log.csv',
-        file_exists: str = 'new',
+        out_dir: str,
+        filename: str = 'mosaic.tiff',
+        file_exists: str = 'error',
+        save_aux_files: bool = True,
+        aux_files: dict[str] = {
+            'settings': 'settings.yaml',
+            'log': 'log.csv',
+            'y_pred': 'y_pred.csv',
+        },
         checkpoint_freq: int = 100,
+        checkpoint_subdir: str = 'checkpoints',
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -690,11 +702,13 @@ class LessReferencedMosaic(Mosaic):
     ):
 
         super().__init__(
-            filepath=filepath,
+            out_dir=out_dir,
+            filename=filename,
             file_exists=file_exists,
-            y_pred_filepath_ext=y_pred_filepath_ext,
-            settings_filepath_ext=settings_filepath_ext,
-            log_filepath_ext=log_filepath_ext,
+            save_aux_files=save_aux_files,
+            aux_files=aux_files,
+            checkpoint_freq=checkpoint_freq,
+            checkpoint_subdir=checkpoint_subdir,
             crs=crs,
             pixel_width=pixel_width,
             pixel_height=pixel_height,
@@ -707,10 +721,13 @@ class LessReferencedMosaic(Mosaic):
             log_keys=log_keys,
         )
         self.reffed_mosaic = ReferencedMosaic(
-            filepath=filepath,
-            settings_filepath_ext='_initial' + settings_filepath_ext,
-            y_pred_filepath_ext='_initial' + y_pred_filepath_ext,
+            out_dir=out_dir,
+            filename=filename,
             file_exists='pass',
+            save_aux_files=False,
+            aux_files=aux_files,
+            checkpoint_freq=None,
+            checkpoint_subdir=checkpoint_subdir,
             crs=crs,
             pixel_width=pixel_width,
             pixel_height=pixel_height,
@@ -722,7 +739,6 @@ class LessReferencedMosaic(Mosaic):
             verbose=verbose,
         )
 
-        self.checkpoint_freq = checkpoint_freq
         self.image_joiner = image_joiner
         self.feature_mode = feature_mode
         self.progress_images_dir = progress_images_dir
@@ -738,15 +754,11 @@ class LessReferencedMosaic(Mosaic):
         i_start: Union[int, str] = 'checkpoint',
     ):
 
-        # Start with a fresh log
-        self.log = {}
-        self.logs = []
-
         assert approx_y is not None, \
             'Must pass approx_y.'
 
         # Create the dataset
-        super().fit(approx_y, dataset=dataset)
+        super().fit(approx_y, dataset=dataset, i_start=i_start)
 
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
@@ -758,10 +770,12 @@ class LessReferencedMosaic(Mosaic):
             dataset.FlushCache()
             dataset = None
 
-            # TODO: This is optional
             # Copy the referenced mosaic to the checkpoint folder
             # for optional inspection
-            shutil.copy()
+            shutil.copy(
+                self.filepath_,
+                os.path.join(self.checkpoint_subdir_, 'initial.tiff')
+            )
 
         return self
 
@@ -780,12 +794,14 @@ class LessReferencedMosaic(Mosaic):
         -------
         '''
 
+        self.log = {}
+
         X = utils.check_df_input(
             X,
             self.required_columns,
         )
 
-        # Check if fit had been called
+        # Check if fit has been called
         check_is_fitted(self, 'filepath_')
 
         # Set up y_pred
@@ -850,6 +866,7 @@ class LessReferencedMosaic(Mosaic):
             start = tracemalloc.take_snapshot()
             self.log['starting_snapshot'] = start
 
+        self.logs = []
         for i, ind in enumerate(iterable):
 
             if i < self.i_start_:
@@ -1045,7 +1062,9 @@ class LessReferencedMosaic(Mosaic):
     def checkpoint(self, i, dataset, y_pred):
 
         # Conditions for normal return
-        if (i % self.checkpoint_freq != 0) or (i == 0):
+        if self.checkpoint_freq is None:
+            return dataset
+        elif (i % self.checkpoint_freq != 0) or (i == 0):
             return dataset
 
         dataset = super().checkpoint(i, dataset)
