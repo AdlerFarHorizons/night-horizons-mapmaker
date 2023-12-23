@@ -106,11 +106,12 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             Returns self
         '''
 
-        # Save the settings used for fitting
-        self.save_settings()
-
         # Make output directories, get filepaths, load dataset (if applicable)
         dataset = self.prepare_filetree(dataset=dataset)
+
+        # Save the settings used for fitting
+        # Must be done after preparing the filetree to have a save location
+        self.save_settings()
 
         # Find out what iteration we'll start with
         self.i_start_ = self.get_starting_iter(i_start=i_start)
