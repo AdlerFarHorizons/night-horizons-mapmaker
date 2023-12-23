@@ -344,7 +344,11 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         # Look for checkpoint files
         i_start = -1
         j_filename = None
-        pattern = re.compile(self.checkpoint_filepattern_)
+        search_pattern = self.checkpoint_filepattern_.replace(
+            r'{:06d}',
+            '(\\d{6})\\',
+        )
+        pattern = re.compile(search_pattern)
         possible_files = os.listdir(self.checkpoint_subdir_)
         for j, filename in enumerate(possible_files):
             match = pattern.search(filename)
