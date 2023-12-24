@@ -221,7 +221,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
                 out_dir_pattern = self.out_dir_ + '_v{:03d}'
                 i = 0
                 while os.path.isfile(self.filepath_):
-                    self.out_dir_ = out_dir_pattern.format(i),
+                    self.out_dir_ = out_dir_pattern.format(i)
                     self.filepath_ = os.path.join(self.out_dir_, self.filename)
                     i += 1
             else:
@@ -769,13 +769,13 @@ class LessReferencedMosaic(Mosaic):
 
         # Make a progress images dir
         self.progress_images_subdir_ = os.path.join(
-            self.out_dir, self.progress_images_subdir)
+            self.out_dir_, self.progress_images_subdir)
         os.makedirs(self.progress_images_subdir_, exist_ok=True)
 
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
             dataset = self.open_dataset()
-            self.reffed_mosaic.filepath = self.filepath_
+            self.reffed_mosaic.out_dir = self.out_dir_
             self.reffed_mosaic.fit_transform(X, dataset=dataset)
 
             # Close, to be safe
@@ -1050,11 +1050,11 @@ class LessReferencedMosaic(Mosaic):
                 self.progress_images_subdir_, 'dst_*.tiff')))
             dst_fp = os.path.join(
                 self.progress_images_subdir_,
-                f'dst_{n_tests_existing:03d}.tiff'
+                f'dst_{n_tests_existing:06d}.tiff'
             )
             src_fp = os.path.join(
                 self.progress_images_subdir_,
-                f'src_{n_tests_existing:03d}.tiff'
+                f'src_{n_tests_existing:06d}.tiff'
             )
 
             cv2.imwrite(src_fp, src_img[:, :, ::-1])
@@ -1063,7 +1063,7 @@ class LessReferencedMosaic(Mosaic):
             if 'blended_img' in result:
                 blended_fp = os.path.join(
                     self.progress_images_subdir_,
-                    f'blended_{n_tests_existing:03d}.tiff'
+                    f'blended_{n_tests_existing:06d}.tiff'
                 )
                 cv2.imwrite(blended_fp, result['blended_img'][:, :, ::-1])
 
