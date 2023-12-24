@@ -105,14 +105,14 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         '''
 
         # Make output directories, get filepaths, load dataset (if applicable)
-        dataset = self.prepare_filetree(dataset=dataset)
+        self.prepare_filetree(dataset=dataset)
 
         # Save the settings used for fitting
         # Must be done after preparing the filetree to have a save location
         self.save_settings()
 
         # Find out what iteration we'll start with
-        self.i_start_ = self.get_starting_iter(i_start=i_start)
+        dataset, self.i_start_ = self.get_starting_state(dataset, i_start)
 
         # Convert CRS as needed
         if isinstance(self.crs, str):
@@ -212,15 +212,10 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             # Standard, simple options
             if self.file_exists == 'error':
                 raise FileExistsError('File already exists at destination.')
-            elif self.file_exists == 'pass':
+            elif self.file_exists in ['pass', 'load']:
                 pass
             elif self.file_exists == 'overwrite':
                 os.remove(self.filepath_)
-            elif self.file_exists == 'load':
-                if dataset is not None:
-                    raise ValueError(
-                        'Cannot both pass in a dataset and load a file')
-                dataset = gdal.Open(self.filepath_, gdal.GA_Update)
             # Create a new file with a new number appended
             elif self.file_exists == 'new':
                 out_dir_pattern = self.out_dir_ + '_v{:03d}'
@@ -250,14 +245,15 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         # Remove the auxiliary files, if they already exist
         # TODO: Better would be checkpointing these
         for key, fp in self.aux_filepaths_.items():
+            # We just update the log
+            if key == 'log':
+                continue
             if os.path.isfile(fp):
                 os.remove(fp)
 
         # Ensure directories exist
         os.makedirs(self.out_dir_, exist_ok=True)
         os.makedirs(self.checkpoint_subdir_, exist_ok=True)
-
-        return dataset
 
     def create_containing_dataset(self, X):
 
@@ -335,11 +331,18 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         with open(self.aux_filepaths_['settings'], 'w') as file:
             yaml.dump(settings, file)
 
-    def get_starting_iter(self, i_start):
+    def get_starting_state(self, dataset, i_start):
 
-        # Skip if i_start is provided
+        # Load the dataset if requested
+        if (self.file_exists == 'load') and os.path.isfile(self.filepath_):
+            if dataset is not None:
+                raise ValueError(
+                    'Cannot both pass in a dataset and load a file')
+            dataset = self.open_dataset()
+
+        # Exit now if i_start is provided
         if isinstance(i_start, int):
-            return i_start
+            return dataset, i_start
 
         # Look for checkpoint files
         i_start = -1
@@ -367,16 +370,18 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
                 f'Will fast forward to i={i_start + 1}'
             )
 
-            # Copy over dataset
+            # Copy and open dataset since restarting from a checkpoint
             filename = possible_files[j_filename]
             filepath = os.path.join(self.checkpoint_subdir_, filename)
             shutil.copy(filepath, self.filepath_)
+            dataset = self.open_dataset()
 
             # Open the log
             log_df = pd.read_csv(self.aux_filepaths_['log'])
             log_df = log_df[self.log_keys]
 
             # Format the stored logs
+            self.logs = []
             for i, ind in enumerate(log_df.index):
                 if i > i_start:
                     break
@@ -387,7 +392,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         # one after
         i_start += 1
 
-        return i_start
+        return dataset, i_start
 
     def checkpoint(self, i, dataset):
 
@@ -872,7 +877,9 @@ class LessReferencedMosaic(Mosaic):
             start = tracemalloc.take_snapshot()
             self.log['starting_snapshot'] = start
 
-        self.logs = []
+        # self.logs will already exist if starting from a checkpoint
+        if self.i_start_ == 0:
+            self.logs = []
         for i, ind in enumerate(iterable):
 
             if i < self.i_start_:
