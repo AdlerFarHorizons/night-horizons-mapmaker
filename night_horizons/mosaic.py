@@ -663,6 +663,10 @@ class ReferencedMosaic(Mosaic):
             # Checkpoint
             dataset = self.checkpoint(i, dataset)
 
+        # Close out
+        dataset.FlushCache()
+        dataset = None
+
     def predict(
         self,
         X: pd.DataFrame,
