@@ -492,17 +492,17 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             )
             if isinstance(oob, bool):
                 if oob:
-                    raise ValueError(
+                    raise OutOfBoundsError(
                         'Tried to convert physical to pixels, but '
-                        'the provided coordinates are outside the bounds'
+                        'the provided coordinates are outside the bounds '
                         'of the mosaic'
                     )
             else:
                 n_oob = oob.sum()
                 if n_oob > 0:
-                    raise ValueError(
+                    raise OutOfBoundsError(
                         'Tried to convert physical to pixels, but '
-                        f'{n_oob} of {oob.size} are outside the bounds'
+                        f'{n_oob} of {oob.size} are outside the bounds '
                         'of the mosaic'
                     )
 
@@ -818,7 +818,13 @@ class LessReferencedMosaic(Mosaic):
         if self.i_start_ == 0:
             dataset = self.open_dataset()
             self.reffed_mosaic.out_dir = self.out_dir_
-            self.reffed_mosaic.fit_transform(X, dataset=dataset)
+            try:
+                self.reffed_mosaic.fit_transform(X, dataset=dataset)
+            except OutOfBoundsError as e:
+                raise OutOfBoundsError(
+                    "Some of the fitted referenced images are out of bounds. "
+                    "Consider increasing the 'padding' in approx_y."
+                ) from e
 
             # Close, to be safe
             dataset.FlushCache()
@@ -1131,3 +1137,7 @@ class LessReferencedMosaic(Mosaic):
         log_df.to_csv(self.aux_filepaths_['log'])
 
         return dataset
+
+
+class OutOfBoundsError(ValueError):
+    pass
