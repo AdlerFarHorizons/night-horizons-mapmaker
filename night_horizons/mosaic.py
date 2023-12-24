@@ -167,9 +167,9 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         (
             X['x_off'], X['y_off'],
             X['x_size'], X['y_size']
-        ) = self.trim_out_of_bounds(
+        ) = self.handle_out_of_bounds(
             X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
+            X['x_size'], X['y_size'],
         )
 
         # Open the dataset
@@ -478,32 +478,61 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         return x_min, x_max, y_min, y_max
 
-    def trim_out_of_bounds(self, x_off, y_off, x_size, y_size):
+    def handle_out_of_bounds(self, x_off, y_off, x_size, y_size, trim=False):
 
-        x_off = copy.copy(x_off)
-        y_off = copy.copy(y_off)
-        x_size = copy.copy(x_size)
-        y_size = copy.copy(y_size)
+        # By default we raise an error
+        if not trim:
 
-        try:
-            # Handle out-of-bounds
-            x_off[x_off < 0] = 0
-            y_off[y_off < 0] = 0
-            x_size[x_off + x_size > self.x_size_] = self.x_size_ - x_off
-            y_size[y_off + y_size > self.y_size_] = self.y_size_ - y_off
+            # Validate
+            oob = (
+                (x_off < 0)
+                | (y_off < 0)
+                | (x_off + x_size > self.x_size_)
+                | (y_off + y_size > self.y_size_)
+            )
+            if isinstance(oob, bool):
+                if oob:
+                    raise ValueError(
+                        'Tried to convert physical to pixels, but '
+                        'the provided coordinates are outside the bounds'
+                        'of the mosaic'
+                    )
+            else:
+                n_oob = oob.sum()
+                if n_oob > 0:
+                    raise ValueError(
+                        'Tried to convert physical to pixels, but '
+                        f'{n_oob} of {oob.size} are outside the bounds'
+                        'of the mosaic'
+                    )
 
-        except TypeError:
-            # Handle out-of-bounds
-            if x_off < 0:
-                x_off = 0
-            elif x_off + x_size >= self.x_size_:
-                x_size = self.x_size_ - x_off
-            if y_off < 0:
-                y_off = 0
-            elif y_off + y_size >= self.y_size_:
-                y_size = self.y_size_ - y_off
+        # But we can also trim
+        else:
 
-        return x_off, y_off, x_size, y_size
+            x_off = copy.copy(x_off)
+            y_off = copy.copy(y_off)
+            x_size = copy.copy(x_size)
+            y_size = copy.copy(y_size)
+
+            try:
+                # Handle out-of-bounds
+                x_off[x_off < 0] = 0
+                y_off[y_off < 0] = 0
+                x_size[x_off + x_size > self.x_size_] = self.x_size_ - x_off
+                y_size[y_off + y_size > self.y_size_] = self.y_size_ - y_off
+
+            except TypeError:
+                # Handle out-of-bounds
+                if x_off < 0:
+                    x_off = 0
+                elif x_off + x_size > self.x_size_:
+                    x_size = self.x_size_ - x_off
+                if y_off < 0:
+                    y_off = 0
+                elif y_off + y_size > self.y_size_:
+                    y_size = self.y_size_ - y_off
+
+            return x_off, y_off, x_size, y_size
 
     def get_image(self, dataset, x_off, y_off, x_size, y_size):
 
@@ -611,6 +640,15 @@ class ReferencedMosaic(Mosaic):
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
             padding=0,
+        )
+
+        # Check nothing is oob
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.handle_out_of_bounds(
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size'],
         )
 
         # Get the dataset
@@ -842,13 +880,14 @@ class LessReferencedMosaic(Mosaic):
         )
 
         # Limit search regions to within the mosaic.
-        # Note that this shouldn't be an issue if the fit is done.
+        # Note that this shouldn't be an issue if the fit is done correctly.
         (
             X['x_off'], X['y_off'],
             X['x_size'], X['y_size']
-        ) = self.trim_out_of_bounds(
+        ) = self.handle_out_of_bounds(
             X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
+            X['x_size'], X['y_size'],
+            trim=True,
         )
 
         dataset = self.open_dataset()
@@ -1051,14 +1090,14 @@ class LessReferencedMosaic(Mosaic):
             and (return_code in self.save_return_codes)
         ):
             n_tests_existing = len(glob.glob(os.path.join(
-                self.progress_images_subdir_, 'dst_*.tiff')))
+                self.progress_images_subdir_, '*_dst.tiff')))
             dst_fp = os.path.join(
                 self.progress_images_subdir_,
-                f'dst_{n_tests_existing:06d}.tiff'
+                f'{n_tests_existing:06d}_dst.tiff'
             )
             src_fp = os.path.join(
                 self.progress_images_subdir_,
-                f'src_{n_tests_existing:06d}.tiff'
+                f'{n_tests_existing:06d}_src.tiff'
             )
 
             cv2.imwrite(src_fp, src_img[:, :, ::-1])
@@ -1067,7 +1106,7 @@ class LessReferencedMosaic(Mosaic):
             if 'blended_img' in result:
                 blended_fp = os.path.join(
                     self.progress_images_subdir_,
-                    f'blended_{n_tests_existing:06d}.tiff'
+                    f'{n_tests_existing:06d}_blended.tiff'
                 )
                 cv2.imwrite(blended_fp, result['blended_img'][:, :, ::-1])
 
