@@ -8,6 +8,7 @@ data_dir: /Users/Shared/data/nitelite/220513-FH135
 paths_relative_to_data_dir:
   images_dir: images/raw
   referenced_images_dir: images/referenced
+  mosaics_dir: mosaics
   img_log_fp: metadata/image.log
   imu_log_fp: metadata/PresIMULog.csv
   gps_log_fp: metadata/GPSLog.csv
