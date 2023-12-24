@@ -532,7 +532,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
                 elif y_off + y_size > self.y_size_:
                     y_size = self.y_size_ - y_off
 
-            return x_off, y_off, x_size, y_size
+        return x_off, y_off, x_size, y_size
 
     def get_image(self, dataset, x_off, y_off, x_size, y_size):
 
@@ -1091,6 +1091,7 @@ class LessReferencedMosaic(Mosaic):
             results['y_off'] += y_off
 
         # Save failed images for later debugging
+        # TODO: Currently the format of the saved images is a little weird.
         if (
             (self.progress_images_subdir_ is not None)
             and (return_code in self.save_return_codes)
