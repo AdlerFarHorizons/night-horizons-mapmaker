@@ -1,6 +1,3 @@
-'''
-TODO: Refactor into classes with @staticmethod. Will be more clean.
-'''
 import copy
 import glob
 import os
