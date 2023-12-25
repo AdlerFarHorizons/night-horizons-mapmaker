@@ -22,7 +22,7 @@ class SensorGeoreferencer(BaseEstimator):
     def __init__(
         self,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        passthrough: Union[bool, list[str]] = False,
+        passthrough: Union[bool, list[str]] = False, # TODO: Deprecated.
         use_direct_estimate: bool = True,
         camera_angles: dict[float] = {0: 30., 1: 0., 2: 30.},
         angle_error: float = 5.,
