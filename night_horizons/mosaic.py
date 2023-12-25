@@ -111,42 +111,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         # Must be done after preparing the filetree to have a save location
         self.save_settings()
 
-        # Find out what iteration we'll start with
-        dataset, self.i_start_ = self.get_starting_state(dataset, i_start)
-
-        # Convert CRS as needed
-        if isinstance(self.crs, str):
-            self.crs = pyproj.CRS(self.crs)
-
-        # Get fit properties from the dataset if it already exists
-        if dataset is not None:
-
-            # Get the dataset bounds
-            (
-                (self.x_min_, self.x_max_),
-                (self.y_min_, self.y_max_),
-                self.pixel_width_, self.pixel_height_
-            ) = raster.get_bounds_from_dataset(
-                dataset,
-                self.crs,
-            )
-            self.x_size_ = dataset.RasterXSize
-            self.y_size_ = dataset.RasterYSize
-
-            # Close out the dataset for now. (Reduces likelihood of mem leaks.)
-            dataset.FlushCache()
-            dataset = None
-
-            return self
-
-        # Otherwise, make a new dataset
-        else:
-            assert self.i_start_ == 0, (
-                'Creating a new dataset, but the starting iteration is not 0. '
-                'If creating a new dataset, should start with i = 0.'
-            )
-
-            self.create_containing_dataset(X)
+        self.set_starting_state(X, dataset, i_start)
 
         return self
 
@@ -331,7 +296,14 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         with open(self.aux_filepaths_['settings'], 'w') as file:
             yaml.dump(settings, file)
 
-    def get_starting_state(self, dataset, i_start):
+    def set_starting_state(self, X, dataset, i_start):
+
+        # Convert CRS as needed
+        if isinstance(self.crs, str):
+            self.crs = pyproj.CRS(self.crs)
+
+        if i_start == 'checkpoint':
+            i_start = self.load_checkpoint()
 
         # Load the dataset if requested
         if (self.file_exists == 'load') and os.path.isfile(self.filepath_):
@@ -340,9 +312,40 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
                     'Cannot both pass in a dataset and load a file')
             dataset = self.open_dataset()
 
-        # Exit now if i_start is provided
-        if isinstance(i_start, int):
-            return dataset, i_start
+        if i_start > 0:
+            dataset = self.open_dataset()
+
+        # Get fit properties from the dataset if it already exists
+        if dataset is not None:
+
+            # Get the dataset bounds
+            (
+                (self.x_min_, self.x_max_),
+                (self.y_min_, self.y_max_),
+                self.pixel_width_, self.pixel_height_
+            ) = raster.get_bounds_from_dataset(
+                dataset,
+                self.crs,
+            )
+            self.x_size_ = dataset.RasterXSize
+            self.y_size_ = dataset.RasterYSize
+
+            # Close out the dataset for now. (Reduces likelihood of mem leaks.)
+            dataset.FlushCache()
+            dataset = None
+
+            return self
+
+        # Otherwise, make a new dataset
+        else:
+            assert self.i_start_ == 0, (
+                'Creating a new dataset, but the starting iteration is not 0. '
+                'If creating a new dataset, should start with i = 0.'
+            )
+
+            self.create_containing_dataset(X)
+
+    def load_checkpoint(self):
 
         # Look for checkpoint files
         i_start = -1
@@ -374,7 +377,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
             filename = possible_files[j_filename]
             filepath = os.path.join(self.checkpoint_subdir_, filename)
             shutil.copy(filepath, self.filepath_)
-            dataset = self.open_dataset()
 
             # Open the log
             log_df = pd.read_csv(self.aux_filepaths_['log'])
@@ -392,7 +394,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         # one after
         i_start += 1
 
-        return dataset, i_start
+        return i_start
 
     def checkpoint(self, i, dataset):
 
@@ -844,8 +846,7 @@ class LessReferencedMosaic(Mosaic):
         X: pd.DataFrame,
         y=None,
     ):
-        ''' TODO: Deprecate iteration_indices. Just have the user order their
-        dataframe prior to input.
+        '''
 
         Parameters
         ----------
