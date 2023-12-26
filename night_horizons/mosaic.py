@@ -402,7 +402,8 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         # one after
         i_start += 1
 
-        return i_start
+        self.i_start_ = i_start
+        return self.i_start_
 
     def save_to_checkpoint(self, i, dataset):
 
