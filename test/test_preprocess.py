@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-import night_horizons.preprocess as preprocess
+import night_horizons.preprocessers as preprocessers
 import night_horizons.utils as utils
 
 
@@ -23,7 +23,7 @@ class TestNITELitePreprocesser(unittest.TestCase):
 
         # Preprocesser construction
         self.expected_cols = ['filepath', 'sensor_x', 'sensor_y']
-        self.transformer = preprocess.NITELitePreprocesser(
+        self.transformer = preprocessers.NITELitePreprocesser(
             output_columns=self.expected_cols
         )
 
@@ -121,10 +121,10 @@ class TestGeoTIFFPreprocesser(unittest.TestCase):
         fps = pd.concat([fps, fps2], ignore_index=True)
         n_files = len(fps)
 
-        transformer = preprocess.GeoTIFFPreprocesser()
+        transformer = preprocessers.GeoTIFFPreprocesser()
         X = transformer.fit_transform(fps)
 
-        expected_cols = ['filepath',] + preprocess.GEOTRANSFORM_COLS
+        expected_cols = ['filepath',] + preprocessers.GEOTRANSFORM_COLS
         assert (~X.columns.isin(expected_cols)).sum() == 0
 
         assert len(X) == n_files
