@@ -21,7 +21,7 @@ from sklearn.utils.validation import check_is_fitted
 import tqdm
 import yaml
 
-from . import utils, raster, preprocess, features, metrics
+from . import file_management, utils, raster, preprocess, features, metrics
 
 
 class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
@@ -59,6 +59,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         verbose: bool = True,
         log_keys: list[str] = ['ind', 'return_code'],
     ):
+
         self.out_dir = out_dir
         self.filename = filename
         self.file_exists = file_exists
@@ -76,6 +77,16 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         self.verbose = verbose
 
         self.required_columns = ['filepath'] + preprocess.GEOTRANSFORM_COLS
+
+        # Handles the more-complicated I/O (filetree prep, checkpoints, etc)
+        self.file_manager = file_management.MosaicFileManager(
+            out_dir=out_dir,
+            filename=filename,
+            file_exists=file_exists,
+            aux_files=aux_files,
+            checkpoint_freq=checkpoint_freq,
+            checkpoint_subdir=checkpoint_subdir,
+        )
 
         super().__init__(log_keys)
 
@@ -105,11 +116,11 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         '''
 
         # Make output directories, get filepaths, load dataset (if applicable)
-        self.prepare_filetree(dataset=dataset)
+        self.out_dir_, self.filepath_ = self.file_manager.prepare_filetree()
 
         # Save the settings used for fitting
         # Must be done after preparing the filetree to have a save location
-        self.save_settings()
+        self.file_manager.save_settings(self)
 
         self.set_starting_state(X, dataset, i_start)
 
@@ -165,60 +176,67 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         return score
 
-    def prepare_filetree(self, dataset):
+    def set_starting_state(self, X, dataset=None, i_start='checkpoint'):
 
-        # Main filepath parameters
-        self.out_dir_ = self.out_dir
-        self.filepath_ = os.path.join(self.out_dir_, self.filename)
+        # Convert CRS as needed
+        if isinstance(self.crs, str):
+            self.crs = pyproj.CRS(self.crs)
 
-        # Flexible file-handling. TODO: Maybe overkill?
-        if os.path.isfile(self.filepath_):
+        # Start from checkpoint, if available
+        if i_start == 'checkpoint':
+            self.i_start_, self.checkpoint_data_ = \
+                self.file_manager.search_and_load_checkpoint()
+        else:
+            self.i_start_ = i_start
+            self.checkpoint_data_ = None
 
-            # Standard, simple options
-            if self.file_exists == 'error':
-                raise FileExistsError('File already exists at destination.')
-            elif self.file_exists in ['pass', 'load']:
-                pass
-            elif self.file_exists == 'overwrite':
-                os.remove(self.filepath_)
-            # Create a new file with a new number appended
-            elif self.file_exists == 'new':
-                out_dir_pattern = self.out_dir_ + '_v{:03d}'
-                i = 0
-                while os.path.isfile(self.filepath_):
-                    self.out_dir_ = out_dir_pattern.format(i)
-                    self.filepath_ = os.path.join(self.out_dir_, self.filename)
-                    i += 1
-            else:
+        # If the dataset was not passed in, load it if possible
+        if (
+            ((self.file_exists == 'load') and os.path.isfile(self.filepath_))
+            or (self.i_start_ != 0)
+        ):
+            if dataset is not None:
                 raise ValueError(
-                    'Unrecognized value for filepath, '
-                    f'filepath={self.filepath_}'
+                    'Cannot both pass in a dataset and load a file')
+            dataset = self.open_dataset()
+
+        # If we have a loaded dataset by this point, get fit params from it
+        if dataset is not None:
+            self.get_fit_from_dataset(dataset)
+
+        # Otherwise, make a new dataset
+        else:
+            if self.i_start_ != 0:
+                raise ValueError(
+                    'Creating a new dataset, '
+                    'but the starting iteration is not 0. '
+                    'If creating a new dataset, should start with i = 0.'
                 )
+            self.create_containing_dataset(X)
 
-        # Auxiliary files
-        self.aux_filepaths_ = {}
-        for key, filename in self.aux_files.items():
-            self.aux_filepaths_[key] = os.path.join(self.out_dir_, filename)
+        return self
 
-        # Checkpoints file handling
-        self.checkpoint_subdir_ = os.path.join(
-            self.out_dir_, self.checkpoint_subdir)
-        base, ext = os.path.splitext(self.filename)
-        i_tag = '_i{:06d}'
-        self.checkpoint_filepattern_ = base + i_tag + ext
+    def open_dataset(self):
 
-        # Remove the auxiliary files, if they already exist
-        # TODO: Better would be checkpointing these
-        for key, fp in self.aux_filepaths_.items():
-            # We just update the log
-            if key == 'log':
-                continue
-            if os.path.isfile(fp):
-                os.remove(fp)
+        return self.file_manager.open_dataset()
 
-        # Ensure directories exist
-        os.makedirs(self.out_dir_, exist_ok=True)
-        os.makedirs(self.checkpoint_subdir_, exist_ok=True)
+    def get_fit_from_dataset(self, dataset):
+
+        # Get the dataset bounds
+        (
+            (self.x_min_, self.x_max_),
+            (self.y_min_, self.y_max_),
+            self.pixel_width_, self.pixel_height_
+        ) = raster.get_bounds_from_dataset(
+            dataset,
+            self.crs,
+        )
+        self.x_size_ = dataset.RasterXSize
+        self.y_size_ = dataset.RasterYSize
+
+        # Close out the dataset for now. (Reduces likelihood of mem leaks.)
+        dataset.FlushCache()
+        dataset = None
 
     def create_containing_dataset(self, X):
 
@@ -275,159 +293,6 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         # Close out the dataset for now. (Reduces likelihood of mem leaks.)
         dataset.FlushCache()
         dataset = None
-
-    def get_fit_from_dataset(self, dataset):
-
-        # Get the dataset bounds
-        (
-            (self.x_min_, self.x_max_),
-            (self.y_min_, self.y_max_),
-            self.pixel_width_, self.pixel_height_
-        ) = raster.get_bounds_from_dataset(
-            dataset,
-            self.crs,
-        )
-        self.x_size_ = dataset.RasterXSize
-        self.y_size_ = dataset.RasterYSize
-
-        # Close out the dataset for now. (Reduces likelihood of mem leaks.)
-        dataset.FlushCache()
-        dataset = None
-
-    def open_dataset(self):
-
-        return gdal.Open(self.filepath_, gdal.GA_Update)
-
-    def save_settings(self):
-
-        fullargspec = inspect.getfullargspec(type(self))
-        settings = {}
-        for setting in fullargspec.args:
-            if setting == 'self':
-                continue
-            value = getattr(self, setting)
-            try:
-                pickle.dumps(value)
-            except TypeError:
-                value = 'no string repr'
-            settings[setting] = value
-        with open(self.aux_filepaths_['settings'], 'w') as file:
-            yaml.dump(settings, file)
-
-    def set_starting_state(self, X, dataset=None, i_start='checkpoint'):
-
-        # Convert CRS as needed
-        if isinstance(self.crs, str):
-            self.crs = pyproj.CRS(self.crs)
-
-        # Start from checkpoint, if available
-        self.restart_from_checkpoint(i_start)
-
-        # If the dataset was not passed in, load it if possible
-        if (
-            ((self.file_exists == 'load') and os.path.isfile(self.filepath_))
-            or (self.i_start_ > 0)
-        ):
-            if dataset is not None:
-                raise ValueError(
-                    'Cannot both pass in a dataset and load a file')
-            dataset = self.open_dataset()
-
-        # If we have a loaded dataset by this point, get fit params from it
-        if dataset is not None:
-            self.get_fit_from_dataset(dataset)
-
-        # Otherwise, make a new dataset
-        else:
-            if self.i_start_ != 0:
-                raise ValueError(
-                    'Creating a new dataset, '
-                    'but the starting iteration is not 0. '
-                    'If creating a new dataset, should start with i = 0.'
-                )
-            self.create_containing_dataset(X)
-
-        return self
-
-    def restart_from_checkpoint(self, i_start):
-
-        if isinstance(i_start, int):
-            self.i_start_ = i_start
-            return self.i_start_
-
-        # Look for checkpoint files
-        i_start = -1
-        j_filename = None
-        search_pattern = self.checkpoint_filepattern_.replace(
-            r'{:06d}',
-            '(\\d{6})\\',
-        )
-        pattern = re.compile(search_pattern)
-        possible_files = os.listdir(self.checkpoint_subdir_)
-        for j, filename in enumerate(possible_files):
-            match = pattern.search(filename)
-            if not match:
-                continue
-
-            number = int(match.group(1))
-            if number > i_start:
-                i_start = number
-                j_filename = j
-
-        if i_start != -1:
-
-            print(
-                'Found checkpoint file. '
-                f'Will fast forward to i={i_start + 1}'
-            )
-
-            # Copy and open dataset since restarting from a checkpoint
-            filename = possible_files[j_filename]
-            filepath = os.path.join(self.checkpoint_subdir_, filename)
-            shutil.copy(filepath, self.filepath_)
-
-            # Open the log
-            log_df = pd.read_csv(self.aux_filepaths_['log'])
-            log_df = log_df[self.log_keys]
-
-            # Format the stored logs
-            self.logs = []
-            for i, ind in enumerate(log_df.index):
-                if i > i_start:
-                    break
-                log = dict(log_df.loc[ind])
-                self.logs.append(log)
-
-        # We don't want to start on the same loop that was saved, but the
-        # one after
-        i_start += 1
-
-        self.i_start_ = i_start
-        return self.i_start_
-
-    def save_to_checkpoint(self, i, dataset):
-
-        # Conditions for normal return
-        if self.checkpoint_freq is None:
-            return dataset
-        if (i % self.checkpoint_freq != 0) or (i == 0):
-            return dataset
-
-        # Flush data to disk
-        dataset.FlushCache()
-        dataset = None
-
-        # Make checkpoint file by copying the dataset
-        checkpoint_fp = os.path.join(
-            self.checkpoint_subdir_,
-            self.checkpoint_filepattern_.format(i),
-        )
-        shutil.copy(self.filepath_, checkpoint_fp)
-
-        # Re-open dataset
-        dataset = self.open_dataset()
-
-        return dataset
 
     def physical_to_pixel(
         self,
@@ -643,6 +508,12 @@ class ReferencedMosaic(Mosaic):
         # Check if fit had been called
         check_is_fitted(self, 'filepath_')
 
+        # Get state of output data
+        if self.checkpoint_data_ is None:
+            self.logs = []
+        else:
+            self.logs = self.checkpoint_data_['logs']
+
         # Convert to pixels
         (
             X['x_off'], X['y_off'],
@@ -670,7 +541,7 @@ class ReferencedMosaic(Mosaic):
             iterable = tqdm.tqdm(X['filepath'], ncols=80)
         else:
             iterable = X['filepath']
-        self.logs = []
+
         for i, fp in enumerate(iterable):
 
             row = X.iloc[i]
@@ -710,7 +581,11 @@ class ReferencedMosaic(Mosaic):
             self.logs.append(log)
 
             # Checkpoint
-            dataset = self.save_to_checkpoint(i, dataset)
+            dataset = self.file_manager.save_to_checkpoint(
+                i,
+                dataset,
+                logs=self.logs,
+            )
 
         # Close out
         dataset.FlushCache()
@@ -873,17 +748,25 @@ class LessReferencedMosaic(Mosaic):
         # Check if fit has been called
         check_is_fitted(self, 'filepath_')
 
-        # Set up y_pred
-        y_pred = X[preprocess.GEOTRANSFORM_COLS].copy()
-        y_pred[[
-            'x_min', 'x_max',
-            'y_min', 'y_max',
-            'pixel_width', 'pixel_height',
-            'x_size', 'y_size',
-            'x_center', 'y_center',
-            'x_off', 'y_off',
-        ]] = np.nan
-        y_pred['return_code'] = 'TBD'
+        # Get state of output data
+        if self.checkpoint_data_ is None:
+            # Set up y-pred
+            y_pred = X[preprocess.GEOTRANSFORM_COLS].copy()
+            y_pred[[
+                'x_min', 'x_max',
+                'y_min', 'y_max',
+                'pixel_width', 'pixel_height',
+                'x_size', 'y_size',
+                'x_center', 'y_center',
+                'x_off', 'y_off',
+            ]] = np.nan
+            y_pred['return_code'] = 'TBD'
+
+            # And the logs too
+            self.logs = []
+        else:
+            y_pred = self.checkpoint_data_['y_pred']
+            self.logs = self.checkpoint_data_['logs']
 
         # Convert to pixels
         (
@@ -936,9 +819,6 @@ class LessReferencedMosaic(Mosaic):
             start = tracemalloc.take_snapshot()
             self.log['starting_snapshot'] = start
 
-        # self.logs will already exist if starting from a checkpoint
-        if self.i_start_ == 0:
-            self.logs = []
         for i, ind in enumerate(iterable):
 
             if i < self.i_start_:
@@ -989,8 +869,13 @@ class LessReferencedMosaic(Mosaic):
             log = self.update_log(locals(), target=log)
             self.logs.append(log)
 
-            # Checkpoint
-            dataset = self.checkpoint(i, dataset, y_pred)
+            # Checkpoint (only saves at particular `i` values)
+            dataset = self.file_manager.save_to_checkpoint(
+                i,
+                dataset=dataset,
+                y_pred=y_pred,
+                logs=self.logs,
+            )
 
         # Convert to pixels
         (
@@ -1008,11 +893,11 @@ class LessReferencedMosaic(Mosaic):
         # Flush data to disk
         dataset.FlushCache()
         dataset = None
-        y_pred.to_csv(self.aux_filepaths_['y_pred'])
+        y_pred.to_csv(self.file_manager.aux_filepaths_['y_pred'])
 
         # Store log
         log_df = pd.DataFrame(self.logs)
-        log_df.to_csv(self.aux_filepaths_['log'])
+        log_df.to_csv(self.file_manager.aux_filepaths_['log'])
 
         # Stop memory tracing
         if 'snapshot' in self.log_keys:
@@ -1131,23 +1016,6 @@ class LessReferencedMosaic(Mosaic):
         log = self.update_log(locals(), target=log)
 
         return return_code, results, log
-
-    def checkpoint(self, i, dataset, y_pred):
-
-        # Conditions for normal return
-        if self.checkpoint_freq is None:
-            return dataset
-        elif (i % self.checkpoint_freq != 0) or (i == 0):
-            return dataset
-
-        dataset = super().save_to_checkpoint(i, dataset)
-
-        # Store auxiliary files
-        y_pred.to_csv(self.aux_filepaths_['y_pred'])
-        log_df = pd.DataFrame(self.logs)
-        log_df.to_csv(self.aux_filepaths_['log'])
-
-        return dataset
 
 
 class OutOfBoundsError(ValueError):
