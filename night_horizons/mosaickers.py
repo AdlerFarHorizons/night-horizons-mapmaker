@@ -21,7 +21,9 @@ from sklearn.utils.validation import check_is_fitted
 import tqdm
 import yaml
 
-from . import file_management, image_joiner, preprocessers, utils, raster, metrics
+from . import (
+    file_management, image_joiner, preprocessers, utils, raster, metrics
+)
 
 
 class Mosaicker(utils.LoggerMixin, TransformerMixin, BaseEstimator):
