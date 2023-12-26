@@ -8,12 +8,16 @@ import cv2
 import numpy as np
 import pandas as pd
 import scipy
+
+from night_horizons.exceptions import (
+    DstDarkFrameError, HomographyTransformError, SrcDarkFrameError
+)
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import utils, preprocess
+from . import preprocessers, utils
 
 
 class ImageJoiner(utils.LoggerMixin):
@@ -56,7 +60,7 @@ class ImageJoiner(utils.LoggerMixin):
 
         # Handle image transformer object creation
         if isinstance(image_transformer, str):
-            img_transformer_fn = getattr(preprocess, image_transformer)
+            img_transformer_fn = getattr(preprocessers, image_transformer)
             if callable(img_transformer_fn):
                 image_transformer = img_transformer_fn(
                     **image_transformer_options)
@@ -397,15 +401,3 @@ class ImageJoinerQueue:
 
         log['i_image_joiner'] = i
         return result_code, result, log
-
-
-class HomographyTransformError(ValueError):
-    pass
-
-
-class SrcDarkFrameError(ValueError):
-    pass
-
-
-class DstDarkFrameError(ValueError):
-    pass

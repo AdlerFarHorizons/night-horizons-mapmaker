@@ -21,10 +21,10 @@ from sklearn.utils.validation import check_is_fitted
 import tqdm
 import yaml
 
-from . import file_management, utils, raster, preprocess, features, metrics
+from . import file_management, image_joiner, preprocessers, utils, raster, metrics
 
 
-class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
+class Mosaicker(utils.LoggerMixin, TransformerMixin, BaseEstimator):
     '''Assemble a mosaic from georeferenced images.
 
     TODO: filepath is a data-dependent parameter, so it really should be
@@ -76,7 +76,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         self.outline = outline
         self.verbose = verbose
 
-        self.required_columns = ['filepath'] + preprocess.GEOTRANSFORM_COLS
+        self.required_columns = ['filepath'] + preprocessers.GEOTRANSFORM_COLS
 
         # Handles the more-complicated I/O (filetree prep, checkpoints, etc)
         self.file_manager = file_management.MosaicFileManager(
@@ -490,7 +490,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         return in_bounds
 
 
-class ReferencedMosaic(Mosaic):
+class ReferencedMosaicker(Mosaicker):
 
     @utils.enable_passthrough
     def transform(
@@ -605,7 +605,7 @@ class ReferencedMosaic(Mosaic):
         return self.transform(X)
 
 
-class LessReferencedMosaic(Mosaic):
+class LessReferencedMosaic(Mosaicker):
 
     def __init__(
         self,
@@ -631,7 +631,7 @@ class LessReferencedMosaic(Mosaic):
         outline: int = 0,
         verbose: bool = True,
         image_joiner: Union[
-            features.ImageJoiner, features.ImageJoinerQueue
+            image_joiner.ImageJoiner, image_joiner.ImageJoinerQueue
         ] = None,
         feature_mode: str = 'recompute',
         log_keys: list[str] = ['i', 'ind', 'return_code', 'abs_det_M'],
@@ -656,7 +656,7 @@ class LessReferencedMosaic(Mosaic):
             verbose=verbose,
             log_keys=log_keys,
         )
-        self.reffed_mosaic = ReferencedMosaic(
+        self.reffed_mosaic = ReferencedMosaicker(
             out_dir=out_dir,
             filename=filename,
             file_exists='pass',
@@ -751,7 +751,7 @@ class LessReferencedMosaic(Mosaic):
         # Get state of output data
         if self.checkpoint_data_ is None:
             # Set up y-pred
-            y_pred = X[preprocess.GEOTRANSFORM_COLS].copy()
+            y_pred = X[preprocessers.GEOTRANSFORM_COLS].copy()
             y_pred[[
                 'x_min', 'x_max',
                 'y_min', 'y_max',
