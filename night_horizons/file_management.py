@@ -53,7 +53,7 @@ class FileManager:
             elif self.file_exists in ['pass', 'load']:
                 pass
             elif self.file_exists == 'overwrite':
-                os.remove(self.filepath_)
+                shutil.rmtree(self.out_dir_)
             # Create a new file with a new number appended
             elif self.file_exists == 'new':
                 out_dir_pattern = self.out_dir_ + '_v{:03d}'
@@ -79,15 +79,6 @@ class FileManager:
         self.aux_filepaths_ = {}
         for key, filename in self.aux_files.items():
             self.aux_filepaths_[key] = os.path.join(self.out_dir_, filename)
-
-        # Remove the auxiliary files, if they already exist
-        # TODO: Better would be checkpointing these
-        for key, fp in self.aux_filepaths_.items():
-            # We just update the log
-            if key == 'log':
-                continue
-            if os.path.isfile(fp):
-                os.remove(fp)
 
         # Ensure directories exist
         os.makedirs(self.out_dir_, exist_ok=True)
@@ -191,27 +182,24 @@ class MosaicFileManager(FileManager):
 
         return dataset
 
-    def load_from_checkpoint(self, i, checkpoint_filename):
+    def load_from_checkpoint(self, i_checkpoint, checkpoint_filename):
 
-        # This is the only data we return.
-        # The dataset is opened on an as-needed basis.
-
-        if i == 0:
+        if i_checkpoint == 0:
             return None
 
-        print(f'Loading checkpoint file for i={i}')
+        print(f'Loading checkpoint file for i={i_checkpoint}')
 
         # Copy checkpoint dataset
         filepath = os.path.join(self.checkpoint_subdir_, checkpoint_filename)
         shutil.copy(filepath, self.filepath_)
 
         # Open the log
-        log_df = pd.read_csv(self.aux_filepaths_['log'])
+        log_df = pd.read_csv(self.aux_filepaths_['log'], index_col=0)
 
         # Format the stored logs
         logs = []
         for i, ind in enumerate(log_df.index):
-            if i >= i:
+            if i >= i_checkpoint:
                 break
             log = dict(log_df.loc[ind])
             logs.append(log)
@@ -223,5 +211,4 @@ class MosaicFileManager(FileManager):
             'logs': logs,
             'y_pred': y_pred,
         }
-
         return loaded_data
