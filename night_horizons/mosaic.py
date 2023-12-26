@@ -276,6 +276,24 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         dataset.FlushCache()
         dataset = None
 
+    def get_fit_from_dataset(self, dataset):
+
+        # Get the dataset bounds
+        (
+            (self.x_min_, self.x_max_),
+            (self.y_min_, self.y_max_),
+            self.pixel_width_, self.pixel_height_
+        ) = raster.get_bounds_from_dataset(
+            dataset,
+            self.crs,
+        )
+        self.x_size_ = dataset.RasterXSize
+        self.y_size_ = dataset.RasterYSize
+
+        # Close out the dataset for now. (Reduces likelihood of mem leaks.)
+        dataset.FlushCache()
+        dataset = None
+
     def open_dataset(self):
 
         return gdal.Open(self.filepath_, gdal.GA_Update)
@@ -296,56 +314,46 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         with open(self.aux_filepaths_['settings'], 'w') as file:
             yaml.dump(settings, file)
 
-    def set_starting_state(self, X, dataset, i_start):
+    def set_starting_state(self, X, dataset=None, i_start='checkpoint'):
 
         # Convert CRS as needed
         if isinstance(self.crs, str):
             self.crs = pyproj.CRS(self.crs)
 
-        if i_start == 'checkpoint':
-            i_start = self.load_checkpoint()
+        # Start from checkpoint, if available
+        self.restart_from_checkpoint(i_start)
 
-        # Load the dataset if requested
-        if (self.file_exists == 'load') and os.path.isfile(self.filepath_):
+        # If the dataset was not passed in, load it if possible
+        if (
+            ((self.file_exists == 'load') and os.path.isfile(self.filepath_))
+            or (self.i_start_ > 0)
+        ):
             if dataset is not None:
                 raise ValueError(
                     'Cannot both pass in a dataset and load a file')
             dataset = self.open_dataset()
 
-        if i_start > 0:
-            dataset = self.open_dataset()
-
-        # Get fit properties from the dataset if it already exists
+        # If we have a loaded dataset by this point, get fit params from it
         if dataset is not None:
-
-            # Get the dataset bounds
-            (
-                (self.x_min_, self.x_max_),
-                (self.y_min_, self.y_max_),
-                self.pixel_width_, self.pixel_height_
-            ) = raster.get_bounds_from_dataset(
-                dataset,
-                self.crs,
-            )
-            self.x_size_ = dataset.RasterXSize
-            self.y_size_ = dataset.RasterYSize
-
-            # Close out the dataset for now. (Reduces likelihood of mem leaks.)
-            dataset.FlushCache()
-            dataset = None
-
-            return self
+            self.get_fit_from_dataset(dataset)
 
         # Otherwise, make a new dataset
         else:
-            assert self.i_start_ == 0, (
-                'Creating a new dataset, but the starting iteration is not 0. '
-                'If creating a new dataset, should start with i = 0.'
-            )
-
+            if self.i_start_ != 0:
+                raise ValueError(
+                    'Creating a new dataset, '
+                    'but the starting iteration is not 0. '
+                    'If creating a new dataset, should start with i = 0.'
+                )
             self.create_containing_dataset(X)
 
-    def load_checkpoint(self):
+        return self
+
+    def restart_from_checkpoint(self, i_start):
+
+        if isinstance(i_start, int):
+            self.i_start_ = i_start
+            return self.i_start_
 
         # Look for checkpoint files
         i_start = -1
@@ -396,7 +404,7 @@ class Mosaic(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         return i_start
 
-    def checkpoint(self, i, dataset):
+    def save_to_checkpoint(self, i, dataset):
 
         # Conditions for normal return
         if self.checkpoint_freq is None:
@@ -701,7 +709,7 @@ class ReferencedMosaic(Mosaic):
             self.logs.append(log)
 
             # Checkpoint
-            dataset = self.checkpoint(i, dataset)
+            dataset = self.save_to_checkpoint(i, dataset)
 
         # Close out
         dataset.FlushCache()
@@ -1131,7 +1139,7 @@ class LessReferencedMosaic(Mosaic):
         elif (i % self.checkpoint_freq != 0) or (i == 0):
             return dataset
 
-        dataset = super().checkpoint(i, dataset)
+        dataset = super().save_to_checkpoint(i, dataset)
 
         # Store auxiliary files
         y_pred.to_csv(self.aux_filepaths_['y_pred'])
