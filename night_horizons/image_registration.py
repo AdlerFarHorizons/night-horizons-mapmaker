@@ -8,10 +8,10 @@ import pyproj
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
-from . import utils, preprocess
+from . import preprocessers, utils
 
 
-class SensorGeoreferencer(BaseEstimator):
+class MetadataImageRegistrar(BaseEstimator):
     '''Perform georeferencing based on sensor metadata.
 
     Parameters
@@ -22,7 +22,7 @@ class SensorGeoreferencer(BaseEstimator):
     def __init__(
         self,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        passthrough: Union[bool, list[str]] = False, # TODO: Deprecated.
+        passthrough: Union[bool, list[str]] = False,  # TODO: Deprecated.
         use_direct_estimate: bool = True,
         camera_angles: dict[float] = {0: 30., 1: 0., 2: 30.},
         angle_error: float = 5.,
@@ -129,7 +129,7 @@ class SensorGeoreferencer(BaseEstimator):
             'x_center', 'y_center',
             'spatial_error', 'padding',
         ]
-        for key in preprocess.GEOTRANSFORM_COLS:
+        for key in preprocessers.GEOTRANSFORM_COLS:
             if key in set_manually:
                 continue
             X[key] = getattr(self, key + '_')
@@ -161,8 +161,8 @@ class SensorGeoreferencer(BaseEstimator):
         X['padding'] = self.padding_fraction * X['spatial_error']
 
         # Ensure correct type
-        X[preprocess.GEOTRANSFORM_COLS] = \
-            X[preprocess.GEOTRANSFORM_COLS].astype(float)
+        X[preprocessers.GEOTRANSFORM_COLS] = \
+            X[preprocessers.GEOTRANSFORM_COLS].astype(float)
 
         return X
 
