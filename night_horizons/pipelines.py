@@ -102,7 +102,7 @@ class MosaicPipelines:
 
         pipeline = Pipeline([
             ('geotiff', preprocessers.GeoTIFFPreprocesser(crs=crs)),
-            ('mosaic', mosaickers.ReferencedMosaicker(filepath=filepath, crs=crs))
+            ('mosaic', mosaickers.Mosaicker(filepath=filepath, crs=crs))
         ])
 
         return pipeline
@@ -118,7 +118,7 @@ class MosaicPipelines:
                 output_columns=['filepath', 'sensor_x', 'sensor_y'])),
             ('geotiff', preprocessers.GeoTIFFPreprocesser(
                 crs=crs, passthrough=True)),
-            ('mosaic', mosaickers.LessReferencedMosaic(filepath=filepath, crs=crs))
+            ('mosaic', mosaickers.SequentialMosaicker(filepath=filepath, crs=crs))
         ])
 
         return pipeline
