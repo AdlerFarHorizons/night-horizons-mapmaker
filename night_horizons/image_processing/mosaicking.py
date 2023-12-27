@@ -21,15 +21,16 @@ import tqdm
 import yaml
 
 from night_horizons.exceptions import OutOfBoundsError
+from . import processors
 
-from .base import BaseProcessor, BaseRowProcessor
+from .base import BaseBatchProcesser, BaseRowProcessor
 
 from .. import (
-    file_management, image_joiner, preprocessers, utils, raster, metrics
+    file_management, preprocessers, utils, raster, metrics
 )
 
 
-class BaseMosaicker(BaseProcessor):
+class BaseMosaicker(BaseBatchProcesser):
     '''Assemble a mosaic from georeferenced images.
 
     TODO: filepath is a data-dependent parameter, so it really should be
@@ -408,7 +409,7 @@ class BaseMosaicker(BaseProcessor):
 
         return x_off, y_off, x_size, y_size
 
-    def transform_to_pixel(self, X, padding)
+    def transform_to_pixel(self, X, padding):
 
         # Convert to pixels
         (
@@ -516,7 +517,7 @@ class SequentialMosaicker(BaseMosaicker):
         outline: int = 0,
         verbose: bool = True,
         image_joiner: Union[
-            image_joiner.ImageJoiner, image_joiner.ImageJoinerQueue
+            processors.ImageJoiner, processors.ImageJoinerQueue
         ] = None,
         feature_mode: str = 'recompute',
         log_keys: list[str] = ['i', 'ind', 'return_code', 'abs_det_M'],
@@ -844,7 +845,7 @@ class SequentialMosaicker(BaseMosaicker):
         #    However, we need to track *how* the failures happened somehow,
         #    so we need some sort of flag, which is basically a return code.
         #    That said, there may be a better alternative to this.
-        return_code, result, image_joiner_log = self.image_joiner.join(
+        return_code, result, image_joiner_log = self.image_joiner.process(
             src_img, dst_img)
         log = self.update_log(image_joiner_log, target=log)
 
@@ -905,6 +906,11 @@ class SequentialMosaicker(BaseMosaicker):
 
 class MosaickerRowTransformer(BaseRowProcessor):
 
+    def __init__(self, x_size, y_size):
+
+        self.x_size = x_size
+        self.y_size = y_size
+
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
 
         src_img = utils.load_image(
@@ -916,7 +922,7 @@ class MosaickerRowTransformer(BaseRowProcessor):
 
     def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:
 
-        dst_img = self.get_image(
+        dst_img = self.get_image_from_dataset(
             resources['dataset'],
             row['x_off'],
             row['y_off'],
@@ -935,18 +941,10 @@ class MosaickerRowTransformer(BaseRowProcessor):
         dst: dict,
     ) -> dict:
 
-        # Resize the source image
-        src_img_resized = cv2.resize(
-            src['image'],
-            (dst['image'].shape[1], dst['image'].shape[0]),
-        )
-
         # Combine the images
-        blended_img = utils.blend_images(
-            src_img=src_img_resized,
-            dst_img=dst['image'],
-            fill_value=self.fill_value,
-            outline=self.outline,
+        blended_img = self.image_blender.safe_process(
+            src['image'],
+            dst['image'],
         )
 
         return {'blended_image': blended_img}
@@ -960,7 +958,7 @@ class MosaickerRowTransformer(BaseRowProcessor):
     ):
 
         # Store the image
-        self.save_image(
+        self.save_image_to_dataset(
             resources['dataset'],
             result['blended_image'],
             row['x_off'],
@@ -970,13 +968,13 @@ class MosaickerRowTransformer(BaseRowProcessor):
     ########################################################################### 
     # Auxillary functions below
 
-    def get_image(self, dataset, x_off, y_off, x_size, y_size):
+    def get_image_from_dataset(self, dataset, x_off, y_off, x_size, y_size):
 
         assert x_off >= 0, 'x_off cannot be less than 0'
-        assert x_off + x_size <= self.x_size_, \
+        assert x_off + x_size <= self.x_size, \
             'x_off + x_size cannot be greater than self.x_size_'
         assert y_off >= 0, 'y_off cannot be less than 0'
-        assert y_off + y_size <= self.y_size_, \
+        assert y_off + y_size <= self.y_size, \
             'y_off + y_size cannot be greater than self.y_size_'
 
         # Note that we cast the input as int, in case we the input was numpy
@@ -991,7 +989,7 @@ class MosaickerRowTransformer(BaseRowProcessor):
 
         return img
 
-    def save_image(self, dataset, img, x_off, y_off):
+    def save_image_to_dataset(self, dataset, img, x_off, y_off):
 
         img_to_save = img.transpose(2, 0, 1)
         dataset.WriteArray(

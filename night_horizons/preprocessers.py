@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import copy
 import glob
 import os
@@ -692,11 +693,9 @@ class BaseImageTransformer(TransformerMixin, BaseEstimator):
 
         return X_t
 
+    @abstractmethod
     def transform_image(self, img):
-
-        raise NotImplementedError(
-            'Abstract method not implemented for base class'
-        )
+        pass
 
 
 class PassImageTransformer(BaseImageTransformer):

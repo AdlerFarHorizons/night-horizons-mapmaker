@@ -17,10 +17,127 @@ from night_horizons.exceptions import (
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import preprocessers, utils
+from .. import preprocessers, utils
 
 
-class ImageJoiner(utils.LoggerMixin):
+class BaseImageProcessor(utils.LoggerMixin):
+
+    def safe_process(self, src_img, dst_img):
+        '''
+        Parameters
+        ----------
+        Returns
+        -------
+            results:
+                blended_img: Combined image. Not always returned.
+                M: Homography transform. Not always returned.
+                src_kp: Keypoints for the src image. Not always returned.
+                src_des: KP descriptors for the src image. Not always returned.
+                duration: Time spent.
+        '''
+
+        start = time.time()
+
+        results = {}
+        return_code = 'not_set'
+        try:
+            results = self.process(src_img, dst_img)
+            return_code = 'success'
+        except cv2.error:
+            return_code = 'opencv_err'
+        except HomographyTransformError:
+            return_code = 'bad_det'
+        except SrcDarkFrameError:
+            return_code = 'dark_frame'
+        except DstDarkFrameError:
+            return_code = 'dst_dark_frame'
+        except np.linalg.LinAlgError:
+            return_code = 'linalg_err'
+        finally:
+            duration = time.time() - start
+            results['duration'] = duration
+
+            self.update_log(locals())
+
+            return return_code, results
+
+
+class Blender(BaseImageProcessor):
+
+    def __init__(
+        self,
+        fill_value: Union[float, int] = None,
+        outline: int = 0.,
+    ):
+
+        self.fill_value = fill_value
+        self.outline = outline
+
+    def process(self, src_img, dst_img):
+
+        # Resize the source image
+        src_img_resized = cv2.resize(
+            src_img,
+            (dst_img.shape[1], dst_img.shape[0]),
+        )
+
+        blended_img = self.blend_images(
+            src_img=src_img_resized,
+            dst_img=dst_img,
+        )
+
+        return {'blended_image': blended_img}
+
+    def blend(
+        self,
+        src_img,
+        dst_img,
+    ):
+
+        # Fill value defaults to values that would be opaque
+        if self.fill_value is None:
+            if np.issubdtype(dst_img.dtype, np.integer):
+                fill_value = 255
+            else:
+                fill_value = 1.
+
+        # Doesn't consider zeros in the final channel as empty
+        n_bands = dst_img.shape[-1]
+        is_empty = (dst_img[:, :, :n_bands - 1].sum(axis=2) == 0)
+
+        # Blend
+        blended_img = []
+        for j in range(n_bands):
+            try:
+                blended_img_j = np.where(
+                    is_empty,
+                    src_img[:, :, j],
+                    dst_img[:, :, j]
+                )
+            # When there's no band information in the one we're blending,
+            # fall back to the fill value
+            except IndexError:
+                blended_img_j = np.full(
+                    dst_img.shape[:2],
+                    fill_value,
+                    dtype=dst_img.dtype
+                )
+            blended_img.append(blended_img_j)
+        blended_img = np.array(blended_img).transpose(1, 2, 0)
+
+        # Add an outline
+        if self.outline > 0:
+            blended_img[:self.outline] = fill_value
+            blended_img[-1 - self.outline:] = fill_value
+            blended_img[:, :self.outline] = fill_value
+            blended_img[:, -1 - self.outline:] = fill_value
+
+        self.update_log(locals())
+
+        return blended_img
+
+
+class ImageJoiner(BaseImageProcessor):
 
     def __init__(
         self,
@@ -88,61 +205,22 @@ class ImageJoiner(utils.LoggerMixin):
         # Initialize the log
         super().__init__(log_keys)
 
-    def join(self, src_img, dst_img, warp_and_blend=True):
-        '''
-        Parameters
-        ----------
-        Returns
-        -------
-            results:
-                blended_img: Combined image. Not always returned.
-                M: Homography transform. Not always returned.
-                src_kp: Keypoints for the src image. Not always returned.
-                src_des: KP descriptors for the src image. Not always returned.
-                duration: Time spent.
-        '''
+    def process(self, src_img, dst_img):
 
-        start = time.time()
+        src_img_t, dst_img_t = self.image_transformer.fit_transform(
+            [src_img, dst_img])
 
-        results = {}
-        return_code = 'not_set'
-        try:
-            src_img_t, dst_img_t = self.image_transformer.fit_transform(
-                [src_img, dst_img])
+        # Try to get a valid homography
+        results = self.find_valid_homography(src_img_t, dst_img_t)
 
-            # Try to get a valid homography
-            results = self.find_valid_homography(src_img_t, dst_img_t)
+        # Warp image
+        warped_img = self.warp(src_img, dst_img, results['M'])
 
-            if warp_and_blend:
+        # Blend images
+        blended_img = self.blend(
+            warped_img, dst_img, outline=self.outline)
 
-                # Warp image
-                warped_img = self.warp(src_img, dst_img, results['M'])
-
-                # Blend images
-                blended_img = self.blend(
-                    warped_img, dst_img, outline=self.outline)
-
-                results['blended_img'] = blended_img
-
-            return_code = 'success'
-        except cv2.error:
-            return_code = 'opencv_err'
-        except HomographyTransformError:
-            return_code = 'bad_det'
-        except SrcDarkFrameError:
-            return_code = 'dark_frame'
-        except DstDarkFrameError:
-            return_code = 'dst_dark_frame'
-        except np.linalg.LinAlgError:
-            return_code = 'linalg_err'
-        finally:
-            duration = time.time() - start
-            results['duration'] = duration
-
-            # Log
-            self.update_log(locals())
-
-            return return_code, results, self.log
+        results['blended_img'] = blended_img
 
     def apply_img_transform(self, img):
 
@@ -267,54 +345,6 @@ class ImageJoiner(utils.LoggerMixin):
         y_size = py_max - py_min
 
         return x_off, y_off, x_size, y_size
-
-    @staticmethod
-    def blend(
-        src_img,
-        dst_img,
-        fill_value: Union[float, int] = None,
-        outline: int = 0.,
-    ):
-
-        # Fill value defaults to values that would be opaque
-        if fill_value is None:
-            if np.issubdtype(dst_img.dtype, np.integer):
-                fill_value = 255
-            else:
-                fill_value = 1.
-
-        # Doesn't consider zeros in the final channel as empty
-        n_bands = dst_img.shape[-1]
-        is_empty = (dst_img[:, :, :n_bands - 1].sum(axis=2) == 0)
-
-        # Blend
-        blended_img = []
-        for j in range(n_bands):
-            try:
-                blended_img_j = np.where(
-                    is_empty,
-                    src_img[:, :, j],
-                    dst_img[:, :, j]
-                )
-            # When there's no band information in the one we're blending,
-            # fall back to the fill value
-            except IndexError:
-                blended_img_j = np.full(
-                    dst_img.shape[:2],
-                    fill_value,
-                    dtype=dst_img.dtype
-                )
-            blended_img.append(blended_img_j)
-        blended_img = np.array(blended_img).transpose(1, 2, 0)
-
-        # Add an outline
-        if outline > 0:
-            blended_img[:outline] = fill_value
-            blended_img[-1 - outline:] = fill_value
-            blended_img[:, :outline] = fill_value
-            blended_img[:, -1 - outline:] = fill_value
-
-        return blended_img
 
     def validate_brightness(self, img, error_type='src'):
 
