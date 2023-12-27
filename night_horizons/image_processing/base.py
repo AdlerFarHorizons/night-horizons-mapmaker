@@ -10,7 +10,11 @@ import tqdm
 from .. import utils
 
 
-class BaseProcessor(utils.LoopLoggerMixin, TransformerMixin, BaseEstimator):
+class BaseBatchProcesser(
+    utils.LoopLoggerMixin,
+    TransformerMixin,
+    BaseEstimator
+):
 
     def __init__(self, file_manager, logger, row_processor, log_keys=[]):
 
@@ -76,8 +80,8 @@ class BaseProcessor(utils.LoopLoggerMixin, TransformerMixin, BaseEstimator):
 
         # TODO: We could avoid passing around the log filepath here, and
         #       keep it as an attribute instead...
-        #       One nice thing about this is that we don't have to go digging
-        #       for where the log is saved.
+        #       One nice thing about this as is is that we don't have to
+        #       go digging for where the log is saved.
         log_filepath = self.file_manager.aux_filepaths['log']
         self.start_logging(
             i_start=self.i_start_,
@@ -86,6 +90,12 @@ class BaseProcessor(utils.LoopLoggerMixin, TransformerMixin, BaseEstimator):
 
         # Resources contains global variables that will be available
         # throughout image processing.
+        # TODO: I may be able to get away without resources. Resources
+        #       originally existed because I thought saving dataset as
+        #       an attribute (for mosaicking) was creating a memory leak.
+        #       However, when I debugged that much of the issue actually came
+        #       from saving massive objects (all the features) to the log
+        #       and duplicating them.
         X_t, resources = self.preprocess(X)
 
         # If verbose, add a progress bar.
