@@ -291,12 +291,15 @@ def enable_passthrough(func):
         X_out = X_out.join(X[passthrough_cols])
 
         return X_out
+
     return wrapper
 
 
 class LoggerMixin:
     '''
-    Note that a decorator is not possible because we're interested in locals()
+    Note that a decorator is not possible because we're typically
+    interested in local variables.
+
     Parameters
     ----------
     Returns
@@ -305,12 +308,14 @@ class LoggerMixin:
 
     def __init__(
         self,
-        log_keys=[],
+        log_keys: list[str] = [],
     ):
         self.log_keys = log_keys
+
+    def start_logging(self):
         self.log = {}
 
-    def update_log(self, new_dict, target=None):
+    def update_log(self, new_dict: dict, target: dict = None):
 
         if target is None:
             target = self.log
@@ -324,3 +329,44 @@ class LoggerMixin:
         target.update(new_dict)
 
         return target
+
+
+class LoopLoggerMixin(LoggerMixin):
+
+    def start_logging(self, i_start: int, log_filepath: str):
+        '''
+        Parameters
+        ----------
+        Returns
+        -------
+
+        Attributes Modified
+        -------------------
+        log : dict
+            Dictionary for variables the user may want to view. This should
+            be treated as "read-only".
+
+        logs : list[dict]
+            List of dictionaries for variables the user may want to view.
+            One dictionary per image.
+            Each should be treated as "read-only".
+        '''
+
+        self.log = {}
+        self.logs = []
+
+        # Open the log if available
+        if os.path.isfile(log_filepath):
+            log_df = pd.read_csv(log_filepath, index_col=0)
+
+            # Format the stored logs
+            for i, ind in enumerate(log_df.index):
+                if i >= i_start:
+                    break
+                log = dict(log_df.loc[ind])
+                self.logs.append(log)
+
+    def write_log(self, log_filepath: str):
+
+        log_df = pd.DataFrame(self.logs)
+        log_df.to_csv(log_filepath)

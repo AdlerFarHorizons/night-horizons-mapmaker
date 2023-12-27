@@ -8,3 +8,7 @@ class SrcDarkFrameError(ValueError):
 
 class DstDarkFrameError(ValueError):
     pass
+
+
+class OutOfBoundsError(ValueError):
+    pass

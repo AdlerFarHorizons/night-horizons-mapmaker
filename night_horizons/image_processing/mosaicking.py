@@ -20,7 +20,9 @@ from sklearn.utils.validation import check_is_fitted
 import tqdm
 import yaml
 
-from .base import BaseProcessor
+from night_horizons.exceptions import OutOfBoundsError
+
+from .base import BaseProcessor, BaseRowProcessor
 
 from .. import (
     file_management, image_joiner, preprocessers, utils, raster, metrics
@@ -91,41 +93,45 @@ class BaseMosaicker(BaseProcessor):
             checkpoint_subdir=checkpoint_subdir,
         )
 
-        super().__init__(log_keys)
-
     @utils.enable_passthrough
     def fit(
         self,
         X: pd.DataFrame,
         y=None,
+        i_start: Union[str, int] = 'checkpoint',
         dataset: gdal.Dataset = None,
-        i_start: Union[int, str] = 'checkpoint',
     ):
-        '''The main thing the fitting does is create an empty dataset to hold
-        the mosaic.
 
-        Parameters
-        ----------
-        X
-            A dataframe containing the bounds of each added image.
+        # The fitting that's done for all image processing pipelines
+        super().fit(X, y, i_start=i_start)
 
-        y
-            Empty.
+        # Convert CRS as needed
+        if isinstance(self.crs, str):
+            self.crs = pyproj.CRS(self.crs)
 
-        Returns
-        -------
-        self
-            Returns self
-        '''
+        # If the dataset was not passed in, load it if possible
+        if (
+            ((self.file_exists == 'load') and os.path.isfile(self.filepath_))
+            or (self.i_start_ != 0)
+        ):
+            if dataset is not None:
+                raise ValueError(
+                    'Cannot both pass in a dataset and load a file')
+            dataset = self.open_dataset()
 
-        # Make output directories, get filepaths, load dataset (if applicable)
-        self.out_dir_, self.filepath_ = self.file_manager.prepare_filetree()
+        # If we have a loaded dataset by this point, get fit params from it
+        if dataset is not None:
+            self.get_fit_from_dataset(dataset)
 
-        # Save the settings used for fitting
-        # Must be done after preparing the filetree to have a save location
-        self.file_manager.save_settings(self)
-
-        self.set_starting_state(X, dataset, i_start)
+        # Otherwise, make a new dataset
+        else:
+            if self.i_start_ != 0:
+                raise ValueError(
+                    'Creating a new dataset, '
+                    'but the starting iteration is not 0. '
+                    'If creating a new dataset, should start with i = 0.'
+                )
+            self.create_containing_dataset(X)
 
         return self
 
@@ -149,27 +155,6 @@ class BaseMosaicker(BaseProcessor):
         }
 
         return X_t, resources
-
-    def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
-
-        src_img = utils.load_image(
-            row['filepath'],
-            dtype=self.dtype,
-        )
-
-        return {'image': src_img}
-
-    def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:
-
-        dst_img = self.get_image(
-            resources['dataset'],
-            row['x_off'],
-            row['y_off'],
-            row['x_size'],
-            row['y_size'],
-        )
-
-        return {'image': dst_img}
 
     def postprocess(self, X_t, resources):
 
@@ -228,46 +213,6 @@ class BaseMosaicker(BaseProcessor):
         score = np.median(self.scores_)
 
         return score
-
-    def set_starting_state(self, X, dataset=None, i_start='checkpoint'):
-
-        # Convert CRS as needed
-        if isinstance(self.crs, str):
-            self.crs = pyproj.CRS(self.crs)
-
-        # Start from checkpoint, if available
-        if i_start == 'checkpoint':
-            self.i_start_, self.checkpoint_data_ = \
-                self.file_manager.search_and_load_checkpoint()
-        else:
-            self.i_start_ = i_start
-            self.checkpoint_data_ = None
-
-        # If the dataset was not passed in, load it if possible
-        if (
-            ((self.file_exists == 'load') and os.path.isfile(self.filepath_))
-            or (self.i_start_ != 0)
-        ):
-            if dataset is not None:
-                raise ValueError(
-                    'Cannot both pass in a dataset and load a file')
-            dataset = self.open_dataset()
-
-        # If we have a loaded dataset by this point, get fit params from it
-        if dataset is not None:
-            self.get_fit_from_dataset(dataset)
-
-        # Otherwise, make a new dataset
-        else:
-            if self.i_start_ != 0:
-                raise ValueError(
-                    'Creating a new dataset, '
-                    'but the starting iteration is not 0. '
-                    'If creating a new dataset, should start with i = 0.'
-                )
-            self.create_containing_dataset(X)
-
-        return self
 
     def open_dataset(self):
 
@@ -486,36 +431,6 @@ class BaseMosaicker(BaseProcessor):
 
         return X
 
-    def get_image(self, dataset, x_off, y_off, x_size, y_size):
-
-        assert x_off >= 0, 'x_off cannot be less than 0'
-        assert x_off + x_size <= self.x_size_, \
-            'x_off + x_size cannot be greater than self.x_size_'
-        assert y_off >= 0, 'y_off cannot be less than 0'
-        assert y_off + y_size <= self.y_size_, \
-            'y_off + y_size cannot be greater than self.y_size_'
-
-        # Note that we cast the input as int, in case we the input was numpy
-        # integers instead of python integers.
-        img = dataset.ReadAsArray(
-            xoff=int(x_off),
-            yoff=int(y_off),
-            xsize=int(x_size),
-            ysize=int(y_size),
-        )
-        img = img.transpose(1, 2, 0)
-
-        return img
-
-    def save_image(self, dataset, img, x_off, y_off):
-
-        img_to_save = img.transpose(2, 0, 1)
-        dataset.WriteArray(
-            img_to_save,
-            xoff=int(x_off),
-            yoff=int(y_off),
-        )
-
     def get_image_with_bounds(self, dataset, x_min, x_max, y_min, y_max):
 
         # Out of bounds
@@ -568,7 +483,12 @@ class BaseMosaicker(BaseProcessor):
 
 class Mosaicker(BaseMosaicker):
 
-    pass
+    def __init__(self):
+
+        row_processer = MosaickerRowTransformer()
+
+        super().__init__(row_processer=row_processer)
+
 
 class SequentialMosaicker(BaseMosaicker):
 
@@ -714,7 +634,7 @@ class SequentialMosaicker(BaseMosaicker):
         check_is_fitted(self, 'filepath_')
 
         # Get state of output data
-        if self.checkpoint_data_ is None:
+        if self.checkpoint_state_ is None:
             # Set up y-pred
             y_pred = X[preprocessers.GEOTRANSFORM_COLS].copy()
             y_pred[[
@@ -730,8 +650,8 @@ class SequentialMosaicker(BaseMosaicker):
             # And the logs too
             self.logs = []
         else:
-            y_pred = self.checkpoint_data_['y_pred']
-            self.logs = self.checkpoint_data_['logs']
+            y_pred = self.checkpoint_state_['y_pred']
+            self.logs = self.checkpoint_state_['logs']
 
         # Convert to pixels
         (
@@ -983,5 +903,99 @@ class SequentialMosaicker(BaseMosaicker):
         return return_code, results, log
 
 
-class OutOfBoundsError(ValueError):
-    pass
+class MosaickerRowTransformer(BaseRowProcessor):
+
+    def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
+
+        src_img = utils.load_image(
+            row['filepath'],
+            dtype=self.dtype,
+        )
+
+        return {'image': src_img}
+
+    def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:
+
+        dst_img = self.get_image(
+            resources['dataset'],
+            row['x_off'],
+            row['y_off'],
+            row['x_size'],
+            row['y_size'],
+        )
+
+        return {'image': dst_img}
+
+    def process(
+        self,
+        i: int,
+        row: pd.Series,
+        resources: dict,
+        src: dict,
+        dst: dict,
+    ) -> dict:
+
+        # Resize the source image
+        src_img_resized = cv2.resize(
+            src['image'],
+            (dst['image'].shape[1], dst['image'].shape[0]),
+        )
+
+        # Combine the images
+        blended_img = utils.blend_images(
+            src_img=src_img_resized,
+            dst_img=dst['image'],
+            fill_value=self.fill_value,
+            outline=self.outline,
+        )
+
+        return {'blended_image': blended_img}
+
+    def store_result(
+        self,
+        i: int,
+        row: pd.Series,
+        resources: dict,
+        result: dict,
+    ):
+
+        # Store the image
+        self.save_image(
+            resources['dataset'],
+            result['blended_image'],
+            row['x_off'],
+            row['y_off'],
+        )
+
+    ########################################################################### 
+    # Auxillary functions below
+
+    def get_image(self, dataset, x_off, y_off, x_size, y_size):
+
+        assert x_off >= 0, 'x_off cannot be less than 0'
+        assert x_off + x_size <= self.x_size_, \
+            'x_off + x_size cannot be greater than self.x_size_'
+        assert y_off >= 0, 'y_off cannot be less than 0'
+        assert y_off + y_size <= self.y_size_, \
+            'y_off + y_size cannot be greater than self.y_size_'
+
+        # Note that we cast the input as int, in case we the input was numpy
+        # integers instead of python integers.
+        img = dataset.ReadAsArray(
+            xoff=int(x_off),
+            yoff=int(y_off),
+            xsize=int(x_size),
+            ysize=int(y_size),
+        )
+        img = img.transpose(1, 2, 0)
+
+        return img
+
+    def save_image(self, dataset, img, x_off, y_off):
+
+        img_to_save = img.transpose(2, 0, 1)
+        dataset.WriteArray(
+            img_to_save,
+            xoff=int(x_off),
+            yoff=int(y_off),
+        )
