@@ -16,17 +16,18 @@ from osgeo import gdal
 import pandas as pd
 import pyproj
 import scipy
-from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 import tqdm
 import yaml
 
-from . import (
+from .base import BaseProcessor
+
+from .. import (
     file_management, image_joiner, preprocessers, utils, raster, metrics
 )
 
 
-class BaseMosaicker(utils.LoggerMixin, TransformerMixin, BaseEstimator):
+class BaseMosaicker(BaseProcessor):
     '''Assemble a mosaic from georeferenced images.
 
     TODO: filepath is a data-dependent parameter, so it really should be
@@ -127,6 +128,56 @@ class BaseMosaicker(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         self.set_starting_state(X, dataset, i_start)
 
         return self
+
+    def preprocess(self, X: pd.DataFrame) -> Tuple[pd.DataFrame, dict]:
+        '''Preprocessing required before doing the full loop.
+        This should focus on preprocessing that depends on the particular
+        image processer (e.g. for mosaickers this includes putting the
+        coordinates in the pixel-based frame of the mosaic).
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        X_t = self.transform_to_pixel(X, padding=0)
+
+        # Get the dataset
+        resources = {
+            'dataset': self.open_dataset(),
+        }
+
+        return X_t, resources
+
+    def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
+
+        src_img = utils.load_image(
+            row['filepath'],
+            dtype=self.dtype,
+        )
+
+        return {'image': src_img}
+
+    def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:
+
+        dst_img = self.get_image(
+            resources['dataset'],
+            row['x_off'],
+            row['y_off'],
+            row['x_size'],
+            row['y_size'],
+        )
+
+        return {'image': dst_img}
+
+    def postprocess(self, X_t, resources):
+
+        # Close out the dataset
+        resources['dataset'].FlushCache()
+        resources['dataset'] = None
+
+        return X_t
 
     def score(self, X, y=None, tm_metric=cv2.TM_CCOEFF_NORMED):
 
@@ -412,6 +463,29 @@ class BaseMosaicker(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
         return x_off, y_off, x_size, y_size
 
+    def transform_to_pixel(self, X, padding)
+
+        # Convert to pixels
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.physical_to_pixel(
+            X['x_min'], X['x_max'],
+            X['y_min'], X['y_max'],
+            padding=padding,
+        )
+
+        # Check nothing is oob
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.handle_out_of_bounds(
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size'],
+        )
+
+        return X
+
     def get_image(self, dataset, x_off, y_off, x_size, y_size):
 
         assert x_off >= 0, 'x_off cannot be less than 0'
@@ -494,118 +568,7 @@ class BaseMosaicker(utils.LoggerMixin, TransformerMixin, BaseEstimator):
 
 class Mosaicker(BaseMosaicker):
 
-    @utils.enable_passthrough
-    def transform(
-        self,
-        X: pd.DataFrame,
-        y=None,
-    ):
-        self.log = {}
-
-        X = utils.check_df_input(
-            X,
-            self.required_columns,
-        )
-
-        # Check if fit had been called
-        check_is_fitted(self, 'filepath_')
-
-        # Get state of output data
-        if self.checkpoint_data_ is None:
-            self.logs = []
-        else:
-            self.logs = self.checkpoint_data_['logs']
-
-        # Convert to pixels
-        (
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
-        ) = self.physical_to_pixel(
-            X['x_min'], X['x_max'],
-            X['y_min'], X['y_max'],
-            padding=0,
-        )
-
-        # Check nothing is oob
-        (
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
-        ) = self.handle_out_of_bounds(
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size'],
-        )
-
-        # Get the dataset
-        dataset = self.open_dataset()
-
-        # If verbose, add a progress bar.
-        if self.verbose:
-            iterable = tqdm.tqdm(X['filepath'], ncols=80)
-        else:
-            iterable = X['filepath']
-
-        for i, fp in enumerate(iterable):
-
-            row = X.iloc[i]
-
-            # Get data
-            src_img = utils.load_image(
-                fp,
-                dtype=self.dtype,
-            )
-            dst_img = self.get_image(
-                dataset,
-                row['x_off'],
-                row['y_off'],
-                row['x_size'],
-                row['y_size'],
-            )
-
-            # Resize the source image
-            src_img_resized = cv2.resize(
-                src_img,
-                (dst_img.shape[1], dst_img.shape[0])
-            )
-
-            # Combine the images
-            blended_img = utils.blend_images(
-                src_img=src_img_resized,
-                dst_img=dst_img,
-                fill_value=self.fill_value,
-                outline=self.outline,
-            )
-
-            # Store the image
-            self.save_image(dataset, blended_img, row['x_off'], row['y_off'])
-
-            # Update the log
-            log = self.update_log(locals(), target={})
-            self.logs.append(log)
-
-            # Checkpoint
-            dataset = self.file_manager.save_to_checkpoint(
-                i,
-                dataset,
-                logs=self.logs,
-            )
-
-        # Close out
-        dataset.FlushCache()
-        dataset = None
-
-    def predict(
-        self,
-        X: pd.DataFrame,
-    ):
-        '''Transform and predict mean the same thing here.
-        Transform is the appropriate term when we're changing the referenced
-        images into a mosaic, and are assuming the mosaic as the ground truth.
-        Predict is the appropriate term when we're assessing the accuracy of
-        the created mosaic.
-        '''
-
-        return self.transform(X)
-
+    pass
 
 class SequentialMosaicker(BaseMosaicker):
 

@@ -10,12 +10,14 @@ import scipy
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+
+from .processers import image_registration, mosaickers
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import image_registration, mosaickers, preprocessers
+from . import preprocessers
 
 
 class PreprocessingPipelines:
