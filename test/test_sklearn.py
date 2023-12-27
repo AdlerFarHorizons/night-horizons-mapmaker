@@ -1,7 +1,7 @@
 import pytest
 from sklearn.utils.estimator_checks import check_estimator
 
-from night_horizons import preprocess
+from night_horizons import preprocessers
 
 
 # TODO: Get this up-and-running. Currently doesn't work

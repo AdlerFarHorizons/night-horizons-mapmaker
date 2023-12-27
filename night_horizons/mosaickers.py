@@ -26,7 +26,7 @@ from . import (
 )
 
 
-class Mosaicker(utils.LoggerMixin, TransformerMixin, BaseEstimator):
+class BaseMosaicker(utils.LoggerMixin, TransformerMixin, BaseEstimator):
     '''Assemble a mosaic from georeferenced images.
 
     TODO: filepath is a data-dependent parameter, so it really should be
@@ -492,7 +492,7 @@ class Mosaicker(utils.LoggerMixin, TransformerMixin, BaseEstimator):
         return in_bounds
 
 
-class ReferencedMosaicker(Mosaicker):
+class Mosaicker(BaseMosaicker):
 
     @utils.enable_passthrough
     def transform(
@@ -607,7 +607,7 @@ class ReferencedMosaicker(Mosaicker):
         return self.transform(X)
 
 
-class LessReferencedMosaic(Mosaicker):
+class SequentialMosaicker(BaseMosaicker):
 
     def __init__(
         self,
@@ -658,7 +658,7 @@ class LessReferencedMosaic(Mosaicker):
             verbose=verbose,
             log_keys=log_keys,
         )
-        self.reffed_mosaic = ReferencedMosaicker(
+        self.reffed_mosaic = Mosaicker(
             out_dir=out_dir,
             filename=filename,
             file_exists='pass',
