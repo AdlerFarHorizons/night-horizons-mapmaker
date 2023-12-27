@@ -151,7 +151,7 @@ class MosaicFileManager(FileManager):
 
         return gdal.Open(self.filepath_, gdal.GA_Update)
 
-    def save_to_checkpoint(self, i, dataset, logs=None, y_pred=None):
+    def save_to_checkpoint(self, i, dataset, y_pred=None):
 
         # Conditions for normal return
         if self.checkpoint_freq is None:
@@ -171,9 +171,6 @@ class MosaicFileManager(FileManager):
         shutil.copy(self.filepath_, checkpoint_fp)
 
         # Store auxiliary files
-        if logs is not None:
-            log_df = pd.DataFrame(logs)
-            log_df.to_csv(self.aux_filepaths_['log'])
         if y_pred is not None:
             y_pred.to_csv(self.aux_filepaths_['y_pred'])
 
@@ -193,22 +190,10 @@ class MosaicFileManager(FileManager):
         filepath = os.path.join(self.checkpoint_subdir_, checkpoint_filename)
         shutil.copy(filepath, self.filepath_)
 
-        # Open the log
-        log_df = pd.read_csv(self.aux_filepaths_['log'], index_col=0)
-
-        # Format the stored logs
-        logs = []
-        for i, ind in enumerate(log_df.index):
-            if i >= i_checkpoint:
-                break
-            log = dict(log_df.loc[ind])
-            logs.append(log)
-
         # And load the predictions
         y_pred = pd.read_csv(self.aux_filepaths_['y_pred'], index_col=0)
 
         loaded_data = {
-            'logs': logs,
             'y_pred': y_pred,
         }
         return loaded_data
