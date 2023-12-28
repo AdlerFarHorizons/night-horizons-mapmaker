@@ -260,7 +260,7 @@ def enable_passthrough(func):
     Requires
     --------
     self.passthrough : Union[list[str], bool]
-        If True
+
     '''
 
     def wrapper(

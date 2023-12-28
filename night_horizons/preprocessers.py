@@ -70,7 +70,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         # Check the input is good.
         X = utils.check_filepaths_input(
             X,
-            passthrough=self.passthrough,
+            only_allow_required=self.passthrough,
         )
 
         # Convert CRS as needed

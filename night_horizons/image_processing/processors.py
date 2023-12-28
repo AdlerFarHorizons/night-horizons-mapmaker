@@ -9,15 +9,15 @@ import numpy as np
 import pandas as pd
 import scipy
 
-from night_horizons.exceptions import (
-    DstDarkFrameError, HomographyTransformError, SrcDarkFrameError
-)
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
 from .. import preprocessers, utils
+from ..exceptions import (
+    DstDarkFrameError, HomographyTransformError, SrcDarkFrameError
+)
 
 
 class BaseImageProcessor(utils.LoggerMixin):
