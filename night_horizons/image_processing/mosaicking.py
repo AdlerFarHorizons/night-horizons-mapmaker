@@ -562,7 +562,6 @@ class SequentialMosaicker(BaseMosaicker):
         image_joiner: Union[
             processors.ImageJoiner, processors.ImageJoinerQueue
         ] = None,
-        feature_mode: str = 'recompute',
         log_keys: list[str] = ['i', 'ind', 'return_code', 'abs_det_M'],
         memory_snapshot_freq: int = 10,
     ):
@@ -602,7 +601,6 @@ class SequentialMosaicker(BaseMosaicker):
         )
 
         self.image_joiner = image_joiner
-        self.feature_mode = feature_mode
         self.progress_images_subdir = progress_images_subdir
         self.memory_snapshot_freq = memory_snapshot_freq
         self.save_return_codes = save_return_codes
@@ -718,22 +716,6 @@ class SequentialMosaicker(BaseMosaicker):
 
         dataset = self.open_dataset()
 
-        # Get the features for the existing mosaic
-        if self.feature_mode == 'store':
-            dst_img = self.get_image(dataset, 0, 0, self.x_size_, self.y_size_)
-            dsframe_dst_kps, dsframe_dst_des = \
-                self.feature_detector_.detectAndCompute(dst_img, None)
-            dsframe_dst_pts = cv2.KeyPoint_convert(dsframe_dst_kps)
-        # Or indicate we will not be passing those in.
-        elif self.feature_mode == 'recompute':
-            dsframe_dst_pts = None
-            dsframe_dst_des = None
-        else:
-            raise ValueError(
-                f'feature_mode = {self.feature_mode} is not a valid option. '
-                "Valid options are ['store', 'recompute']."
-            )
-
         # Start memory tracing
         if 'snapshot' in self.log_keys:
             tracemalloc.start()
@@ -752,28 +734,12 @@ class SequentialMosaicker(BaseMosaicker):
             return_code, results, log = self.incorporate_image(
                 dataset,
                 row,
-                dsframe_dst_pts,
-                dsframe_dst_des,
             )
             # Time it
             if 'iter_duration' in self.log_keys:
                 iter_duration = time.time() - start
 
             if return_code == 'success':
-
-                # Store the transformed points for the next loop
-                if self.feature_mode == 'store':
-                    dsframe_dst_pts = np.append(
-                        dsframe_dst_pts,
-                        results['dsframe_src_pts'],
-                        axis=0
-                    )
-                    dsframe_dst_des = np.append(
-                        dsframe_dst_des,
-                        results['src_des'],
-                        axis=0
-                    )
-
                 # Update y_pred
                 y_pred.loc[ind, ['x_off', 'y_off', 'x_size', 'y_size']] = [
                     results['x_off'], results['y_off'],
@@ -830,8 +796,6 @@ class SequentialMosaicker(BaseMosaicker):
         self,
         dataset,
         row: pd.Series,
-        dsframe_dst_pts: np.ndarray,
-        dsframe_dst_des: np.ndarray,
     ):
 
         results = {}
@@ -847,27 +811,11 @@ class SequentialMosaicker(BaseMosaicker):
         # TODO: When dst pts are provided, this step could be made faster by
         #       not loading dst_img at this time.
         dst_img = self.get_image(dataset, x_off, y_off, x_size, y_size)
-        if self.feature_mode == 'store':
-            raise NotImplementedError('Removed this functionality for now.')
 
-            # Check what's in bounds, exit if nothing
-            in_bounds = self.check_bounds(
-                dsframe_dst_pts,
-                x_off, y_off, x_size, y_size
-            )
-            if in_bounds.sum() == 0:
-                debug_log = self.log_locals(locals())
-                return 'out_of_bounds', results, debug_log
-
-            # Get pts in the local frame
-            dst_pts = dsframe_dst_pts[in_bounds] - np.array([x_off, y_off])
-            dst_kp = cv2.KeyPoint_convert(dst_pts)
-            dst_des = dsframe_dst_des[in_bounds]
-        else:
-            # Check what's in bounds, exit if nothing
-            if dst_img.sum() == 0:
-                log = self.update_log(locals(), target=log)
-                return 'out_of_bounds', results, log
+        # Check what's in bounds, exit if nothing
+        if dst_img.sum() == 0:
+            log = self.update_log(locals(), target=log)
+            return 'out_of_bounds', results, log
 
         # Get src image
         src_img = utils.load_image(
@@ -888,23 +836,6 @@ class SequentialMosaicker(BaseMosaicker):
         if return_code == 'success':
             # Store the image
             self.save_image(dataset, result['blended_img'], x_off, y_off)
-
-            # Auxiliary: Convert to the dataset frame
-            src_pts = cv2.KeyPoint_convert(result['src_kp'])
-            dsframe_src_pts = cv2.perspectiveTransform(
-                src_pts.reshape(-1, 1, 2),
-                result['M'],
-            ).reshape(-1, 2)
-            dsframe_src_pts += np.array([x_off, y_off])
-            results['dsframe_src_pts'] = dsframe_src_pts
-
-            # Auxiliary: Convert bounding box (needed for georeferencing)
-            (
-                results['x_off'], results['y_off'],
-                results['x_size'], results['y_size']
-            ) = utils.warp_bounds(src_img, result['M'])
-            results['x_off'] += x_off
-            results['y_off'] += y_off
 
         # Save failed images for later debugging
         # TODO: Currently the format of the saved images is a little weird.
