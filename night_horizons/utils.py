@@ -317,6 +317,9 @@ def store_parameters(constructor):
     my_object = MyClass(*args, **kwargs)
     will be stored in my_object as an attribute, i.e. my_object.arg
 
+    TODO: Deprecate this, and consider storing the many parameters
+    in a different, more-readable way.
+
     Parameters
     ----------
         constructor : callable

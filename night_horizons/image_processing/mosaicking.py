@@ -42,7 +42,6 @@ class BaseMosaicker(BaseBatchProcesser):
     -------
     '''
 
-    @utils.store_parameters
     def __init__(
         self,
         row_processer,
@@ -64,7 +63,23 @@ class BaseMosaicker(BaseBatchProcesser):
         n_bands: int = 4,
         outline: int = 0,
         log_keys: list[str] = ['ind', 'return_code'],
+        passthrough: Union[list[str], bool] = False,
     ):
+
+        super().__init__(
+            row_processer=row_processer,
+            passthrough=passthrough,
+            log_keys=log_keys,
+        )
+
+        # Store settings for latter use
+        self.crs = crs
+        self.pixel_width = pixel_width
+        self.pixel_height = pixel_height
+        self.dtype = dtype
+        self.fill_value = fill_value
+        self.n_bands = n_bands
+        self.outline = outline
 
         self.required_columns = ['filepath'] + preprocessers.GEOTRANSFORM_COLS
 
@@ -533,7 +548,6 @@ class SequentialMosaicker(BaseMosaicker):
         n_bands: int = 4,
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
-        verbose: bool = True,
         image_joiner: Union[
             processors.ImageJoiner, processors.ImageJoinerQueue
         ] = None,
@@ -557,7 +571,6 @@ class SequentialMosaicker(BaseMosaicker):
             n_bands=n_bands,
             passthrough=passthrough,
             outline=outline,
-            verbose=verbose,
             log_keys=log_keys,
         )
         self.reffed_mosaic = Mosaicker(
@@ -575,7 +588,6 @@ class SequentialMosaicker(BaseMosaicker):
             n_bands=n_bands,
             passthrough=passthrough,
             outline=outline,
-            verbose=verbose,
         )
 
         self.image_joiner = image_joiner
@@ -711,19 +723,13 @@ class SequentialMosaicker(BaseMosaicker):
                 "Valid options are ['store', 'recompute']."
             )
 
-        # If verbose, add a progress bar.
-        if self.verbose:
-            iterable = tqdm.tqdm(X.index, ncols=80)
-        else:
-            iterable = X.index
-
         # Start memory tracing
         if 'snapshot' in self.log_keys:
             tracemalloc.start()
             start = tracemalloc.take_snapshot()
             self.log['starting_snapshot'] = start
 
-        for i, ind in enumerate(iterable):
+        for i, ind in enumerate(tqdm.tqdm(X.index, ncols=80)):
 
             if i < self.i_start_:
                 continue
