@@ -66,13 +66,14 @@ class BaseMosaicker(BaseBatchProcesser):
         passthrough: Union[list[str], bool] = False,
     ):
 
-        super().__init__(
-            row_processer=row_processer,
-            passthrough=passthrough,
-            log_keys=log_keys,
-        )
-
         # Store settings for latter use
+        self.row_processer = row_processer
+        self.out_dir = out_dir
+        self.filename = filename
+        self.file_exists = file_exists
+        self.aux_files = aux_files
+        self.checkpoint_freq = checkpoint_freq
+        self.checkpoint_subdir = checkpoint_subdir
         self.crs = crs
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height
@@ -80,6 +81,8 @@ class BaseMosaicker(BaseBatchProcesser):
         self.fill_value = fill_value
         self.n_bands = n_bands
         self.outline = outline
+        self.log_keys = log_keys
+        self.passthrough = passthrough
 
         self.required_columns = ['filepath'] + preprocessers.GEOTRANSFORM_COLS
 
@@ -505,12 +508,14 @@ class Mosaicker(BaseMosaicker):
         dtype: type = np.uint8,
         n_bands: int = 4,
         log_keys: list[str] = ['ind', 'return_code'],
-        image_blender: processors.ImageBlender = None,
+        image_processor: processors.ImageBlender = None,
     ):
+
+        self.image_processor = image_processor
 
         row_processer = MosaickerRowTransformer(
             dtype=dtype,
-            image_processor=image_blender,
+            image_processor=image_processor,
         )
 
         super().__init__(
@@ -978,13 +983,13 @@ class MosaickerRowTransformer(BaseRowProcessor):
         # Combine the images
         # TODO: image_processor is more-general,
         #       but image_blender is more descriptive
-        blended_img = self.image_processor.process(
+        results = self.image_processor.process(
             src['image'],
             dst['image'],
         )
         self.update_log(self.image_processor.log)
 
-        return {'blended_image': blended_img}
+        return {'blended_image': results['blended_image']}
 
     def store_results(
         self,
