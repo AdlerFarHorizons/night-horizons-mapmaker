@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Tuple, Union
 
 import cv2
@@ -13,16 +13,21 @@ from .. import utils
 class BaseBatchProcesser(
     utils.LoopLoggerMixin,
     TransformerMixin,
-    BaseEstimator
+    BaseEstimator,
+    ABC
 ):
 
-    def __init__(self, file_manager, logger, row_processor, log_keys=[]):
+    def __init__(self, i_start, passthrough, log_keys):
+        '''
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
 
-        self.file_manager = file_manager
-        self.logger = logger
-        self.row_processor = row_processor
-
-        super().__init__(log_keys=log_keys)
+        self.i_start = i_start
+        self.passthrough = passthrough
+        self.log_keys = log_keys
 
     @utils.enable_passthrough
     def fit(
@@ -168,7 +173,7 @@ class BaseBatchProcesser(
         pass
 
 
-class BaseRowProcessor(utils.LoggerMixin):
+class BaseRowProcessor(utils.LoggerMixin, ABC):
     '''This could probably be framed as an sklearn estimator too, but let's
     not do that until necessary.
 

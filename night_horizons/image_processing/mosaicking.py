@@ -42,8 +42,10 @@ class BaseMosaicker(BaseBatchProcesser):
     -------
     '''
 
+    @utils.store_parameters
     def __init__(
         self,
+        row_processer,
         out_dir: str,
         filename: str = 'mosaic.tiff',
         file_exists: str = 'error',
@@ -57,30 +59,12 @@ class BaseMosaicker(BaseBatchProcesser):
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
-        fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
+        fill_value: Union[int, float] = None,
         n_bands: int = 4,
-        passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
-        verbose: bool = True,
         log_keys: list[str] = ['ind', 'return_code'],
     ):
-
-        self.out_dir = out_dir
-        self.filename = filename
-        self.file_exists = file_exists
-        self.aux_files = aux_files
-        self.checkpoint_freq = checkpoint_freq
-        self.checkpoint_subdir = checkpoint_subdir
-        self.crs = crs
-        self.pixel_width = pixel_width
-        self.pixel_height = pixel_height
-        self.fill_value = fill_value
-        self.dtype = dtype
-        self.n_bands = n_bands
-        self.passthrough = passthrough
-        self.outline = outline
-        self.verbose = verbose
 
         self.required_columns = ['filepath'] + preprocessers.GEOTRANSFORM_COLS
 
@@ -484,11 +468,45 @@ class BaseMosaicker(BaseBatchProcesser):
 
 class Mosaicker(BaseMosaicker):
 
-    def __init__(self):
+    @utils.store_parameters
+    def __init__(
+        self,
+        out_dir: str,
+        filename: str = 'mosaic.tiff',
+        file_exists: str = 'error',
+        aux_files: dict[str] = {
+            'settings': 'settings.yaml',
+            'log': 'log.csv',
+            'y_pred': 'y_pred.csv',
+        },
+        checkpoint_freq: int = 100,
+        checkpoint_subdir: str = 'checkpoints',
+        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+        pixel_width: float = None,
+        pixel_height: float = None,
+        dtype: type = np.uint8,
+        n_bands: int = 4,
+        log_keys: list[str] = ['ind', 'return_code'],
+        image_blender: processors.Blender = None,
+    ):
 
-        row_processer = MosaickerRowTransformer()
+        row_processer = MosaickerRowTransformer(image_blender=image_blender)
 
-        super().__init__(row_processer=row_processer)
+        super().__init__(
+            row_processer=row_processer,
+            out_dir=out_dir,
+            filename=filename,
+            file_exists=file_exists,
+            aux_files=aux_files,
+            checkpoint_freq=checkpoint_freq,
+            checkpoint_subdir=checkpoint_subdir,
+            crs=crs,
+            pixel_width=pixel_width,
+            pixel_height=pixel_height,
+            dtype=dtype,
+            n_bands=n_bands,
+            log_keys=log_keys,
+        )
 
 
 class SequentialMosaicker(BaseMosaicker):
@@ -906,10 +924,17 @@ class SequentialMosaicker(BaseMosaicker):
 
 class MosaickerRowTransformer(BaseRowProcessor):
 
-    def __init__(self, x_size, y_size):
+    def __init__(self, image_blender=None):
 
-        self.x_size = x_size
-        self.y_size = y_size
+        if image_blender is None:
+            self.image_blender = processors.Blender()
+        else:
+            self.image_blender = image_blender
+
+    def fit(self, mosaicker):
+
+        self.x_size_ = mosaicker.x_size_
+        self.y_size_ = mosaicker.y_size_
 
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
 
@@ -946,6 +971,7 @@ class MosaickerRowTransformer(BaseRowProcessor):
             src['image'],
             dst['image'],
         )
+        self.update_log(self.image_blender.log)
 
         return {'blended_image': blended_img}
 
@@ -965,16 +991,16 @@ class MosaickerRowTransformer(BaseRowProcessor):
             row['y_off'],
         )
 
-    ########################################################################### 
+    ###########################################################################
     # Auxillary functions below
 
     def get_image_from_dataset(self, dataset, x_off, y_off, x_size, y_size):
 
         assert x_off >= 0, 'x_off cannot be less than 0'
-        assert x_off + x_size <= self.x_size, \
+        assert x_off + x_size <= self.x_size_, \
             'x_off + x_size cannot be greater than self.x_size_'
         assert y_off >= 0, 'y_off cannot be less than 0'
-        assert y_off + y_size <= self.y_size, \
+        assert y_off + y_size <= self.y_size_, \
             'y_off + y_size cannot be greater than self.y_size_'
 
         # Note that we cast the input as int, in case we the input was numpy

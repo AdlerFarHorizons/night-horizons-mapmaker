@@ -52,7 +52,7 @@ class TestNITELitePreprocesser(unittest.TestCase):
         utils.check_columns(
             actual=metadata.columns,
             expected=self.expected_cols,
-            passthrough=self.transformer.passthrough,
+            only_allow_required=self.transformer.passthrough,
         )
         assert metadata['sensor_x'].isna().sum() == 0
 
