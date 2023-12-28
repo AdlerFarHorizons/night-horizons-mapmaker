@@ -227,9 +227,9 @@ class BaseRowProcessor(utils.LoggerMixin, ABC):
         dst = self.get_dst(i, row, resources)
 
         # Main function that changes depending on parent class
-        return_code, result = self.safe_process(i, row, resources, src, dst)
+        results = self.safe_process(i, row, resources, src, dst)
 
-        self.store_results(i, row, resources, return_code, result)
+        self.store_results(i, row, resources, results)
 
         return row
 

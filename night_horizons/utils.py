@@ -323,7 +323,9 @@ def store_parameters(constructor):
     This would include maintaining consistent rules for creating objects
     vs passing them in.
     Also consistent rules for using super().__init__ to store options
-    vs storing them directly.
+    vs storing them directly. I'm leaning towards requiring super().__init__
+    because then the user can track what parameters exist in the superclass
+    vs subclass.
     Think also about how fit parameters are handled.
     Also, consistent names for image_processor vs image_blender.
 
