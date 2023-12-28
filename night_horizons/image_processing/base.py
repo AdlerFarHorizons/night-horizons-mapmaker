@@ -17,7 +17,7 @@ class BaseBatchProcesser(
     ABC
 ):
 
-    def __init__(self, i_start, passthrough, log_keys):
+    def __init__(self, row_processer, passthrough, log_keys):
         '''
         Parameters
         ----------
@@ -25,7 +25,7 @@ class BaseBatchProcesser(
         -------
         '''
 
-        self.i_start = i_start
+        self.row_processer = row_processer
         self.passthrough = passthrough
         self.log_keys = log_keys
 
@@ -87,7 +87,7 @@ class BaseBatchProcesser(
         #       keep it as an attribute instead...
         #       One nice thing about this as is is that we don't have to
         #       go digging for where the log is saved.
-        log_filepath = self.file_manager.aux_filepaths['log']
+        log_filepath = self.file_manager.aux_filepaths_['log']
         self.start_logging(
             i_start=self.i_start_,
             log_filepath=log_filepath,
@@ -103,22 +103,16 @@ class BaseBatchProcesser(
         #       and duplicating them.
         X_t, resources = self.preprocess(X)
 
-        # If verbose, add a progress bar.
-        if self.verbose:
-            iterable = tqdm.tqdm(X_t.index, ncols=80)
-        else:
-            iterable = X_t.index
-
         # Main loop
-        for i in range(len(iterable)):
+        for i, ind in enumerate(tqdm.tqdm(X_t.index, ncols=80)):
 
             # Go to the right loop
             if i < self.i_start_:
                 continue
 
-            row = X.iloc[i]
+            row = X.loc[ind]
             row = self.row_processer.transform_row(i, row, resources)
-            X_t.iloc[i] = row
+            X_t.loc[ind] = row
 
             # Checkpoint
             resources['dataset'] = self.file_manager.save_to_checkpoint(
@@ -163,6 +157,8 @@ class BaseBatchProcesser(
 
         # Check if fit had been called
         check_is_fitted(self, 'out_dir_')
+
+        return X
 
     @abstractmethod
     def preprocess(self, X: pd.DataFrame) -> Tuple[pd.DataFrame, dict]:
