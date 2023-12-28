@@ -15,60 +15,9 @@ import scipy
 # TODO: Remove this when the draft is done.
 
 from .. import preprocessers, utils
-from ..exceptions import (
-    DstDarkFrameError, HomographyTransformError, SrcDarkFrameError
-)
 
 
-class BaseImageProcessor(utils.LoggerMixin):
-
-    def __init__(self, log_keys: list[str] = []):
-
-        # TODO: This feels unnecessarily complicated
-        self.log_keys = log_keys
-        self.start_logging()
-
-    def safe_process(self, src_img, dst_img):
-        '''
-        Parameters
-        ----------
-        Returns
-        -------
-            results:
-                blended_img: Combined image. Not always returned.
-                M: Homography transform. Not always returned.
-                src_kp: Keypoints for the src image. Not always returned.
-                src_des: KP descriptors for the src image. Not always returned.
-                duration: Time spent.
-        '''
-
-        start = time.time()
-
-        results = {}
-        return_code = 'not_set'
-        try:
-            results = self.process(src_img, dst_img)
-            return_code = 'success'
-        except cv2.error:
-            return_code = 'opencv_err'
-        except HomographyTransformError:
-            return_code = 'bad_det'
-        except SrcDarkFrameError:
-            return_code = 'dark_frame'
-        except DstDarkFrameError:
-            return_code = 'dst_dark_frame'
-        except np.linalg.LinAlgError:
-            return_code = 'linalg_err'
-        finally:
-            duration = time.time() - start
-            results['duration'] = duration
-
-            self.update_log(locals())
-
-            return return_code, results
-
-
-class Blender(BaseImageProcessor):
+class ImageBlender(utils.LoggerMixin):
 
     def __init__(
         self,
@@ -77,12 +26,13 @@ class Blender(BaseImageProcessor):
         log_keys: list[str] = [],
     ):
 
-        super().__init__(log_keys=log_keys)
-
         self.fill_value = fill_value
         self.outline = outline
+        self.log_keys = log_keys
 
     def process(self, src_img, dst_img):
+
+        self.start_logging()
 
         # Resize the source image
         src_img_resized = cv2.resize(
@@ -146,7 +96,7 @@ class Blender(BaseImageProcessor):
         return blended_img
 
 
-class ImageJoiner(BaseImageProcessor):
+class ImageJoiner(utils.LoggerMixin):
 
     def __init__(
         self,

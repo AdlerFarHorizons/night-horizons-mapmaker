@@ -1,13 +1,15 @@
 from abc import ABC, abstractmethod
+import time
 from typing import Tuple, Union
 
 import cv2
+import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 import tqdm
 
-from .. import utils
+from .. import utils, exceptions
 
 
 class BaseBatchProcesser(
@@ -200,8 +202,6 @@ class BaseRowProcessor(utils.LoggerMixin, ABC):
             attr_value = getattr(batch_processor, attr_name)
             setattr(self, attr_name, attr_value)
 
-        self.start_logging()
-
         return self
 
     def transform_row(
@@ -227,11 +227,49 @@ class BaseRowProcessor(utils.LoggerMixin, ABC):
         dst = self.get_dst(i, row, resources)
 
         # Main function that changes depending on parent class
-        result = self.process(i, row, resources, src, dst)
+        return_code, result = self.safe_process(i, row, resources, src, dst)
 
-        self.store_result(i, row, resources, result)
+        self.store_results(i, row, resources, return_code, result)
 
         return row
+
+    def safe_process(self, i, row, resources, src, dst):
+        '''
+        Parameters
+        ----------
+        Returns
+        -------
+            results:
+                blended_img: Combined image. Not always returned.
+                M: Homography transform. Not always returned.
+                src_kp: Keypoints for the src image. Not always returned.
+                src_des: KP descriptors for the src image. Not always returned.
+                duration: Time spent.
+        '''
+
+        start = time.time()
+
+        results = {}
+        return_code = 'not_set'
+        try:
+            results = self.process(i, row, resources, src, dst)
+            return_code = 'success'
+        except cv2.error:
+            return_code = 'opencv_err'
+        except exceptions.HomographyTransformError:
+            return_code = 'bad_det'
+        except exceptions.SrcDarkFrameError:
+            return_code = 'dark_frame'
+        except exceptions.DstDarkFrameError:
+            return_code = 'dst_dark_frame'
+        except np.linalg.LinAlgError:
+            return_code = 'linalg_err'
+        finally:
+            duration = time.time() - start
+            results['duration'] = duration
+            results['return_code'] = return_code
+
+            return results
 
     @abstractmethod
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
@@ -253,7 +291,7 @@ class BaseRowProcessor(utils.LoggerMixin, ABC):
         pass
 
     @abstractmethod
-    def store_result(
+    def store_results(
         self,
         i: int,
         row: pd.Series,
