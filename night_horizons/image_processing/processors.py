@@ -14,7 +14,7 @@ import scipy
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from .. import preprocessers, utils
+from .. import preprocessors, utils
 
 
 class ImageBlender(utils.LoggerMixin):
@@ -136,7 +136,7 @@ class ImageJoiner(utils.LoggerMixin):
 
         # Handle image transformer object creation
         if isinstance(image_transformer, str):
-            img_transformer_fn = getattr(preprocessers, image_transformer)
+            img_transformer_fn = getattr(preprocessors, image_transformer)
             if callable(img_transformer_fn):
                 image_transformer = img_transformer_fn(
                     **image_transformer_options)

@@ -28,7 +28,7 @@ GEOTRANSFORM_COLS = [
 ]
 
 
-class NITELitePreprocesser(TransformerMixin, BaseEstimator):
+class NITELitePreprocessor(TransformerMixin, BaseEstimator):
     '''Transform filepaths into a metadata dataframe.
 
     Parameters
@@ -409,7 +409,7 @@ class NITELitePreprocesser(TransformerMixin, BaseEstimator):
         return gps_log_df
 
 
-class GeoTIFFPreprocesser(TransformerMixin, BaseEstimator):
+class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
     '''Transform filepaths into geotransform properties.
 
     Parameters
