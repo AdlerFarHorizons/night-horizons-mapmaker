@@ -179,6 +179,31 @@ class BaseRowProcessor(utils.LoggerMixin, ABC):
     -------
     '''
 
+    def __init__(self, image_processor, log_keys: list[str] = []):
+
+        self.image_processor = image_processor
+        self.log_keys = log_keys
+
+    def fit(self, batch_processor):
+        '''Copy over fit values from the batch processor.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        for attr_name in batch_processor.__dir__():
+            # Fit variables have names ending with an underscore
+            if (attr_name[-1] != '_') or (attr_name[-2:] == '__'):
+                continue
+            attr_value = getattr(batch_processor, attr_name)
+            setattr(self, attr_name, attr_value)
+
+        self.start_logging()
+
+        return self
+
     def transform_row(
         self,
         i: int,
