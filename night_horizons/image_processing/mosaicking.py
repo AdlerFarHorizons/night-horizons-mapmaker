@@ -106,6 +106,7 @@ class BaseMosaicker(BaseBatchProcesser):
         super().fit(X, y, i_start=i_start)
 
         # Convert CRS as needed
+        # TODO: When making object-creation consistent, address this too.
         if isinstance(self.crs, str):
             self.crs = pyproj.CRS(self.crs)
 
@@ -486,7 +487,6 @@ class BaseMosaicker(BaseBatchProcesser):
 
 class Mosaicker(BaseMosaicker):
 
-    @utils.store_parameters
     def __init__(
         self,
         out_dir: str,
@@ -505,7 +505,7 @@ class Mosaicker(BaseMosaicker):
         dtype: type = np.uint8,
         n_bands: int = 4,
         log_keys: list[str] = ['ind', 'return_code'],
-        image_blender: processors.Blender = None,
+        image_blender: processors.ImageBlender = None,
     ):
 
         row_processer = MosaickerRowTransformer(
@@ -939,7 +939,7 @@ class MosaickerRowTransformer(BaseRowProcessor):
     def __init__(self, image_processor=None, dtype: type = np.uint8):
 
         if image_processor is None:
-            self.image_processor = processors.Blender()
+            self.image_processor = processors.ImageBlender()
         else:
             self.image_processor = image_processor
 
@@ -976,7 +976,9 @@ class MosaickerRowTransformer(BaseRowProcessor):
     ) -> dict:
 
         # Combine the images
-        return_code, blended_img = self.image_processor.safe_process(
+        # TODO: image_processor is more-general,
+        #       but image_blender is more descriptive
+        blended_img = self.image_processor.process(
             src['image'],
             dst['image'],
         )
@@ -984,7 +986,7 @@ class MosaickerRowTransformer(BaseRowProcessor):
 
         return {'blended_image': blended_img}
 
-    def store_result(
+    def store_results(
         self,
         i: int,
         row: pd.Series,
