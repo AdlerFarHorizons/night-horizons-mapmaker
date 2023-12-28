@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 import night_horizons.utils as utils
-import night_horizons.preprocessers as preprocessers
+import night_horizons.preprocessors as preprocessors
 import night_horizons.raster as raster
 import night_horizons.pipelines as pipelines
 import night_horizons.metrics as metrics
@@ -38,7 +38,7 @@ class TestSensorGeoreferencing(BaseTester):
 
         super().setUp()
 
-        self.y_pipeline = preprocessers.GeoTIFFPreprocesser()
+        self.y_pipeline = preprocessors.GeoTIFFPreprocessor()
 
         self.pipeline = \
             pipelines.GeoreferencePipelines.sensor_georeferencing()

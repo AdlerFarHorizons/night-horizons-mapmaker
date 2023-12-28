@@ -11,13 +11,13 @@ from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 
-from .processers import image_registration, mosaickers
+from .processors import image_registration, mosaickers
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import preprocessers
+from . import preprocessors
 
 
 class PreprocessingPipelines:
@@ -42,8 +42,8 @@ class PreprocessingPipelines:
         -------
         '''
 
-        # Choose the preprocesser for getting the bulk of the metadata
-        metadata_preprocesser = preprocessers.NITELitePreprocesser(crs=crs)
+        # Choose the preprocessor for getting the bulk of the metadata
+        metadata_preprocessor = preprocessors.NITELitePreprocessor(crs=crs)
 
         # Choose the georeferencing
         if use_approximate_georeferencing:
@@ -53,7 +53,7 @@ class PreprocessingPipelines:
                 padding_fraction=padding_fraction,
             )
         else:
-            georeferencer = preprocessers.GeoTIFFPreprocesser(
+            georeferencer = preprocessors.GeoTIFFPreprocessor(
                 crs=crs,
                 passthrough=['camera_num'],
                 padding_fraction=padding_fraction,
@@ -62,13 +62,13 @@ class PreprocessingPipelines:
         # Build the steps
         preprocessing_steps = [
             ('metadata',
-             metadata_preprocesser),
+             metadata_preprocessor),
             ('select_deployment_phase',
-             preprocessers.AltitudeFilter(column=altitude_column)),
+             preprocessors.AltitudeFilter(column=altitude_column)),
             ('select_steady',
-             preprocessers.SteadyFilter(columns=gyro_columns)),
+             preprocessors.SteadyFilter(columns=gyro_columns)),
             ('georeference', georeferencer),
-            ('order', preprocessers.SensorAndDistanceOrder()),
+            ('order', preprocessors.SensorAndDistanceOrder()),
         ]
 
         return preprocessing_steps
@@ -81,13 +81,13 @@ class GeoreferencePipelines:
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
     ):
 
-        # Choose the preprocesser for getting the bulk of the metadata
-        metadata_preprocesser = preprocessers.NITELitePreprocesser(
+        # Choose the preprocessor for getting the bulk of the metadata
+        metadata_preprocessor = preprocessors.NITELitePreprocessor(
             crs=crs,
             unhandled_files='warn and drop',
         )
         pipeline = Pipeline([
-            ('nitelite', metadata_preprocesser),
+            ('nitelite', metadata_preprocessor),
             ('georeference', image_registration.MetadataImageRegistrar(crs=crs)),
         ])
 
@@ -103,7 +103,7 @@ class MosaicPipelines:
     ):
 
         pipeline = Pipeline([
-            ('geotiff', preprocessers.GeoTIFFPreprocesser(crs=crs)),
+            ('geotiff', preprocessors.GeoTIFFPreprocessor(crs=crs)),
             ('mosaic', mosaickers.Mosaicker(filepath=filepath, crs=crs))
         ])
 
@@ -116,9 +116,9 @@ class MosaicPipelines:
     ):
 
         pipeline = Pipeline([
-            ('nitelite', preprocessers.NITELitePreprocesser(
+            ('nitelite', preprocessors.NITELitePreprocessor(
                 output_columns=['filepath', 'sensor_x', 'sensor_y'])),
-            ('geotiff', preprocessers.GeoTIFFPreprocesser(
+            ('geotiff', preprocessors.GeoTIFFPreprocessor(
                 crs=crs, passthrough=True)),
             ('mosaic', mosaickers.SequentialMosaicker(filepath=filepath, crs=crs))
         ])

@@ -19,7 +19,7 @@ class BaseBatchProcesser(
     ABC
 ):
 
-    def __init__(self, row_processer, passthrough, log_keys):
+    def __init__(self, row_processor, passthrough, log_keys):
         '''
         Parameters
         ----------
@@ -27,7 +27,7 @@ class BaseBatchProcesser(
         -------
         '''
 
-        self.row_processer = row_processer
+        self.row_processor = row_processor
         self.passthrough = passthrough
         self.log_keys = log_keys
 
@@ -113,7 +113,7 @@ class BaseBatchProcesser(
                 continue
 
             row = X.loc[ind]
-            row = self.row_processer.transform_row(i, row, resources)
+            row = self.row_processor.transform_row(i, row, resources)
             X_t.loc[ind] = row
 
             # Checkpoint

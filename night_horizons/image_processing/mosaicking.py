@@ -26,7 +26,7 @@ from . import processors
 from .base import BaseBatchProcesser, BaseRowProcessor
 
 from .. import (
-    file_management, preprocessers, utils, raster, metrics
+    file_management, preprocessors, utils, raster, metrics
 )
 
 
@@ -44,7 +44,7 @@ class BaseMosaicker(BaseBatchProcesser):
 
     def __init__(
         self,
-        row_processer,
+        row_processor,
         out_dir: str,
         filename: str = 'mosaic.tiff',
         file_exists: str = 'error',
@@ -67,7 +67,7 @@ class BaseMosaicker(BaseBatchProcesser):
     ):
 
         # Store settings for latter use
-        self.row_processer = row_processer
+        self.row_processor = row_processor
         self.out_dir = out_dir
         self.filename = filename
         self.file_exists = file_exists
@@ -84,7 +84,7 @@ class BaseMosaicker(BaseBatchProcesser):
         self.log_keys = log_keys
         self.passthrough = passthrough
 
-        self.required_columns = ['filepath'] + preprocessers.GEOTRANSFORM_COLS
+        self.required_columns = ['filepath'] + preprocessors.GEOTRANSFORM_COLS
 
         # Handles the more-complicated I/O (filetree prep, checkpoints, etc)
         self.file_manager = file_management.MosaicFileManager(
@@ -138,14 +138,14 @@ class BaseMosaicker(BaseBatchProcesser):
             self.create_containing_dataset(X)
 
         # Fit the row processor too
-        self.row_processer.fit(self)
+        self.row_processor.fit(self)
 
         return self
 
     def preprocess(self, X: pd.DataFrame) -> Tuple[pd.DataFrame, dict]:
         '''Preprocessing required before doing the full loop.
         This should focus on preprocessing that depends on the particular
-        image processer (e.g. for mosaickers this includes putting the
+        image processor (e.g. for mosaickers this includes putting the
         coordinates in the pixel-based frame of the mosaic).
 
         Parameters
@@ -513,13 +513,13 @@ class Mosaicker(BaseMosaicker):
 
         self.image_processor = image_processor
 
-        row_processer = MosaickerRowTransformer(
+        row_processor = MosaickerRowTransformer(
             dtype=dtype,
             image_processor=image_processor,
         )
 
         super().__init__(
-            row_processer=row_processer,
+            row_processor=row_processor,
             out_dir=out_dir,
             filename=filename,
             file_exists=file_exists,
@@ -678,7 +678,7 @@ class SequentialMosaicker(BaseMosaicker):
         # Get state of output data
         if self.checkpoint_state_ is None:
             # Set up y-pred
-            y_pred = X[preprocessers.GEOTRANSFORM_COLS].copy()
+            y_pred = X[preprocessors.GEOTRANSFORM_COLS].copy()
             y_pred[[
                 'x_min', 'x_max',
                 'y_min', 'y_max',

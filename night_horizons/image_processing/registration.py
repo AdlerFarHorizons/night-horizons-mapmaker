@@ -8,7 +8,7 @@ import pyproj
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
-from .. import preprocessers, utils
+from .. import preprocessors, utils
 
 
 class MetadataImageRegistrar(BaseEstimator):
@@ -129,7 +129,7 @@ class MetadataImageRegistrar(BaseEstimator):
             'x_center', 'y_center',
             'spatial_error', 'padding',
         ]
-        for key in preprocessers.GEOTRANSFORM_COLS:
+        for key in preprocessors.GEOTRANSFORM_COLS:
             if key in set_manually:
                 continue
             X[key] = getattr(self, key + '_')
@@ -161,8 +161,8 @@ class MetadataImageRegistrar(BaseEstimator):
         X['padding'] = self.padding_fraction * X['spatial_error']
 
         # Ensure correct type
-        X[preprocessers.GEOTRANSFORM_COLS] = \
-            X[preprocessers.GEOTRANSFORM_COLS].astype(float)
+        X[preprocessors.GEOTRANSFORM_COLS] = \
+            X[preprocessors.GEOTRANSFORM_COLS].astype(float)
 
         return X
 
