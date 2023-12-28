@@ -1,6 +1,8 @@
 '''
 TODO: Refactor into classes with @staticmethod. Will be more clean.
 '''
+
+from functools import wraps
 import glob
 import inspect
 import os
@@ -255,6 +257,10 @@ def enable_passthrough(func):
     ----------
     Returns
     -------
+    Requires
+    --------
+    self.passthrough : Union[list[str], bool]
+        If True
     '''
 
     def wrapper(
@@ -267,10 +273,19 @@ def enable_passthrough(func):
         if isinstance(X, pd.Series):
             return func(self, X, *args, **kwargs)
 
-        # Get the columns to pass through
-        passthrough = pd.Series(self.passthrough)
-        is_in_X = pd.Series(passthrough).isin(X.columns)
-        passthrough = passthrough[is_in_X]
+        # Boolean passthrough values
+        if isinstance(self.passthrough, bool):
+            if self.passthrough:
+                passthrough = X.columns
+            else:
+                check_columns(X.columns, self.required_columns)
+                passthrough = pd.Series([])
+
+        # When specific columns are passed
+        else:
+            passthrough = pd.Series(self.passthrough)
+            is_in_X = passthrough.isin(X.columns)
+            passthrough = passthrough[is_in_X]
 
         # Select the columns to pass in
         X_in = X[self.required_columns].copy()
@@ -296,17 +311,16 @@ def enable_passthrough(func):
     return wrapper
 
 
-from functools import wraps
-
-
 def store_parameters(constructor):
     '''Decorator for automatically storing arguments passed to a constructor.
     I.e. any args passed to constructor via
-    test_object = TestObject(*args, **kwargs)
-    will be stored in test_object, e.g. test_object.args
+    my_object = MyClass(*args, **kwargs)
+    will be stored in my_object as an attribute, i.e. my_object.arg
 
-    Args:
-        constructor (function) : Constructor to wrap.
+    Parameters
+    ----------
+        constructor : callable
+            Constructor to wrap.
     '''
 
     @wraps(constructor)
