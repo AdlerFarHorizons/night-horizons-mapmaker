@@ -319,6 +319,13 @@ def store_parameters(constructor):
 
     TODO: Deprecate this, and consider storing the many parameters
     in a different, more-readable way.
+    Probably as options dictionaries.
+    This would include maintaining consistent rules for creating objects
+    vs passing them in.
+    Also consistent rules for using super().__init__ to store options
+    vs storing them directly.
+    Think also about how fit parameters are handled.
+    Also, consistent names for image_processor vs image_blender.
 
     Parameters
     ----------
@@ -350,6 +357,12 @@ class LoggerMixin:
     '''
     Note that a decorator is not possible because we're typically
     interested in local variables.
+
+    TODO: Evaluate if this helps things or makes things worse.
+    When debugging I wanted to be able to peek at any of the parameters,
+    but in a statistical approach. The idea was that this would be helpful
+    for identify blackbox parameters that correlated with successful
+    (or poor) results.
 
     Parameters
     ----------

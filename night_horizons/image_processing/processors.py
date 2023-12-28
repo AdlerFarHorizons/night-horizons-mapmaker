@@ -22,6 +22,12 @@ from ..exceptions import (
 
 class BaseImageProcessor(utils.LoggerMixin):
 
+    def __init__(self, log_keys: list[str] = []):
+
+        # TODO: This feels unnecessarily complicated
+        self.log_keys = log_keys
+        self.start_logging()
+
     def safe_process(self, src_img, dst_img):
         '''
         Parameters
@@ -68,7 +74,10 @@ class Blender(BaseImageProcessor):
         self,
         fill_value: Union[float, int] = None,
         outline: int = 0.,
+        log_keys: list[str] = [],
     ):
+
+        super().__init__(log_keys=log_keys)
 
         self.fill_value = fill_value
         self.outline = outline
@@ -81,7 +90,7 @@ class Blender(BaseImageProcessor):
             (dst_img.shape[1], dst_img.shape[0]),
         )
 
-        blended_img = self.blend_images(
+        blended_img = self.blend(
             src_img=src_img_resized,
             dst_img=dst_img,
         )

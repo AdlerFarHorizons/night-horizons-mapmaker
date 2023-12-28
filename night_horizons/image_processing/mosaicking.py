@@ -133,6 +133,9 @@ class BaseMosaicker(BaseBatchProcesser):
                 )
             self.create_containing_dataset(X)
 
+        # Fit the row processor too
+        self.row_processer.fit(self)
+
         return self
 
     def preprocess(self, X: pd.DataFrame) -> Tuple[pd.DataFrame, dict]:
@@ -505,7 +508,10 @@ class Mosaicker(BaseMosaicker):
         image_blender: processors.Blender = None,
     ):
 
-        row_processer = MosaickerRowTransformer(image_blender=image_blender)
+        row_processer = MosaickerRowTransformer(
+            dtype=dtype,
+            image_processor=image_blender,
+        )
 
         super().__init__(
             row_processer=row_processer,
@@ -930,17 +936,14 @@ class SequentialMosaicker(BaseMosaicker):
 
 class MosaickerRowTransformer(BaseRowProcessor):
 
-    def __init__(self, image_blender=None):
+    def __init__(self, image_processor=None, dtype: type = np.uint8):
 
-        if image_blender is None:
-            self.image_blender = processors.Blender()
+        if image_processor is None:
+            self.image_processor = processors.Blender()
         else:
-            self.image_blender = image_blender
+            self.image_processor = image_processor
 
-    def fit(self, mosaicker):
-
-        self.x_size_ = mosaicker.x_size_
-        self.y_size_ = mosaicker.y_size_
+        self.dtype = dtype
 
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
 
@@ -973,11 +976,11 @@ class MosaickerRowTransformer(BaseRowProcessor):
     ) -> dict:
 
         # Combine the images
-        blended_img = self.image_blender.safe_process(
+        return_code, blended_img = self.image_processor.safe_process(
             src['image'],
             dst['image'],
         )
-        self.update_log(self.image_blender.log)
+        self.update_log(self.image_processor.log)
 
         return {'blended_image': blended_img}
 
