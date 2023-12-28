@@ -2,6 +2,7 @@
 TODO: Refactor into classes with @staticmethod. Will be more clean.
 '''
 import glob
+import inspect
 import os
 from typing import Tuple, Union
 
@@ -293,6 +294,39 @@ def enable_passthrough(func):
         return X_out
 
     return wrapper
+
+
+from functools import wraps
+
+
+def store_parameters(constructor):
+    '''Decorator for automatically storing arguments passed to a constructor.
+    I.e. any args passed to constructor via
+    test_object = TestObject(*args, **kwargs)
+    will be stored in test_object, e.g. test_object.args
+
+    Args:
+        constructor (function) : Constructor to wrap.
+    '''
+
+    @wraps(constructor)
+    def wrapped_constructor(self, *args, **kwargs):
+
+        constructor(self, *args, **kwargs)
+
+        parameters_to_store = inspect.getcallargs(
+            constructor,
+            self,
+            *args,
+            **kwargs
+        )
+
+        for param_key, param_value in parameters_to_store.items():
+            if param_key == 'self':
+                continue
+            setattr(self, param_key, param_value)
+
+    return wrapped_constructor
 
 
 class LoggerMixin:

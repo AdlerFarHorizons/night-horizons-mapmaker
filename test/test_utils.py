@@ -78,3 +78,23 @@ class TestDiscoverData(unittest.TestCase):
             pattern=r'Geo\s\d+_\d.tif'
         )
         assert list(fps) == expected_fps
+
+
+class TestStoreParameters(unittest.TestCase):
+
+    def test_functional(self):
+
+        class MyClass:
+
+            @utils.store_parameters
+            def __init__(self, a, b, c=5, dog=True):
+                pass
+
+        a = 'sentence'
+        b = 'another'
+        c = 3
+        my_class = MyClass(a, b, c) 
+
+        assert my_class.a == 'sentence'
+        assert my_class.b == b
+        assert my_class.c == 3
