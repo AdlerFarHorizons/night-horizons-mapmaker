@@ -147,6 +147,36 @@ class FileManager:
 
 class MosaicFileManager(FileManager):
 
+    def __init__(
+        self,
+        out_dir: str,
+        filename: str = 'mosaic.tiff',
+        file_exists: str = 'error',
+        aux_files: dict[str] = {
+            'settings': 'settings.yaml',
+            'log': 'log.csv',
+            'y_pred': 'y_pred.csv',
+        },
+        checkpoint_freq: int = 100,
+        checkpoint_subdir: str = 'checkpoints',
+    ):
+        '''The inputs are more-appropriate defaults for mosaics.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        super().__init__(
+            out_dir=out_dir,
+            filename=filename,
+            file_exists=file_exists,
+            aux_files=aux_files,
+            checkpoint_freq=checkpoint_freq,
+            checkpoint_subdir=checkpoint_subdir,
+        )
+
     def open_dataset(self):
 
         return gdal.Open(self.filepath_, gdal.GA_Update)

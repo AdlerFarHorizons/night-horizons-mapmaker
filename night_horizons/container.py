@@ -58,34 +58,10 @@ class MosaickerMaker(DIContainer):
         )
 
         # Register file manager typical for mosaickers
-        def make_mosaic_file_manager(
-            out_dir: str,
-            filename: str = 'mosaic.tiff',
-            file_exists: str = 'error',
-            aux_files: dict[str] = {
-                'settings': 'settings.yaml',
-                'log': 'log.csv',
-                'y_pred': 'y_pred.csv',
-            },
-            checkpoint_freq: int = 100,
-            checkpoint_subdir: str = 'checkpoints',
-        ):
-            '''TODO: Probably just move these defaults into MosaicFileManager...
-
-            Parameters
-            ----------
-            Returns
-            -------
-            '''
-            return file_management.MosaicFileManager(
-                out_dir=out_dir,
-                filename=filename,
-                file_exists=file_exists,
-                aux_files=aux_files,
-                checkpoint_freq=checkpoint_freq,
-                checkpoint_subdir=checkpoint_subdir,
-            )
-        self.register_service('file_manager', make_mosaic_file_manager)
+        self.register_service(
+            'file_manager',
+            file_management.MosaicFileManager,
+        )
 
         # Image processor typical for mosaickers (constructor defaults are ok)
         self.register_service(
