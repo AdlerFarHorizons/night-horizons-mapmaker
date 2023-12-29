@@ -96,7 +96,11 @@ class ImageBlender(utils.LoggerMixin):
         return blended_img
 
 
-class ImageJoiner(utils.LoggerMixin):
+class ImageAligner(utils.LoggerMixin):
+    pass
+
+
+class ImageJoiner(ImageBlender):
 
     def __init__(
         self,
