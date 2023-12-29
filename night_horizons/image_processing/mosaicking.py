@@ -45,6 +45,7 @@ class BaseMosaicker(BaseBatchProcesser):
     def __init__(
         self,
         row_processor,
+        file_manager,
         out_dir: str,
         filename: str = 'mosaic.tiff',
         file_exists: str = 'error',
