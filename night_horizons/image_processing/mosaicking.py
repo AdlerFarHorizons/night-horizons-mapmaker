@@ -44,18 +44,8 @@ class BaseMosaicker(BaseBatchProcesser):
 
     def __init__(
         self,
-        row_processor,
         file_manager,
-        out_dir: str,
-        filename: str = 'mosaic.tiff',
-        file_exists: str = 'error',
-        aux_files: dict[str] = {
-            'settings': 'settings.yaml',
-            'log': 'log.csv',
-            'y_pred': 'y_pred.csv',
-        },
-        checkpoint_freq: int = 100,
-        checkpoint_subdir: str = 'checkpoints',
+        row_processor,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -68,13 +58,8 @@ class BaseMosaicker(BaseBatchProcesser):
     ):
 
         # Store settings for latter use
+        self.file_manager = file_manager
         self.row_processor = row_processor
-        self.out_dir = out_dir
-        self.filename = filename
-        self.file_exists = file_exists
-        self.aux_files = aux_files
-        self.checkpoint_freq = checkpoint_freq
-        self.checkpoint_subdir = checkpoint_subdir
         self.crs = crs
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height
@@ -86,16 +71,6 @@ class BaseMosaicker(BaseBatchProcesser):
         self.passthrough = passthrough
 
         self.required_columns = ['filepath'] + preprocessors.GEOTRANSFORM_COLS
-
-        # Handles the more-complicated I/O (filetree prep, checkpoints, etc)
-        self.file_manager = file_management.MosaicFileManager(
-            out_dir=out_dir,
-            filename=filename,
-            file_exists=file_exists,
-            aux_files=aux_files,
-            checkpoint_freq=checkpoint_freq,
-            checkpoint_subdir=checkpoint_subdir,
-        )
 
     @utils.enable_passthrough
     def fit(
@@ -116,7 +91,10 @@ class BaseMosaicker(BaseBatchProcesser):
 
         # If the dataset was not passed in, load it if possible
         if (
-            ((self.file_exists == 'load') and os.path.isfile(self.filepath_))
+            (
+                (self.file_manager.file_exists == 'load')
+                and os.path.isfile(self.filepath_)
+            )
             or (self.i_start_ != 0)
         ):
             if dataset is not None:
