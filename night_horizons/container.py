@@ -7,8 +7,8 @@ import yaml
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import file_management
-from .image_processing import mosaicking, processors
+from . import file_management, preprocessors
+from .image_processing import base, mosaicking, processors
 
 
 class DIContainer:
@@ -51,7 +51,13 @@ class MosaickerMaker(DIContainer):
 
         super().__init__(config_filepath=config_filepath)
 
-        # Register file manager typical for mosaics
+        # We register the preprocessing here too
+        self.register_service(
+            'preprocessing',
+            preprocessors.GeoTIFFPreprocessor
+        )
+
+        # Register file manager typical for mosaickers
         def make_mosaic_file_manager(
             out_dir: str,
             filename: str = 'mosaic.tiff',
@@ -64,7 +70,14 @@ class MosaickerMaker(DIContainer):
             checkpoint_freq: int = 100,
             checkpoint_subdir: str = 'checkpoints',
         ):
-            return file_management.FileManager(
+            '''TODO: Probably just move these defaults into MosaicFileManager...
+
+            Parameters
+            ----------
+            Returns
+            -------
+            '''
+            return file_management.MosaicFileManager(
                 out_dir=out_dir,
                 filename=filename,
                 file_exists=file_exists,
@@ -74,25 +87,49 @@ class MosaickerMaker(DIContainer):
             )
         self.register_service('file_manager', make_mosaic_file_manager)
 
+        # Image processor typical for mosaickers (constructor defaults are ok)
         self.register_service(
             'image_blender',
             processors.ImageBlender,
         )
-        self.register_service(
-            'row_transformer',
-            lambda *args, **kwargs: mosaicking.MosaickerRowTransformer(
-                image_processor=self.get_service('image_blender'),
-                *args, **kwargs
-            ),
-        )
-        self.register_service(
-            'mosaicker',
-            lambda *args, **kwargs: mosaicking.BaseMosaicker(
-                row_processor=self.get_service('row_transformer'),
+
+        # And the row transformer typical for mosaickers
+        def make_mosaicker_row_processor(
+            image_processor: processors.ImageProcessor = None,
+            *args, **kwargs
+        ):
+            if image_processor is None:
+                image_processor = self.get_service('image_blender')
+            return mosaicking.MosaickerRowTransformer(
+                image_processor=image_processor,
                 *args, **kwargs
             )
+        self.register_service(
+            'row_processor',
+            make_mosaicker_row_processor,
         )
 
-    def get_mosaicker(self, *args, **kwargs):
+        # Finally, the mosaicker itself
+        def make_mosaicker(
+            out_dir: str,
+            file_manager: file_management.FileManager = None,
+            row_processor: base.BaseRowProcessor = None,
+            *args, **kwargs
+        ):
+            if file_manager is None:
+                file_manager = self.get_service(
+                    'file_manager',
+                    out_dir=out_dir,
+                )
+            if row_processor is None:
+                row_processor = self.get_service('row_processor')
+            return mosaicking.BaseMosaicker(
+                file_manager=file_manager,
+                row_processor=row_processor,
+                *args, **kwargs
+            )
+        self.register_service('mosaicker', make_mosaicker)
+
+    def create(self, *args, **kwargs):
 
         return self.get_service('mosaicker', *args, **kwargs)

@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import copy
 import glob
 import os
@@ -17,7 +18,14 @@ import scipy
 from .. import preprocessors, utils
 
 
-class ImageBlender(utils.LoggerMixin):
+class ImageProcessor(utils.LoggerMixin, ABC):
+
+    @abstractmethod
+    def process(self, src_img, dst_img):
+        pass
+
+
+class ImageBlender(ImageProcessor):
 
     def __init__(
         self,
