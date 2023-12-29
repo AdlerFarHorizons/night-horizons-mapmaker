@@ -7,6 +7,7 @@ import yaml
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
+from . import file_management
 from .image_processing import mosaicking, processors
 
 
@@ -44,11 +45,34 @@ class DIContainer:
         return constructor(*args, **kwargs)
 
 
-class MosaickerManager(DIContainer):
+class MosaickerMaker(DIContainer):
 
     def __init__(self, config_filepath: str):
 
         super().__init__(config_filepath=config_filepath)
+
+        # Register file manager typical for mosaics
+        def make_mosaic_file_manager(
+            out_dir: str,
+            filename: str = 'mosaic.tiff',
+            file_exists: str = 'error',
+            aux_files: dict[str] = {
+                'settings': 'settings.yaml',
+                'log': 'log.csv',
+                'y_pred': 'y_pred.csv',
+            },
+            checkpoint_freq: int = 100,
+            checkpoint_subdir: str = 'checkpoints',
+        ):
+            return file_management.FileManager(
+                out_dir=out_dir,
+                filename=filename,
+                file_exists=file_exists,
+                aux_files=aux_files,
+                checkpoint_freq=checkpoint_freq,
+                checkpoint_subdir=checkpoint_subdir,
+            )
+        self.register_service('file_manager', make_mosaic_file_manager)
 
         self.register_service(
             'image_blender',
@@ -68,3 +92,7 @@ class MosaickerManager(DIContainer):
                 *args, **kwargs
             )
         )
+
+    def get_mosaicker(self, *args, **kwargs):
+
+        return self.get_service('mosaicker', *args, **kwargs)

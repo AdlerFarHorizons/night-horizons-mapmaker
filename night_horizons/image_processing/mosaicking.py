@@ -488,52 +488,61 @@ class BaseMosaicker(BaseBatchProcesser):
 
         return in_bounds
 
-
-class Mosaicker(BaseMosaicker):
-
-    def __init__(
-        self,
-        out_dir: str,
-        filename: str = 'mosaic.tiff',
-        file_exists: str = 'error',
-        aux_files: dict[str] = {
-            'settings': 'settings.yaml',
-            'log': 'log.csv',
-            'y_pred': 'y_pred.csv',
-        },
-        checkpoint_freq: int = 100,
-        checkpoint_subdir: str = 'checkpoints',
-        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        pixel_width: float = None,
-        pixel_height: float = None,
-        dtype: type = np.uint8,
-        n_bands: int = 4,
-        log_keys: list[str] = ['ind', 'return_code'],
-        image_processor: processors.ImageBlender = None,
-    ):
-
-        self.image_processor = image_processor
-
-        row_processor = MosaickerRowTransformer(
-            dtype=dtype,
-            image_processor=image_processor,
-        )
-
-        super().__init__(
-            row_processor=row_processor,
-            out_dir=out_dir,
-            filename=filename,
-            file_exists=file_exists,
-            aux_files=aux_files,
-            checkpoint_freq=checkpoint_freq,
-            checkpoint_subdir=checkpoint_subdir,
-            crs=crs,
-            pixel_width=pixel_width,
-            pixel_height=pixel_height,
-            dtype=dtype,
-            n_bands=n_bands,
-            log_keys=log_keys,
-        )
+# class Mosaicker(BaseMosaicker):
+# 
+#     def __init__(
+#         self,
+#         config: dict,
+#         file_manager: file_management.FileManager = None,
+#         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+#         pixel_width: float = None,
+#         pixel_height: float = None,
+#         dtype: type = np.uint8,
+#         n_bands: int = 4,
+#         log_keys: list[str] = ['ind', 'return_code'],
+#         image_processor: processors.ImageBlender = None,
+#     ):
+# 
+#         # Default settings for file manipulation
+#         if file_manager is None:
+#             file_manager_options = dict(
+#                 filename='mosaic.tiff',
+#                 file_exists='error',
+#                 aux_files={
+#                     'settings': 'settings.yaml',
+#                     'log': 'log.csv',
+#                     'y_pred': 'y_pred.csv',
+#                 },
+#                 checkpoint_freq=100,
+#                 checkpoint_subdir='checkpoints',
+#             )
+#             if 'file_manager' in config:
+#                 file_manager_options.update(config['file_manager'])
+#             file_manager = file_management.FileManager(**file_manager_options)
+#         self.file_manager = file_manager
+# 
+#         self.image_processor = image_processor
+# 
+#         row_processor = MosaickerRowTransformer(
+#             dtype=dtype,
+#             image_processor=image_processor,
+#         )
+# 
+#         super().__init__(
+#             row_processor=row_processor,
+#             out_dir=out_dir,
+#             filename=filename,
+#             file_exists=file_exists,
+#             aux_files=aux_files,
+#             checkpoint_freq=checkpoint_freq,
+#             checkpoint_subdir=checkpoint_subdir,
+#             crs=crs,
+#             pixel_width=pixel_width,
+#             pixel_height=pixel_height,
+#             dtype=dtype,
+#             n_bands=n_bands,
+#             log_keys=log_keys,
+#         )
 
 
 class SequentialMosaicker(BaseMosaicker):
