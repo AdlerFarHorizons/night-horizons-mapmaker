@@ -1,11 +1,11 @@
 ###############################################################################
-# Evaluation Configuration File
+# Example Configuration File
 ###############################################################################
 
-data_dir: /Users/Shared/data/nitelite/220513-FH135
-
-# Relative to data_dir
-paths_relative_to_data_dir:
+# filetree paths are relative to root_dir
+root_dir: /Users/Shared/data/nitelite/220513-FH135
+filetree:
+  out_dir: default_out_dir # This should usually be changed in-file
   images_dir: images/raw
   referenced_images_dir: images/referenced
   img_log_fp: metadata/image.log
