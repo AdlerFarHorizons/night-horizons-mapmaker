@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pandas as pd
 import scipy
@@ -13,7 +15,7 @@ from .image_processing import base, mosaicking, processors
 
 class DIContainer:
 
-    def __init__(self, config_filepath: str):
+    def __init__(self, config_filepath: str, local_options: dict = {}):
         '''
 
         TODO: Rename "service" (and maybe container) to something more
@@ -31,6 +33,8 @@ class DIContainer:
         with open(config_filepath, 'r', encoding='UTF-8') as file:
             self.config = yaml.load(file, Loader=yaml.FullLoader)
 
+        self.update_config(local_options)
+
     def register_service(self, name, constructor):
         self._services[name] = constructor
 
@@ -44,16 +48,47 @@ class DIContainer:
             kwargs = {**self.config[name], **kwargs}
         return constructor(*args, **kwargs)
 
+    def update_config(self, new_config):
 
-class MosaickerMaker(DIContainer):
+        def deep_update(orig_dict, new_dict):
+            for key, value in new_dict.items():
+                if (
+                    isinstance(value, dict)
+                    and (key in orig_dict)
+                    and isinstance(orig_dict[key], dict)
+                ):
+                    deep_update(orig_dict[key], value)
+                else:
+                    orig_dict[key] = value
 
-    def __init__(self, config_filepath: str):
+        deep_update(self.config, new_config)
 
-        super().__init__(config_filepath=config_filepath)
+    def parse_config(self):
+        '''This goes through the config and handles some parameters.
 
-        # We register the preprocessing here too
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        for key, value in self.config['filetree'].items():
+            self.config['filetree'][key] = os.path.join(
+                self.config['root_dir'], value)
+
+
+class MosaickerFactory(DIContainer):
+
+    def __init__(self, config_filepath: str, local_settings: dict = {}):
+
+        super().__init__(
+            config_filepath=config_filepath,
+            local_options=local_settings,
+        )
+
+        # We register the preprocessing here, in addition to the other objects
         self.register_service(
-            'preprocessing',
+            'preprocessor',
             preprocessors.GeoTIFFPreprocessor
         )
 
@@ -88,7 +123,7 @@ class MosaickerMaker(DIContainer):
         # Finally, the mosaicker itself
         def make_mosaicker(
             out_dir: str,
-            file_manager: file_management.FileManager = None,
+            file_manager: file_management.OutputFileManager = None,
             row_processor: base.BaseRowProcessor = None,
             *args, **kwargs
         ):
