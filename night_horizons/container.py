@@ -151,3 +151,72 @@ class MosaickerFactory(DIContainer):
     def create(self, *args, **kwargs):
 
         return self.get_service('mosaicker', *args, **kwargs)
+
+
+class SequentialMosaickerFactory(DIContainer):
+
+    def __init__(self, config_filepath: str, local_options: dict = {}):
+
+        super().__init__(
+            config_filepath=config_filepath,
+            local_options=local_options,
+        )
+
+        # We register the preprocessing here, in addition to the other objects
+        self.register_service(
+            'y_preprocessor',
+            preprocessors.GeoTIFFPreprocessor
+        )
+
+        # Register file manager typical for mosaickers
+        self.register_service(
+            'io_manager',
+            io_management.MosaicIOManager,
+        )
+
+        # Image processor typical for mosaickers (constructor defaults are ok)
+        self.register_service(
+            'image_blender',
+            processors.ImageBlender,
+        )
+
+        # And the row transformer typical for mosaickers
+        def make_mosaicker_row_processor(
+            image_processor: processors.ImageProcessor = None,
+            *args, **kwargs
+        ):
+            if image_processor is None:
+                image_processor = self.get_service('image_blender')
+            return mosaicking.MosaickerRowTransformer(
+                image_processor=image_processor,
+                *args, **kwargs
+            )
+        self.register_service(
+            'row_processor',
+            make_mosaicker_row_processor,
+        )
+
+        # Finally, the mosaicker itself
+        def make_mosaicker(
+            out_dir: str,
+            io_manager: io_management.IOManager = None,
+            row_processor: base.BaseRowProcessor = None,
+            *args, **kwargs
+        ):
+            if io_manager is None:
+                io_manager = self.get_service(
+                    'io_manager',
+                    out_dir=out_dir,
+                )
+            if row_processor is None:
+                row_processor = self.get_service('row_processor')
+            return mosaicking.BaseMosaicker(
+                io_manager=io_manager,
+                row_processor=row_processor,
+                *args, **kwargs
+            )
+        self.register_service('mosaicker', make_mosaicker)
+
+    def create(self, *args, **kwargs):
+
+        return self.get_service('mosaicker', *args, **kwargs)

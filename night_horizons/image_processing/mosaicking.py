@@ -26,7 +26,7 @@ from . import processors
 from .base import BaseBatchProcesser, BaseRowProcessor
 
 from .. import (
-    io_management, preprocessors, utils, raster, metrics
+    preprocessors, utils, raster, metrics
 )
 
 
@@ -527,16 +527,9 @@ class SequentialMosaicker(BaseMosaicker):
 
     def __init__(
         self,
-        out_dir: str,
-        filename: str = 'mosaic.tiff',
-        file_exists: str = 'error',
-        aux_files: dict[str] = {
-            'settings': 'settings.yaml',
-            'log': 'log.csv',
-            'y_pred': 'y_pred.csv',
-        },
-        checkpoint_freq: int = 100,
-        checkpoint_subdir: str = 'checkpoints',
+        io_manager,
+        row_processor,
+        reffed_mosaicker,
         progress_images_subdir: str = 'progress_images',
         save_return_codes: list[str] = [],
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
@@ -547,20 +540,13 @@ class SequentialMosaicker(BaseMosaicker):
         n_bands: int = 4,
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
-        image_joiner: Union[
-            processors.ImageJoiner, processors.ImageJoinerQueue
-        ] = None,
         log_keys: list[str] = ['i', 'ind', 'return_code', 'abs_det_M'],
         memory_snapshot_freq: int = 10,
     ):
 
         super().__init__(
-            out_dir=out_dir,
-            filename=filename,
-            file_exists=file_exists,
-            aux_files=aux_files,
-            checkpoint_freq=checkpoint_freq,
-            checkpoint_subdir=checkpoint_subdir,
+            io_manager=io_manager,
+            row_processor=row_processor,
             crs=crs,
             pixel_width=pixel_width,
             pixel_height=pixel_height,
@@ -571,24 +557,10 @@ class SequentialMosaicker(BaseMosaicker):
             outline=outline,
             log_keys=log_keys,
         )
-        self.reffed_mosaic = Mosaicker(
-            out_dir=out_dir,
-            filename=filename,
-            file_exists='pass',
-            aux_files={'settings': 'settings_initial.yaml'},
-            checkpoint_freq=None,
-            checkpoint_subdir=checkpoint_subdir,
-            crs=crs,
-            pixel_width=pixel_width,
-            pixel_height=pixel_height,
-            fill_value=fill_value,
-            dtype=dtype,
-            n_bands=n_bands,
-            passthrough=passthrough,
-            outline=outline,
-        )
+        self.reffed_mosaicker = reffed_mosaicker
+        # file_exists='pass',
+        # aux_files={'settings': 'settings_initial.yaml'},
 
-        self.image_joiner = image_joiner
         self.progress_images_subdir = progress_images_subdir
         self.memory_snapshot_freq = memory_snapshot_freq
         self.save_return_codes = save_return_codes
@@ -616,9 +588,9 @@ class SequentialMosaicker(BaseMosaicker):
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
             dataset = self.open_dataset()
-            self.reffed_mosaic.out_dir = self.out_dir_
+            self.reffed_mosaicker.out_dir = self.out_dir_
             try:
-                self.reffed_mosaic.fit_transform(X, dataset=dataset)
+                self.reffed_mosaicker.fit_transform(X, dataset=dataset)
             except OutOfBoundsError as e:
                 raise OutOfBoundsError(
                     "Some of the fitted referenced images are out of bounds. "
