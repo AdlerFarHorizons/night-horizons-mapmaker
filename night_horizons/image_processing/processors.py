@@ -114,10 +114,7 @@ class ImageJoiner(ImageBlender):
         self,
         feature_detector,
         feature_matcher,
-        image_transformer='PassImageTransformer',
-        feature_detector_options={},
-        feature_matcher_options={},
-        image_transformer_options={},
+        image_transformer,
         det_min=0.6,
         det_max=2.0,
         required_brightness=0.03,
@@ -129,36 +126,6 @@ class ImageJoiner(ImageBlender):
         outline: int = 0,
         log_keys: list[str] = ['abs_det_M', 'duration'],
     ):
-
-        # Handle feature detector object creation
-        if isinstance(feature_detector, str):
-            feature_detector_fn = getattr(cv2, f'{feature_detector}_create')
-            feature_detector = feature_detector_fn(**feature_detector_options)
-        else:
-            assert feature_detector_options == {}, \
-                'Can only pass options if `feature_detector` is a str'
-
-        # Handle feature matcher object creation
-        if isinstance(feature_matcher, str):
-            feature_matcher_fn = getattr(cv2, f'{feature_matcher}_create')
-            feature_matcher = feature_matcher_fn(**feature_matcher_options)
-        else:
-            assert feature_matcher_options == {}, \
-                'Can only pass options if `feature_matcher` is a str'
-
-        # Handle image transformer object creation
-        if isinstance(image_transformer, str):
-            img_transformer_fn = getattr(preprocessors, image_transformer)
-            if callable(img_transformer_fn):
-                image_transformer = img_transformer_fn(
-                    **image_transformer_options)
-            else:
-                image_transformer = img_transformer_fn
-                assert image_transformer_options == {}, \
-                    'Cannot pass options to an image transformer pipeline.'
-        else:
-            assert image_transformer_options == {}, \
-                'Can only pass options if `img_transformer` is a str'
 
         self.feature_detector = feature_detector
         self.feature_matcher = feature_matcher
