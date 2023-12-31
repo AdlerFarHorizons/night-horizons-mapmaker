@@ -581,7 +581,6 @@ class SequentialMosaicker(BaseMosaicker):
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
             dataset = self.open_dataset()
-            self.mosaicker_train.out_dir = self.out_dir_
             try:
                 self.mosaicker_train.fit_transform(X, dataset=dataset)
             except OutOfBoundsError as e:
@@ -596,8 +595,8 @@ class SequentialMosaicker(BaseMosaicker):
 
             # Save the fit mosaic, pre-prediction
             shutil.copy(
-                self.filepath_,
-                self.filepath_.replace('.tiff', '_fit.tiff'),
+                self.io_manager.filepath_,
+                self.io_manager.filepath_.replace('.tiff', '_fit.tiff'),
             )
 
         return self
