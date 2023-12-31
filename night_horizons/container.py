@@ -20,7 +20,7 @@ class DIContainer:
         '''
 
         TODO: Rename "service" (and maybe container) to something more
-        recognizable to scientists.
+        recognizable to scientists?
 
         Parameters
         ----------
@@ -86,11 +86,11 @@ class DIContainer:
 
 class MosaickerFactory(DIContainer):
 
-    def __init__(self, config_filepath: str, local_settings: dict = {}):
+    def __init__(self, config_filepath: str, local_options: dict = {}):
 
         super().__init__(
             config_filepath=config_filepath,
-            local_options=local_settings,
+            local_options=local_options,
         )
 
         # We register the preprocessing here, in addition to the other objects
