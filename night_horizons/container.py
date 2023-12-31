@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import scipy
+from sklearn.utils import check_random_state
 import yaml
 # This is a draft---don't overengineer!
 # NO renaming!
@@ -34,6 +35,8 @@ class DIContainer:
             self.config = yaml.load(file, Loader=yaml.FullLoader)
 
         self.update_config(local_options)
+
+        self.parse_config()
 
     def register_service(self, name, constructor):
         self._services[name] = constructor
@@ -76,6 +79,10 @@ class DIContainer:
             self.config['filetree'][key] = os.path.join(
                 self.config['root_dir'], value)
 
+        if 'random_state' in self.config:
+            self.config['random_state'] = check_random_state(
+                self.config['random_state'])
+
 
 class MosaickerFactory(DIContainer):
 
@@ -95,7 +102,7 @@ class MosaickerFactory(DIContainer):
         # Register file manager typical for mosaickers
         self.register_service(
             'io_manager',
-            io_management.MosaicFileManager,
+            io_management.MosaicIOManager,
         )
 
         # Image processor typical for mosaickers (constructor defaults are ok)
@@ -123,7 +130,7 @@ class MosaickerFactory(DIContainer):
         # Finally, the mosaicker itself
         def make_mosaicker(
             out_dir: str,
-            io_manager: io_management.OutputFileManager = None,
+            io_manager: io_management.IOManager = None,
             row_processor: base.BaseRowProcessor = None,
             *args, **kwargs
         ):

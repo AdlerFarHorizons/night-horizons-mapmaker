@@ -145,7 +145,7 @@ class IOManager:
         return i_resume, loaded_data
 
 
-class MosaicFileManager(IOManager):
+class MosaicIOManager(IOManager):
 
     def __init__(
         self,
