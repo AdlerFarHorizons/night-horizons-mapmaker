@@ -354,7 +354,7 @@ def store_parameters(constructor):
 
     return wrapped_constructor
 
-
+"""
 class LoggerMixin:
     '''
     Note that a decorator is not possible because we're typically
@@ -436,3 +436,4 @@ class LoopLoggerMixin(LoggerMixin):
 
         log_df = pd.DataFrame(self.logs)
         log_df.to_csv(log_filepath)
+"""
