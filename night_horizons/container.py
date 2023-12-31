@@ -1,5 +1,6 @@
 import os
 
+import cv2
 import numpy as np
 import pandas as pd
 import pyproj
@@ -203,10 +204,42 @@ class SequentialMosaickerFactory(DIContainer):
             io_management.MosaicIOManager,
         )
 
-        # For the sequential mosaicker
+        # Feature detection and matching
+        self.register_service(
+            'image_transformer',
+            preprocessors.PassImageTransformer,
+        )
+        self.register_service(
+            'feature_detector',
+            cv2.AKAZE.create,
+        )
+        self.register_service(
+            'feature_matcher',
+            cv2.BFMatcher.create,
+        )
+
+        # Image processing
+        def make_image_aligner(
+            image_transformer: preprocessors.PassImageTransformer = None,
+            feature_detector: cv2.Feature2D = None,
+            feature_matcher: cv2.DescriptorMatcher = None,
+            *args, **kwargs
+        ):
+            if image_transformer is None:
+                image_transformer = self.get_service('image_transformer')
+            if feature_detector is None:
+                feature_detector = self.get_service('feature_detector')
+            if feature_matcher is None:
+                feature_matcher = self.get_service('feature_matcher')
+            return processors.ImageAligner(
+                image_transformer=image_transformer,
+                feature_detector=feature_detector,
+                feature_matcher=feature_matcher,
+                *args, **kwargs
+            )
         self.register_service(
             'image_processor',
-            processors.ImageAlignerBlender,
+            make_image_aligner,
         )
         # For the training mosaic
         self.register_service(
