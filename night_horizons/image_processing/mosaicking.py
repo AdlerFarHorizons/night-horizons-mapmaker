@@ -84,6 +84,10 @@ class BaseMosaicker(BaseBatchProcesser):
         # The fitting that's done for all image processing pipelines
         super().fit(X, y, i_start=i_start)
 
+        # TODO: Make this compatible with dependency injection
+        if not isinstance(self.crs, pyproj.CRS):
+            self.crs = pyproj.CRS(self.crs)
+
         # If the dataset was not passed in, load it if possible
         if (
             (
