@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import pandas as pd
+import pyproj
 import scipy
 from sklearn.utils import check_random_state
 import yaml
@@ -34,14 +35,18 @@ class DIContainer:
         with open(config_filepath, 'r', encoding='UTF-8') as file:
             self.config = yaml.load(file, Loader=yaml.FullLoader)
 
-        self.update_config(local_options)
+        self.config = self.update_config(self.config, local_options)
 
-        self.parse_config()
+        self.config = self.parse_config(self.config)
 
     def register_service(self, name, constructor):
         self._services[name] = constructor
 
     def get_service(self, name, *args, **kwargs):
+        '''
+        TODO: Add parameter validation.
+        '''
+
         constructor = self._services.get(name)
         if not constructor:
             raise ValueError(f'Service {name} not registered')
@@ -51,7 +56,7 @@ class DIContainer:
             kwargs = {**self.config[name], **kwargs}
         return constructor(*args, **kwargs)
 
-    def update_config(self, new_config):
+    def update_config(self, old_config, new_config):
 
         def deep_update(orig_dict, new_dict):
             for key, value in new_dict.items():
@@ -64,24 +69,43 @@ class DIContainer:
                 else:
                     orig_dict[key] = value
 
-        deep_update(self.config, new_config)
+        deep_update(old_config, new_config)
 
-    def parse_config(self):
+        return old_config
+
+    def parse_config(self, config: dict) -> dict:
         '''This goes through the config and handles some parameters.
 
         Parameters
         ----------
         Returns
         -------
+
         '''
 
-        for key, value in self.config['filetree'].items():
-            self.config['filetree'][key] = os.path.join(
-                self.config['root_dir'], value)
+        for key, value in config['filetree'].items():
+            config['filetree'][key] = os.path.join(config['root_dir'], value)
 
-        if 'random_state' in self.config:
-            self.config['random_state'] = check_random_state(
-                self.config['random_state'])
+        def deep_interpret(unparsed):
+
+            parsed = {}
+            for key, value in unparsed.items():
+
+                if isinstance(value, dict):
+                    parsed[key] = deep_interpret(value)
+                elif key == 'random_state':
+                    parsed[key] = check_random_state(value)
+                elif key == 'crs':
+                    if not isinstance(value, pyproj.CRS):
+                        parsed[key] = pyproj.CRS(value)
+                    else:
+                        parsed[key] = value
+                else:
+                    parsed[key] = value
+
+            return parsed
+
+        return deep_interpret(config)
 
 
 class MosaickerFactory(DIContainer):
@@ -129,16 +153,12 @@ class MosaickerFactory(DIContainer):
 
         # Finally, the mosaicker itself
         def make_mosaicker(
-            out_dir: str,
             io_manager: io_management.IOManager = None,
             row_processor: base.BaseRowProcessor = None,
             *args, **kwargs
         ):
             if io_manager is None:
-                io_manager = self.get_service(
-                    'io_manager',
-                    out_dir=out_dir,
-                )
+                io_manager = self.get_service('io_manager')
             if row_processor is None:
                 row_processor = self.get_service('row_processor')
             return mosaicking.BaseMosaicker(
@@ -154,6 +174,9 @@ class MosaickerFactory(DIContainer):
 
 
 class SequentialMosaickerFactory(DIContainer):
+    '''TODO: Can we clean this up? Possibly incorporate this into a Mapmaker
+             class?
+    '''
 
     def __init__(self, config_filepath: str, local_options: dict = {}):
 
@@ -174,7 +197,12 @@ class SequentialMosaickerFactory(DIContainer):
             io_management.MosaicIOManager,
         )
 
-        # Image processor typical for mosaickers (constructor defaults are ok)
+        # For the sequential mosaicker
+        self.register_service(
+            'image_processor',
+            processors.ImageAlignerBlender,
+        )
+        # For the training mosaic
         self.register_service(
             'image_blender',
             processors.ImageBlender,
@@ -186,7 +214,7 @@ class SequentialMosaickerFactory(DIContainer):
             *args, **kwargs
         ):
             if image_processor is None:
-                image_processor = self.get_service('image_blender')
+                image_processor = self.get_service('image_processor')
             return mosaicking.MosaickerRowTransformer(
                 image_processor=image_processor,
                 *args, **kwargs
@@ -196,23 +224,46 @@ class SequentialMosaickerFactory(DIContainer):
             make_mosaicker_row_processor,
         )
 
+        def make_mosaicker_train(
+            io_manager_train: io_management.IOManager = None,
+            row_processor_train: base.BaseRowProcessor = None,
+            *args, **kwargs
+        ):
+            if io_manager_train is None:
+                io_manager_train = self.get_service(
+                    'io_manager',
+                    file_exists='pass',
+                    aux_files={'settings': 'settings_initial.yaml'},
+                )
+            if row_processor_train is None:
+                row_processor_train = self.get_service(
+                    'row_processor',
+                    image_processor=self.get_service('image_blender')
+                )
+            return mosaicking.BaseMosaicker(
+                io_manager=io_manager_train,
+                row_processor=row_processor_train,
+                *args, **kwargs
+            )
+        self.register_service('mosaicker_train', make_mosaicker_train)
+
         # Finally, the mosaicker itself
         def make_mosaicker(
-            out_dir: str,
             io_manager: io_management.IOManager = None,
             row_processor: base.BaseRowProcessor = None,
+            mosaicker_train: mosaicking.BaseMosaicker = None,
             *args, **kwargs
         ):
             if io_manager is None:
-                io_manager = self.get_service(
-                    'io_manager',
-                    out_dir=out_dir,
-                )
+                io_manager = self.get_service('io_manager')
             if row_processor is None:
                 row_processor = self.get_service('row_processor')
-            return mosaicking.BaseMosaicker(
+            if mosaicker_train is None:
+                mosaicker_train = self.get_service('mosaicker_train')
+            return mosaicking.SequentialMosaicker(
                 io_manager=io_manager,
                 row_processor=row_processor,
+                mosaicker_train=mosaicker_train,
                 *args, **kwargs
             )
         self.register_service('mosaicker', make_mosaicker)

@@ -84,11 +84,6 @@ class BaseMosaicker(BaseBatchProcesser):
         # The fitting that's done for all image processing pipelines
         super().fit(X, y, i_start=i_start)
 
-        # Convert CRS as needed
-        # TODO: When making object-creation consistent, address this too.
-        if isinstance(self.crs, str):
-            self.crs = pyproj.CRS(self.crs)
-
         # If the dataset was not passed in, load it if possible
         if (
             (
@@ -529,9 +524,10 @@ class SequentialMosaicker(BaseMosaicker):
         self,
         io_manager,
         row_processor,
-        reffed_mosaicker,
+        mosaicker_train,
         progress_images_subdir: str = 'progress_images',
         save_return_codes: list[str] = [],
+        memory_snapshot_freq: int = 10,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -541,7 +537,6 @@ class SequentialMosaicker(BaseMosaicker):
         passthrough: Union[bool, list[str]] = False,
         outline: int = 0,
         log_keys: list[str] = ['i', 'ind', 'return_code', 'abs_det_M'],
-        memory_snapshot_freq: int = 10,
     ):
 
         super().__init__(
@@ -557,13 +552,11 @@ class SequentialMosaicker(BaseMosaicker):
             outline=outline,
             log_keys=log_keys,
         )
-        self.reffed_mosaicker = reffed_mosaicker
-        # file_exists='pass',
-        # aux_files={'settings': 'settings_initial.yaml'},
 
+        self.mosaicker_train = mosaicker_train
         self.progress_images_subdir = progress_images_subdir
-        self.memory_snapshot_freq = memory_snapshot_freq
         self.save_return_codes = save_return_codes
+        self.memory_snapshot_freq = memory_snapshot_freq
 
     def fit(
         self,
@@ -588,9 +581,9 @@ class SequentialMosaicker(BaseMosaicker):
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
             dataset = self.open_dataset()
-            self.reffed_mosaicker.out_dir = self.out_dir_
+            self.mosaicker_train.out_dir = self.out_dir_
             try:
-                self.reffed_mosaicker.fit_transform(X, dataset=dataset)
+                self.mosaicker_train.fit_transform(X, dataset=dataset)
             except OutOfBoundsError as e:
                 raise OutOfBoundsError(
                     "Some of the fitted referenced images are out of bounds. "
