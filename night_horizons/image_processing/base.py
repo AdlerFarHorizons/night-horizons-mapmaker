@@ -13,6 +13,7 @@ from .. import utils, exceptions
 
 
 class BaseBatchProcesser(
+    utils.LoopLoggerMixin,
     TransformerMixin,
     BaseEstimator,
     ABC
@@ -88,11 +89,11 @@ class BaseBatchProcesser(
         #       keep it as an attribute instead...
         #       One nice thing about this as is is that we don't have to
         #       go digging for where the log is saved.
-        # log_filepath = self.io_manager.aux_filepaths_['log']
-        # self.start_logging(
-        #     i_start=self.i_start_,
-        #     log_filepath=log_filepath,
-        # )
+        log_filepath = self.io_manager.aux_filepaths_['log']
+        self.start_logging(
+            i_start=self.i_start_,
+            log_filepath=log_filepath,
+        )
 
         # Resources contains global variables that will be available
         # throughout image processing.
@@ -170,7 +171,7 @@ class BaseBatchProcesser(
         pass
 
 
-class BaseRowProcessor(ABC):
+class BaseRowProcessor(utils.LoggerMixin, ABC):
     '''This could probably be framed as an sklearn estimator too, but let's
     not do that until necessary.
 
@@ -218,6 +219,8 @@ class BaseRowProcessor(ABC):
         Returns
         -------
         '''
+
+        self.start_logging()
 
         # Get data
         src = self.get_src(i, row, resources)

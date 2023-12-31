@@ -18,7 +18,7 @@ import scipy
 from .. import utils, exceptions
 
 
-class ImageProcessor(ABC):
+class ImageProcessor(utils.LoggerMixin, ABC):
 
     @abstractmethod
     def process(self, src_img, dst_img):
@@ -40,7 +40,7 @@ class ImageBlender(ImageProcessor):
 
     def process(self, src_img, dst_img):
 
-        # self.start_logging()
+        self.start_logging()
 
         # Resize the source image
         src_img_resized = cv2.resize(
@@ -104,7 +104,7 @@ class ImageBlender(ImageProcessor):
         return blended_img
 
 
-class ImageAligner:
+class ImageAligner(utils.LoggerMixin):
 
     def __init__(
         self,
