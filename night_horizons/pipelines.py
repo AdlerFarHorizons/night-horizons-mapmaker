@@ -11,19 +11,19 @@ from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 
-from .processors import image_registration, mosaickers
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
 from . import preprocessors
+from .image_processing import registration, mosaicking
 
 
-class PreprocessingPipelines:
+class PreprocessorPipelines:
 
     @staticmethod
-    def nitelite_preprocessing_steps(
+    def nitelite(
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         use_approximate_georeferencing: bool = True,
         altitude_column: str = 'mAltitude',
@@ -47,7 +47,7 @@ class PreprocessingPipelines:
 
         # Choose the georeferencing
         if use_approximate_georeferencing:
-            georeferencer = image_registration.MetadataImageRegistrar(
+            georeferencer = registration.MetadataImageRegistrar(
                 crs=crs,
                 passthrough=['filepath', 'camera_num'],
                 padding_fraction=padding_fraction,
@@ -60,7 +60,7 @@ class PreprocessingPipelines:
             )
 
         # Build the steps
-        preprocessing_steps = [
+        preprocessor = Pipeline([
             ('metadata',
              metadata_preprocessor),
             ('select_deployment_phase',
@@ -69,9 +69,9 @@ class PreprocessingPipelines:
              preprocessors.SteadyFilter(columns=gyro_columns)),
             ('georeference', georeferencer),
             ('order', preprocessors.SensorAndDistanceOrder()),
-        ]
+        ])
 
-        return preprocessing_steps
+        return preprocessor
 
 
 class GeoreferencePipelines:
@@ -88,7 +88,7 @@ class GeoreferencePipelines:
         )
         pipeline = Pipeline([
             ('nitelite', metadata_preprocessor),
-            ('georeference', image_registration.MetadataImageRegistrar(crs=crs)),
+            ('georeference', registration.MetadataImageRegistrar(crs=crs)),
         ])
 
         return pipeline
@@ -104,7 +104,7 @@ class MosaicPipelines:
 
         pipeline = Pipeline([
             ('geotiff', preprocessors.GeoTIFFPreprocessor(crs=crs)),
-            ('mosaic', mosaickers.Mosaicker(filepath=filepath, crs=crs))
+            ('mosaic', mosaicking.Mosaicker(filepath=filepath, crs=crs))
         ])
 
         return pipeline
@@ -120,7 +120,7 @@ class MosaicPipelines:
                 output_columns=['filepath', 'sensor_x', 'sensor_y'])),
             ('geotiff', preprocessors.GeoTIFFPreprocessor(
                 crs=crs, passthrough=True)),
-            ('mosaic', mosaickers.SequentialMosaicker(filepath=filepath, crs=crs))
+            ('mosaic', mosaicking.SequentialMosaicker(filepath=filepath, crs=crs))
         ])
 
         return pipeline

@@ -11,7 +11,7 @@ import yaml
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import io_management, preprocessors
+from . import io_management, pipelines, preprocessors
 from .image_processing import base, mosaicking, processors
 
 
@@ -186,6 +186,12 @@ class SequentialMosaickerFactory(DIContainer):
         )
 
         # We register the preprocessing here, in addition to the other objects
+        # Preprocessor for X values
+        self.register_service(
+            'preprocessor',
+            pipelines.PreprocessorPipelines.nitelite
+        )
+        # Preprocessor for y values
         self.register_service(
             'preprocessor_y',
             preprocessors.GeoTIFFPreprocessor
