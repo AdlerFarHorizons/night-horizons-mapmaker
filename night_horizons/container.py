@@ -187,7 +187,7 @@ class SequentialMosaickerFactory(DIContainer):
 
         # We register the preprocessing here, in addition to the other objects
         self.register_service(
-            'y_preprocessor',
+            'preprocessor_y',
             preprocessors.GeoTIFFPreprocessor
         )
 
