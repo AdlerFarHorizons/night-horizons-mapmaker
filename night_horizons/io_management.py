@@ -17,7 +17,7 @@ from osgeo import gdal
 import yaml
 
 
-class FileManager:
+class IOManager:
 
     def __init__(
         self,
@@ -145,7 +145,7 @@ class FileManager:
         return i_resume, loaded_data
 
 
-class MosaicFileManager(FileManager):
+class MosaicFileManager(IOManager):
 
     def __init__(
         self,

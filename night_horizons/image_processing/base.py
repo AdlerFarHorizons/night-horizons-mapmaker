@@ -56,16 +56,16 @@ class BaseBatchProcesser(
         '''
 
         # Make output directories, get filepaths, load dataset (if applicable)
-        self.out_dir_, self.filepath_ = self.file_manager.prepare_filetree()
+        self.out_dir_, self.filepath_ = self.io_manager.prepare_filetree()
 
         # Save the settings used for fitting
         # Must be done after preparing the filetree to have a save location
-        self.file_manager.save_settings(self)
+        self.io_manager.save_settings(self)
 
         # Start from checkpoint, if available
         if i_start == 'checkpoint':
             self.i_start_, self.checkpoint_state_ = \
-                self.file_manager.search_and_load_checkpoint()
+                self.io_manager.search_and_load_checkpoint()
         else:
             self.i_start_ = i_start
             self.checkpoint_state_ = None
@@ -89,7 +89,7 @@ class BaseBatchProcesser(
         #       keep it as an attribute instead...
         #       One nice thing about this as is is that we don't have to
         #       go digging for where the log is saved.
-        log_filepath = self.file_manager.aux_filepaths_['log']
+        log_filepath = self.io_manager.aux_filepaths_['log']
         self.start_logging(
             i_start=self.i_start_,
             log_filepath=log_filepath,
@@ -117,7 +117,7 @@ class BaseBatchProcesser(
             X_t.loc[ind] = row
 
             # Checkpoint
-            resources['dataset'] = self.file_manager.save_to_checkpoint(
+            resources['dataset'] = self.io_manager.save_to_checkpoint(
                 i,
                 resources['dataset'],
             )

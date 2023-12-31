@@ -26,7 +26,7 @@ from . import processors
 from .base import BaseBatchProcesser, BaseRowProcessor
 
 from .. import (
-    file_management, preprocessors, utils, raster, metrics
+    io_management, preprocessors, utils, raster, metrics
 )
 
 
@@ -44,7 +44,7 @@ class BaseMosaicker(BaseBatchProcesser):
 
     def __init__(
         self,
-        file_manager,
+        io_manager,
         row_processor,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
@@ -58,7 +58,7 @@ class BaseMosaicker(BaseBatchProcesser):
     ):
 
         # Store settings for latter use
-        self.file_manager = file_manager
+        self.io_manager = io_manager
         self.row_processor = row_processor
         self.crs = crs
         self.pixel_width = pixel_width
@@ -92,7 +92,7 @@ class BaseMosaicker(BaseBatchProcesser):
         # If the dataset was not passed in, load it if possible
         if (
             (
-                (self.file_manager.file_exists == 'load')
+                (self.io_manager.file_exists == 'load')
                 and os.path.isfile(self.filepath_)
             )
             or (self.i_start_ != 0)
@@ -202,7 +202,7 @@ class BaseMosaicker(BaseBatchProcesser):
 
     def open_dataset(self):
 
-        return self.file_manager.open_dataset()
+        return self.io_manager.open_dataset()
 
     def get_fit_from_dataset(self, dataset):
 
@@ -471,7 +471,7 @@ class BaseMosaicker(BaseBatchProcesser):
 #     def __init__(
 #         self,
 #         config: dict,
-#         file_manager: file_management.FileManager = None,
+#         io_manager: io_management.FileManager = None,
 #         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
 #         pixel_width: float = None,
 #         pixel_height: float = None,
@@ -482,8 +482,8 @@ class BaseMosaicker(BaseBatchProcesser):
 #     ):
 # 
 #         # Default settings for file manipulation
-#         if file_manager is None:
-#             file_manager_options = dict(
+#         if io_manager is None:
+#             io_manager_options = dict(
 #                 filename='mosaic.tiff',
 #                 file_exists='error',
 #                 aux_files={
@@ -494,10 +494,10 @@ class BaseMosaicker(BaseBatchProcesser):
 #                 checkpoint_freq=100,
 #                 checkpoint_subdir='checkpoints',
 #             )
-#             if 'file_manager' in config:
-#                 file_manager_options.update(config['file_manager'])
-#             file_manager = file_management.FileManager(**file_manager_options)
-#         self.file_manager = file_manager
+#             if 'io_manager' in config:
+#                 io_manager_options.update(config['io_manager'])
+#             io_manager = io_management.FileManager(**io_manager_options)
+#         self.io_manager = io_manager
 # 
 #         self.image_processor = image_processor
 # 
@@ -745,7 +745,7 @@ class SequentialMosaicker(BaseMosaicker):
             self.logs.append(log)
 
             # Checkpoint (only saves at particular `i` values)
-            dataset = self.file_manager.save_to_checkpoint(
+            dataset = self.io_manager.save_to_checkpoint(
                 i,
                 dataset=dataset,
                 y_pred=y_pred,
@@ -768,11 +768,11 @@ class SequentialMosaicker(BaseMosaicker):
         # Flush data to disk
         dataset.FlushCache()
         dataset = None
-        y_pred.to_csv(self.file_manager.aux_filepaths_['y_pred'])
+        y_pred.to_csv(self.io_manager.aux_filepaths_['y_pred'])
 
         # Store log
         log_df = pd.DataFrame(self.logs)
-        log_df.to_csv(self.file_manager.aux_filepaths_['log'])
+        log_df.to_csv(self.io_manager.aux_filepaths_['log'])
 
         # Stop memory tracing
         if 'snapshot' in self.log_keys:
