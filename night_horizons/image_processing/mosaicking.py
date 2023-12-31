@@ -471,7 +471,7 @@ class BaseMosaicker(BaseBatchProcesser):
 #     def __init__(
 #         self,
 #         config: dict,
-#         io_manager: io_management.FileManager = None,
+#         io_manager: io_management.IOManager = None,
 #         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
 #         pixel_width: float = None,
 #         pixel_height: float = None,
@@ -496,7 +496,7 @@ class BaseMosaicker(BaseBatchProcesser):
 #             )
 #             if 'io_manager' in config:
 #                 io_manager_options.update(config['io_manager'])
-#             io_manager = io_management.FileManager(**io_manager_options)
+#             io_manager = io_management.IOManager(**io_manager_options)
 #         self.io_manager = io_manager
 # 
 #         self.image_processor = image_processor
