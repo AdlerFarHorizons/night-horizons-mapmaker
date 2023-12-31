@@ -9,7 +9,7 @@ import yaml
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import file_management, preprocessors
+from . import io_management, preprocessors
 from .image_processing import base, mosaicking, processors
 
 
@@ -94,8 +94,8 @@ class MosaickerFactory(DIContainer):
 
         # Register file manager typical for mosaickers
         self.register_service(
-            'file_manager',
-            file_management.MosaicFileManager,
+            'io_manager',
+            io_management.MosaicFileManager,
         )
 
         # Image processor typical for mosaickers (constructor defaults are ok)
@@ -123,19 +123,19 @@ class MosaickerFactory(DIContainer):
         # Finally, the mosaicker itself
         def make_mosaicker(
             out_dir: str,
-            file_manager: file_management.OutputFileManager = None,
+            io_manager: io_management.OutputFileManager = None,
             row_processor: base.BaseRowProcessor = None,
             *args, **kwargs
         ):
-            if file_manager is None:
-                file_manager = self.get_service(
-                    'file_manager',
+            if io_manager is None:
+                io_manager = self.get_service(
+                    'io_manager',
                     out_dir=out_dir,
                 )
             if row_processor is None:
                 row_processor = self.get_service('row_processor')
             return mosaicking.BaseMosaicker(
-                file_manager=file_manager,
+                io_manager=io_manager,
                 row_processor=row_processor,
                 *args, **kwargs
             )
