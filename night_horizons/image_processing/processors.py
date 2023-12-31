@@ -15,7 +15,7 @@ import scipy
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from .. import preprocessors, utils
+from .. import utils, exceptions
 
 
 class ImageProcessor(utils.LoggerMixin, ABC):
@@ -105,10 +105,6 @@ class ImageBlender(ImageProcessor):
 
 
 class ImageAligner(utils.LoggerMixin):
-    pass
-
-
-class ImageJoiner(ImageBlender):
 
     def __init__(
         self,
@@ -123,7 +119,6 @@ class ImageJoiner(ImageBlender):
         homography_method=cv2.RANSAC,
         reproj_threshold=5.,
         find_homography_options={},
-        outline: int = 0,
         log_keys: list[str] = ['abs_det_M', 'duration'],
     ):
 
@@ -138,10 +133,7 @@ class ImageJoiner(ImageBlender):
         self.homography_method = homography_method
         self.reproj_threshold = reproj_threshold
         self.find_homography_options = find_homography_options
-        self.outline = outline
-
-        # Initialize the log
-        super().__init__(log_keys)
+        self.log_keys = log_keys
 
     def process(self, src_img, dst_img):
 
@@ -154,11 +146,9 @@ class ImageJoiner(ImageBlender):
         # Warp image
         warped_img = self.warp(src_img, dst_img, results['M'])
 
-        # Blend images
-        blended_img = self.blend(
-            warped_img, dst_img, outline=self.outline)
+        results['warped_img'] = warped_img
 
-        results['blended_img'] = blended_img
+        return results
 
     def apply_img_transform(self, img):
 
@@ -300,9 +290,9 @@ class ImageJoiner(ImageBlender):
 
         if bright_area < self.required_bright_pixel_area:
             if error_type == 'src':
-                error_type = SrcDarkFrameError
+                error_type = exceptions.SrcDarkFrameError
             elif error_type == 'dst':
-                error_type == DstDarkFrameError
+                error_type == exceptions.DstDarkFrameError
             else:
                 raise KeyError(
                     'Unrecognized error type in validate_brightness')
@@ -328,12 +318,65 @@ class ImageJoiner(ImageBlender):
         self.update_log(locals())
 
         if not det_in_range:
-            raise HomographyTransformError(
+            raise exceptions.HomographyTransformError(
                 f'Bad determinant, abs_det_M = {abs_det_M:.2g}'
             )
 
 
-class ImageJoinerQueue:
+class ImageAlignerBlender(ImageAligner, ImageBlender):
+
+    def __init__(
+        self,
+        feature_detector,
+        feature_matcher,
+        image_transformer,
+        det_min=0.6,
+        det_max=2.0,
+        required_brightness=0.03,
+        required_bright_pixel_area=50000,
+        n_matches_used=500,
+        homography_method=cv2.RANSAC,
+        reproj_threshold=5.,
+        find_homography_options={},
+        outline: int = 0,
+        log_keys: list[str] = ['abs_det_M', 'duration'],
+    ):
+
+        self.feature_detector = feature_detector
+        self.feature_matcher = feature_matcher
+        self.image_transformer = image_transformer
+        self.det_min = det_min
+        self.det_max = det_max
+        self.required_brightness = required_brightness
+        self.required_bright_pixel_area = required_bright_pixel_area
+        self.n_matches_used = n_matches_used
+        self.homography_method = homography_method
+        self.reproj_threshold = reproj_threshold
+        self.find_homography_options = find_homography_options
+        self.outline = outline
+
+        # Initialize the log
+        super().__init__(log_keys)
+
+    def process(self, src_img, dst_img):
+
+        src_img_t, dst_img_t = self.image_transformer.fit_transform(
+            [src_img, dst_img])
+
+        # Try to get a valid homography
+        results = self.find_valid_homography(src_img_t, dst_img_t)
+
+        # Warp image
+        warped_img = self.warp(src_img, dst_img, results['M'])
+
+        # Blend images
+        blended_img = self.blend(
+            warped_img, dst_img, outline=self.outline)
+
+        results['blended_img'] = blended_img
+
+
+class ImageProcessorQueue:
 
     def __init__(self, defaults, variations):
         '''
@@ -353,14 +396,14 @@ class ImageJoinerQueue:
         for var in variations:
             options = copy.deepcopy(defaults)
             options.update(var)
-            image_joiner = ImageJoiner(**options)
+            image_joiner = ImageAlignerBlender(**options)
             self.image_joiners.append(image_joiner)
 
-    def join(self, src_img, dst_img):
+    def process(self, src_img, dst_img):
 
         for i, image_joiner in enumerate(self.image_joiners):
 
-            result_code, result, log = image_joiner.join(
+            result_code, result, log = image_joiner.process(
                 src_img,
                 dst_img
             )
