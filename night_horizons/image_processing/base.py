@@ -266,12 +266,12 @@ class BaseRowProcessor(utils.LoggerMixin, ABC):
             return_code = 'dst_dark_frame'
         except np.linalg.LinAlgError:
             return_code = 'linalg_err'
-        finally:
-            duration = time.time() - start
-            results['duration'] = duration
-            results['return_code'] = return_code
 
-            return results
+        duration = time.time() - start
+        results['duration'] = duration
+        results['return_code'] = return_code
+
+        return results
 
     @abstractmethod
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
