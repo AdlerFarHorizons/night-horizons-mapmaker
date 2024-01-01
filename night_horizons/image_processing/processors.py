@@ -353,12 +353,12 @@ class ImageAlignerBlender(ImageAligner, ImageBlender):
             homography_method=homography_method,
             reproj_threshold=reproj_threshold,
             find_homography_options=find_homography_options,
-            log_keys=log_keys,
         )
 
         super(ImageAligner, self).__init__(
             fill_value=fill_value,
             outline=outline,
+            log_keys=log_keys,
         )
 
     def process(self, src_img, dst_img):

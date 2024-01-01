@@ -416,6 +416,18 @@ class BaseMosaicker(BaseBatchProcesser):
 
         return X
 
+    def transform_to_physical(self, X):
+
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.pixel_to_physical(
+            X['x_min'], X['x_max'],
+            X['y_min'], X['y_max'],
+        )
+
+        return X
+
     def get_image_with_bounds(self, dataset, x_min, x_max, y_min, y_max):
 
         # Out of bounds
@@ -605,13 +617,11 @@ class SequentialMosaicker(BaseMosaicker):
 
         return self
 
-    @utils.enable_passthrough
-    def predict(
-        self,
-        X: pd.DataFrame,
-        y=None,
-    ):
-        '''
+    def preprocess(self, X: pd.DataFrame) -> Tuple[pd.DataFrame, dict]:
+        '''Preprocessing required before doing the full loop.
+        This should focus on preprocessing that depends on the particular
+        image processor (e.g. for mosaickers this includes putting the
+        coordinates in the pixel-based frame of the mosaic).
 
         Parameters
         ----------
@@ -619,211 +629,43 @@ class SequentialMosaicker(BaseMosaicker):
         -------
         '''
 
-        self.log = {}
-
-        X = utils.check_df_input(
-            X,
-            self.required_columns,
-        )
-
-        # Check if fit has been called
-        check_is_fitted(self, 'filepath_')
-
         # Get state of output data
         if self.checkpoint_state_ is None:
-            # Set up y-pred
-            y_pred = X[preprocessors.GEOTRANSFORM_COLS].copy()
-            y_pred[[
-                'x_min', 'x_max',
-                'y_min', 'y_max',
-                'pixel_width', 'pixel_height',
-                'x_size', 'y_size',
-                'x_center', 'y_center',
-                'x_off', 'y_off',
-            ]] = np.nan
-            y_pred['return_code'] = 'TBD'
+            X_t = self.transform_to_pixel(X, padding=0)
 
             # And the logs too
             self.logs = []
         else:
-            y_pred = self.checkpoint_state_['y_pred']
+            X_t = self.checkpoint_state_['y_pred']
             self.logs = self.checkpoint_state_['logs']
 
-        # Convert to pixels
-        (
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
-        ) = self.physical_to_pixel(
-            X['x_min'], X['x_max'],
-            X['y_min'], X['y_max'],
-            padding=X['padding'],
-        )
+        # Get the dataset
+        resources = {
+            'dataset': self.open_dataset(),
+        }
 
-        # Limit search regions to within the mosaic.
-        # Note that this shouldn't be an issue if the fit is done correctly.
-        (
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
-        ) = self.handle_out_of_bounds(
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size'],
-            trim=True,
-        )
+        return X_t, resources
 
-        dataset = self.open_dataset()
-
-        # Start memory tracing
-        if 'snapshot' in self.log_keys:
-            tracemalloc.start()
-            start = tracemalloc.take_snapshot()
-            self.log['starting_snapshot'] = start
-
-        for i, ind in enumerate(tqdm.tqdm(X.index, ncols=80)):
-
-            if i < self.i_start_:
-                continue
-
-            row = X.loc[ind]
-
-            if 'iter_duration' in self.log_keys:
-                start = time.time()
-            return_code, results, log = self.incorporate_image(
-                dataset,
-                row,
-            )
-            # Time it
-            if 'iter_duration' in self.log_keys:
-                iter_duration = time.time() - start
-
-            if return_code == 'success':
-                # Update y_pred
-                y_pred.loc[ind, ['x_off', 'y_off', 'x_size', 'y_size']] = [
-                    results['x_off'], results['y_off'],
-                    results['x_size'], results['y_size']
-                ]
-
-            # Snapshot the memory usage
-            if 'snapshot' in self.log_keys:
-                if i % self.memory_snapshot_freq == 0:
-                    log['snapshot'] = tracemalloc.take_snapshot()
-
-            # Store metadata
-            y_pred.loc[ind, 'return_code'] = return_code
-            log = self.update_log(locals(), target=log)
-            self.logs.append(log)
-
-            # Checkpoint (only saves at particular `i` values)
-            dataset = self.io_manager.save_to_checkpoint(
-                i,
-                dataset=dataset,
-                y_pred=y_pred,
-                logs=self.logs,
-            )
+    def postprocess(self, y_pred, resources):
 
         # Convert to pixels
-        (
-            y_pred['x_min'], y_pred['x_max'],
-            y_pred['y_min'], y_pred['y_max'],
-        ) = self.pixel_to_physical(
-            y_pred['x_off'], y_pred['y_off'],
-            y_pred['x_size'], y_pred['y_size']
-        )
+        y_pred = self.transform_to_physical(y_pred)
         y_pred['pixel_width'] = self.pixel_width_
         y_pred['pixel_height'] = self.pixel_height_
         y_pred['x_center'] = 0.5 * (y_pred['x_min'] + y_pred['x_max'])
         y_pred['y_center'] = 0.5 * (y_pred['y_min'] + y_pred['y_max'])
 
-        # Flush data to disk
-        dataset.FlushCache()
-        dataset = None
         y_pred.to_csv(self.io_manager.aux_filepaths_['y_pred'])
 
         # Store log
         log_df = pd.DataFrame(self.logs)
         log_df.to_csv(self.io_manager.aux_filepaths_['log'])
 
-        # Stop memory tracing
-        if 'snapshot' in self.log_keys:
-            tracemalloc.stop()
+        # Flush data to disk
+        resources['dataset'].FlushCache()
+        resources['dataset'] = None
 
         return y_pred
-
-    def incorporate_image(
-        self,
-        dataset,
-        row: pd.Series,
-    ):
-
-        results = {}
-        log = {}
-
-        # Get image location
-        x_off = row['x_off']
-        y_off = row['y_off']
-        x_size = row['x_size']
-        y_size = row['y_size']
-
-        # Get dst features
-        # TODO: When dst pts are provided, this step could be made faster by
-        #       not loading dst_img at this time.
-        dst_img = self.get_image(dataset, x_off, y_off, x_size, y_size)
-
-        # Check what's in bounds, exit if nothing
-        if dst_img.sum() == 0:
-            log = self.update_log(locals(), target=log)
-            return 'out_of_bounds', results, log
-
-        # Get src image
-        src_img = utils.load_image(
-            row['filepath'],
-            dtype=self.dtype,
-        )
-
-        # Main function
-        # TODO: Return codes may not actually be particularly Pythonic.
-        #    However, we need to track *how* the failures happened somehow,
-        #    so we need some sort of flag, which is basically a return code.
-        #    That said, there may be a better alternative to this.
-        return_code, result, image_joiner_log = self.image_joiner.process(
-            src_img, dst_img)
-        log = self.update_log(image_joiner_log, target=log)
-
-        # TODO: Clean this up
-        if return_code == 'success':
-            # Store the image
-            self.save_image(dataset, result['blended_img'], x_off, y_off)
-
-        # Save failed images for later debugging
-        # TODO: Currently the format of the saved images is a little weird.
-        if (
-            (self.progress_images_subdir_ is not None)
-            and (return_code in self.save_return_codes)
-        ):
-            n_tests_existing = len(glob.glob(os.path.join(
-                self.progress_images_subdir_, '*_dst.tiff')))
-            dst_fp = os.path.join(
-                self.progress_images_subdir_,
-                f'{n_tests_existing:06d}_dst.tiff'
-            )
-            src_fp = os.path.join(
-                self.progress_images_subdir_,
-                f'{n_tests_existing:06d}_src.tiff'
-            )
-
-            cv2.imwrite(src_fp, src_img[:, :, ::-1])
-            cv2.imwrite(dst_fp, dst_img[:, :, ::-1])
-
-            if 'blended_img' in result:
-                blended_fp = os.path.join(
-                    self.progress_images_subdir_,
-                    f'{n_tests_existing:06d}_blended.tiff'
-                )
-                cv2.imwrite(blended_fp, result['blended_img'][:, :, ::-1])
-
-        # Log
-        log = self.update_log(locals(), target=log)
-
-        return return_code, results, log
 
 
 class MosaickerRowTransformer(BaseRowProcessor):
@@ -883,16 +725,22 @@ class MosaickerRowTransformer(BaseRowProcessor):
         i: int,
         row: pd.Series,
         resources: dict,
-        result: dict,
+        results: dict,
     ):
 
         # Store the image
-        self.save_image_to_dataset(
-            resources['dataset'],
-            result['blended_image'],
-            row['x_off'],
-            row['y_off'],
-        )
+        if results['return_code'] == 'success':
+            self.save_image_to_dataset(
+                resources['dataset'],
+                results['blended_image'],
+                row['x_off'],
+                row['y_off'],
+            )
+
+        # Store the return code
+        row['return_code'] = results['return_code']
+
+        return row
 
     ###########################################################################
     # Auxillary functions below
@@ -926,3 +774,82 @@ class MosaickerRowTransformer(BaseRowProcessor):
             xoff=int(x_off),
             yoff=int(y_off),
         )
+
+
+class SequentialMosaickerRowTransformer(MosaickerRowTransformer):
+
+    def process(
+        self,
+        i: int,
+        row: pd.Series,
+        resources: dict,
+        src: dict,
+        dst: dict,
+    ) -> dict:
+
+        # Check what's in bounds, exit if nothing
+        if dst['image'].sum() == 0:
+            self.update_log(locals())
+            raise OutOfBoundsError('No dst data in bounds.')
+
+        # Combine the images
+        # TODO: image_processor is more-general,
+        #       but image_blender is more descriptive
+        results = self.image_processor.process(
+            src['image'],
+            dst['image'],
+        )
+        self.update_log(self.image_processor.log)
+
+        return {
+            'blended_image': results['blended_image'],
+            'src_image': src['image'],
+            'dst_image': dst['image'],
+        }
+
+    def store_results(
+        self,
+        i: int,
+        row: pd.Series,
+        resources: dict,
+        results: dict,
+    ):
+
+        # Superclass call stores the image
+        row = super().store_results(i, row, resources, results)
+
+        # Update y_pred
+        if results['return_code'] == 'success':
+            row['x_off', 'y_off', 'x_size', 'y_size'] = [
+                results['x_off'], results['y_off'],
+                results['x_size'], results['y_size']
+            ]
+
+        # Save failed images for later debugging
+        # TODO: Currently the format of the saved images is a little weird.
+        if (
+            (self.progress_images_subdir_ is not None)
+            and (results['return_code'] in self.save_return_codes)
+        ):
+            n_tests_existing = len(glob.glob(os.path.join(
+                self.progress_images_subdir_, '*_dst.tiff')))
+            dst_fp = os.path.join(
+                self.progress_images_subdir_,
+                f'{n_tests_existing:06d}_dst.tiff'
+            )
+            src_fp = os.path.join(
+                self.progress_images_subdir_,
+                f'{n_tests_existing:06d}_src.tiff'
+            )
+
+            cv2.imwrite(src_fp, results['src_image'][:, :, ::-1])
+            cv2.imwrite(dst_fp, results['dst_image'][:, :, ::-1])
+
+            if 'blended_img' in results:
+                blended_fp = os.path.join(
+                    self.progress_images_subdir_,
+                    f'{n_tests_existing:06d}_blended.tiff'
+                )
+                cv2.imwrite(blended_fp, results['blended_img'][:, :, ::-1])
+
+        return row
