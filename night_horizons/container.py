@@ -221,7 +221,7 @@ class SequentialMosaickerFactory(DIContainer):
         )
 
         # Image processing
-        def make_image_aligner(
+        def make_image_aligner_blender(
             image_transformer: preprocessors.PassImageTransformer = None,
             feature_detector: cv2.Feature2D = None,
             feature_matcher: cv2.DescriptorMatcher = None,
@@ -233,7 +233,7 @@ class SequentialMosaickerFactory(DIContainer):
                 feature_detector = self.get_service('feature_detector')
             if feature_matcher is None:
                 feature_matcher = self.get_service('feature_matcher')
-            return processors.ImageAligner(
+            return processors.ImageAlignerBlender(
                 image_transformer=image_transformer,
                 feature_detector=feature_detector,
                 feature_matcher=feature_matcher,
@@ -241,7 +241,7 @@ class SequentialMosaickerFactory(DIContainer):
             )
         self.register_service(
             'image_processor',
-            make_image_aligner,
+            make_image_aligner_blender,
         )
         # For the training mosaic
         self.register_service(
