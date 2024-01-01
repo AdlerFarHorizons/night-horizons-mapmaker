@@ -140,7 +140,7 @@ class MosaickerFactory(DIContainer):
 
         # And the row transformer typical for mosaickers
         def make_mosaicker_row_processor(
-            image_processor: processors.ImageProcessor = None,
+            image_processor: processors.BaseImageProcessor = None,
             *args, **kwargs
         ):
             if image_processor is None:
@@ -251,7 +251,7 @@ class SequentialMosaickerFactory(DIContainer):
 
         # And the row transformer typical for mosaickers
         def make_mosaicker_row_processor(
-            image_processor: processors.ImageProcessor = None,
+            image_processor: processors.BaseImageProcessor = None,
             *args, **kwargs
         ):
             if image_processor is None:
