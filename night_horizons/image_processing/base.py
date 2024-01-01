@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import time
+import tracemalloc
 from typing import Tuple, Union
 
 import cv2
@@ -106,18 +107,33 @@ class BaseBatchProcesser(
         #       However, when I debugged that much of the issue actually came
         #       from saving massive objects (all the features) to the log
         #       and duplicating them.
-        X_t, resources = self.preprocess(X)
+        Z_out, resources = self.preprocess(X)
+
+        # Start memory tracing
+        if 'snapshot' in self.log_keys:
+            tracemalloc.start()
+            start = tracemalloc.take_snapshot()
+            self.log['starting_snapshot'] = start
 
         # Main loop
-        for i, ind in enumerate(tqdm.tqdm(X_t.index, ncols=80)):
+        for i, ind in enumerate(tqdm.tqdm(X.index, ncols=80)):
 
             # Go to the right loop
             if i < self.i_start_:
                 continue
 
-            row = X.loc[ind]
+            # We make a copy of row so that we don't modify the original
+            row = X.loc[ind].copy()
+
+            # Process the row
             row = self.row_processor.transform_row(i, row, resources)
-            X_t.loc[ind] = row
+            Z_out.loc[ind] = row
+
+            # Snapshot the memory usage
+            log = self.row_processor.log
+            if 'snapshot' in self.log_keys:
+                if i % self.memory_snapshot_freq == 0:
+                    log['snapshot'] = tracemalloc.take_snapshot()
 
             # Checkpoint
             resources['dataset'] = self.io_manager.save_to_checkpoint(
@@ -127,13 +143,17 @@ class BaseBatchProcesser(
 
             # Update and save the log
             # TODO: We probably don't have to write every loop...
-            self.logs.append(self.row_processor.log)
+            self.logs.append(log)
             if hasattr(self, 'log_filepath_'):
                 self.write_log(self.log_filepath_)
 
-        X_t = self.postprocess(X_t, resources)
+        # Stop memory tracing
+        if 'snapshot' in self.log_keys:
+            tracemalloc.stop()
 
-        return X_t
+        Z_out = self.postprocess(Z_out, resources)
+
+        return Z_out
 
     def predict(
         self,
@@ -231,7 +251,7 @@ class BaseRowProcessor(utils.LoggerMixin, ABC):
         # Main function that changes depending on parent class
         results = self.safe_process(i, row, resources, src, dst)
 
-        self.store_results(i, row, resources, results)
+        row = self.store_results(i, row, resources, results)
 
         return row
 
@@ -298,6 +318,6 @@ class BaseRowProcessor(utils.LoggerMixin, ABC):
         i: int,
         row: pd.Series,
         resources: dict,
-        result: dict,
-    ):
+        results: dict,
+    ) -> pd.Series:
         pass
