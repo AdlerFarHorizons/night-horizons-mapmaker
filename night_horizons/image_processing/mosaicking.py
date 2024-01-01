@@ -23,14 +23,14 @@ import yaml
 from night_horizons.exceptions import OutOfBoundsError
 from . import processors
 
-from .base import BaseBatchProcesser, BaseRowProcessor
+from .base import BatchProcessor, BaseRowProcessor
 
 from .. import (
     preprocessors, utils, raster, metrics
 )
 
 
-class Mosaicker(BaseBatchProcesser):
+class Mosaicker(BatchProcessor):
     '''Assemble a mosaic from georeferenced images.
 
     TODO: filepath is a data-dependent parameter, so it really should be

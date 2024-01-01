@@ -13,11 +13,10 @@ import tqdm
 from .. import utils, exceptions
 
 
-class BaseBatchProcesser(
+class BatchProcessor(
     utils.LoopLoggerMixin,
     TransformerMixin,
     BaseEstimator,
-    ABC
 ):
 
     def __init__(self, row_processor, passthrough, log_keys):
@@ -186,13 +185,11 @@ class BaseBatchProcesser(
 
         return X
 
-    @abstractmethod
     def preprocess(self, X: pd.DataFrame) -> Tuple[pd.DataFrame, dict]:
-        pass
+        return X, {}
 
-    @abstractmethod
     def postprocess(self, X: pd.DataFrame, resources: dict) -> pd.DataFrame:
-        pass
+        return X
 
 
 class BaseRowProcessor(utils.LoggerMixin, ABC):
