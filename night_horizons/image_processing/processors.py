@@ -18,14 +18,14 @@ import scipy
 from .. import utils, exceptions
 
 
-class ImageProcessor(utils.LoggerMixin, ABC):
+class BaseImageProcessor(utils.LoggerMixin, ABC):
 
     @abstractmethod
     def process(self, src_img, dst_img):
         pass
 
 
-class ImageBlender(ImageProcessor):
+class ImageBlender(BaseImageProcessor):
 
     def __init__(
         self,
@@ -102,7 +102,7 @@ class ImageBlender(ImageProcessor):
         return blended_img
 
 
-class ImageAligner(utils.LoggerMixin):
+class ImageAligner(BaseImageProcessor):
 
     def __init__(
         self,
@@ -336,25 +336,30 @@ class ImageAlignerBlender(ImageAligner, ImageBlender):
         homography_method=cv2.RANSAC,
         reproj_threshold=5.,
         find_homography_options={},
+        fill_value: Union[float, int] = None,
         outline: int = 0,
         log_keys: list[str] = ['abs_det_M', 'duration'],
     ):
 
-        self.feature_detector = feature_detector
-        self.feature_matcher = feature_matcher
-        self.image_transformer = image_transformer
-        self.det_min = det_min
-        self.det_max = det_max
-        self.required_brightness = required_brightness
-        self.required_bright_pixel_area = required_bright_pixel_area
-        self.n_matches_used = n_matches_used
-        self.homography_method = homography_method
-        self.reproj_threshold = reproj_threshold
-        self.find_homography_options = find_homography_options
-        self.outline = outline
+        super().__init__(
+            feature_detector=feature_detector,
+            feature_matcher=feature_matcher,
+            image_transformer=image_transformer,
+            det_min=det_min,
+            det_max=det_max,
+            required_brightness=required_brightness,
+            required_bright_pixel_area=required_bright_pixel_area,
+            n_matches_used=n_matches_used,
+            homography_method=homography_method,
+            reproj_threshold=reproj_threshold,
+            find_homography_options=find_homography_options,
+            log_keys=log_keys,
+        )
 
-        # Initialize the log
-        super().__init__(log_keys)
+        super(ImageAligner, self).__init__(
+            fill_value=fill_value,
+            outline=outline,
+        )
 
     def process(self, src_img, dst_img):
 
