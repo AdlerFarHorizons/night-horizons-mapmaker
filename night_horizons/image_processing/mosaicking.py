@@ -670,14 +670,16 @@ class SequentialMosaicker(BaseMosaicker):
 
 class MosaickerRowTransformer(BaseRowProcessor):
 
-    def __init__(self, image_processor=None, dtype: type = np.uint8):
+    def __init__(
+        self,
+        image_processor,
+        dtype: type = np.uint8,
+        log_keys: list[str] = [],
+    ):
 
-        if image_processor is None:
-            self.image_processor = processors.ImageBlender()
-        else:
-            self.image_processor = image_processor
-
+        self.image_processor = image_processor
         self.dtype = dtype
+        self.log_keys = log_keys
 
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
 
@@ -777,6 +779,22 @@ class MosaickerRowTransformer(BaseRowProcessor):
 
 
 class SequentialMosaickerRowTransformer(MosaickerRowTransformer):
+
+    def __init__(
+        self,
+        image_processor,
+        dtype: type = np.uint8,
+        log_keys: list[str] = [],
+        save_return_codes: list[str] = [],
+    ):
+
+        super().__init__(
+            image_processor=image_processor,
+            dtype=dtype,
+            log_keys=log_keys,
+        )
+
+        self.save_return_codes = save_return_codes
 
     def process(
         self,
