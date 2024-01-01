@@ -89,11 +89,14 @@ class BaseBatchProcesser(
         #       keep it as an attribute instead...
         #       One nice thing about this as is is that we don't have to
         #       go digging for where the log is saved.
-        log_filepath = self.io_manager.aux_filepaths_['log']
-        self.start_logging(
-            i_start=self.i_start_,
-            log_filepath=log_filepath,
-        )
+        if 'log' in self.io_manager.aux_filepaths_:
+            self.log_filepath_ = self.io_manager.aux_filepaths_['log']
+            self.start_logging(
+                i_start=self.i_start_,
+                log_filepath=self.log_filepath_,
+            )
+        else:
+            self.start_logging()
 
         # Resources contains global variables that will be available
         # throughout image processing.
@@ -125,7 +128,8 @@ class BaseBatchProcesser(
             # Update and save the log
             # TODO: We probably don't have to write every loop...
             self.logs.append(self.row_processor.log)
-            self.write_log(log_filepath)
+            if hasattr(self, 'log_filepath_'):
+                self.write_log(self.log_filepath_)
 
         X_t = self.postprocess(X_t, resources)
 
@@ -219,8 +223,6 @@ class BaseRowProcessor(utils.LoggerMixin, ABC):
         Returns
         -------
         '''
-
-        self.start_logging()
 
         # Get data
         src = self.get_src(i, row, resources)
