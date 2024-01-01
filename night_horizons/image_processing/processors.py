@@ -144,7 +144,7 @@ class ImageAligner(BaseImageProcessor):
         # Warp image
         warped_img = self.warp(src_img, dst_img, results['M'])
 
-        results['warped_img'] = warped_img
+        results['warped_image'] = warped_img
 
         return results
 
@@ -373,10 +373,11 @@ class ImageAlignerBlender(ImageAligner, ImageBlender):
         warped_img = self.warp(src_img, dst_img, results['M'])
 
         # Blend images
-        blended_img = self.blend(
-            warped_img, dst_img, outline=self.outline)
+        blended_img = self.blend(warped_img, dst_img)
 
-        results['blended_img'] = blended_img
+        results['blended_image'] = blended_img
+
+        return results
 
 
 class ImageProcessorQueue:
