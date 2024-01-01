@@ -366,6 +366,11 @@ class LoggerMixin:
     for identify blackbox parameters that correlated with successful
     (or poor) results.
 
+    NOTE: It is tempting to refactor this to use dependency injection,
+        but in practice that requires one more object to be passed around,
+        and for something as pervasive as the logger, that's a lot of
+        boilerplate. I think it's better to just use a mixin.
+
     Parameters
     ----------
     Returns
@@ -378,8 +383,17 @@ class LoggerMixin:
     ):
         self.log_keys = log_keys
 
-    def start_logging(self):
-        self.log = {}
+    @property
+    def log(self):
+        '''We create the log on the fly so that it's not stored in memory.
+        '''
+        if not hasattr(self, '_log'):
+            self._log = {}
+        return self._log
+
+    @log.setter
+    def log(self, value):
+        self._log = value
 
     def update_log(self, new_dict: dict, target: dict = None):
 
@@ -399,7 +413,7 @@ class LoggerMixin:
 
 class LoopLoggerMixin(LoggerMixin):
 
-    def start_logging(self, i_start: int, log_filepath: str):
+    def start_logging(self, i_start: int = 0, log_filepath: str = None):
         '''
         Parameters
         ----------
@@ -418,11 +432,13 @@ class LoopLoggerMixin(LoggerMixin):
             Each should be treated as "read-only".
         '''
 
+        # It's harder to create the log via properties when possibly loading
+        # from a file.
         self.log = {}
         self.logs = []
 
         # Open the log if available
-        if os.path.isfile(log_filepath):
+        if isinstance(log_filepath, str) and os.path.isfile(log_filepath):
             log_df = pd.read_csv(log_filepath, index_col=0)
 
             # Format the stored logs
