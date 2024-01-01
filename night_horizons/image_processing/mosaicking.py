@@ -30,7 +30,7 @@ from .. import (
 )
 
 
-class BaseMosaicker(BaseBatchProcesser):
+class Mosaicker(BaseBatchProcesser):
     '''Assemble a mosaic from georeferenced images.
 
     TODO: filepath is a data-dependent parameter, so it really should be
@@ -534,7 +534,7 @@ class BaseMosaicker(BaseBatchProcesser):
 #         )
 
 
-class SequentialMosaicker(BaseMosaicker):
+class SequentialMosaicker(Mosaicker):
 
     def __init__(
         self,
@@ -668,6 +668,8 @@ class SequentialMosaicker(BaseMosaicker):
         return y_pred
 
 
+# TODO: See if this can avoid being a subclass.
+#       What are the essential features of this class that makes it necessary?
 class MosaickerRowTransformer(BaseRowProcessor):
 
     def __init__(
@@ -835,13 +837,6 @@ class SequentialMosaickerRowTransformer(MosaickerRowTransformer):
 
         # Superclass call stores the image
         row = super().store_results(i, row, resources, results)
-
-        # Update y_pred
-        if results['return_code'] == 'success':
-            row['x_off', 'y_off', 'x_size', 'y_size'] = [
-                results['x_off'], results['y_off'],
-                results['x_size'], results['y_size']
-            ]
 
         # Save failed images for later debugging
         # TODO: Currently the format of the saved images is a little weird.
