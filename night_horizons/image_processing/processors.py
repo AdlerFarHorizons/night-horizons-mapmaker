@@ -40,8 +40,6 @@ class ImageBlender(ImageProcessor):
 
     def process(self, src_img, dst_img):
 
-        self.start_logging()
-
         # Resize the source image
         src_img_resized = cv2.resize(
             src_img,
