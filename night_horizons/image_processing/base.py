@@ -1,16 +1,12 @@
-from abc import ABC, abstractmethod
-import time
 import tracemalloc
 from typing import Tuple, Union
 
-import cv2
-import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 import tqdm
 
-from .. import utils, exceptions
+from .. import utils
 
 
 class BatchProcessor(
@@ -192,129 +188,3 @@ class BatchProcessor(
         return X
 
 
-class BaseRowProcessor(utils.LoggerMixin, ABC):
-    '''This could probably be framed as an sklearn estimator too, but let's
-    not do that until necessary.
-
-    Parameters
-    ----------
-    Returns
-    -------
-    '''
-
-    def __init__(self, image_processor, log_keys: list[str] = []):
-
-        self.image_processor = image_processor
-        self.log_keys = log_keys
-
-    def fit(self, batch_processor):
-        '''Copy over fit values from the batch processor.
-
-        Parameters
-        ----------
-        Returns
-        -------
-        '''
-
-        for attr_name in batch_processor.__dir__():
-            # Fit variables have names ending with an underscore
-            if (attr_name[-1] != '_') or (attr_name[-2:] == '__'):
-                continue
-            attr_value = getattr(batch_processor, attr_name)
-            setattr(self, attr_name, attr_value)
-
-        return self
-
-    def transform_row(
-        self,
-        i: int,
-        row: pd.Series,
-        resources: dict,
-    ) -> pd.Series:
-        '''Generally speaking, src refers to our new data, and dst refers to
-        the existing data (including if the existing data was just updated
-        with src in a previous row).
-
-        Parameters
-        ----------
-        Returns
-        -------
-        '''
-
-        # Get data
-        src = self.get_src(i, row, resources)
-        dst = self.get_dst(i, row, resources)
-
-        # Main function that changes depending on parent class
-        results = self.safe_process(i, row, resources, src, dst)
-
-        row = self.store_results(i, row, resources, results)
-
-        return row
-
-    def safe_process(self, i, row, resources, src, dst):
-        '''
-        Parameters
-        ----------
-        Returns
-        -------
-            results:
-                blended_img: Combined image. Not always returned.
-                M: Homography transform. Not always returned.
-                src_kp: Keypoints for the src image. Not always returned.
-                src_des: KP descriptors for the src image. Not always returned.
-                duration: Time spent.
-        '''
-
-        start = time.time()
-
-        results = {}
-        return_code = 'not_set'
-        try:
-            results = self.process(i, row, resources, src, dst)
-            return_code = 'success'
-        except cv2.error:
-            return_code = 'opencv_err'
-        except exceptions.HomographyTransformError:
-            return_code = 'bad_det'
-        except exceptions.SrcDarkFrameError:
-            return_code = 'dark_frame'
-        except exceptions.DstDarkFrameError:
-            return_code = 'dst_dark_frame'
-        except np.linalg.LinAlgError:
-            return_code = 'linalg_err'
-
-        duration = time.time() - start
-        results['duration'] = duration
-        results['return_code'] = return_code
-
-        return results
-
-    @abstractmethod
-    def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
-        pass
-
-    @abstractmethod
-    def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:
-        pass
-
-    @abstractmethod
-    def process(
-        self,
-        i: int,
-        row: pd.Series,
-        resources: dict,
-        src: dict,
-        dst: dict,
-    ) -> dict:
-        pass
-
-    @abstractmethod
-    def store_results(
-        self,
-        i: int,
-        row: pd.Series,
-        resources: dict,
-        results: dict,
-    ) -> pd.Series:
-        pass

@@ -13,7 +13,7 @@ import yaml
 # TODO: Remove this when the draft is done.
 
 from . import io_management, pipelines, preprocessors
-from .image_processing import base, mosaicking, processors
+from .image_processing import mosaicking, operators, processors
 
 
 class DIContainer:
@@ -135,17 +135,17 @@ class MosaickerFactory(DIContainer):
         # Image processor typical for mosaickers (constructor defaults are ok)
         self.register_service(
             'image_blender',
-            processors.ImageBlender,
+            operators.ImageBlender,
         )
 
         # And the row transformer typical for mosaickers
         def make_mosaicker_row_processor(
-            image_processor: processors.BaseImageProcessor = None,
+            image_processor: operators.BaseImageOperator = None,
             *args, **kwargs
         ):
             if image_processor is None:
                 image_processor = self.get_service('image_blender')
-            return mosaicking.MosaickerRowTransformer(
+            return processors.MosaickerRowTransformer(
                 image_processor=image_processor,
                 *args, **kwargs
             )
@@ -157,7 +157,7 @@ class MosaickerFactory(DIContainer):
         # Finally, the mosaicker itself
         def make_mosaicker(
             io_manager: io_management.IOManager = None,
-            row_processor: base.BaseRowProcessor = None,
+            row_processor: processors.Processor = None,
             *args, **kwargs
         ):
             if io_manager is None:
@@ -233,7 +233,7 @@ class SequentialMosaickerFactory(DIContainer):
                 feature_detector = self.get_service('feature_detector')
             if feature_matcher is None:
                 feature_matcher = self.get_service('feature_matcher')
-            return processors.ImageAlignerBlender(
+            return operators.ImageAlignerBlender(
                 image_transformer=image_transformer,
                 feature_detector=feature_detector,
                 feature_matcher=feature_matcher,
@@ -246,17 +246,17 @@ class SequentialMosaickerFactory(DIContainer):
         # For the training mosaic
         self.register_service(
             'image_blender',
-            processors.ImageBlender,
+            operators.ImageBlender,
         )
 
         # And the row transformer typical for mosaickers
         def make_mosaicker_row_processor_train(
-            image_processor: processors.BaseImageProcessor = None,
+            image_processor: operators.BaseImageOperator = None,
             *args, **kwargs
         ):
             if image_processor is None:
                 image_processor = self.get_service('image_blender')
-            return mosaicking.MosaickerRowTransformer(
+            return processors.MosaickerRowTransformer(
                 image_processor=image_processor,
                 *args, **kwargs
             )
@@ -267,12 +267,12 @@ class SequentialMosaickerFactory(DIContainer):
 
         # And the row transformer used for the sequential mosaicker
         def make_mosaicker_row_processor(
-            image_processor: processors.BaseImageProcessor = None,
+            image_processor: operators.BaseImageOperator = None,
             *args, **kwargs
         ):
             if image_processor is None:
                 image_processor = self.get_service('image_processor')
-            return mosaicking.SequentialMosaickerRowTransformer(
+            return processors.SequentialMosaickerRowTransformer(
                 image_processor=image_processor,
                 *args, **kwargs
             )
@@ -283,7 +283,7 @@ class SequentialMosaickerFactory(DIContainer):
 
         def make_mosaicker_train(
             io_manager_train: io_management.IOManager = None,
-            row_processor_train: base.BaseRowProcessor = None,
+            row_processor_train: processors.Processor = None,
             *args, **kwargs
         ):
             if io_manager_train is None:
@@ -304,7 +304,7 @@ class SequentialMosaickerFactory(DIContainer):
         # Finally, the mosaicker itself
         def make_mosaicker(
             io_manager: io_management.IOManager = None,
-            row_processor: base.BaseRowProcessor = None,
+            row_processor: processors.Processor = None,
             mosaicker_train: mosaicking.Mosaicker = None,
             *args, **kwargs
         ):
