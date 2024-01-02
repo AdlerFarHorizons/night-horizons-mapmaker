@@ -1,11 +1,12 @@
 from abc import abstractmethod
+import copy
 import glob
 import inspect
 import os
 import pickle
 import re
 import shutil
-from typing import Union
+from typing import Tuple, Union
 
 from osgeo import gdal
 import yaml
@@ -33,6 +34,9 @@ class IOManager:
     - Checkpoint files - DONE
     - Save auxiliary files (settings, logs, etc.) - DONE (kinda)
 
+    NOTE: This *could* be broken into an InputFileManager, an
+    OutputFileManager, and a DataIOManager, but that seems like overkill.
+
     Parameters
     ----------
     Returns
@@ -41,39 +45,53 @@ class IOManager:
 
     def __init__(
         self,
-        input_file_manager,
-        output_file_manager,
-        data_ios: list[data_io.DataIO],
+        input_dir: str,
+        input_description: dict[dict],
+        output_dir: str,
+        output_description: dict[str],
+        file_exists: str = 'error',
+        file_exists_key: str = None,
+        checkpoint_freq: int = 100,
+        checkpoint_subdir: str = 'checkpoints',
+        data_ios: list[data_io.DataIO] = [],
     ) -> None:
-        pass
 
+        self.input_dir = input_dir
+        self.output_dir = output_dir
+        self.output_description = output_description
+        self.file_exists_key = file_exists_key
+        self.file_exists = file_exists
+        self.checkpoint_freq = checkpoint_freq
+        self.checkpoint_subdir = checkpoint_subdir
+        self.data_ios = data_ios
 
-class InputFileManager:
+        self.input_filepaths, self.input_description = \
+            self.find_input_files(input_description)
 
-    def __init__(self, in_dir: str, **filetree_description) -> None:
-        self.in_dir = in_dir
-        self.filetree_description = filetree_description
+    def find_input_files(
+        self,
+        input_description: dict[dict],
+    ) -> Tuple[dict[pd.Series], dict[dict]]:
 
-        # Validate filetree_description
-        for key, descr in filetree_description.items():
+        # Validate and store input description
+        modified_input_description = copy.deepcopy(input_description)
+        for key, descr in modified_input_description.items():
             if 'directory' not in descr:
                 raise ValueError(
-                    f'filetree_description[{key}] must have a "directory" key'
+                    f'input_description[{key}] must have a "directory" key'
                 )
-            self.filetree_description[key]['directory'] = \
-                os.path.join(self.in_dir, descr['directory'])
+            modified_input_description[key]['directory'] = \
+                os.path.join(self.input_dir, descr['directory'])
 
         # Find files
-        self.filepaths = {
-            key: self.find_files(key)
-            for key in self.filetree_description.keys()
+        input_filepaths = {
+            key: self.find_files(**item)
+            for key, item in modified_input_description.items()
         }
 
-    def find_files(self, key: str) -> pd.Series:
+        return input_filepaths, modified_input_description
 
-        return self._find_files(**self.filetree_description[key])
-
-    def _find_files(
+    def find_files(
         self,
         directory: str,
         extension: Union[str, list[str]] = None,
@@ -121,28 +139,6 @@ class InputFileManager:
         fps.index = np.arange(fps.size)
 
         return fps
-
-
-class OutputFileManager:
-    '''
-    '''
-
-    def __init__(
-        self,
-        out_dir: str,
-        filename: str,
-        file_exists: str = 'error',
-        aux_files: dict[str] = {},
-        checkpoint_freq: int = 100,
-        checkpoint_subdir: str = 'checkpoints',
-    ):
-
-        self.out_dir = out_dir
-        self.filename = filename
-        self.file_exists = file_exists
-        self.aux_files = aux_files
-        self.checkpoint_freq = checkpoint_freq
-        self.checkpoint_subdir = checkpoint_subdir
 
     # TODO: Maybe remove trailing underscores since they're not directly
     # attrs of a fit estimator?
@@ -254,7 +250,7 @@ class OutputFileManager:
         return i_resume, loaded_data
 
 
-class MosaicIOManager(OutputFileManager):
+class MosaicIOManager(IOManager):
 
     def __init__(
         self,
