@@ -137,3 +137,17 @@ class TestOutputFileManager(unittest.TestCase):
         self.file_manager_out.prepare_filetree()
         assert os.path.exists(self.out_dir)
         assert os.path.exists(new_outdir)
+
+    def test_test_search_for_checkpoint(self):
+
+        self.file_manager_out.prepare_filetree()
+
+        checkpoint_dir = os.path.join(self.out_dir, 'checkpoints')
+        filepath = os.path.join(checkpoint_dir, 'mosaic_i000013.tiff')
+        other_filepath = os.path.join(checkpoint_dir, 'mosaic_i000003.tiff')
+        open(filepath, 'w').close()
+        open(other_filepath, 'w').close()
+
+        i, filename = self.file_manager_out.search_for_checkpoint()
+        assert i == 13 + 1
+        assert filename == os.path.basename(filepath)
