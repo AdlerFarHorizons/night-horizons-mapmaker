@@ -221,6 +221,7 @@ class OutputFileManager:
         )
         pattern = re.compile(search_pattern)
         possible_files = os.listdir(self.checkpoint_subdir_)
+        filename_start = None
         for j, filename in enumerate(possible_files):
             match = pattern.search(filename)
             if not match:
@@ -229,13 +230,13 @@ class OutputFileManager:
             number = int(match.group(1))
             if number > i_start:
                 i_start = number
-                filename = possible_files[j]
+                filename_start = possible_files[j]
 
         # We don't want to start on the same loop that was saved, but the
         # one after
         i_start += 1
 
-        return i_start, filename
+        return i_start, filename_start
 
     @abstractmethod
     def save_to_checkpoint(self, i):
