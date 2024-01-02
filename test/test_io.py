@@ -125,3 +125,15 @@ class TestOutputFileManager(unittest.TestCase):
         assert os.path.exists(self.out_dir)
         assert not os.path.exists(filepath)
 
+    def test_prepare_filetree_new(self):
+
+        self.file_manager_out.file_exists = 'new'
+
+        filepath = os.path.join(self.out_dir, 'mosaic.tiff')
+        os.makedirs(self.out_dir)
+        open(filepath, 'w').close()
+        new_outdir = './test/test_data/mosaics/temp_v000'
+
+        self.file_manager_out.prepare_filetree()
+        assert os.path.exists(self.out_dir)
+        assert os.path.exists(new_outdir)
