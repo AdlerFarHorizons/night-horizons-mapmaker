@@ -98,14 +98,6 @@ class TestOutput(unittest.TestCase):
         if os.path.exists(self.output_dir):
             shutil.rmtree(self.output_dir)
 
-        self.io_manager = IOManager(
-            input_dir=self.input_dir,
-            input_description={},
-            output_dir=self.output_dir,
-            output_description={'mosaic': 'mosaic.tiff'},
-            file_exists='error',
-        )
-
     def tearDown(self):
 
         # Don't leave a trace
@@ -114,7 +106,14 @@ class TestOutput(unittest.TestCase):
 
     def test_prepare_filetree(self):
 
-        self.io_manager.get_output_filepaths()
+        io_manager = IOManager(
+            input_dir=self.input_dir,
+            input_description={},
+            output_dir=self.output_dir,
+            output_description={'mosaic': 'mosaic.tiff'},
+            file_exists='error',
+        )
+
         assert os.path.exists(self.output_dir)
         assert os.path.exists(os.path.join(self.output_dir, 'checkpoints'))
 
@@ -125,36 +124,58 @@ class TestOutput(unittest.TestCase):
         open(filepath, 'w').close()
 
         with self.assertRaises(FileExistsError):
-            self.io_manager.get_output_filepaths()
+            io_manager = IOManager(
+                input_dir=self.input_dir,
+                input_description={},
+                output_dir=self.output_dir,
+                output_description={'mosaic': 'mosaic.tiff'},
+                file_exists='error',
+            )
 
     def test_prepare_filetree_overwrite(self):
-
-        self.io_manager.file_exists = 'overwrite'
 
         filepath = os.path.join(self.output_dir, 'mosaic.tiff')
         os.makedirs(self.output_dir)
         open(filepath, 'w').close()
 
-        self.io_manager.get_output_filepaths()
+        io_manager = IOManager(
+            input_dir=self.input_dir,
+            input_description={},
+            output_dir=self.output_dir,
+            output_description={'mosaic': 'mosaic.tiff'},
+            file_exists='overwrite',
+        )
+
         assert os.path.exists(self.output_dir)
         assert not os.path.exists(filepath)
 
     def test_prepare_filetree_new(self):
-
-        self.io_manager.file_exists = 'new'
 
         filepath = os.path.join(self.output_dir, 'mosaic.tiff')
         os.makedirs(self.output_dir)
         open(filepath, 'w').close()
         new_outdir = './test/test_data/mosaics/temp_v000'
 
-        self.io_manager.get_output_filepaths()
+        io_manager = IOManager(
+            input_dir=self.input_dir,
+            input_description={},
+            output_dir=self.output_dir,
+            output_description={'mosaic': 'mosaic.tiff'},
+            file_exists='new',
+        )
+
         assert os.path.exists(self.output_dir)
         assert os.path.exists(new_outdir)
 
     def test_test_search_for_checkpoint(self):
 
-        self.io_manager.get_output_filepaths()
+        io_manager = IOManager(
+            input_dir=self.input_dir,
+            input_description={},
+            output_dir=self.output_dir,
+            output_description={'mosaic': 'mosaic.tiff'},
+            file_exists='new',
+        )
 
         checkpoint_dir = os.path.join(self.output_dir, 'checkpoints')
         filepath = os.path.join(checkpoint_dir, 'mosaic_i000013.tiff')
@@ -162,6 +183,6 @@ class TestOutput(unittest.TestCase):
         open(filepath, 'w').close()
         open(other_filepath, 'w').close()
 
-        i, filename = self.io_manager.search_for_checkpoint()
+        i, filename = io_manager.search_for_checkpoint('mosaic')
         assert i == 13 + 1
         assert filename == os.path.basename(filepath)
