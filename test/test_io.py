@@ -91,6 +91,7 @@ class TestOutput(unittest.TestCase):
 
     def setUp(self):
 
+        self.input_dir = './test/test_data'
         self.output_dir = './test/test_data/mosaics/temp'
 
         # Start with a clean slate
@@ -98,8 +99,10 @@ class TestOutput(unittest.TestCase):
             shutil.rmtree(self.output_dir)
 
         self.io_manager = IOManager(
+            input_dir=self.input_dir,
+            input_description={},
             output_dir=self.output_dir,
-            filename='mosaic.tiff',
+            output_description={'mosaic': 'mosaic.tiff'},
             file_exists='error',
         )
 
@@ -111,7 +114,7 @@ class TestOutput(unittest.TestCase):
 
     def test_prepare_filetree(self):
 
-        self.io_manager.prepare_filetree()
+        self.io_manager.get_output_filepaths()
         assert os.path.exists(self.output_dir)
         assert os.path.exists(os.path.join(self.output_dir, 'checkpoints'))
 
@@ -122,7 +125,7 @@ class TestOutput(unittest.TestCase):
         open(filepath, 'w').close()
 
         with self.assertRaises(FileExistsError):
-            self.io_manager.prepare_filetree()
+            self.io_manager.get_output_filepaths()
 
     def test_prepare_filetree_overwrite(self):
 
@@ -132,7 +135,7 @@ class TestOutput(unittest.TestCase):
         os.makedirs(self.output_dir)
         open(filepath, 'w').close()
 
-        self.io_manager.prepare_filetree()
+        self.io_manager.get_output_filepaths()
         assert os.path.exists(self.output_dir)
         assert not os.path.exists(filepath)
 
@@ -145,13 +148,13 @@ class TestOutput(unittest.TestCase):
         open(filepath, 'w').close()
         new_outdir = './test/test_data/mosaics/temp_v000'
 
-        self.io_manager.prepare_filetree()
+        self.io_manager.get_output_filepaths()
         assert os.path.exists(self.output_dir)
         assert os.path.exists(new_outdir)
 
     def test_test_search_for_checkpoint(self):
 
-        self.io_manager.prepare_filetree()
+        self.io_manager.get_output_filepaths()
 
         checkpoint_dir = os.path.join(self.output_dir, 'checkpoints')
         filepath = os.path.join(checkpoint_dir, 'mosaic_i000013.tiff')
