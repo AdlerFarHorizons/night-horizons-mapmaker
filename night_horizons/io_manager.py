@@ -235,22 +235,6 @@ class IOManager:
 
         return checkpoint_filepatterns, checkpoint_dir
 
-    def save_settings(self, obj):
-
-        fullargspec = inspect.getfullargspec(type(obj))
-        settings = {}
-        for setting in fullargspec.args:
-            if setting == 'self':
-                continue
-            value = getattr(obj, setting)
-            try:
-                pickle.dumps(value)
-            except TypeError:
-                value = 'no string repr'
-            settings[setting] = value
-        with open(self.output_filepaths['settings'], 'w') as file:
-            yaml.dump(settings, file)
-
     def search_for_checkpoint(self, key: str):
 
         checkpoint_filepattern = self.checkpoint_filepatterns[key]

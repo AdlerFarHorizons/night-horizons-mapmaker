@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+import inspect
+import pickle
 
 import cv2
 from osgeo import gdal
@@ -46,3 +48,24 @@ class TabularDataIO(DataIO):
         df = pd.read_csv(filepath)
         data = df.values
         return data
+
+
+class YAMLDataIO(DataIO):
+    def save_data(self, data, filepath):
+
+        fullargspec = inspect.getfullargspec(type(obj))
+        settings = {}
+        for setting in fullargspec.args:
+            if setting == 'self':
+                continue
+            value = getattr(obj, setting)
+            try:
+                pickle.dumps(value)
+            except TypeError:
+                value = 'no string repr'
+            settings[setting] = value
+        with open(self.output_filepaths['settings'], 'w') as file:
+            yaml.dump(settings, file)
+
+    def load_data(self, filepath):
+        pass
