@@ -156,7 +156,7 @@ class MosaickerFactory(DIContainer):
 
         # Finally, the mosaicker itself
         def make_mosaicker(
-            io_manager: io.IOManager = None,
+            io_manager: io.OutputFileManager = None,
             row_processor: processors.Processor = None,
             *args, **kwargs
         ):
@@ -282,7 +282,7 @@ class SequentialMosaickerFactory(DIContainer):
         )
 
         def make_mosaicker_train(
-            io_manager_train: io.IOManager = None,
+            io_manager_train: io.OutputFileManager = None,
             row_processor_train: processors.Processor = None,
             *args, **kwargs
         ):
@@ -303,7 +303,7 @@ class SequentialMosaickerFactory(DIContainer):
 
         # Finally, the mosaicker itself
         def make_mosaicker(
-            io_manager: io.IOManager = None,
+            io_manager: io.OutputFileManager = None,
             row_processor: processors.Processor = None,
             mosaicker_train: mosaicking.Mosaicker = None,
             *args, **kwargs

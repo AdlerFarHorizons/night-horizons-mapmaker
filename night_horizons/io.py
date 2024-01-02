@@ -1,3 +1,15 @@
+from abc import abstractmethod
+import glob
+import inspect
+import os
+import pickle
+import re
+import shutil
+from typing import Union
+
+from osgeo import gdal
+import yaml
+
 import numpy as np
 import pandas as pd
 import scipy
@@ -6,18 +18,92 @@ import scipy
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from abc import abstractmethod
-import inspect
-import os
-import pickle
-import re
-import shutil
 
-from osgeo import gdal
-import yaml
+class IOManager:
+    '''
+    Things IOManager should do:
+
+    - Get full paths given relative paths
+    - Identify all valid files in a directory and subdirectories
+    - Check if a file exists, and act accordingly (overwrite, etc.) - DONE
+    - Read files
+    - Save files
+    - Checkpoint files - DONE
+    - Save auxiliary files (settings, logs, etc.) - DONE (kinda)
+
+    Parameters
+    ----------
+    Returns
+    -------
+    '''
+
+    def __init__(
+        self,
+        work_dir: str,
+        input_file_manager,
+        output_file_manager,
+    ) -> None:
+        pass
 
 
-class OldFileManager:
+class InputFileManager:
+
+    def __init__(self, in_dir: str, **filetree_description) -> None:
+        pass
+
+    def find_files(
+        self,
+        directory: str,
+        extension: Union[str, list[str]] = None,
+        pattern: str = None,
+    ) -> pd.Series:
+        '''
+        Parameters
+        ----------
+            directory:
+                Directory containing the data.
+            extension:
+                What filetypes to include.
+    
+        Returns
+        -------
+            filepaths:
+                Data filepaths.
+        '''
+
+        # When all files
+        if extension is None:
+            glob_pattern = os.path.join(directory, '**', '*.*')
+            fps = glob.glob(glob_pattern, recursive=True)
+        # When a single extension
+        elif isinstance(extension, str):
+            glob_pattern = os.path.join(directory, '**', f'*{extension}')
+            fps = glob.glob(glob_pattern, recursive=True)
+        # When a list of extensions
+        else:
+            try:
+                fps = []
+                for ext in extension:
+                    glob_pattern = os.path.join(directory, '**', f'*{ext}')
+                    fps.extend(glob.glob(glob_pattern, recursive=True))
+            except TypeError:
+                raise TypeError(f'Unexpected type for extension: {extension}')
+
+        fps = pd.Series(fps)
+
+        # Filter to select particular files
+        if pattern is not None:
+            contains_pattern = fps.str.findall(pattern).str[0].notna()
+            fps = fps.loc[contains_pattern]
+
+        fps.index = np.arange(fps.size)
+
+        return fps
+
+
+class OutputFileManager:
+    '''
+    '''
 
     def __init__(
         self,
@@ -145,7 +231,7 @@ class OldFileManager:
         return i_resume, loaded_data
 
 
-class MosaicIOManager(IOManager):
+class MosaicIOManager(OutputFileManager):
 
     def __init__(
         self,
@@ -230,6 +316,17 @@ class MosaicIOManager(IOManager):
 
 
 class FileManager:
+    '''
+    Things IOManager should do:
+
+    - Get full paths given relative paths
+    - Identify all valid files in a directory and subdirectories
+    - Check if a file exists, and act accordingly (overwrite, skip, etc.)
+    - Read files
+    - Save files
+    - Checkpoint files
+    - Save auxiliary files (settings, logs, etc.)
+    '''
 
     def __init__(
         self,
