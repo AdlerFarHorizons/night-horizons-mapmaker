@@ -49,9 +49,22 @@ class IOManager:
 class InputFileManager:
 
     def __init__(self, in_dir: str, **filetree_description) -> None:
-        pass
+        self.in_dir = in_dir
+        self.filetree_description = filetree_description
 
-    def find_files(
+        for key, descr in filetree_description.items():
+            if 'directory' not in descr:
+                raise ValueError(
+                    f'filetree_description[{key}] must have a "directory" key'
+                )
+            self.filetree_description[key]['directory'] = \
+                os.path.join(self.in_dir, descr['directory'])
+
+    def find_files(self, key: str) -> pd.Series:
+
+        return self._find_files(**self.filetree_description[key])
+
+    def _find_files(
         self,
         directory: str,
         extension: Union[str, list[str]] = None,
