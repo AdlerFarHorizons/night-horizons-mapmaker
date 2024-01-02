@@ -213,7 +213,7 @@ class OutputFileManager:
     def search_for_checkpoint(self):
 
         # Look for checkpoint files
-        i_start = -1
+        i_resume = -1
         filename = None
         search_pattern = self.checkpoint_filepattern_.replace(
             r'{:06d}',
@@ -228,15 +228,15 @@ class OutputFileManager:
                 continue
 
             number = int(match.group(1))
-            if number > i_start:
-                i_start = number
+            if number > i_resume:
+                i_resume = number
                 filename_start = possible_files[j]
 
         # We don't want to start on the same loop that was saved, but the
         # one after
-        i_start += 1
+        i_resume += 1
 
-        return i_start, filename_start
+        return i_resume, filename_start
 
     @abstractmethod
     def save_to_checkpoint(self, i):
