@@ -103,3 +103,12 @@ class TestOutputFileManager(unittest.TestCase):
         self.file_manager_out.prepare_filetree()
         assert os.path.exists(self.out_dir)
         assert os.path.exists(os.path.join(self.out_dir, 'checkpoints'))
+
+    def test_prepare_filetree_error(self):
+
+        filepath = os.path.join(self.out_dir, 'mosaic.tiff')
+        os.makedirs(self.out_dir)
+        open(filepath, 'w').close()
+
+        with self.assertRaises(FileExistsError):
+            self.file_manager_out.prepare_filetree()
