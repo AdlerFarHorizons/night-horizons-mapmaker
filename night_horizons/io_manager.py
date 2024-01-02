@@ -50,23 +50,43 @@ class IOManager:
         output_dir: str,
         output_description: dict[str],
         file_exists: str = 'error',
-        file_exists_key: str = None,
-        checkpoint_freq: int = 100,
+        tracked_file_key: str = None,
         checkpoint_subdir: str = 'checkpoints',
+        checkpoint_tag: str = '_i{:06d}',
+        checkpoint_freq: int = 100,
         data_ios: list[data_io.DataIO] = [],
     ) -> None:
 
         self.input_dir = input_dir
-        self.output_dir = output_dir
         self.output_description = output_description
-        self.file_exists_key = file_exists_key
         self.file_exists = file_exists
-        self.checkpoint_freq = checkpoint_freq
+        self.tracked_file_key = tracked_file_key
         self.checkpoint_subdir = checkpoint_subdir
+        self.checkpoint_tag = checkpoint_tag
+        self.checkpoint_freq = checkpoint_freq
         self.data_ios = data_ios
 
+        # Process input filetree
         self.input_filepaths, self.input_description = \
             self.find_input_files(input_description)
+
+        # Process output filetree
+        self.output_filepaths, self.output_dir = \
+            self.get_output_filepaths(
+                output_dir=output_dir,
+                output_description=output_description,
+                file_exists=file_exists,
+                tracked_file_key=tracked_file_key,
+            )
+
+        # And finally, the checkpoint info
+        self.checkpoint_filepatterns, self.checkpoint_dir = \
+            self.get_checkpoint_filepatterns(
+                output_dir=self.output_dir,
+                output_filepaths=self.output_filepaths,
+                checkpoint_subdir=self.checkpoint_subdir,
+                checkpoint_tag=self.checkpoint_tag,
+            )
 
     def find_input_files(
         self,
@@ -104,7 +124,7 @@ class IOManager:
                 Directory containing the data.
             extension:
                 What filetypes to include.
-    
+
         Returns
         -------
             filepaths:
@@ -140,55 +160,81 @@ class IOManager:
 
         return fps
 
-    # TODO: Maybe remove trailing underscores since they're not directly
-    # attrs of a fit estimator?
-    def prepare_filetree(self):
+    def get_output_filepaths(
+        self,
+        output_dir: str,
+        output_description: dict[str],
+        file_exists: str,
+        tracked_file_key: str,
+    ) -> Tuple[dict[str], str]:
+
+        # Exit early if there's nothing to do
+        if len(output_description) == 0:
+            return {}, output_dir
+
+        # Default to the first key
+        if tracked_file_key is None:
+            tracked_file_key = list(output_description.keys())[0]
+        tracked_filename = output_description[tracked_file_key]
 
         # Main filepath parameters
-        self.out_dir_ = self.out_dir
-        self.filepath_ = os.path.join(self.out_dir_, self.filename)
-
-        # Flexible file-handling. TODO: Maybe overkill?
-        if os.path.isfile(self.filepath_):
+        tracked_filepath = os.path.join(output_dir, tracked_filename)
+        if os.path.isfile(tracked_filepath):
 
             # Standard, simple options
-            if self.file_exists == 'error':
+            if file_exists == 'error':
                 raise FileExistsError('File already exists at destination.')
-            elif self.file_exists in ['pass', 'load']:
+            elif file_exists in ['pass', 'load']:
                 pass
-            elif self.file_exists == 'overwrite':
-                shutil.rmtree(self.out_dir_)
+            elif file_exists == 'overwrite':
+                shutil.rmtree(output_dir)
             # Create a new file with a new number appended
-            elif self.file_exists == 'new':
-                out_dir_pattern = self.out_dir_ + '_v{:03d}'
+            elif file_exists == 'new':
+                out_dir_pattern = output_dir + '_v{:03d}'
                 i = 0
-                while os.path.isfile(self.filepath_):
-                    self.out_dir_ = out_dir_pattern.format(i)
-                    self.filepath_ = os.path.join(self.out_dir_, self.filename)
+                while os.path.isfile(tracked_filepath):
+                    output_dir = out_dir_pattern.format(i)
                     i += 1
             else:
                 raise ValueError(
                     'Unrecognized value for filepath, '
-                    f'filepath={self.filepath_}'
+                    f'filepath={tracked_filepath}'
                 )
 
-        # Checkpoints file handling
-        self.checkpoint_subdir_ = os.path.join(
-            self.out_dir_, self.checkpoint_subdir)
-        base, ext = os.path.splitext(self.filename)
-        i_tag = '_i{:06d}'
-        self.checkpoint_filepattern_ = base + i_tag + ext
-
         # Auxiliary files
-        self.aux_filepaths_ = {}
-        for key, filename in self.aux_files.items():
-            self.aux_filepaths_[key] = os.path.join(self.out_dir_, filename)
+        output_filepaths = {}
+        for key, tracked_filename in output_description.items():
+            output_filepaths[key] = os.path.join(
+                output_dir,
+                tracked_filename,
+            )
 
         # Ensure directories exist
-        os.makedirs(self.out_dir_, exist_ok=True)
-        os.makedirs(self.checkpoint_subdir_, exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
 
-        return self.out_dir_, self.filepath_
+        return output_filepaths, output_dir
+
+    def get_checkpoint_filepatterns(
+        self,
+        output_dir: str,
+        output_filepaths: dict[str],
+        checkpoint_subdir: str,
+        checkpoint_tag: str,
+    ) -> Tuple[dict[str], str]:
+
+        checkpoint_dir = os.path.join(output_dir, checkpoint_subdir)
+        os.makedirs(checkpoint_dir, exist_ok=True)
+
+        # Create checkpoint filepatterns
+        checkpoint_filepatterns = {}
+        for key, filepath in output_filepaths.items():
+            base, ext = os.path.splitext(os.path.basename(filepath))
+            checkpoint_filepatterns[key] = os.path.join(
+                checkpoint_dir,
+                base + checkpoint_tag + ext,
+            )
+
+        return checkpoint_filepatterns, checkpoint_dir
 
     def save_settings(self, obj):
 
@@ -203,7 +249,7 @@ class IOManager:
             except TypeError:
                 value = 'no string repr'
             settings[setting] = value
-        with open(self.aux_filepaths_['settings'], 'w') as file:
+        with open(self.output_filepaths['settings'], 'w') as file:
             yaml.dump(settings, file)
 
     def search_for_checkpoint(self):
@@ -211,12 +257,12 @@ class IOManager:
         # Look for checkpoint files
         i_resume = -1
         filename = None
-        search_pattern = self.checkpoint_filepattern_.replace(
+        search_pattern = self.checkpoint_filepattern.replace(
             r'{:06d}',
             '(\\d{6})\\',
         )
         pattern = re.compile(search_pattern)
-        possible_files = os.listdir(self.checkpoint_subdir_)
+        possible_files = os.listdir(self.checkpoint_subdir)
         filename_start = None
         for j, filename in enumerate(possible_files):
             match = pattern.search(filename)
@@ -284,7 +330,7 @@ class MosaicIOManager(IOManager):
 
     def open_dataset(self):
 
-        return gdal.Open(self.filepath_, gdal.GA_Update)
+        return gdal.Open(self.tracked_filepath, gdal.GA_Update)
 
     def save_to_checkpoint(self, i, dataset, y_pred=None):
 
@@ -300,14 +346,14 @@ class MosaicIOManager(IOManager):
 
         # Make checkpoint file by copying the dataset
         checkpoint_fp = os.path.join(
-            self.checkpoint_subdir_,
-            self.checkpoint_filepattern_.format(i),
+            self.checkpoint_subdir,
+            self.checkpoint_filepattern.format(i),
         )
-        shutil.copy(self.filepath_, checkpoint_fp)
+        shutil.copy(self.tracked_filepath, checkpoint_fp)
 
         # Store auxiliary files
         if y_pred is not None:
-            y_pred.to_csv(self.aux_filepaths_['y_pred'])
+            y_pred.to_csv(self.output_filepaths['y_pred'])
 
         # Re-open dataset
         dataset = self.open_dataset()
@@ -322,11 +368,11 @@ class MosaicIOManager(IOManager):
         print(f'Loading checkpoint file for i={i_checkpoint}')
 
         # Copy checkpoint dataset
-        filepath = os.path.join(self.checkpoint_subdir_, checkpoint_filename)
-        shutil.copy(filepath, self.filepath_)
+        filepath = os.path.join(self.checkpoint_subdir, checkpoint_filename)
+        shutil.copy(filepath, self.tracked_filepath)
 
         # And load the predictions
-        y_pred = pd.read_csv(self.aux_filepaths_['y_pred'], index_col=0)
+        y_pred = pd.read_csv(self.output_filepaths['y_pred'], index_col=0)
 
         loaded_data = {
             'y_pred': y_pred,
@@ -357,8 +403,8 @@ class FileManager:
     ):
 
         self.out_dir = work_dir
-        self.filename = rel_path
-        self.file_exists = file_exists
+        filename = rel_path
+        file_exists = file_exists
         self.checkpoint_freq = checkpoint_freq
         self.checkpoint_subdir = checkpoint_subdir
 
@@ -368,25 +414,25 @@ class FileManager:
 
         # Main filepath parameters
         self.out_dir_ = self.out_dir
-        self.filepath_ = os.path.join(self.out_dir_, self.filename)
+        self.filepath_ = os.path.join(self.out_dir_, filename)
 
         # Flexible file-handling. TODO: Maybe overkill?
         if os.path.isfile(self.filepath_):
 
             # Standard, simple options
-            if self.file_exists == 'error':
+            if file_exists == 'error':
                 raise FileExistsError('File already exists at destination.')
-            elif self.file_exists in ['pass', 'load']:
+            elif file_exists in ['pass', 'load']:
                 pass
-            elif self.file_exists == 'overwrite':
+            elif file_exists == 'overwrite':
                 shutil.rmtree(self.out_dir_)
             # Create a new file with a new number appended
-            elif self.file_exists == 'new':
+            elif file_exists == 'new':
                 out_dir_pattern = self.out_dir_ + '_v{:03d}'
                 i = 0
                 while os.path.isfile(self.filepath_):
                     self.out_dir_ = out_dir_pattern.format(i)
-                    self.filepath_ = os.path.join(self.out_dir_, self.filename)
+                    self.filepath_ = os.path.join(self.out_dir_, filename)
                     i += 1
             else:
                 raise ValueError(
@@ -397,7 +443,7 @@ class FileManager:
         # Checkpoints file handling
         self.checkpoint_subdir_ = os.path.join(
             self.out_dir_, self.checkpoint_subdir)
-        base, ext = os.path.splitext(self.filename)
+        base, ext = os.path.splitext(filename)
         i_tag = '_i{:06d}'
         self.checkpoint_filepattern_ = base + i_tag + ext
 
