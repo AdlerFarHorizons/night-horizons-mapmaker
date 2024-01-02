@@ -6,12 +6,12 @@ class TestInputFileManager(unittest.TestCase):
 
     def setUp(self):
 
-        self.work_dir = './test/test_data'
+        self.in_dir = './test/test_data'
 
     def test_find_files(self):
 
         file_manager_in = io.InputFileManager(
-            work_dir=self.work_dir,
+            in_dir=self.in_dir,
             raw_images={'directory': 'images'},
         )
 
@@ -28,7 +28,7 @@ class TestInputFileManager(unittest.TestCase):
     def test_find_files_exts(self):
 
         file_manager_in = io.InputFileManager(
-            work_dir=self.work_dir,
+            in_dir=self.in_dir,
             filetree_description={
                 'raw_images': {
                     'directory': 'images',
@@ -56,7 +56,7 @@ class TestInputFileManager(unittest.TestCase):
     def test_find_files_pattern(self):
 
         file_manager_in = io.InputFileManager(
-            work_dir=self.work_dir,
+            in_dir=self.in_dir,
             referenced_images={
                 'directory': '',
                 'extension': ['tif', 'tiff'],
