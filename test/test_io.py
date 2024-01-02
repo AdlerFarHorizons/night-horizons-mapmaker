@@ -112,3 +112,16 @@ class TestOutputFileManager(unittest.TestCase):
 
         with self.assertRaises(FileExistsError):
             self.file_manager_out.prepare_filetree()
+
+    def test_prepare_filetree_overwrite(self):
+
+        self.file_manager_out.file_exists = 'overwrite'
+
+        filepath = os.path.join(self.out_dir, 'mosaic.tiff')
+        os.makedirs(self.out_dir)
+        open(filepath, 'w').close()
+
+        self.file_manager_out.prepare_filetree()
+        assert os.path.exists(self.out_dir)
+        assert not os.path.exists(filepath)
+
