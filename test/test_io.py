@@ -1,4 +1,7 @@
+import os
+import shutil
 import unittest
+
 from night_horizons import io_manager
 
 
@@ -78,3 +81,25 @@ class TestOutputFileManager(unittest.TestCase):
     def setUp(self):
 
         self.out_dir = './test/test_data/mosaics/temp'
+
+        # Start with a clean slate
+        if os.path.exists(self.out_dir):
+            shutil.rmtree(self.out_dir)
+
+        self.file_manager_out = io_manager.OutputFileManager(
+            out_dir=self.out_dir,
+            filename='mosaic.tiff',
+            file_exists='error',
+        )
+
+    def tearDown(self):
+
+        # Don't leave a trace
+        if os.path.exists(self.out_dir):
+            shutil.rmtree(self.out_dir)
+
+    def test_prepare_filetree(self):
+
+        self.file_manager_out.prepare_filetree()
+        assert os.path.exists(self.out_dir)
+        assert os.path.exists(os.path.join(self.out_dir, 'checkpoints'))

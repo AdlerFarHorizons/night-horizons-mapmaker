@@ -18,6 +18,8 @@ import scipy
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
+from . import data_io
+
 
 class IOManager:
     '''
