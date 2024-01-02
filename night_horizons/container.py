@@ -12,7 +12,7 @@ import yaml
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import io, pipelines, preprocessors
+from . import io_manager, pipelines, preprocessors
 from .image_processing import mosaicking, operators, processors
 
 
@@ -129,7 +129,7 @@ class MosaickerFactory(DIContainer):
         # Register file manager typical for mosaickers
         self.register_service(
             'io_manager',
-            io.MosaicIOManager,
+            io_manager.MosaicIOManager,
         )
 
         # Image processor typical for mosaickers (constructor defaults are ok)
@@ -156,7 +156,7 @@ class MosaickerFactory(DIContainer):
 
         # Finally, the mosaicker itself
         def make_mosaicker(
-            io_manager: io.OutputFileManager = None,
+            io_manager: io_manager.OutputFileManager = None,
             row_processor: processors.Processor = None,
             *args, **kwargs
         ):
@@ -203,7 +203,7 @@ class SequentialMosaickerFactory(DIContainer):
         # Register file manager typical for mosaickers
         self.register_service(
             'io_manager',
-            io.MosaicIOManager,
+            io_manager.MosaicIOManager,
         )
 
         # Feature detection and matching
@@ -282,7 +282,7 @@ class SequentialMosaickerFactory(DIContainer):
         )
 
         def make_mosaicker_train(
-            io_manager_train: io.OutputFileManager = None,
+            io_manager_train: io_manager.OutputFileManager = None,
             row_processor_train: processors.Processor = None,
             *args, **kwargs
         ):
@@ -303,7 +303,7 @@ class SequentialMosaickerFactory(DIContainer):
 
         # Finally, the mosaicker itself
         def make_mosaicker(
-            io_manager: io.OutputFileManager = None,
+            io_manager: io_manager.OutputFileManager = None,
             row_processor: processors.Processor = None,
             mosaicker_train: mosaicking.Mosaicker = None,
             *args, **kwargs
