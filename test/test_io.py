@@ -29,7 +29,7 @@ class TestInputFileManager(unittest.TestCase):
 
         file_manager_in = io.InputFileManager(
             in_dir=self.in_dir,
-            filetree_description={
+            **{
                 'raw_images': {
                     'directory': 'images',
                     'extension': 'raw',
