@@ -194,6 +194,8 @@ class IOManager:
                 i = 0
                 while os.path.isfile(tracked_filepath):
                     output_dir = out_dir_pattern.format(i)
+                    tracked_filepath = os.path.join(
+                        output_dir, tracked_filename)
                     i += 1
             else:
                 raise ValueError(
@@ -229,10 +231,7 @@ class IOManager:
         checkpoint_filepatterns = {}
         for key, filepath in output_filepaths.items():
             base, ext = os.path.splitext(os.path.basename(filepath))
-            checkpoint_filepatterns[key] = os.path.join(
-                checkpoint_dir,
-                base + checkpoint_tag + ext,
-            )
+            checkpoint_filepatterns[key] = base + checkpoint_tag + ext
 
         return checkpoint_filepatterns, checkpoint_dir
 
@@ -252,17 +251,19 @@ class IOManager:
         with open(self.output_filepaths['settings'], 'w') as file:
             yaml.dump(settings, file)
 
-    def search_for_checkpoint(self):
+    def search_for_checkpoint(self, key: str):
+
+        checkpoint_filepattern = self.checkpoint_filepatterns[key]
 
         # Look for checkpoint files
         i_resume = -1
         filename = None
-        search_pattern = self.checkpoint_filepattern.replace(
+        search_pattern = checkpoint_filepattern.replace(
             r'{:06d}',
             '(\\d{6})\\',
         )
         pattern = re.compile(search_pattern)
-        possible_files = os.listdir(self.checkpoint_subdir)
+        possible_files = os.listdir(self.checkpoint_dir)
         filename_start = None
         for j, filename in enumerate(possible_files):
             match = pattern.search(filename)
