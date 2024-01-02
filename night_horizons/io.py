@@ -39,9 +39,9 @@ class IOManager:
 
     def __init__(
         self,
-        work_dir: str,
         input_file_manager,
         output_file_manager,
+        data_ios: list[data_io.DataIO],
     ) -> None:
         pass
 
@@ -52,6 +52,7 @@ class InputFileManager:
         self.in_dir = in_dir
         self.filetree_description = filetree_description
 
+        # Validate filetree_description
         for key, descr in filetree_description.items():
             if 'directory' not in descr:
                 raise ValueError(
@@ -59,6 +60,12 @@ class InputFileManager:
                 )
             self.filetree_description[key]['directory'] = \
                 os.path.join(self.in_dir, descr['directory'])
+
+        # Find files
+        self.filepaths = {
+            key: self.find_files(key)
+            for key in self.filetree_description.keys()
+        }
 
     def find_files(self, key: str) -> pd.Series:
 
