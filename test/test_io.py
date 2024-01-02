@@ -1,5 +1,5 @@
 import unittest
-from night_horizons import io
+from night_horizons import io_manager
 
 
 class TestInputFileManager(unittest.TestCase):
@@ -10,7 +10,7 @@ class TestInputFileManager(unittest.TestCase):
 
     def test_find_files(self):
 
-        file_manager_in = io.InputFileManager(
+        file_manager_in = io_manager.InputFileManager(
             in_dir=self.in_dir,
             raw_images={'directory': 'images'},
         )
@@ -27,7 +27,7 @@ class TestInputFileManager(unittest.TestCase):
 
     def test_find_files_exts(self):
 
-        file_manager_in = io.InputFileManager(
+        file_manager_in = io_manager.InputFileManager(
             in_dir=self.in_dir,
             **{
                 'raw_images': {
@@ -55,7 +55,7 @@ class TestInputFileManager(unittest.TestCase):
 
     def test_find_files_pattern(self):
 
-        file_manager_in = io.InputFileManager(
+        file_manager_in = io_manager.InputFileManager(
             in_dir=self.in_dir,
             referenced_images={
                 'directory': '',
@@ -71,3 +71,10 @@ class TestInputFileManager(unittest.TestCase):
 
         fps = file_manager_in.find_files('referenced_images')
         assert list(fps) == expected_fps
+
+
+class TestOutputFileManager(unittest.TestCase):
+
+    def setUp(self):
+
+        self.out_dir = './test/test_data/mosaics/temp'
