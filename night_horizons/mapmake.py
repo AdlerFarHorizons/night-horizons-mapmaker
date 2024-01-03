@@ -65,9 +65,9 @@ class MosaicMaker(Mapmaker):
             *args, **kwargs
         ):
             if io_manager is None:
-                io_manager = self.get_service('io_manager')
+                io_manager = self.container.get_service('io_manager')
             if image_operator is None:
-                image_operator = self.get_service('image_operator')
+                image_operator = self.container.get_service('image_operator')
             return processors.Processor(
                 io_manager=io_manager,
                 image_operator=image_operator,
@@ -82,9 +82,9 @@ class MosaicMaker(Mapmaker):
             *args, **kwargs
         ):
             if io_manager is None:
-                io_manager = self.get_service('io_manager')
+                io_manager = self.container.get_service('io_manager')
             if processor is None:
-                processor = self.get_service(
+                processor = self.container.get_service(
                     'processor',
                     io_manager=io_manager,
                 )

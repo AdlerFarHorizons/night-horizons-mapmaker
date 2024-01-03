@@ -232,7 +232,7 @@ class SequentialMosaickerFactory(DIContainer):
                 row_processor_train = self.get_service('row_processor_train')
             return mosaicking.Mosaicker(
                 io_manager=io_manager_train,
-                row_processor=row_processor_train,
+                processor=row_processor_train,
                 *args, **kwargs
             )
         self.register_service('mosaicker_train', make_mosaicker_train)
