@@ -3,14 +3,20 @@
 ###############################################################################
 
 # filetree paths are relative to root_dir
-root_dir: /Users/Shared/data/nitelite/220513-FH135
-filetree:
-  out_dir: default_out_dir # This should usually be changed in-file
-  images_dir: images/raw
-  referenced_images_dir: images/referenced
-  img_log_fp: metadata/image.log
-  imu_log_fp: metadata/PresIMULog.csv
-  gps_log_fp: metadata/GPSLog.csv
+io_manager:
+  root_dir: /Users/Shared/data/nitelite/220513-FH135
+  input_dir: /
+  input_description:
+    raw_images:
+      directory: images/raw
+      extension: ['raw', 'tif', 'tiff']
+    referenced_images:
+      directory: images/referenced
+      extension: ['tif', 'tiff']
+      pattern: r'Geo\s\d+_' + f'{i}.tif'
+    img_log: metadata/image.log
+    imu_log: metadata/PresIMULog.csv
+    gps_log: metadata/GPSLog.csv
 
 # Coordinate reference-system employed
 crs: 'EPSG:3857'

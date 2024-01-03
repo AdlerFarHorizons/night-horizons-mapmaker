@@ -111,7 +111,6 @@ class DIContainer:
         return deep_interpret(config)
 
 
-
 class SequentialMosaickerFactory(DIContainer):
     '''TODO: Can we clean this up? Possibly incorporate this into a Mapmaker
              class?

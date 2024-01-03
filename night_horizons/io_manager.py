@@ -47,12 +47,17 @@ class IOManager:
         input_description: dict[dict],
         output_dir: str,
         output_description: dict[str],
+        root_dir: str = None,
         file_exists: str = 'error',
         tracked_file_key: str = None,
         checkpoint_subdir: str = 'checkpoints',
         checkpoint_tag: str = '_i{:06d}',
         checkpoint_freq: int = 100,
     ) -> None:
+
+        if root_dir is not None:
+            input_dir = os.path.join(root_dir, input_dir)
+            output_dir = os.path.join(root_dir, output_dir)
 
         self.input_dir = input_dir
         self.output_description = output_description
