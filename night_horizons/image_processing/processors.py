@@ -194,18 +194,21 @@ class Processor(utils.LoggerMixin, ABC):
 
         # Save failed images for later debugging
         # TODO: Currently the format of the saved images is a little weird.
+        progress_images_dir = (
+            self.io_manager.output_filepaths['progress_images_dir']
+        )
         if (
-            (self.progress_images_subdir_ is not None)
+            (progress_images_dir is not None)
             and (results['return_code'] in self.save_return_codes)
         ):
             n_tests_existing = len(glob.glob(os.path.join(
-                self.progress_images_subdir_, '*_dst.tiff')))
+                progress_images_dir, '*_dst.tiff')))
             dst_fp = os.path.join(
-                self.progress_images_subdir_,
+                progress_images_dir,
                 f'{n_tests_existing:06d}_dst.tiff'
             )
             src_fp = os.path.join(
-                self.progress_images_subdir_,
+                progress_images_dir,
                 f'{n_tests_existing:06d}_src.tiff'
             )
 
@@ -214,7 +217,7 @@ class Processor(utils.LoggerMixin, ABC):
 
             if 'blended_img' in results:
                 blended_fp = os.path.join(
-                    self.progress_images_subdir_,
+                    progress_images_dir,
                     f'{n_tests_existing:06d}_blended.tiff'
                 )
                 cv2.imwrite(blended_fp, results['blended_img'][:, :, ::-1])

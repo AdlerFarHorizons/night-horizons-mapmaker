@@ -91,7 +91,7 @@ class Mosaicker(BatchProcessor):
         if (
             (
                 (self.io_manager.file_exists == 'load')
-                and os.path.isfile(self.filepath_)
+                and os.path.isfile(self.io_manager.output_filepaths['mosaic'])
             )
             or (self.i_start_ != 0)
         ):
@@ -200,7 +200,10 @@ class Mosaicker(BatchProcessor):
 
     def open_dataset(self):
 
-        return self.io_manager.open_dataset()
+        return gdal.Open(
+            self.io_manager.output_filepaths['mosaic'],
+            gdal.GA_Update,
+        )
 
     def get_fit_from_dataset(self, dataset):
 
@@ -252,7 +255,7 @@ class Mosaicker(BatchProcessor):
         # Initialize an empty GeoTiff
         driver = gdal.GetDriverByName('GTiff')
         dataset = driver.Create(
-            self.filepath_,
+            self.io_manager.output_filepaths['mosaic'],
             xsize=self.x_size_,
             ysize=self.y_size_,
             bands=self.n_bands,
