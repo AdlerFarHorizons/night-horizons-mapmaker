@@ -11,21 +11,6 @@ class Mapmaker:
             local_options=local_options,
         )
 
-    def run(self):
-        # Preprocessing
-        preprocessor = self.container.create_preprocessor(self.config)
-        preprocessed_data = preprocessor.preprocess()
-
-        # Batch processing
-        batch_processor = self.container.create_batch_processor(self.config)
-        processed_data = batch_processor.process(preprocessed_data)
-
-        # Postprocessing
-        postprocessor = self.container.create_postprocessor(self.config)
-        postprocessed_data = postprocessor.postprocess(processed_data)
-
-        # Additional logic or output here
-
 
 class MosaicMaker(Mapmaker):
 
@@ -35,6 +20,20 @@ class MosaicMaker(Mapmaker):
             config_filepath=config_filepath,
             local_options=local_options,
         )
+
+    def run(self):
+
+        # Get the filepaths
+        io_manager = self.container.get_service('io_manager')
+        referenced_fps = io_manager.filepaths['referenced_images']
+
+        # Preprocessing
+        preprocessor = self.container.get_service('preprocessor')
+        X = preprocessor.fit_transform(referenced_fps)
+
+        # Mosaicking
+        mosaicker = self.container.get_service('mosaicker')
+        X_out = mosaicker.fit_transform(X)
 
     def register_default_services(self):
 
