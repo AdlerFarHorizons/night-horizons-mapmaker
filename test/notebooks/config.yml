@@ -5,7 +5,7 @@
 # filetree paths are relative to root_dir
 io_manager:
   root_dir: /Users/Shared/data/nitelite/220513-FH135
-  input_dir: /
+  input_dir: ''
   input_description:
     raw_images:
       directory: images/raw
@@ -13,7 +13,7 @@ io_manager:
     referenced_images:
       directory: images/referenced
       extension: ['tif', 'tiff']
-      pattern: r'Geo\s\d+_' + f'{i}.tif'
+      pattern: 'Geo\s\d+_\d.tif'
     img_log: metadata/image.log
     imu_log: metadata/PresIMULog.csv
     gps_log: metadata/GPSLog.csv

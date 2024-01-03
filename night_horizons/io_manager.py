@@ -61,6 +61,7 @@ class IOManager:
 
         self.input_dir = input_dir
         self.output_description = output_description
+        self.root_dir = root_dir
         self.file_exists = file_exists
         self.tracked_file_key = tracked_file_key
         self.checkpoint_subdir = checkpoint_subdir
