@@ -327,7 +327,7 @@ def store_parameters(constructor):
     because then the user can track what parameters exist in the superclass
     vs subclass.
     Think also about how fit parameters are handled.
-    Also, consistent names for image_processor vs image_blender.
+    Also, consistent names for image_operator vs image_blender.
 
     Parameters
     ----------

@@ -488,7 +488,7 @@ class Mosaicker(BatchProcessor):
 #         dtype: type = np.uint8,
 #         n_bands: int = 4,
 #         log_keys: list[str] = ['ind', 'return_code'],
-#         image_processor: processors.ImageBlender = None,
+#         image_operator: processors.ImageBlender = None,
 #     ):
 # 
 #         # Default settings for file manipulation
@@ -509,11 +509,11 @@ class Mosaicker(BatchProcessor):
 #             io_manager = io_management.IOManager(**io_manager_options)
 #         self.io_manager = io_manager
 # 
-#         self.image_processor = image_processor
+#         self.image_operator = image_operator
 # 
 #         row_processor = MosaickerRowTransformer(
 #             dtype=dtype,
-#             image_processor=image_processor,
+#             image_operator=image_operator,
 #         )
 # 
 #         super().__init__(

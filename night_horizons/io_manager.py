@@ -19,8 +19,6 @@ import scipy
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import data_io
-
 
 class IOManager:
     '''
@@ -54,7 +52,6 @@ class IOManager:
         checkpoint_subdir: str = 'checkpoints',
         checkpoint_tag: str = '_i{:06d}',
         checkpoint_freq: int = 100,
-        data_ios: list[data_io.DataIO] = [],
     ) -> None:
 
         self.input_dir = input_dir
@@ -64,7 +61,6 @@ class IOManager:
         self.checkpoint_subdir = checkpoint_subdir
         self.checkpoint_tag = checkpoint_tag
         self.checkpoint_freq = checkpoint_freq
-        self.data_ios = data_ios
 
         # Process input filetree
         self.input_filepaths, self.input_description = \

@@ -1,5 +1,5 @@
-from night_horizons import exceptions, utils
-
+import glob
+import os
 
 import cv2
 import numpy as np
@@ -9,7 +9,7 @@ import pandas as pd
 import time
 from abc import ABC, abstractmethod
 
-from night_horizons.exceptions import OutOfBoundsError
+from night_horizons import exceptions, utils
 
 
 class Processor(utils.LoggerMixin, ABC):
@@ -24,12 +24,14 @@ class Processor(utils.LoggerMixin, ABC):
 
     def __init__(
         self,
-        image_processor,
+        io_manager,
+        image_operator,
         log_keys: list[str] = [],
         save_return_codes: list[str] = [],
     ):
 
-        self.image_processor = image_processor
+        self.io_manager = io_manager
+        self.image_operator = image_operator
         self.log_keys = log_keys
         self.save_return_codes = save_return_codes
 
@@ -51,7 +53,7 @@ class Processor(utils.LoggerMixin, ABC):
 
         return self
 
-    def transform_row(
+    def process_row(
         self,
         i: int,
         row: pd.Series,
@@ -149,16 +151,16 @@ class Processor(utils.LoggerMixin, ABC):
         # Check what's in bounds, exit if nothing
         if dst['image'].sum() == 0:
             self.update_log(locals())
-            raise OutOfBoundsError('No dst data in bounds.')
+            raise exceptions.OutOfBoundsError('No dst data in bounds.')
 
         # Combine the images
-        # TODO: image_processor is more-general,
+        # TODO: image_operator is more-general,
         #       but image_blender is more descriptive
-        results = self.image_processor.process(
+        results = self.image_operator.process(
             src['image'],
             dst['image'],
         )
-        self.update_log(self.image_processor.log)
+        self.update_log(self.image_operator.log)
 
         return {
             'blended_image': results['blended_image'],
@@ -219,6 +221,8 @@ class Processor(utils.LoggerMixin, ABC):
     # Auxillary functions below
 
     def get_image_from_dataset(self, dataset, x_off, y_off, x_size, y_size):
+        '''TODO: Refactor all IO into DataIO.
+        '''
 
         assert x_off >= 0, 'x_off cannot be less than 0'
         assert x_off + x_size <= self.x_size_, \
