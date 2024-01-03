@@ -331,6 +331,7 @@ class MosaicIOManager(IOManager):
             'settings': 'settings.yaml',
             'log': 'log.csv',
             'y_pred': 'y_pred.csv',
+            'progress_images_dir': 'progress_images',
         },
         root_dir: str = None,
         file_exists: str = 'error',
@@ -359,10 +360,6 @@ class MosaicIOManager(IOManager):
             checkpoint_tag=checkpoint_tag,
             checkpoint_freq=checkpoint_freq,
         )
-
-    def open_dataset(self):
-
-        return gdal.Open(self.tracked_filepath, gdal.GA_Update)
 
     def save_to_checkpoint(self, i, dataset, y_pred=None):
 

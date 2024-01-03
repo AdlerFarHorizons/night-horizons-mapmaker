@@ -15,7 +15,7 @@ class BatchProcessor(
     BaseEstimator,
 ):
 
-    def __init__(self, row_processor, passthrough, log_keys):
+    def __init__(self, processor, passthrough, log_keys):
         '''
         Parameters
         ----------
@@ -23,7 +23,7 @@ class BatchProcessor(
         -------
         '''
 
-        self.row_processor = row_processor
+        self.processor = processor
         self.passthrough = passthrough
         self.log_keys = log_keys
 
@@ -82,8 +82,8 @@ class BatchProcessor(
         #       keep it as an attribute instead...
         #       One nice thing about this as is is that we don't have to
         #       go digging for where the log is saved.
-        if 'log' in self.io_manager.aux_filepaths_:
-            self.log_filepath_ = self.io_manager.aux_filepaths_['log']
+        if 'log' in self.io_manager.output_filepaths:
+            self.log_filepath_ = self.io_manager.output_filepaths['log']
             self.start_logging(
                 i_start=self.i_start_,
                 log_filepath=self.log_filepath_,
@@ -118,11 +118,11 @@ class BatchProcessor(
             row = X.loc[ind].copy()
 
             # Process the row
-            row = self.row_processor.transform_row(i, row, resources)
+            row = self.processor.process_row(i, row, resources)
             Z_out.loc[ind] = row
 
             # Snapshot the memory usage
-            log = self.row_processor.log
+            log = self.processor.log
             if 'snapshot' in self.log_keys:
                 if i % self.memory_snapshot_freq == 0:
                     log['snapshot'] = tracemalloc.take_snapshot()
@@ -174,7 +174,7 @@ class BatchProcessor(
         )
 
         # Check if fit had been called
-        check_is_fitted(self, 'out_dir_')
+        check_is_fitted(self, 'i_start_')
 
         return X
 
