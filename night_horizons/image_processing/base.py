@@ -51,9 +51,6 @@ class BatchProcessor(
             Returns self
         '''
 
-        # Make output directories, get filepaths, load dataset (if applicable)
-        self.out_dir_, self.filepath_ = self.io_manager.prepare_filetree()
-
         # Save the settings used for fitting
         # Must be done after preparing the filetree to have a save location
         self.io_manager.save_settings(self)

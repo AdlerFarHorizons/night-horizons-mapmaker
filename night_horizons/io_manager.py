@@ -73,6 +73,7 @@ class IOManager:
             self.find_input_files(input_description)
 
         # Process output filetree
+        # TODO: Ideally this would be called at the time of the fit.
         self.output_filepaths, self.output_dir = \
             self.get_output_filepaths(
                 output_dir=output_dir,
@@ -227,6 +228,29 @@ class IOManager:
 
         return output_filepaths, output_dir
 
+    def save_settings(self, obj):
+        '''TODO: Another thing to move into a DataIO
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        fullargspec = inspect.getfullargspec(type(obj))
+        settings = {}
+        for setting in fullargspec.args:
+            if setting == 'self':
+                continue
+            value = getattr(obj, setting)
+            try:
+                pickle.dumps(value)
+            except TypeError:
+                value = 'no string repr'
+            settings[setting] = value
+        with open(self.output_filepaths['settings'], 'w') as file:
+            yaml.dump(settings, file)
+
     def get_checkpoint_filepatterns(
         self,
         output_dir: str,
@@ -246,7 +270,10 @@ class IOManager:
 
         return checkpoint_filepatterns, checkpoint_dir
 
-    def search_for_checkpoint(self, key: str):
+    def search_for_checkpoint(self, key: str = None):
+
+        if key is None:
+            key = self.tracked_file_key
 
         checkpoint_filepattern = self.checkpoint_filepatterns[key]
 
@@ -284,9 +311,9 @@ class IOManager:
     def load_from_checkpoint(self, i, filename):
         pass
 
-    def search_and_load_checkpoint(self):
+    def search_and_load_checkpoint(self, key: str = None):
 
-        i_resume, checkpoint_filename = self.search_for_checkpoint()
+        i_resume, checkpoint_filename = self.search_for_checkpoint(key=key)
         loaded_data = self.load_from_checkpoint(i_resume, checkpoint_filename)
 
         return i_resume, loaded_data

@@ -44,7 +44,7 @@ class Mosaicker(BatchProcessor):
     def __init__(
         self,
         io_manager,
-        row_processor,
+        processor,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -58,7 +58,7 @@ class Mosaicker(BatchProcessor):
 
         # Store settings for latter use
         self.io_manager = io_manager
-        self.row_processor = row_processor
+        self.processor = processor
         self.crs = crs
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height
@@ -115,7 +115,7 @@ class Mosaicker(BatchProcessor):
             self.create_containing_dataset(X)
 
         # Fit the row processor too
-        self.row_processor.fit(self)
+        self.processor.fit(self)
 
         return self
 
@@ -511,13 +511,13 @@ class Mosaicker(BatchProcessor):
 # 
 #         self.image_operator = image_operator
 # 
-#         row_processor = MosaickerRowTransformer(
+#         processor = MosaickerRowTransformer(
 #             dtype=dtype,
 #             image_operator=image_operator,
 #         )
 # 
 #         super().__init__(
-#             row_processor=row_processor,
+#             processor=processor,
 #             out_dir=out_dir,
 #             filename=filename,
 #             file_exists=file_exists,
@@ -538,7 +538,7 @@ class SequentialMosaicker(Mosaicker):
     def __init__(
         self,
         io_manager,
-        row_processor,
+        processor,
         mosaicker_train,
         progress_images_subdir: str = 'progress_images',
         save_return_codes: list[str] = [],
@@ -556,7 +556,7 @@ class SequentialMosaicker(Mosaicker):
 
         super().__init__(
             io_manager=io_manager,
-            row_processor=row_processor,
+            processor=processor,
             crs=crs,
             pixel_width=pixel_width,
             pixel_height=pixel_height,
