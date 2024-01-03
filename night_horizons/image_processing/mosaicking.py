@@ -98,7 +98,7 @@ class Mosaicker(BatchProcessor):
             if dataset is not None:
                 raise ValueError(
                     'Cannot both pass in a dataset and load a file')
-            dataset = self.open_dataset()
+            dataset = self.io_manager.open_dataset()
 
         # If we have a loaded dataset by this point, get fit params from it
         if dataset is not None:
@@ -135,7 +135,7 @@ class Mosaicker(BatchProcessor):
 
         # Get the dataset
         resources = {
-            'dataset': self.open_dataset(),
+            'dataset': self.io_manager.open_dataset(),
         }
 
         return X_t, resources
@@ -171,7 +171,7 @@ class Mosaicker(BatchProcessor):
         )
 
         # Open the dataset
-        dataset = self.open_dataset()
+        dataset = self.io_manager.open_dataset()
 
         self.scores_ = []
         for i, fp in enumerate(tqdm.tqdm(X['filepath'], ncols=80)):
@@ -197,13 +197,6 @@ class Mosaicker(BatchProcessor):
         score = np.median(self.scores_)
 
         return score
-
-    def open_dataset(self):
-
-        return gdal.Open(
-            self.io_manager.output_filepaths['mosaic'],
-            gdal.GA_Update,
-        )
 
     def get_fit_from_dataset(self, dataset):
 
@@ -598,7 +591,7 @@ class SequentialMosaicker(Mosaicker):
 
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
-            dataset = self.open_dataset()
+            dataset = self.io_manager.open_dataset()
             try:
                 self.mosaicker_train.fit_transform(X, dataset=dataset)
             except OutOfBoundsError as e:
@@ -643,7 +636,7 @@ class SequentialMosaicker(Mosaicker):
 
         # Get the dataset
         resources = {
-            'dataset': self.open_dataset(),
+            'dataset': self.io_manager.open_dataset(),
         }
 
         return X_t, resources

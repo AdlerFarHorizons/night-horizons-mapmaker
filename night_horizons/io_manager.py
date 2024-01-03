@@ -361,6 +361,13 @@ class MosaicIOManager(IOManager):
             checkpoint_freq=checkpoint_freq,
         )
 
+    def open_dataset(self):
+
+        return gdal.Open(
+            self.output_filepaths['mosaic'],
+            gdal.GA_Update,
+        )
+
     def save_to_checkpoint(self, i, dataset, y_pred=None):
 
         # Conditions for normal return
@@ -373,16 +380,18 @@ class MosaicIOManager(IOManager):
         dataset.FlushCache()
         dataset = None
 
-        # Make checkpoint file by copying the dataset
-        checkpoint_fp = os.path.join(
-            self.checkpoint_subdir,
-            self.checkpoint_filepattern.format(i),
-        )
-        shutil.copy(self.tracked_filepath, checkpoint_fp)
-
         # Store auxiliary files
         if y_pred is not None:
             y_pred.to_csv(self.output_filepaths['y_pred'])
+
+        # Make checkpoint files by copying the data
+        for key, pattern in self.checkpoint_filepatterns.items():
+            if os.path.isfile(self.output_filepaths[key]):
+                checkpoint_fp = os.path.join(
+                    self.checkpoint_dir,
+                    pattern.format(i)
+                )
+                shutil.copy(self.output_filepaths[key], checkpoint_fp)
 
         # Re-open dataset
         dataset = self.open_dataset()
@@ -396,9 +405,14 @@ class MosaicIOManager(IOManager):
 
         print(f'Loading checkpoint file for i={i_checkpoint}')
 
-        # Copy checkpoint dataset
-        filepath = os.path.join(self.checkpoint_subdir, checkpoint_filename)
-        shutil.copy(filepath, self.tracked_filepath)
+        # Copy checkpoint files
+        for key, pattern in self.checkpoint_filepatterns.items():
+            checkpoint_fp = os.path.join(
+                self.checkpoint_dir,
+                pattern.format(i_checkpoint)
+            )
+            if os.path.isfile(checkpoint_fp):
+                shutil.copy(checkpoint_fp, self.output_filepaths[key])
 
         # And load the predictions
         y_pred = pd.read_csv(self.output_filepaths['y_pred'], index_col=0)
