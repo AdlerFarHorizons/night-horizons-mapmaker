@@ -84,10 +84,11 @@ class DIContainer:
 
         '''
 
-        for key, value in config['filetree'].items():
-            config['filetree'][key] = os.path.join(config['root_dir'], value)
-        config.setdefault('io_manager', {})['out_dir'] = \
-            config['filetree']['out_dir']
+        # TODO: Delete this once we're sure we don't need it
+        # for key, value in config['filetree'].items():
+        #     config['filetree'][key] = os.path.join(config['root_dir'], value)
+        # config.setdefault('io_manager', {})['out_dir'] = \
+        #     config['filetree']['out_dir']
 
         def deep_interpret(unparsed):
 

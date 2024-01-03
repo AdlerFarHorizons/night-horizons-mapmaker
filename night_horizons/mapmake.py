@@ -21,6 +21,8 @@ class MosaicMaker(Mapmaker):
             local_options=local_options,
         )
 
+        self.register_default_services()
+
     def run(self):
 
         # Get the filepaths
