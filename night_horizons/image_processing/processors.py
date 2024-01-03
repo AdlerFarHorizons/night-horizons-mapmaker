@@ -16,6 +16,8 @@ class Processor(utils.LoggerMixin, ABC):
     '''This could probably be framed as an sklearn estimator too, but let's
     not do that until necessary.
 
+    TODO: dtype is another thing to refactor into DataIO.
+
     Parameters
     ----------
     Returns
@@ -28,15 +30,19 @@ class Processor(utils.LoggerMixin, ABC):
         image_operator,
         log_keys: list[str] = [],
         save_return_codes: list[str] = [],
+        dtype: type = np.uint8,
     ):
 
         self.io_manager = io_manager
         self.image_operator = image_operator
         self.log_keys = log_keys
         self.save_return_codes = save_return_codes
+        self.dtype = dtype
 
     def fit(self, batch_processor):
         '''Copy over fit values from the batch processor.
+
+        TODO: We may be able to get rid of this function.
 
         Parameters
         ----------
@@ -62,6 +68,9 @@ class Processor(utils.LoggerMixin, ABC):
         '''Generally speaking, src refers to our new data, and dst refers to
         the existing data (including if the existing data was just updated
         with src in a previous row).
+
+        TODO: A better name than "process_row" may be available, since we don't
+              clarify what a row is.
 
         Parameters
         ----------
@@ -147,11 +156,6 @@ class Processor(utils.LoggerMixin, ABC):
         src: dict,
         dst: dict,
     ) -> dict:
-
-        # Check what's in bounds, exit if nothing
-        if dst['image'].sum() == 0:
-            self.update_log(locals())
-            raise exceptions.OutOfBoundsError('No dst data in bounds.')
 
         # Combine the images
         # TODO: image_operator is more-general,
