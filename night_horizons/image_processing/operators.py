@@ -167,6 +167,10 @@ class ImageAligner(BaseImageOperator):
                 src_des: Keypoint descriptors for the src image.
         '''
 
+        # Check what's in bounds, exit if nothing
+        if dst_img.sum() == 0:
+            raise exceptions.OutOfBoundsError('No dst data in bounds.')
+
         results = {}
 
         # Check for a dark frame
