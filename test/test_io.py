@@ -18,6 +18,7 @@ class TestInput(unittest.TestCase):
             input_dir=self.input_dir,
             input_description={
                 'raw_images': {'directory': 'images'},
+                'test': 'this/dir.txt',
             },
             output_dir=self.output_dir,
             output_description={},
@@ -32,6 +33,9 @@ class TestInput(unittest.TestCase):
 
         fps = io_manager.input_filepaths['raw_images']
         assert list(fps) == expected_fps
+
+        assert io_manager.input_filepaths['test'] == \
+            './test/test_data/this/dir.txt'
 
     def test_find_files_exts(self):
 

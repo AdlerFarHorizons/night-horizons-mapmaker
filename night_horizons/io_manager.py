@@ -97,16 +97,25 @@ class IOManager:
         # Validate and store input description
         modified_input_description = copy.deepcopy(input_description)
         for key, descr in modified_input_description.items():
-            if 'directory' not in descr:
-                raise ValueError(
-                    f'input_description[{key}] must have a "directory" key'
-                )
-            modified_input_description[key]['directory'] = \
-                os.path.join(self.input_dir, descr['directory'])
+            if isinstance(descr, str):
+                modified_input_description[key] = \
+                    os.path.join(self.input_dir, descr)
+            else:
+                if 'directory' not in descr:
+                    raise ValueError(
+                        f'input_description[{key}] must have a "directory" '
+                        'key if it is a dictionary'
+                    )
+                modified_input_description[key]['directory'] = \
+                    os.path.join(self.input_dir, descr['directory'])
 
         # Find files
         input_filepaths = {
-            key: self.find_files(**item)
+            key: (
+                self.find_files(**item)
+                if isinstance(item, dict)
+                else item
+            )
             for key, item in modified_input_description.items()
         }
 
@@ -286,16 +295,21 @@ class MosaicIOManager(IOManager):
 
     def __init__(
         self,
-        out_dir: str,
-        filename: str = 'mosaic.tiff',
-        file_exists: str = 'error',
-        aux_files: dict[str] = {
+        input_dir: str,
+        input_description: dict[dict],
+        output_dir: str,
+        output_description: dict[str] = {
+            'mosaic': 'mosaic.tiff',
             'settings': 'settings.yaml',
             'log': 'log.csv',
             'y_pred': 'y_pred.csv',
         },
-        checkpoint_freq: int = 100,
+        root_dir: str = None,
+        file_exists: str = 'error',
+        tracked_file_key: str = 'mosaic',
         checkpoint_subdir: str = 'checkpoints',
+        checkpoint_tag: str = '_i{:06d}',
+        checkpoint_freq: int = 100,
     ):
         '''The inputs are more-appropriate defaults for mosaics.
 
@@ -306,12 +320,16 @@ class MosaicIOManager(IOManager):
         '''
 
         super().__init__(
-            out_dir=out_dir,
-            filename=filename,
+            input_dir=input_dir,
+            input_description=input_description,
+            output_dir=output_dir,
+            output_description=output_description,
+            root_dir=root_dir,
             file_exists=file_exists,
-            aux_files=aux_files,
-            checkpoint_freq=checkpoint_freq,
+            tracked_file_key=tracked_file_key,
             checkpoint_subdir=checkpoint_subdir,
+            checkpoint_tag=checkpoint_tag,
+            checkpoint_freq=checkpoint_freq,
         )
 
     def open_dataset(self):
@@ -366,6 +384,8 @@ class MosaicIOManager(IOManager):
         return loaded_data
 
 
+# TODO: Delete this once we're sure we don't need it
+"""
 class FileManager:
     '''
     Things IOManager should do:
@@ -501,4 +521,4 @@ class FileManager:
         loaded_data = self.load_from_checkpoint(i_resume, checkpoint_filename)
 
         return i_resume, loaded_data
-
+"""
