@@ -106,13 +106,15 @@ class BatchProcessor(
         self,
         X: pd.DataFrame,
         y=None,
-    ):
+    ) -> pd.Series:
 
-        return self.batch_process(
+        X_out = self.batch_process(
             self.scorer,
             X,
             y,
         )
+
+        return X_out['score']
 
     def batch_process(
         self,

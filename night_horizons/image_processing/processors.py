@@ -87,6 +87,8 @@ class Processor(utils.LoggerMixin, ABC):
             results = self.safe_process(i, row, resources, src, dst)
         else:
             results = self.process(i, row, resources, src, dst)
+            # If it ran without error, we can assume it was a success
+            results['return_code'] = 'success'
 
         row = self.store_results(i, row, resources, results)
 
@@ -347,7 +349,11 @@ class DatasetScorer(DatasetProcessor):
         results: dict,
     ):
 
-        row['score'] = results['score']
+        if results['return_code'] == 'success':
+            row['score'] = results['score']
+        else:
+            row['score'] = np.nan
+
         row['return_code'] = results['return_code']
 
         return row
