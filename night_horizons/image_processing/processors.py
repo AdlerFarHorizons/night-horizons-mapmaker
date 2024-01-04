@@ -78,6 +78,8 @@ class Processor(utils.LoggerMixin, ABC):
         -------
         '''
 
+        self.start_logging()
+
         # Get data
         src = self.get_src(i, row, resources)
         dst = self.get_dst(i, row, resources)
@@ -91,6 +93,8 @@ class Processor(utils.LoggerMixin, ABC):
             results['return_code'] = 'success'
 
         row = self.store_results(i, row, resources, results)
+
+        self.update_log(locals())
 
         return row
 
@@ -288,33 +292,34 @@ class DatasetUpdater(DatasetProcessor):
 
         # Save failed images for later debugging
         # TODO: Currently the format of the saved images is a little weird.
-        progress_images_dir = (
-            self.io_manager.output_filepaths['progress_images_dir']
-        )
-        if (
-            (progress_images_dir is not None)
-            and (results['return_code'] in self.save_return_codes)
-        ):
-            n_tests_existing = len(glob.glob(os.path.join(
-                progress_images_dir, '*_dst.tiff')))
-            dst_fp = os.path.join(
-                progress_images_dir,
-                f'{n_tests_existing:06d}_dst.tiff'
+        if 'progress_images_dir' in self.io_manager.output_filepaths:
+            progress_images_dir = (
+                self.io_manager.output_filepaths['progress_images_dir']
             )
-            src_fp = os.path.join(
-                progress_images_dir,
-                f'{n_tests_existing:06d}_src.tiff'
-            )
-
-            cv2.imwrite(src_fp, results['src_image'][:, :, ::-1])
-            cv2.imwrite(dst_fp, results['dst_image'][:, :, ::-1])
-
-            if 'blended_img' in results:
-                blended_fp = os.path.join(
+            if (
+                (progress_images_dir is not None)
+                and (results['return_code'] in self.save_return_codes)
+            ):
+                n_tests_existing = len(glob.glob(os.path.join(
+                    progress_images_dir, '*_dst.tiff')))
+                dst_fp = os.path.join(
                     progress_images_dir,
-                    f'{n_tests_existing:06d}_blended.tiff'
+                    f'{n_tests_existing:06d}_dst.tiff'
                 )
-                cv2.imwrite(blended_fp, results['blended_img'][:, :, ::-1])
+                src_fp = os.path.join(
+                    progress_images_dir,
+                    f'{n_tests_existing:06d}_src.tiff'
+                )
+
+                cv2.imwrite(src_fp, results['src_image'][:, :, ::-1])
+                cv2.imwrite(dst_fp, results['dst_image'][:, :, ::-1])
+
+                if 'blended_img' in results:
+                    blended_fp = os.path.join(
+                        progress_images_dir,
+                        f'{n_tests_existing:06d}_blended.tiff'
+                    )
+                    cv2.imwrite(blended_fp, results['blended_img'][:, :, ::-1])
 
         return row
 
