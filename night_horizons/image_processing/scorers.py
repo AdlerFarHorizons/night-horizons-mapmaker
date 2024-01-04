@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 from .operators import BaseImageOperator
 
@@ -15,7 +16,7 @@ class SimilarityScorer(BaseImageOperator):
         self.compare_nonzero = compare_nonzero
         self.tm_metric = tm_metric
 
-    def process(self, src_img, dst_img):
+    def operate(self, src_img, dst_img):
 
         if src_img.shape != dst_img.shape:
             if not self.allow_resize:

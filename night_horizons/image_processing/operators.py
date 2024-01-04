@@ -21,7 +21,7 @@ from .. import utils, exceptions
 class BaseImageOperator(utils.LoggerMixin, ABC):
 
     @abstractmethod
-    def process(self, src_img, dst_img):
+    def operate(self, src_img, dst_img):
         pass
 
 
@@ -38,7 +38,7 @@ class ImageBlender(BaseImageOperator):
         self.outline = outline
         self.log_keys = log_keys
 
-    def process(self, src_img, dst_img):
+    def operate(self, src_img, dst_img):
 
         # Resize the source image
         src_img_resized = cv2.resize(
@@ -133,7 +133,7 @@ class ImageAligner(BaseImageOperator):
         self.find_homography_options = find_homography_options
         self.log_keys = log_keys
 
-    def process(self, src_img, dst_img):
+    def operate(self, src_img, dst_img):
 
         src_img_t, dst_img_t = self.image_transformer.fit_transform(
             [src_img, dst_img])
@@ -365,7 +365,7 @@ class ImageAlignerBlender(ImageAligner, ImageBlender):
             log_keys=log_keys,
         )
 
-    def process(self, src_img, dst_img):
+    def operate(self, src_img, dst_img):
 
         src_img_t, dst_img_t = self.image_transformer.fit_transform(
             [src_img, dst_img])
@@ -407,7 +407,7 @@ class ImageProcessorQueue:
             image_joiner = ImageAlignerBlender(**options)
             self.image_joiners.append(image_joiner)
 
-    def process(self, src_img, dst_img):
+    def operate(self, src_img, dst_img):
 
         for i, image_joiner in enumerate(self.image_joiners):
 
