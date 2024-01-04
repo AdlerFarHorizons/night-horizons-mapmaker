@@ -18,6 +18,14 @@ class SimilarityScorer(BaseImageOperator):
 
     def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
 
+        if src_img.shape[-1] != dst_img.shape[-1]:
+            if dst_img.shape[-1] < src_img.shape[-1]:
+                raise ValueError(
+                    'Destination image must have as many or more channels '
+                    'than source image.'
+                )
+            dst_img = dst_img[..., :src_img.shape[-1]]
+
         if src_img.shape != dst_img.shape:
             if not self.allow_resize:
                 raise ValueError('Images must have the same shape.')
