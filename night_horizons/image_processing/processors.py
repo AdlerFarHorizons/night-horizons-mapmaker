@@ -30,14 +30,12 @@ class Processor(utils.LoggerMixin, ABC):
         image_operator,
         log_keys: list[str] = [],
         save_return_codes: list[str] = [],
-        dtype: type = np.uint8,
     ):
 
         self.io_manager = io_manager
         self.image_operator = image_operator
         self.log_keys = log_keys
         self.save_return_codes = save_return_codes
-        self.dtype = dtype
 
     def fit(self, batch_processor):
         '''Copy over fit values from the batch processor.
@@ -127,6 +125,55 @@ class Processor(utils.LoggerMixin, ABC):
 
         return results
 
+    @abstractmethod
+    def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
+        pass
+
+    @abstractmethod
+    def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:
+        pass
+
+    @abstractmethod
+    def process(
+        self,
+        i: int,
+        row: pd.Series,
+        resources: dict,
+        src: dict,
+        dst: dict,
+    ) -> dict:
+        pass
+
+    @abstractmethod
+    def store_results(
+        self,
+        i: int,
+        row: pd.Series,
+        resources: dict,
+        results: dict,
+    ) -> pd.Series:
+        pass
+
+
+class DatasetProcessor(Processor):
+
+    def __init__(
+        self,
+        io_manager,
+        image_operator,
+        log_keys: list[str] = [],
+        save_return_codes: list[str] = [],
+        dtype: type = np.uint8,
+    ):
+
+        super().__init__(
+            io_manager=io_manager,
+            image_operator=image_operator,
+            log_keys=log_keys,
+            save_return_codes=save_return_codes,
+        )
+        self.dtype = dtype
+
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
 
         src_img = utils.load_image(
@@ -147,6 +194,44 @@ class Processor(utils.LoggerMixin, ABC):
         )
 
         return {'image': dst_img}
+
+    ########################################
+    # Auxillary functions below
+
+    def get_image_from_dataset(self, dataset, x_off, y_off, x_size, y_size):
+        '''TODO: Refactor all IO into DataIO.
+        '''
+
+        assert x_off >= 0, 'x_off cannot be less than 0'
+        assert x_off + x_size <= self.x_size_, \
+            'x_off + x_size cannot be greater than self.x_size_'
+        assert y_off >= 0, 'y_off cannot be less than 0'
+        assert y_off + y_size <= self.y_size_, \
+            'y_off + y_size cannot be greater than self.y_size_'
+
+        # Note that we cast the input as int, in case we the input was numpy
+        # integers instead of python integers.
+        img = dataset.ReadAsArray(
+            xoff=int(x_off),
+            yoff=int(y_off),
+            xsize=int(x_size),
+            ysize=int(y_size),
+        )
+        img = img.transpose(1, 2, 0)
+
+        return img
+
+    def save_image_to_dataset(self, dataset, img, x_off, y_off):
+
+        img_to_save = img.transpose(2, 0, 1)
+        dataset.WriteArray(
+            img_to_save,
+            xoff=int(x_off),
+            yoff=int(y_off),
+        )
+
+
+class DatasetUpdater(DatasetProcessor):
 
     def process(
         self,
@@ -224,37 +309,38 @@ class Processor(utils.LoggerMixin, ABC):
 
         return row
 
-    ###########################################################################
-    # Auxillary functions below
 
-    def get_image_from_dataset(self, dataset, x_off, y_off, x_size, y_size):
-        '''TODO: Refactor all IO into DataIO.
-        '''
+class DatasetScorer(DatasetProcessor):
 
-        assert x_off >= 0, 'x_off cannot be less than 0'
-        assert x_off + x_size <= self.x_size_, \
-            'x_off + x_size cannot be greater than self.x_size_'
-        assert y_off >= 0, 'y_off cannot be less than 0'
-        assert y_off + y_size <= self.y_size_, \
-            'y_off + y_size cannot be greater than self.y_size_'
+    def process(
+        self,
+        i: int,
+        row: pd.Series,
+        resources: dict,
+        src: dict,
+        dst: dict,
+    ) -> dict:
 
-        # Note that we cast the input as int, in case we the input was numpy
-        # integers instead of python integers.
-        img = dataset.ReadAsArray(
-            xoff=int(x_off),
-            yoff=int(y_off),
-            xsize=int(x_size),
-            ysize=int(y_size),
+        # Combine the images
+        # TODO: image_operator is more-general,
+        #       but image_blender is more descriptive
+        results = self.image_operator.process(
+            src['image'],
+            dst['image'],
         )
-        img = img.transpose(1, 2, 0)
+        self.update_log(self.image_operator.log)
 
-        return img
+        return results
 
-    def save_image_to_dataset(self, dataset, img, x_off, y_off):
+    def store_results(
+        self,
+        i: int,
+        row: pd.Series,
+        resources: dict,
+        results: dict,
+    ):
 
-        img_to_save = img.transpose(2, 0, 1)
-        dataset.WriteArray(
-            img_to_save,
-            xoff=int(x_off),
-            yoff=int(y_off),
-        )
+        row['score'] = results['score']
+        row['return_code'] = results['return_code']
+
+        return row
