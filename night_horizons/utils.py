@@ -383,6 +383,9 @@ class LoggerMixin:
     ):
         self.log_keys = log_keys
 
+    def start_logging(self):
+        self.log = {}
+
     @property
     def log(self):
         '''We create the log on the fly so that it's not stored in memory.

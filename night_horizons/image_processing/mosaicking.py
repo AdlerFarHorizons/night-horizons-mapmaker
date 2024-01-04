@@ -546,9 +546,10 @@ class SequentialMosaicker(Mosaicker):
         super().fit(approx_y, dataset=dataset, i_start=i_start)
 
         # Make a progress images dir
-        self.progress_images_subdir_ = os.path.join(
-            self.out_dir_, self.progress_images_subdir)
-        os.makedirs(self.progress_images_subdir_, exist_ok=True)
+        os.makedirs(
+            self.io_manager.output_filepaths['progress_images_dir'],
+            exist_ok=True
+        )
 
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
@@ -566,10 +567,8 @@ class SequentialMosaicker(Mosaicker):
             dataset = None
 
             # Save the fit mosaic, pre-prediction
-            shutil.copy(
-                self.io_manager.filepath_,
-                self.io_manager.filepath_.replace('.tiff', '_fit.tiff'),
-            )
+            mosaic_fp = self.io_manager.output_filepaths['mosaic']
+            shutil.copy(mosaic_fp, mosaic_fp.replace('.tiff', '_fit.tiff'))
 
         return self
 
@@ -611,11 +610,11 @@ class SequentialMosaicker(Mosaicker):
         y_pred['x_center'] = 0.5 * (y_pred['x_min'] + y_pred['x_max'])
         y_pred['y_center'] = 0.5 * (y_pred['y_min'] + y_pred['y_max'])
 
-        y_pred.to_csv(self.io_manager.aux_filepaths_['y_pred'])
+        y_pred.to_csv(self.io_manager.output_filepaths['y_pred'])
 
         # Store log
         log_df = pd.DataFrame(self.logs)
-        log_df.to_csv(self.io_manager.aux_filepaths_['log'])
+        log_df.to_csv(self.io_manager.output_filepaths['log'])
 
         # Flush data to disk
         resources['dataset'].FlushCache()

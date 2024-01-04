@@ -185,6 +185,7 @@ class BatchProcessor(
 
             # Update and save the log
             # TODO: We probably don't have to write every loop...
+            log = self.update_log(locals(), log)
             self.logs.append(log)
             if hasattr(self, 'log_filepath_'):
                 self.write_log(self.log_filepath_)
