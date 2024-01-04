@@ -146,7 +146,7 @@ class BatchProcessor(
         #       However, when I debugged that much of the issue actually came
         #       from saving massive objects (all the features) to the log
         #       and duplicating them.
-        Z_out, resources = self.preprocess(X)
+        X_t, resources = self.preprocess(X)
 
         # Start memory tracing
         if 'snapshot' in self.log_keys:
@@ -155,26 +155,21 @@ class BatchProcessor(
             self.log['starting_snapshot'] = start
 
         # Main loop
-        for i, ind in enumerate(tqdm.tqdm(X.index, ncols=80)):
+        Z_out = pd.DataFrame()
+        for i, ind in enumerate(tqdm.tqdm(X_t.index, ncols=80)):
 
             # Go to the right loop
             if i < self.i_start_:
                 continue
 
             # We make a copy of row so that we don't modify the original
-            row = X.loc[ind].copy()
+            row = X_t.loc[ind].copy()
 
             # Process the row
             row = processor.process_row(i, row, resources)
 
-            # In case row adds more columns
-            if row.index.difference(Z_out.columns).any():
-                Z_out = Z_out.reindex(
-                    columns=row.index.union(Z_out.columns),
-                    fill_value=np.nan,
-                )
-
-            Z_out.loc[ind] = row
+            # Incorporate the row into the output DataFrame
+            Z_out = pd.concat([Z_out, row.to_frame().T])
 
             # Snapshot the memory usage
             log = processor.log
