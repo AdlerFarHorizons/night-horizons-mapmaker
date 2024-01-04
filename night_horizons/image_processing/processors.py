@@ -232,6 +232,8 @@ class DatasetProcessor(Processor):
         )
         img = img.transpose(1, 2, 0)
 
+        self.update_log(locals())
+
         return img
 
     def save_image_to_dataset(self, dataset, img, x_off, y_off):
@@ -242,6 +244,8 @@ class DatasetProcessor(Processor):
             xoff=int(x_off),
             yoff=int(y_off),
         )
+
+        self.update_log(locals())
 
 
 class DatasetUpdater(DatasetProcessor):
