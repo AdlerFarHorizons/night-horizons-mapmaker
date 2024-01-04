@@ -71,6 +71,11 @@ class BatchProcessor(
             self.i_start_ = i_start
             self.checkpoint_state_ = None
 
+        # Fit the processor and scorer too
+        self.processor.fit(self)
+        if self.scorer is not None:
+            self.scorer.fit(self)
+
         return self
 
     @utils.enable_passthrough
@@ -190,7 +195,6 @@ class BatchProcessor(
         Z_out = self.postprocess(Z_out, resources)
 
         return Z_out
-
 
     def validate_readiness(self, X: pd.DataFrame):
         '''Pre-transform validation.
