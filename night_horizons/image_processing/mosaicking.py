@@ -22,7 +22,7 @@ import yaml
 from night_horizons.exceptions import OutOfBoundsError
 from . import operators
 
-from .base import BatchProcessor
+from .batch import BatchProcessor
 
 from .. import (
     preprocessors, utils, raster, metrics
