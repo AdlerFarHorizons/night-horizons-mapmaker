@@ -158,6 +158,13 @@ class BatchProcessor(
 
         return self.transform(X)
 
+    def score(
+        self,
+        X: pd.DataFrame,
+        y=None,
+    ):
+        pass
+
     def validate_readiness(self, X: pd.DataFrame):
         '''Pre-transform validation.
 
