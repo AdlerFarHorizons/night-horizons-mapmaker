@@ -363,7 +363,7 @@ class IOManager:
             raw_fps.index += fps_test.size
             fps = pd.concat([fps_test, raw_fps])
         else:
-            fps = referenced_fps_test
+            fps = fps_test
 
         return fps_train, fps_test, fps
 
