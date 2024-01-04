@@ -131,17 +131,34 @@ class SequentialMosaicMaker(MosaicMaker):
 
     def run(self):
 
+        settings = self.container.config
+
         # Get the filepaths
         io_manager = self.container.get_service('io_manager')
-        referenced_fps = io_manager.filepaths['referenced_images']
+        fps_train, fps_test, fps = io_manager.train_test_production_split(
+            train_size=settings['train_size'],
+            random_state=settings['random_state'],
+            use_raw_images=settings['use_raw_images'],
+        )
 
         # Preprocessing
         preprocessor = self.container.get_service('preprocessor')
-        X = preprocessor.fit_transform(referenced_fps)
+        X_train = preprocessor.fit_transform(fps_train)
+        X = preprocessor.fit_transform(fps)
+
+        preprocessor_y = self.container.get_service('preprocessor_y')
+        y_train = preprocessor_y.fit_transform(fps_train)
+        y_test = preprocessor_y.fit_transform(fps_test)
 
         # Mosaicking
         mosaicker = self.container.get_service('mosaicker')
-        X_out = mosaicker.fit_transform(X)
+        # TODO: It's unintuitive that we use X=y_train here, and approx_y=X.
+        y_pred = mosaicker.fit(
+            X=y_train,
+            approx_y=X,
+        )
+
+        return y_pred
 
     def register_default_services(self):
 
