@@ -25,8 +25,9 @@ from . import operators
 from .batch import BatchProcessor
 
 from .. import (
-    preprocessors, utils, raster, metrics
+    preprocessors, utils, raster
 )
+from . import processors
 
 
 class Mosaicker(BatchProcessor):
@@ -45,6 +46,7 @@ class Mosaicker(BatchProcessor):
         self,
         io_manager,
         processor,
+        scorer: processors.Processor = None,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
@@ -56,9 +58,15 @@ class Mosaicker(BatchProcessor):
         passthrough: Union[list[str], bool] = False,
     ):
 
+        super().__init__(
+            processor=processor,
+            passthrough=passthrough,
+            log_keys=log_keys,
+            scorer=scorer,
+        )
+
         # Store settings for latter use
         self.io_manager = io_manager
-        self.processor = processor
         self.crs = crs
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height
@@ -66,8 +74,6 @@ class Mosaicker(BatchProcessor):
         self.fill_value = fill_value
         self.n_bands = n_bands
         self.outline = outline
-        self.log_keys = log_keys
-        self.passthrough = passthrough
 
         self.required_columns = ['filepath'] + preprocessors.GEOTRANSFORM_COLS
 
@@ -147,56 +153,6 @@ class Mosaicker(BatchProcessor):
         resources['dataset'] = None
 
         return X_t
-
-    def score(self, X, y=None, tm_metric=cv2.TM_CCOEFF_NORMED):
-
-        # Convert to pixels
-        (
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
-        ) = self.physical_to_pixel(
-            X['x_min'], X['x_max'],
-            X['y_min'], X['y_max'],
-            padding=X['padding'],
-        )
-
-        # Limit search regions to within the mosaic.
-        # Note that this shouldn't be an issue if the fit is done.
-        (
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
-        ) = self.handle_out_of_bounds(
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size'],
-        )
-
-        # Open the dataset
-        dataset = self.io_manager.open_dataset()
-
-        self.scores_ = []
-        for i, fp in enumerate(tqdm.tqdm(X['filepath'], ncols=80)):
-
-            row = X.iloc[i]
-
-            actual_img = utils.load_image(fp, dtype=self.dtype)
-            mosaic_img = self.get_image(
-                dataset,
-                row['x_off'],
-                row['y_off'],
-                row['x_size'],
-                row['y_size'],
-            )
-
-            r = metrics.image_to_image_ccoeff(
-                actual_img,
-                mosaic_img[:, :, :3],
-                tm_metric=tm_metric,
-            )
-            self.scores_.append(r)
-
-        score = np.median(self.scores_)
-
-        return score
 
     def get_fit_from_dataset(self, dataset):
 

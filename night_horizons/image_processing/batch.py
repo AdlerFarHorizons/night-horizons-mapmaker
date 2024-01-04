@@ -19,8 +19,8 @@ class BatchProcessor(
     def __init__(
         self,
         processor: Processor,
-        passthrough,
-        log_keys,
+        log_keys: list[str] = ['ind', 'return_code'],
+        passthrough: Union[list[str], bool] = False,
         scorer: Processor = None,
     ):
         '''

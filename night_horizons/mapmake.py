@@ -1,7 +1,7 @@
 
 from .container import DIContainer
 from . import io_manager, preprocessors
-from .image_processing import mosaicking, operators, processors
+from .image_processing import mosaicking, operators, processors, scorers
 
 
 class Mapmaker:
@@ -68,17 +68,41 @@ class MosaicMaker(Mapmaker):
                 io_manager = self.container.get_service('io_manager')
             if image_operator is None:
                 image_operator = self.container.get_service('image_operator')
-            return processors.Processor(
+            return processors.DatasetUpdater(
                 io_manager=io_manager,
                 image_operator=image_operator,
                 *args, **kwargs
             )
         self.container.register_service('processor', make_mosaicker_processor)
 
+        # This is the operator for scoring images
+        self.container.register_service(
+            'image_scorer',
+            scorers.SimilarityScorer,
+        )
+
+        # And this is the corresponding processor for scoring images
+        def make_mosaicker_scorer(
+            io_manager: io_manager.IOManager = None,
+            image_operator: operators.BaseImageOperator = None,
+            *args, **kwargs
+        ):
+            if io_manager is None:
+                io_manager = self.container.get_service('io_manager')
+            if image_operator is None:
+                image_operator = self.container.get_service('image_scorer')
+            return processors.DatasetScorer(
+                io_manager=io_manager,
+                image_operator=image_operator,
+                *args, **kwargs
+            )
+        self.container.register_service('scorer', make_mosaicker_scorer)
+
         # Finally, the mosaicker itself, which is a batch processor
         def make_mosaicker(
             io_manager: io_manager.IOManager = None,
             processor: processors.Processor = None,
+            scorer: processors.Processor = None,
             *args, **kwargs
         ):
             if io_manager is None:
@@ -88,9 +112,15 @@ class MosaicMaker(Mapmaker):
                     'processor',
                     io_manager=io_manager,
                 )
+            if scorer is None:
+                scorer = self.container.get_service(
+                    'scorer',
+                    io_manager=io_manager,
+                )
             return mosaicking.Mosaicker(
                 io_manager=io_manager,
                 processor=processor,
+                scorer=scorer,
                 *args, **kwargs
             )
         self.container.register_service('mosaicker', make_mosaicker)
