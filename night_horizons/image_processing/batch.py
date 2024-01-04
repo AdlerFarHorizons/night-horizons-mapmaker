@@ -1,6 +1,7 @@
 import tracemalloc
 from typing import Tuple, Union
 
+import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
@@ -70,11 +71,6 @@ class BatchProcessor(
         else:
             self.i_start_ = i_start
             self.checkpoint_state_ = None
-
-        # Fit the processor and scorer too
-        self.processor.fit(self)
-        if self.scorer is not None:
-            self.scorer.fit(self)
 
         return self
 
@@ -170,6 +166,14 @@ class BatchProcessor(
 
             # Process the row
             row = processor.process_row(i, row, resources)
+
+            # In case row adds more columns
+            if row.index.difference(Z_out.columns).any():
+                Z_out = Z_out.reindex(
+                    columns=row.index.union(Z_out.columns),
+                    fill_value=np.nan,
+                )
+
             Z_out.loc[ind] = row
 
             # Snapshot the memory usage
