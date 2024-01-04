@@ -2,7 +2,9 @@ import cv2
 
 from .container import DIContainer
 from . import io_manager, pipelines, preprocessors
-from .image_processing import mosaicking, operators, processors, scorers
+from .image_processing import (
+    mosaicking, operators, processors, registration, scorers
+)
 
 
 class Mapmaker:
@@ -176,16 +178,73 @@ class SequentialMosaicMaker(MosaicMaker):
 
     def register_default_preprocessors(self):
 
-        # We register the preprocessing here, in addition to the other objects
-        # Preprocessor for X values
+        # Preprocessor to get metadata
         self.container.register_service(
-            'preprocessor',
-            pipelines.PreprocessorPipelines.nitelite
+            'metadata_preprocessor',
+            preprocessors.NITELitePreprocessor,
         )
-        # Preprocessor for y values
+
+        # Preprocessor to use metadata to georeference
         self.container.register_service(
-            'preprocessor_y',
+            'metadata_image_registrar',
+            lambda passthrough=['filepath', 'camera_num'], *args, **kwargs: (
+                registration.MetadataImageRegistrar(
+                    passthrough=passthrough,
+                    *args, **kwargs
+                )
+            )
+        )
+
+        # Preprocessor to get geotiff metadata (which includes georeferencing)
+        self.container.register_service(
+            'geotiff_preprocessor',
             preprocessors.GeoTIFFPreprocessor
+        )
+
+        # Preprocessor to filter on altitude
+        self.container.register_service(
+            'altitude_filter',
+            lambda altitude_column='mAltitude', *args, **kwargs: (
+                preprocessors.AltitudeFilter(
+                    column=altitude_column,
+                    *args, **kwargs
+                )
+            )
+        )
+
+        # Preprocessor to filter on steadiness
+        def make_steady_filter(
+            gyro_columns=['imuGyroX', 'imuGyroY', 'imuGyroZ'],
+            *args, **kwargs
+        ):
+            return preprocessors.SteadyFilter(
+                gyro_columns=gyro_columns,
+                *args, **kwargs
+            )
+        self.container.register_service('steady_filter', make_steady_filter)
+
+        self.container.register_service(
+            'order',
+            preprocessors.SensorAndDistanceOrder,
+        )
+
+        def make_preprocessor_pipeline(
+            steps = [
+                'metadata_preprocessor',
+                'altitude_filter',
+                'steady_filter',
+                'metadata_image_registrar',
+                'order',
+            ],
+            *args, **kwargs
+        ):
+            return Pipeline([
+                (step, self.container.get_service(step, *args, **kwargs))
+                for step in steps
+            ])
+        self.container.register_service(
+            'preprocessor_pipeline',
+            make_preprocessor_pipeline,
         )
 
     def register_default_train_services(self):

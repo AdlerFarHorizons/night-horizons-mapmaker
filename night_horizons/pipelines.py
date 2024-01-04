@@ -63,7 +63,7 @@ class PreprocessorPipelines:
         preprocessor = Pipeline([
             ('metadata',
              metadata_preprocessor),
-            ('select_deployment_phase',
+            ('select_float_phase',
              preprocessors.AltitudeFilter(column=altitude_column)),
             ('select_steady',
              preprocessors.SteadyFilter(columns=gyro_columns)),
