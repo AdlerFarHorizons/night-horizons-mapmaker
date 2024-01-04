@@ -120,8 +120,13 @@ class Mosaicker(BatchProcessor):
                 )
             self.create_containing_dataset(X)
 
-        # Fit the row processor too
+        # Fit the processor and scorer too
+        # While this is generic and expected for the majority of
+        # BatchProcessors, it cannot be part of self.fit because it has to be
+        # called after the rest of the fitting is done.
         self.processor.fit(self)
+        if self.scorer is not None:
+            self.scorer.fit(self)
 
         return self
 
