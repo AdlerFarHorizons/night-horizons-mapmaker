@@ -38,7 +38,7 @@ class ImageBlender(BaseImageOperator):
         self.outline = outline
         self.log_keys = log_keys
 
-    def operate(self, src_img, dst_img):
+    def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
 
         # Resize the source image
         src_img_resized = cv2.resize(
@@ -55,9 +55,9 @@ class ImageBlender(BaseImageOperator):
 
     def blend(
         self,
-        src_img,
-        dst_img,
-    ):
+        src_img: np.ndarray,
+        dst_img: np.ndarray,
+    ) -> np.ndarray:
 
         # Fill value defaults to values that would be opaque
         if self.fill_value is None:

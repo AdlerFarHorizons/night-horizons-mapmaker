@@ -16,7 +16,7 @@ class SimilarityScorer(BaseImageOperator):
         self.compare_nonzero = compare_nonzero
         self.tm_metric = tm_metric
 
-    def operate(self, src_img, dst_img):
+    def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
 
         if src_img.shape != dst_img.shape:
             if not self.allow_resize:
@@ -32,4 +32,4 @@ class SimilarityScorer(BaseImageOperator):
 
         r = cv2.matchTemplate(src_img, dst_img, self.tm_metric)[0][0]
 
-        return r
+        return {'score': r}

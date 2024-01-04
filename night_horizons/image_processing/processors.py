@@ -30,12 +30,14 @@ class Processor(utils.LoggerMixin, ABC):
         image_operator,
         log_keys: list[str] = [],
         save_return_codes: list[str] = [],
+        use_safe_process: bool = True,
     ):
 
         self.io_manager = io_manager
         self.image_operator = image_operator
         self.log_keys = log_keys
         self.save_return_codes = save_return_codes
+        self.use_safe_process = use_safe_process
 
     def fit(self, batch_processor):
         '''Copy over fit values from the batch processor.
@@ -81,7 +83,10 @@ class Processor(utils.LoggerMixin, ABC):
         dst = self.get_dst(i, row, resources)
 
         # Main function that changes depending on parent class
-        results = self.safe_process(i, row, resources, src, dst)
+        if self.use_safe_process:
+            results = self.safe_process(i, row, resources, src, dst)
+        else:
+            results = self.process(i, row, resources, src, dst)
 
         row = self.store_results(i, row, resources, results)
 
@@ -163,6 +168,7 @@ class DatasetProcessor(Processor):
         image_operator,
         log_keys: list[str] = [],
         save_return_codes: list[str] = [],
+        use_safe_process: bool = True,
         dtype: type = np.uint8,
     ):
 
@@ -171,6 +177,7 @@ class DatasetProcessor(Processor):
             image_operator=image_operator,
             log_keys=log_keys,
             save_return_codes=save_return_codes,
+            use_safe_process=use_safe_process,
         )
         self.dtype = dtype
 
@@ -245,7 +252,7 @@ class DatasetUpdater(DatasetProcessor):
         # Combine the images
         # TODO: image_operator is more-general,
         #       but image_blender is more descriptive
-        results = self.image_operator.process(
+        results = self.image_operator.operate(
             src['image'],
             dst['image'],
         )
@@ -324,7 +331,7 @@ class DatasetScorer(DatasetProcessor):
         # Combine the images
         # TODO: image_operator is more-general,
         #       but image_blender is more descriptive
-        results = self.image_operator.process(
+        results = self.image_operator.operate(
             src['image'],
             dst['image'],
         )
