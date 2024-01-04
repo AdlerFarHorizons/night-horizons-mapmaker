@@ -7,6 +7,7 @@ from sklearn.utils.validation import check_is_fitted
 import tqdm
 
 from .. import utils
+from .processors import Processor
 
 
 class BatchProcessor(
@@ -15,7 +16,13 @@ class BatchProcessor(
     BaseEstimator,
 ):
 
-    def __init__(self, processor, passthrough, log_keys):
+    def __init__(
+        self,
+        processor: Processor,
+        passthrough,
+        log_keys,
+        scorer: Processor = None,
+    ):
         '''
         Parameters
         ----------
@@ -26,6 +33,7 @@ class BatchProcessor(
         self.processor = processor
         self.passthrough = passthrough
         self.log_keys = log_keys
+        self.scorer = scorer
 
     @utils.enable_passthrough
     def fit(
@@ -68,6 +76,42 @@ class BatchProcessor(
     @utils.enable_passthrough
     def transform(
         self,
+        X: pd.DataFrame,
+        y=None,
+    ):
+
+        return self.batch_process(
+            self.processor,
+            X,
+            y,
+        )
+
+    def predict(
+        self,
+        X: pd.DataFrame,
+    ):
+        '''Transform and predict perform the same process here.
+        Transform is appropriate for image processing as an intermediate step.
+        Predict is appropriate for image processing as the final step.
+        '''
+
+        return self.transform(X)
+
+    def score(
+        self,
+        X: pd.DataFrame,
+        y=None,
+    ):
+
+        return self.batch_process(
+            self.scorer,
+            X,
+            y,
+        )
+
+    def batch_process(
+        self,
+        processor: Processor,
         X: pd.DataFrame,
         y=None,
     ):
@@ -118,11 +162,11 @@ class BatchProcessor(
             row = X.loc[ind].copy()
 
             # Process the row
-            row = self.processor.process_row(i, row, resources)
+            row = processor.process_row(i, row, resources)
             Z_out.loc[ind] = row
 
             # Snapshot the memory usage
-            log = self.processor.log
+            log = processor.log
             if 'snapshot' in self.log_keys:
                 if i % self.memory_snapshot_freq == 0:
                     log['snapshot'] = tracemalloc.take_snapshot()
@@ -147,23 +191,6 @@ class BatchProcessor(
 
         return Z_out
 
-    def predict(
-        self,
-        X: pd.DataFrame,
-    ):
-        '''Transform and predict perform the same process here.
-        Transform is appropriate for image processing as an intermediate step.
-        Predict is appropriate for image processing as the final step.
-        '''
-
-        return self.transform(X)
-
-    def score(
-        self,
-        X: pd.DataFrame,
-        y=None,
-    ):
-        pass
 
     def validate_readiness(self, X: pd.DataFrame):
         '''Pre-transform validation.
