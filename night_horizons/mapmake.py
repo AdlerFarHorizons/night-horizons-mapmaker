@@ -124,22 +124,38 @@ class SequentialMosaicMaker(MosaicMaker):
             use_raw_images=settings['use_raw_images'],
         )
 
-        # Preprocessing
-        preprocessor = self.container.get_service('preprocessor')
-        X_train = preprocessor.fit_transform(fps_train)
-        X = preprocessor.fit_transform(fps)
-
+        # Y preprocessing
         preprocessor_y = self.container.get_service('preprocessor_y')
         y_train = preprocessor_y.fit_transform(fps_train)
         y_test = preprocessor_y.fit_transform(fps_test)
 
+        # X preprocessing
+        preprocessor = self.container.get_service('preprocessor')
+        # Fit the pipeline
+        preprocessor = preprocessor.fit(
+            X=fps_train,
+            y=y_train,
+            metadata_preprocessor__img_log_fp=(
+                io_manager.input_filepaths['img_log']
+            ),
+            metadata_preprocessor__imu_log_fp=(
+                io_manager.input_filepaths['imu_log']
+            ),
+            metadata_preprocessor__gps_log_fp=(
+                io_manager.input_filepaths['gps_log']
+            ),
+        )
+        X_train = preprocessor.fit_transform(fps_train)
+        X = preprocessor.fit_transform(fps)
+
         # Mosaicking
         mosaicker = self.container.get_service('mosaicker')
         # TODO: It's unintuitive that we use X=y_train here, and approx_y=X.
-        y_pred = mosaicker.fit(
+        mosaicker = mosaicker.fit(
             X=y_train,
             approx_y=X,
         )
+        y_pred = mosaicker.fit_transform(X)
 
         return y_pred
 
@@ -185,24 +201,14 @@ class SequentialMosaicMaker(MosaicMaker):
         # Preprocessor to filter on altitude
         self.container.register_service(
             'altitude_filter',
-            lambda altitude_column='mAltitude', *args, **kwargs: (
-                preprocessors.AltitudeFilter(
-                    column=altitude_column,
-                    *args, **kwargs
-                )
-            )
+            preprocessors.AltitudeFilter,
         )
 
         # Preprocessor to filter on steadiness
-        def make_steady_filter(
-            gyro_columns=['imuGyroX', 'imuGyroY', 'imuGyroZ'],
-            *args, **kwargs
-        ):
-            return preprocessors.SteadyFilter(
-                gyro_columns=gyro_columns,
-                *args, **kwargs
-            )
-        self.container.register_service('steady_filter', make_steady_filter)
+        self.container.register_service(
+            'steady_filter',
+            preprocessors.SteadyFilter,
+        )
 
         # Preprocessor to order images
         self.container.register_service(
@@ -223,13 +229,24 @@ class SequentialMosaicMaker(MosaicMaker):
             ],
             *args, **kwargs
         ):
-            return Pipeline([
-                (step, self.container.get_service(step, *args, **kwargs))
-                for step in steps
-            ])
+            return Pipeline(
+                [
+                    (step, self.container.get_service(step))
+                    for step in steps
+                ],
+                *args, **kwargs
+            )
         self.container.register_service(
             'preprocessor',
             make_preprocessor_pipeline,
+        )
+
+        # Preprocessor for the y values is just a geotiff preprocessor
+        self.container.register_service(
+            'preprocessor_y',
+            lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
+                *args, **kwargs
+            )
         )
 
     def register_default_train_services(self):
@@ -299,6 +316,9 @@ class SequentialMosaicMaker(MosaicMaker):
         )
 
     def register_default_batch_processor(self):
+        '''
+        TODO: This could be cleaned up more, at the cost of flexibility.
+        '''
 
         # Feature detection and matching
         self.container.register_service(
