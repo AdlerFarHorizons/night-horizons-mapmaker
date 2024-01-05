@@ -591,7 +591,6 @@ class SequentialMosaicker(Mosaicker):
             self.logs = []
         else:
             X_t = self.checkpoint_state_['y_pred']
-            self.logs = self.checkpoint_state_['logs']
 
         # Get the dataset
         resources = {
