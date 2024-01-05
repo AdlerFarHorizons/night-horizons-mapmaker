@@ -55,7 +55,7 @@ class Mosaicker(BatchProcessor):
         n_bands: int = 4,
         outline: int = 0,
         log_keys: list[str] = ['ind', 'return_code'],
-        passthrough: Union[list[str], bool] = False,
+        passthrough: Union[list[str], bool] = True,
     ):
 
         super().__init__(
@@ -239,7 +239,6 @@ class Mosaicker(BatchProcessor):
         x_max,
         y_min,
         y_max,
-        padding=0,
     ):
         '''
         Parameters
@@ -249,10 +248,10 @@ class Mosaicker(BatchProcessor):
         '''
 
         # Get physical dimensions
-        x_imgframe = x_min - self.x_min_ - padding
-        y_imgframe = self.y_max_ - y_max - padding
-        width = x_max - x_min + 2 * padding
-        height = y_max - y_min + 2 * padding
+        x_imgframe = x_min - self.x_min_
+        y_imgframe = self.y_max_ - y_max
+        width = x_max - x_min
+        height = y_max - y_min
 
         # Convert to pixels
         x_off = np.round(x_imgframe / self.pixel_width_)
@@ -505,7 +504,7 @@ class SequentialMosaicker(Mosaicker):
         fill_value: Union[int, float] = None,
         dtype: type = np.uint8,
         n_bands: int = 4,
-        passthrough: Union[bool, list[str]] = False,
+        passthrough: Union[bool, list[str]] = True,
         outline: int = 0,
         log_keys: list[str] = ['i', 'ind', 'return_code', 'abs_det_M'],
     ):

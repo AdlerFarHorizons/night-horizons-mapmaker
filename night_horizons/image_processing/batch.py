@@ -21,10 +21,14 @@ class BatchProcessor(
         self,
         processor: Processor,
         log_keys: list[str] = ['ind', 'return_code'],
-        passthrough: Union[list[str], bool] = False,
+        passthrough: Union[list[str], bool] = True,
         scorer: Processor = None,
     ):
         '''
+        TODO: Passthrough is currently True by default. This is less likely to
+        cause unexpected errors, but slightly more likely to cause uncaught
+        unexpected behavior.
+
         Parameters
         ----------
         Returns
