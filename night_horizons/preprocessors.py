@@ -66,6 +66,7 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
         imu_log_fp: str = None,
         gps_log_fp: str = None,
     ):
+        '''TODO: Another area to rework with DataIO'''
 
         # Check the input is good.
         X = utils.check_filepaths_input(
@@ -569,7 +570,11 @@ class Filter(TransformerMixin, BaseEstimator):
 
 class AltitudeFilter(Filter):
 
-    def __init__(self, column, cruising_altitude=13000.):
+    def __init__(
+        self,
+        column: str = 'mAltitude',
+        cruising_altitude: float = 13000.,
+    ):
 
         self.column = column
         self.cruising_altitude = cruising_altitude
@@ -582,7 +587,11 @@ class AltitudeFilter(Filter):
 
 class SteadyFilter(Filter):
 
-    def __init__(self, columns, max_gyro=0.075):
+    def __init__(
+        self,
+        columns: list[str] = ['imuGyroX', 'imuGyroY', 'imuGyroZ'],
+        max_gyro: float = 0.075,
+    ):
 
         self.columns = columns
         self.max_gyro = max_gyro
