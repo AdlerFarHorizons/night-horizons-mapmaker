@@ -159,8 +159,8 @@ class BatchProcessor(
             self.log['starting_snapshot'] = start
 
         # Main loop
-        Z_out = pd.DataFrame()
-        for i, ind in enumerate(tqdm.tqdm(X_t.index, ncols=80)):
+        Z_out = X_t.copy()
+        for i, ind in enumerate(tqdm.tqdm(X.index, ncols=80)):
 
             # Go to the right loop
             if i < self.i_start_:
@@ -173,6 +173,10 @@ class BatchProcessor(
             row = processor.process_row(i, row, resources)
 
             # Incorporate the row into the output DataFrame
+            # We drop and append because concat handles adding new columns,
+            # while Z_out.loc[ind] = row does not.
+            # The cost of this is scrambling the data (it's probably also slow)
+            Z_out = Z_out.drop(ind)
             Z_out = pd.concat([Z_out, row.to_frame().T])
 
             # Snapshot the memory usage
@@ -185,6 +189,7 @@ class BatchProcessor(
             resources['dataset'] = self.io_manager.save_to_checkpoint(
                 i,
                 resources['dataset'],
+                y_pred=Z_out,
             )
 
             # Update and save the log
@@ -193,6 +198,10 @@ class BatchProcessor(
             self.logs.append(log)
             if hasattr(self, 'log_filepath_'):
                 self.write_log(self.log_filepath_)
+
+        # It's possible for the data to get scrambled during processing,
+        # so we sort it before returning it.
+        Z_out = Z_out.loc[X.index]
 
         # Stop memory tracing
         if 'snapshot' in self.log_keys:
