@@ -1,5 +1,5 @@
-'''Test file for pipelines.
-'''
+"""Test file for pipelines.
+TODO: Is there anything in here worth saving?
 
 import os
 import unittest
@@ -150,3 +150,5 @@ class TestLessReferencedMosaic(BaseTester):
         # Check the score
         score = self.pipeline.score(self.fps)
         assert score > metrics.R_ACCEPT
+
+"""
