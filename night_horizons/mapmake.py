@@ -63,21 +63,16 @@ class MosaicMaker(Mapmaker):
 
         # The processor is deals with saving and loading, in addition to
         # calling the image_operator.
-        def make_processor(
-            io_manager: io_manager.IOManager = None,
-            image_operator: operators.BaseImageOperator = None,
-            *args, **kwargs
-        ):
-            if io_manager is None:
-                io_manager = self.container.get_service('io_manager')
-            if image_operator is None:
-                image_operator = self.container.get_service('image_operator')
-            return processors.DatasetUpdater(
+        # By including io_manager as an an argument, we can promote using
+        # the same io_manager throughout
+        self.container.register_service(
+            'processor',
+            lambda io_manager, *args, **kwargs: processors.DatasetUpdater(
                 io_manager=io_manager,
-                image_operator=image_operator,
+                image_operator=self.container.get_service('image_operator'),
                 *args, **kwargs
             )
-        self.container.register_service('processor', make_processor)
+        )
 
         # This is the operator for scoring images
         self.container.register_service(
@@ -85,42 +80,27 @@ class MosaicMaker(Mapmaker):
             scorers.SimilarityScorer,
         )
 
-        # And this is the corresponding processor for scoring images
-        def make_scorer(
-            io_manager: io_manager.IOManager = None,
-            image_operator: operators.BaseImageOperator = None,
-            *args, **kwargs
-        ):
-            if io_manager is None:
-                io_manager = self.container.get_service('io_manager')
-            if image_operator is None:
-                image_operator = self.container.get_service('image_scorer')
-            return processors.DatasetScorer(
+        # This is the corresponding processor for scoring images
+        self.container.register_service(
+            'scorer',
+            lambda io_manager, *args, **kwargs: processors.DatasetScorer(
                 io_manager=io_manager,
-                image_operator=image_operator,
+                image_operator=self.container.get_service('image_scorer'),
                 *args, **kwargs
             )
-        self.container.register_service('scorer', make_scorer)
+        )
 
         # Finally, the mosaicker itself, which is a batch processor
         def make_mosaicker(
             io_manager: io_manager.IOManager = None,
-            processor: processors.Processor = None,
-            scorer: processors.Processor = None,
             *args, **kwargs
         ):
             if io_manager is None:
                 io_manager = self.container.get_service('io_manager')
-            if processor is None:
-                processor = self.container.get_service(
-                    'processor',
-                    io_manager=io_manager,
-                )
-            if scorer is None:
-                scorer = self.container.get_service(
-                    'scorer',
-                    io_manager=io_manager,
-                )
+            processor = self.container.get_service(
+                'processor', io_manager=io_manager)
+            scorer = self.container.get_service(
+                'scorer', io_manager=io_manager)
             return mosaicking.Mosaicker(
                 io_manager=io_manager,
                 processor=processor,
