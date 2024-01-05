@@ -458,7 +458,7 @@ class MosaicIOManager(IOManager):
         for key, pattern in self.checkpoint_filepatterns.items():
             checkpoint_fp = os.path.join(
                 self.checkpoint_dir,
-                pattern.format(i_checkpoint)
+                pattern.format(i_checkpoint - 1)
             )
             if os.path.isfile(checkpoint_fp):
                 shutil.copy(checkpoint_fp, self.output_filepaths[key])
