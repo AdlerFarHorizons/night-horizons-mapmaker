@@ -10,11 +10,13 @@ class SimilarityScorer(BaseImageOperator):
         self,
         allow_resize: bool = True,
         compare_nonzero: bool = True,
-        tm_metric=cv2.TM_CCOEFF_NORMED
+        tm_metric=cv2.TM_CCOEFF_NORMED,
+        log_keys: list[str] = [],
     ):
         self.allow_resize = allow_resize
         self.compare_nonzero = compare_nonzero
         self.tm_metric = tm_metric
+        self.log_keys = log_keys
 
     def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
 
