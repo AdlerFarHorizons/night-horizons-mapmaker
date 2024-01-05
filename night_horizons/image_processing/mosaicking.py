@@ -142,7 +142,7 @@ class Mosaicker(BatchProcessor):
         -------
         '''
 
-        X_t = self.transform_to_pixel(X, padding=0)
+        X_t = self.transform_to_pixel(X)
 
         # Get the dataset
         resources = {
@@ -349,7 +349,7 @@ class Mosaicker(BatchProcessor):
 
         return x_off, y_off, x_size, y_size
 
-    def transform_to_pixel(self, X, padding):
+    def transform_to_pixel(self, X):
 
         # Convert to pixels
         (
@@ -358,7 +358,6 @@ class Mosaicker(BatchProcessor):
         ) = self.physical_to_pixel(
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
-            padding=padding,
         )
 
         # Check nothing is oob
@@ -586,7 +585,8 @@ class SequentialMosaicker(Mosaicker):
 
         # Get state of output data
         if self.checkpoint_state_ is None:
-            X_t = self.transform_to_pixel(X, padding=0)
+            X_t = self.get_search_zone(X)
+            X_t = self.transform_to_pixel(X_t)
 
             # And the logs too
             self.logs = []
@@ -621,3 +621,12 @@ class SequentialMosaicker(Mosaicker):
         resources['dataset'] = None
 
         return y_pred
+
+    def get_search_zone(self, X: pd.DataFrame) -> pd.DataFrame:
+
+        X['x_min'] = X['x_min'] - X['padding']
+        X['x_max'] = X['x_max'] + X['padding']
+        X['y_min'] = X['y_min'] - X['padding']
+        X['y_max'] = X['y_max'] + X['padding']
+
+        return X
