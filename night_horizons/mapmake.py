@@ -1,4 +1,5 @@
 import cv2
+from sklearn.pipeline import Pipeline
 
 from .container import DIContainer
 from . import io_manager, pipelines, preprocessors
