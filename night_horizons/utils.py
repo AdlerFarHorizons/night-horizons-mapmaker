@@ -400,6 +400,9 @@ class LoggerMixin:
 
     def update_log(self, new_dict: dict, target: dict = None):
 
+        if len(self.log_keys) == 0:
+            return target
+
         if target is None:
             target = self.log
 
@@ -412,6 +415,9 @@ class LoggerMixin:
         target.update(new_dict)
 
         return target
+
+    def stop_logging(self):
+        self.log_keys = []
 
 
 class LoopLoggerMixin(LoggerMixin):
