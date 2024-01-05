@@ -10,18 +10,20 @@ import scipy
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import preprocess, reference, mosaic
+from . import preprocessors
+from .image_processing import registration, mosaicking
 
 
-class PreprocessingPipelines:
+class PreprocessorPipelines:
 
     @staticmethod
-    def nitelite_preprocessing_steps(
+    def nitelite(
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         use_approximate_georeferencing: bool = True,
         altitude_column: str = 'mAltitude',
@@ -40,36 +42,36 @@ class PreprocessingPipelines:
         -------
         '''
 
-        # Choose the preprocesser for getting the bulk of the metadata
-        metadata_preprocesser = preprocess.NITELitePreprocesser(crs=crs)
+        # Choose the preprocessor for getting the bulk of the metadata
+        metadata_preprocessor = preprocessors.NITELitePreprocessor(crs=crs)
 
         # Choose the georeferencing
         if use_approximate_georeferencing:
-            georeferencer = reference.SensorGeoreferencer(
+            georeferencer = registration.MetadataImageRegistrar(
                 crs=crs,
                 passthrough=['filepath', 'camera_num'],
                 padding_fraction=padding_fraction,
             )
         else:
-            georeferencer = preprocess.GeoTIFFPreprocesser(
+            georeferencer = preprocessors.GeoTIFFPreprocessor(
                 crs=crs,
                 passthrough=['camera_num'],
                 padding_fraction=padding_fraction,
             )
 
         # Build the steps
-        preprocessing_steps = [
+        preprocessor = Pipeline([
             ('metadata',
-             metadata_preprocesser),
-            ('select_deployment_phase',
-             preprocess.AltitudeFilter(column=altitude_column)),
+             metadata_preprocessor),
+            ('select_float_phase',
+             preprocessors.AltitudeFilter(column=altitude_column)),
             ('select_steady',
-             preprocess.SteadyFilter(columns=gyro_columns)),
+             preprocessors.SteadyFilter(columns=gyro_columns)),
             ('georeference', georeferencer),
-            ('order', preprocess.SensorAndDistanceOrder()),
-        ]
+            ('order', preprocessors.SensorAndDistanceOrder()),
+        ])
 
-        return preprocessing_steps
+        return preprocessor
 
 
 class GeoreferencePipelines:
@@ -79,14 +81,14 @@ class GeoreferencePipelines:
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
     ):
 
-        # Choose the preprocesser for getting the bulk of the metadata
-        metadata_preprocesser = preprocess.NITELitePreprocesser(
+        # Choose the preprocessor for getting the bulk of the metadata
+        metadata_preprocessor = preprocessors.NITELitePreprocessor(
             crs=crs,
             unhandled_files='warn and drop',
         )
         pipeline = Pipeline([
-            ('nitelite', metadata_preprocesser),
-            ('georeference', reference.SensorGeoreferencer(crs=crs)),
+            ('nitelite', metadata_preprocessor),
+            ('georeference', registration.MetadataImageRegistrar(crs=crs)),
         ])
 
         return pipeline
@@ -101,8 +103,8 @@ class MosaicPipelines:
     ):
 
         pipeline = Pipeline([
-            ('geotiff', preprocess.GeoTIFFPreprocesser(crs=crs)),
-            ('mosaic', mosaic.ReferencedMosaic(filepath=filepath, crs=crs))
+            ('geotiff', preprocessors.GeoTIFFPreprocessor(crs=crs)),
+            ('mosaic', mosaicking.Mosaicker(filepath=filepath, crs=crs))
         ])
 
         return pipeline
@@ -114,11 +116,11 @@ class MosaicPipelines:
     ):
 
         pipeline = Pipeline([
-            ('nitelite', preprocess.NITELitePreprocesser(
+            ('nitelite', preprocessors.NITELitePreprocessor(
                 output_columns=['filepath', 'sensor_x', 'sensor_y'])),
-            ('geotiff', preprocess.GeoTIFFPreprocesser(
+            ('geotiff', preprocessors.GeoTIFFPreprocessor(
                 crs=crs, passthrough=True)),
-            ('mosaic', mosaic.LessReferencedMosaic(filepath=filepath, crs=crs))
+            ('mosaic', mosaicking.SequentialMosaicker(filepath=filepath, crs=crs))
         ])
 
         return pipeline

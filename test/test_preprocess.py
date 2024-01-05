@@ -7,11 +7,11 @@ import unittest
 import numpy as np
 import pandas as pd
 
-import night_horizons.preprocess as preprocess
+import night_horizons.preprocessors as preprocessors
 import night_horizons.utils as utils
 
 
-class TestNITELitePreprocesser(unittest.TestCase):
+class TestNITELitePreprocessor(unittest.TestCase):
 
     def setUp(self):
 
@@ -21,9 +21,9 @@ class TestNITELitePreprocesser(unittest.TestCase):
         self.imu_log_fp = os.path.join(metadata_dir, 'PresIMULog.csv')
         self.gps_log_fp = os.path.join(metadata_dir, 'GPSLog.csv')
 
-        # Preprocesser construction
+        # Preprocessor construction
         self.expected_cols = ['filepath', 'sensor_x', 'sensor_y']
-        self.transformer = preprocess.NITELitePreprocesser(
+        self.transformer = preprocessors.NITELitePreprocessor(
             output_columns=self.expected_cols
         )
 
@@ -105,7 +105,7 @@ class TestNITELitePreprocesser(unittest.TestCase):
         np.testing.assert_allclose(metadata.index, fps.index)
 
 
-class TestGeoTIFFPreprocesser(unittest.TestCase):
+class TestGeoTIFFPreprocessor(unittest.TestCase):
 
     def test_output(self):
 
@@ -121,10 +121,10 @@ class TestGeoTIFFPreprocesser(unittest.TestCase):
         fps = pd.concat([fps, fps2], ignore_index=True)
         n_files = len(fps)
 
-        transformer = preprocess.GeoTIFFPreprocesser()
+        transformer = preprocessors.GeoTIFFPreprocessor()
         X = transformer.fit_transform(fps)
 
-        expected_cols = ['filepath',] + preprocess.GEOTRANSFORM_COLS
+        expected_cols = ['filepath',] + preprocessors.GEOTRANSFORM_COLS
         assert (~X.columns.isin(expected_cols)).sum() == 0
 
         assert len(X) == n_files

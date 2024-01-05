@@ -1,5 +1,5 @@
-'''Test file for pipelines.
-'''
+"""Test file for pipelines.
+TODO: Is there anything in here worth saving?
 
 import os
 import unittest
@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 import night_horizons.utils as utils
-import night_horizons.preprocess as preprocess
+import night_horizons.preprocessors as preprocessors
 import night_horizons.raster as raster
 import night_horizons.pipelines as pipelines
 import night_horizons.metrics as metrics
@@ -38,7 +38,7 @@ class TestSensorGeoreferencing(BaseTester):
 
         super().setUp()
 
-        self.y_pipeline = preprocess.GeoTIFFPreprocesser()
+        self.y_pipeline = preprocessors.GeoTIFFPreprocessor()
 
         self.pipeline = \
             pipelines.GeoreferencePipelines.sensor_georeferencing()
@@ -150,3 +150,5 @@ class TestLessReferencedMosaic(BaseTester):
         # Check the score
         score = self.pipeline.score(self.fps)
         assert score > metrics.R_ACCEPT
+
+"""

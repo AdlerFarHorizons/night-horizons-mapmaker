@@ -1,7 +1,10 @@
 '''
 TODO: Refactor into classes with @staticmethod. Will be more clean.
 '''
+
+from functools import wraps
 import glob
+import inspect
 import os
 from typing import Tuple, Union
 
@@ -115,151 +118,6 @@ def load_image(
     img = (img * np.iinfo(dtype).max).astype(dtype)
 
     return img
-
-
-def calc_warp_transform(
-    src_kp,
-    src_des,
-    dst_kp,
-    dst_des,
-    feature_matcher=None,
-    n_matches_used=500,
-    method=cv2.RANSAC,
-    ransacReprojThreshold=5.,
-    log_keys: list[str] = [],
-    *args,
-    **kwargs
-):
-
-    if feature_matcher is None:
-        feature_matcher = cv2.BFMatcher()
-
-    # Perform match
-    matches = feature_matcher.match(src_des, dst_des)
-
-    # Sort matches in the order of their distance.
-    matches = sorted(matches, key=lambda x: x.distance)
-
-    # Take only n_matches_used matches
-    matches = matches[:n_matches_used]
-
-    # Points for the transform
-    src_pts = np.array([src_kp[m.queryIdx].pt for m in matches]).reshape(
-        -1, 1, 2)
-    dst_pts = np.array([dst_kp[m.trainIdx].pt for m in matches]).reshape(
-        -1, 1, 2)
-
-    # Get the transform
-    M, mask = cv2.findHomography(
-        src_pts,
-        dst_pts,
-        method=method,
-        ransacReprojThreshold=ransacReprojThreshold,
-        *args,
-        **kwargs
-    )
-
-    log = {}
-    for log_key in log_keys:
-        if log_key in locals():
-            log[log_key] = locals()[log_key]
-
-    return M, log
-
-
-def validate_warp_transform(M, det_min=0.5, det_max=2.):
-
-    abs_det_M = np.abs(np.linalg.det(M))
-
-    det_in_range = (
-        (abs_det_M > det_min)
-        and (abs_det_M < det_max)
-    )
-
-    return det_in_range, abs_det_M
-
-
-def warp_image(src_img, dst_img, M):
-
-    # Warp the image being fit
-    height, width = dst_img.shape[:2]
-    warped_img = cv2.warpPerspective(src_img, M, (width, height))
-
-    return warped_img
-
-
-def warp_bounds(src_img, M):
-
-    bounds = np.array([
-        [0., 0.],
-        [0., src_img.shape[0]],
-        [src_img.shape[1], src_img.shape[0]],
-        [src_img.shape[1], 0.],
-    ])
-    dsframe_bounds = cv2.perspectiveTransform(
-        bounds.reshape(-1, 1, 2),
-        M,
-    ).reshape(-1, 2)
-
-    # Get the new mins and maxs
-    px_min, py_min = dsframe_bounds.min(axis=0)
-    px_max, py_max = dsframe_bounds.max(axis=0)
-
-    # Put in terms of offset and size
-    x_off = px_min
-    y_off = py_min
-    x_size = px_max - px_min
-    y_size = py_max - py_min
-
-    return x_off, y_off, x_size, y_size
-
-
-def blend_images(
-    src_img,
-    dst_img,
-    fill_value: Union[float, int] = None,
-    outline: int = 0,
-):
-
-    # Fill value defaults to values that would be opaque
-    if fill_value is None:
-        if np.issubdtype(dst_img.dtype, np.integer):
-            fill_value = 255
-        else:
-            fill_value = 1.
-
-    # Doesn't consider zeros in the final channel as empty
-    n_bands = dst_img.shape[-1]
-    is_empty = (dst_img[:, :, :n_bands - 1].sum(axis=2) == 0)
-
-    # Blend
-    blended_img = []
-    for j in range(n_bands):
-        try:
-            blended_img_j = np.where(
-                is_empty,
-                src_img[:, :, j],
-                dst_img[:, :, j]
-            )
-        # When there's no band information in the one we're blending,
-        # fall back to the fill value
-        except IndexError:
-            blended_img_j = np.full(
-                dst_img.shape[:2],
-                fill_value,
-                dtype=dst_img.dtype
-            )
-        blended_img.append(blended_img_j)
-    blended_img = np.array(blended_img).transpose(1, 2, 0)
-
-    # Add an outline
-    if outline > 0:
-        blended_img[:outline] = fill_value
-        blended_img[-1 - outline:] = fill_value
-        blended_img[:, :outline] = fill_value
-        blended_img[:, -1 - outline:] = fill_value
-
-    return blended_img
 
 
 def check_filepaths_input(
@@ -399,6 +257,10 @@ def enable_passthrough(func):
     ----------
     Returns
     -------
+    Requires
+    --------
+    self.passthrough : Union[list[str], bool]
+
     '''
 
     def wrapper(
@@ -411,10 +273,19 @@ def enable_passthrough(func):
         if isinstance(X, pd.Series):
             return func(self, X, *args, **kwargs)
 
-        # Get the columns to pass through
-        passthrough = pd.Series(self.passthrough)
-        is_in_X = pd.Series(passthrough).isin(X.columns)
-        passthrough = passthrough[is_in_X]
+        # Boolean passthrough values
+        if isinstance(self.passthrough, bool):
+            if self.passthrough:
+                passthrough = X.columns
+            else:
+                check_columns(X.columns, self.required_columns)
+                passthrough = pd.Series([])
+
+        # When specific columns are passed
+        else:
+            passthrough = pd.Series(self.passthrough)
+            is_in_X = passthrough.isin(X.columns)
+            passthrough = passthrough[is_in_X]
 
         # Select the columns to pass in
         X_in = X[self.required_columns].copy()
@@ -436,12 +307,70 @@ def enable_passthrough(func):
         X_out = X_out.join(X[passthrough_cols])
 
         return X_out
+
     return wrapper
+
+
+def store_parameters(constructor):
+    '''Decorator for automatically storing arguments passed to a constructor.
+    I.e. any args passed to constructor via
+    my_object = MyClass(*args, **kwargs)
+    will be stored in my_object as an attribute, i.e. my_object.arg
+
+    TODO: Deprecate this, and consider storing the many parameters
+    in a different, more-readable way.
+    Probably as options dictionaries.
+    This would include maintaining consistent rules for creating objects
+    vs passing them in.
+    Also consistent rules for using super().__init__ to store options
+    vs storing them directly. I'm leaning towards requiring super().__init__
+    because then the user can track what parameters exist in the superclass
+    vs subclass.
+    Think also about how fit parameters are handled.
+    Also, consistent names for image_operator vs image_blender.
+
+    Parameters
+    ----------
+        constructor : callable
+            Constructor to wrap.
+    '''
+
+    @wraps(constructor)
+    def wrapped_constructor(self, *args, **kwargs):
+
+        constructor(self, *args, **kwargs)
+
+        parameters_to_store = inspect.getcallargs(
+            constructor,
+            self,
+            *args,
+            **kwargs
+        )
+
+        for param_key, param_value in parameters_to_store.items():
+            if param_key == 'self':
+                continue
+            setattr(self, param_key, param_value)
+
+    return wrapped_constructor
 
 
 class LoggerMixin:
     '''
-    Note that a decorator is not possible because we're interested in locals()
+    Note that a decorator is not possible because we're typically
+    interested in local variables.
+
+    TODO: Evaluate if this helps things or makes things worse.
+    When debugging I wanted to be able to peek at any of the parameters,
+    but in a statistical approach. The idea was that this would be helpful
+    for identify blackbox parameters that correlated with successful
+    (or poor) results.
+
+    NOTE: It is tempting to refactor this to use dependency injection,
+        but in practice that requires one more object to be passed around,
+        and for something as pervasive as the logger, that's a lot of
+        boilerplate. I think it's better to just use a mixin.
+
     Parameters
     ----------
     Returns
@@ -450,12 +379,29 @@ class LoggerMixin:
 
     def __init__(
         self,
-        log_keys=[],
+        log_keys: list[str] = [],
     ):
         self.log_keys = log_keys
+
+    def start_logging(self):
         self.log = {}
 
-    def update_log(self, new_dict, target=None):
+    @property
+    def log(self):
+        '''We create the log on the fly so that it's not stored in memory.
+        '''
+        if not hasattr(self, '_log'):
+            self._log = {}
+        return self._log
+
+    @log.setter
+    def log(self, value):
+        self._log = value
+
+    def update_log(self, new_dict: dict, target: dict = None):
+
+        if len(self.log_keys) == 0:
+            return target
 
         if target is None:
             target = self.log
@@ -469,3 +415,49 @@ class LoggerMixin:
         target.update(new_dict)
 
         return target
+
+    def stop_logging(self):
+        self.log_keys = []
+
+
+class LoopLoggerMixin(LoggerMixin):
+
+    def start_logging(self, i_start: int = 0, log_filepath: str = None):
+        '''
+        Parameters
+        ----------
+        Returns
+        -------
+
+        Attributes Modified
+        -------------------
+        log : dict
+            Dictionary for variables the user may want to view. This should
+            be treated as "read-only".
+
+        logs : list[dict]
+            List of dictionaries for variables the user may want to view.
+            One dictionary per image.
+            Each should be treated as "read-only".
+        '''
+
+        # It's harder to create the log via properties when possibly loading
+        # from a file.
+        self.log = {}
+        self.logs = []
+
+        # Open the log if available
+        if isinstance(log_filepath, str) and os.path.isfile(log_filepath):
+            log_df = pd.read_csv(log_filepath, index_col=0)
+
+            # Format the stored logs
+            for i, ind in enumerate(log_df.index):
+                if i >= i_start:
+                    break
+                log = dict(log_df.loc[ind])
+                self.logs.append(log)
+
+    def write_log(self, log_filepath: str):
+
+        log_df = pd.DataFrame(self.logs)
+        log_df.to_csv(log_filepath)

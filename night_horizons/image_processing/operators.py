@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import copy
 import glob
 import os
@@ -8,24 +9,106 @@ import cv2
 import numpy as np
 import pandas as pd
 import scipy
+
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import utils, preprocess
+from .. import utils, exceptions
 
 
-class ImageJoiner(utils.LoggerMixin):
+class BaseImageOperator(utils.LoggerMixin, ABC):
+
+    @abstractmethod
+    def operate(self, src_img, dst_img):
+        pass
+
+
+class ImageBlender(BaseImageOperator):
+
+    def __init__(
+        self,
+        fill_value: Union[float, int] = None,
+        outline: int = 0.,
+        log_keys: list[str] = [],
+    ):
+
+        self.fill_value = fill_value
+        self.outline = outline
+        self.log_keys = log_keys
+
+    def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
+
+        # Resize the source image
+        src_img_resized = cv2.resize(
+            src_img,
+            (dst_img.shape[1], dst_img.shape[0]),
+        )
+
+        blended_img = self.blend(
+            src_img=src_img_resized,
+            dst_img=dst_img,
+        )
+
+        return {'blended_image': blended_img}
+
+    def blend(
+        self,
+        src_img: np.ndarray,
+        dst_img: np.ndarray,
+    ) -> np.ndarray:
+
+        # Fill value defaults to values that would be opaque
+        if self.fill_value is None:
+            if np.issubdtype(dst_img.dtype, np.integer):
+                fill_value = 255
+            else:
+                fill_value = 1.
+
+        # Doesn't consider zeros in the final channel as empty
+        n_bands = dst_img.shape[-1]
+        is_empty = (dst_img[:, :, :n_bands - 1].sum(axis=2) == 0)
+
+        # Blend
+        blended_img = []
+        for j in range(n_bands):
+            try:
+                blended_img_j = np.where(
+                    is_empty,
+                    src_img[:, :, j],
+                    dst_img[:, :, j]
+                )
+            # When there's no band information in the one we're blending,
+            # fall back to the fill value
+            except IndexError:
+                blended_img_j = np.full(
+                    dst_img.shape[:2],
+                    fill_value,
+                    dtype=dst_img.dtype
+                )
+            blended_img.append(blended_img_j)
+        blended_img = np.array(blended_img).transpose(1, 2, 0)
+
+        # Add an outline
+        if self.outline > 0:
+            blended_img[:self.outline] = fill_value
+            blended_img[-1 - self.outline:] = fill_value
+            blended_img[:, :self.outline] = fill_value
+            blended_img[:, -1 - self.outline:] = fill_value
+
+        self.update_log(locals())
+
+        return blended_img
+
+
+class ImageAligner(BaseImageOperator):
 
     def __init__(
         self,
         feature_detector,
         feature_matcher,
-        image_transformer='PassImageTransformer',
-        feature_detector_options={},
-        feature_matcher_options={},
-        image_transformer_options={},
+        image_transformer,
         det_min=0.6,
         det_max=2.0,
         required_brightness=0.03,
@@ -34,39 +117,8 @@ class ImageJoiner(utils.LoggerMixin):
         homography_method=cv2.RANSAC,
         reproj_threshold=5.,
         find_homography_options={},
-        outline: int = 0,
         log_keys: list[str] = ['abs_det_M', 'duration'],
     ):
-
-        # Handle feature detector object creation
-        if isinstance(feature_detector, str):
-            feature_detector_fn = getattr(cv2, f'{feature_detector}_create')
-            feature_detector = feature_detector_fn(**feature_detector_options)
-        else:
-            assert feature_detector_options == {}, \
-                'Can only pass options if `feature_detector` is a str'
-
-        # Handle feature matcher object creation
-        if isinstance(feature_matcher, str):
-            feature_matcher_fn = getattr(cv2, f'{feature_matcher}_create')
-            feature_matcher = feature_matcher_fn(**feature_matcher_options)
-        else:
-            assert feature_matcher_options == {}, \
-                'Can only pass options if `feature_matcher` is a str'
-
-        # Handle image transformer object creation
-        if isinstance(image_transformer, str):
-            img_transformer_fn = getattr(preprocess, image_transformer)
-            if callable(img_transformer_fn):
-                image_transformer = img_transformer_fn(
-                    **image_transformer_options)
-            else:
-                image_transformer = img_transformer_fn
-                assert image_transformer_options == {}, \
-                    'Cannot pass options to an image transformer pipeline.'
-        else:
-            assert image_transformer_options == {}, \
-                'Can only pass options if `img_transformer` is a str'
 
         self.feature_detector = feature_detector
         self.feature_matcher = feature_matcher
@@ -79,66 +131,22 @@ class ImageJoiner(utils.LoggerMixin):
         self.homography_method = homography_method
         self.reproj_threshold = reproj_threshold
         self.find_homography_options = find_homography_options
-        self.outline = outline
+        self.log_keys = log_keys
 
-        # Initialize the log
-        super().__init__(log_keys)
+    def operate(self, src_img, dst_img):
 
-    def join(self, src_img, dst_img, warp_and_blend=True):
-        '''
-        Parameters
-        ----------
-        Returns
-        -------
-            results:
-                blended_img: Combined image. Not always returned.
-                M: Homography transform. Not always returned.
-                src_kp: Keypoints for the src image. Not always returned.
-                src_des: KP descriptors for the src image. Not always returned.
-                duration: Time spent.
-        '''
+        src_img_t, dst_img_t = self.image_transformer.fit_transform(
+            [src_img, dst_img])
 
-        start = time.time()
+        # Try to get a valid homography
+        results = self.find_valid_homography(src_img_t, dst_img_t)
 
-        results = {}
-        return_code = 'not_set'
-        try:
-            src_img_t, dst_img_t = self.image_transformer.fit_transform(
-                [src_img, dst_img])
+        # Warp image
+        warped_img = self.warp(src_img, dst_img, results['M'])
 
-            # Try to get a valid homography
-            results = self.find_valid_homography(src_img_t, dst_img_t)
+        results['warped_image'] = warped_img
 
-            if warp_and_blend:
-
-                # Warp image
-                warped_img = self.warp(src_img, dst_img, results['M'])
-
-                # Blend images
-                blended_img = self.blend(
-                    warped_img, dst_img, outline=self.outline)
-
-                results['blended_img'] = blended_img
-
-            return_code = 'success'
-        except cv2.error:
-            return_code = 'opencv_err'
-        except HomographyTransformError:
-            return_code = 'bad_det'
-        except SrcDarkFrameError:
-            return_code = 'dark_frame'
-        except DstDarkFrameError:
-            return_code = 'dst_dark_frame'
-        except np.linalg.LinAlgError:
-            return_code = 'linalg_err'
-        finally:
-            duration = time.time() - start
-            results['duration'] = duration
-
-            # Log
-            self.update_log(locals())
-
-            return return_code, results, self.log
+        return results
 
     def apply_img_transform(self, img):
 
@@ -158,6 +166,10 @@ class ImageJoiner(utils.LoggerMixin):
                 src_kp: Keypoints for the src image.
                 src_des: Keypoint descriptors for the src image.
         '''
+
+        # Check what's in bounds, exit if nothing
+        if dst_img.sum() == 0:
+            raise exceptions.OutOfBoundsError('No dst data in bounds.')
 
         results = {}
 
@@ -264,54 +276,6 @@ class ImageJoiner(utils.LoggerMixin):
 
         return x_off, y_off, x_size, y_size
 
-    @staticmethod
-    def blend(
-        src_img,
-        dst_img,
-        fill_value: Union[float, int] = None,
-        outline: int = 0.,
-    ):
-
-        # Fill value defaults to values that would be opaque
-        if fill_value is None:
-            if np.issubdtype(dst_img.dtype, np.integer):
-                fill_value = 255
-            else:
-                fill_value = 1.
-
-        # Doesn't consider zeros in the final channel as empty
-        n_bands = dst_img.shape[-1]
-        is_empty = (dst_img[:, :, :n_bands - 1].sum(axis=2) == 0)
-
-        # Blend
-        blended_img = []
-        for j in range(n_bands):
-            try:
-                blended_img_j = np.where(
-                    is_empty,
-                    src_img[:, :, j],
-                    dst_img[:, :, j]
-                )
-            # When there's no band information in the one we're blending,
-            # fall back to the fill value
-            except IndexError:
-                blended_img_j = np.full(
-                    dst_img.shape[:2],
-                    fill_value,
-                    dtype=dst_img.dtype
-                )
-            blended_img.append(blended_img_j)
-        blended_img = np.array(blended_img).transpose(1, 2, 0)
-
-        # Add an outline
-        if outline > 0:
-            blended_img[:outline] = fill_value
-            blended_img[-1 - outline:] = fill_value
-            blended_img[:, :outline] = fill_value
-            blended_img[:, -1 - outline:] = fill_value
-
-        return blended_img
-
     def validate_brightness(self, img, error_type='src'):
 
         # Get values as fraction of max possible
@@ -328,9 +292,9 @@ class ImageJoiner(utils.LoggerMixin):
 
         if bright_area < self.required_bright_pixel_area:
             if error_type == 'src':
-                error_type = SrcDarkFrameError
+                error_type = exceptions.SrcDarkFrameError
             elif error_type == 'dst':
-                error_type == DstDarkFrameError
+                error_type == exceptions.DstDarkFrameError
             else:
                 raise KeyError(
                     'Unrecognized error type in validate_brightness')
@@ -356,12 +320,71 @@ class ImageJoiner(utils.LoggerMixin):
         self.update_log(locals())
 
         if not det_in_range:
-            raise HomographyTransformError(
+            raise exceptions.HomographyTransformError(
                 f'Bad determinant, abs_det_M = {abs_det_M:.2g}'
             )
 
 
-class ImageJoinerQueue:
+class ImageAlignerBlender(ImageAligner, ImageBlender):
+
+    def __init__(
+        self,
+        feature_detector,
+        feature_matcher,
+        image_transformer,
+        det_min=0.6,
+        det_max=2.0,
+        required_brightness=0.03,
+        required_bright_pixel_area=50000,
+        n_matches_used=500,
+        homography_method=cv2.RANSAC,
+        reproj_threshold=5.,
+        find_homography_options={},
+        fill_value: Union[float, int] = None,
+        outline: int = 0,
+        log_keys: list[str] = ['abs_det_M', 'duration'],
+    ):
+
+        super().__init__(
+            feature_detector=feature_detector,
+            feature_matcher=feature_matcher,
+            image_transformer=image_transformer,
+            det_min=det_min,
+            det_max=det_max,
+            required_brightness=required_brightness,
+            required_bright_pixel_area=required_bright_pixel_area,
+            n_matches_used=n_matches_used,
+            homography_method=homography_method,
+            reproj_threshold=reproj_threshold,
+            find_homography_options=find_homography_options,
+        )
+
+        super(ImageAligner, self).__init__(
+            fill_value=fill_value,
+            outline=outline,
+            log_keys=log_keys,
+        )
+
+    def operate(self, src_img, dst_img):
+
+        src_img_t, dst_img_t = self.image_transformer.fit_transform(
+            [src_img, dst_img])
+
+        # Try to get a valid homography
+        results = self.find_valid_homography(src_img_t, dst_img_t)
+
+        # Warp image
+        warped_img = self.warp(src_img, dst_img, results['M'])
+
+        # Blend images
+        blended_img = self.blend(warped_img, dst_img)
+
+        results['blended_image'] = blended_img
+
+        return results
+
+
+class ImageProcessorQueue:
 
     def __init__(self, defaults, variations):
         '''
@@ -381,14 +404,14 @@ class ImageJoinerQueue:
         for var in variations:
             options = copy.deepcopy(defaults)
             options.update(var)
-            image_joiner = ImageJoiner(**options)
+            image_joiner = ImageAlignerBlender(**options)
             self.image_joiners.append(image_joiner)
 
-    def join(self, src_img, dst_img):
+    def operate(self, src_img, dst_img):
 
         for i, image_joiner in enumerate(self.image_joiners):
 
-            result_code, result, log = image_joiner.join(
+            result_code, result, log = image_joiner.process(
                 src_img,
                 dst_img
             )
@@ -397,15 +420,3 @@ class ImageJoinerQueue:
 
         log['i_image_joiner'] = i
         return result_code, result, log
-
-
-class HomographyTransformError(ValueError):
-    pass
-
-
-class SrcDarkFrameError(ValueError):
-    pass
-
-
-class DstDarkFrameError(ValueError):
-    pass
