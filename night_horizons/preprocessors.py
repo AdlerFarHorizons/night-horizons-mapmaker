@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 import copy
 import glob
 import os
@@ -28,7 +28,25 @@ GEOTRANSFORM_COLS = [
 ]
 
 
-class NITELitePreprocessor(TransformerMixin, BaseEstimator):
+class Preprocessor(TransformerMixin, BaseEstimator, ABC):
+    '''Abstract base class for all preprocessors.
+
+    Parameters
+    ----------
+    Returns
+    -------
+    '''
+
+    @abstractmethod
+    def fit(self, X, y=None):
+        pass
+
+    @abstractmethod
+    def transform(self, X, y=None):
+        pass
+
+
+class NITELitePreprocessor(Preprocessor):
     '''Transform filepaths into a metadata dataframe.
 
     Parameters
@@ -410,7 +428,7 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
         return gps_log_df
 
 
-class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
+class GeoTIFFPreprocessor(Preprocessor):
     '''Transform filepaths into geotransform properties.
 
     Parameters
@@ -537,7 +555,7 @@ class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
         return X
 
 
-class Filter(TransformerMixin, BaseEstimator):
+class Filter(Preprocessor):
     '''Simple estimator to implement easy filtering of rows.
     Does not actually remove rows, but instead adds a `selected` column.
 
@@ -603,7 +621,7 @@ class SteadyFilter(Filter):
         super().__init__(condition)
 
 
-class SensorAndDistanceOrder(TransformerMixin, BaseEstimator):
+class SensorAndDistanceOrder(Preprocessor):
     '''Simple estimator to implement ordering of data.
     For consistency with other transformers, does not actually rearrange data.
     Instead, adds a column `order` that indicates the order to take.
@@ -656,7 +674,7 @@ class SensorAndDistanceOrder(TransformerMixin, BaseEstimator):
         return X
 
 
-class ApplyFilterAndOrder(TransformerMixin, BaseEstimator):
+class ApplyFilterAndOrder(Preprocessor):
     '''Simple estimator to implement easy filtering of rows.
     Does not actually remove rows, but instead adds a `selected` column.
     TODO: Consider deleting this, since we have the option to apply on the fly.
@@ -680,7 +698,7 @@ class ApplyFilterAndOrder(TransformerMixin, BaseEstimator):
         return X_out
 
 
-class BaseImageTransformer(TransformerMixin, BaseEstimator):
+class BaseImageTransformer(Preprocessor):
     '''Transformer for image data.
 
     Parameters
