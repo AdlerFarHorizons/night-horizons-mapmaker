@@ -302,7 +302,7 @@ class IOManager:
         # one after
         i_resume += 1
 
-        return i_resume, filename_start
+        return i_resume
 
     @abstractmethod
     def save_to_checkpoint(self, i):
@@ -314,8 +314,8 @@ class IOManager:
 
     def search_and_load_checkpoint(self, key: str = None):
 
-        i_resume, checkpoint_filename = self.search_for_checkpoint(key=key)
-        loaded_data = self.load_from_checkpoint(i_resume, checkpoint_filename)
+        i_resume = self.search_for_checkpoint(key=key)
+        loaded_data = self.load_from_checkpoint(i_resume)
 
         return i_resume, loaded_data
 
@@ -447,7 +447,7 @@ class MosaicIOManager(IOManager):
 
         return dataset
 
-    def load_from_checkpoint(self, i_checkpoint, checkpoint_filename):
+    def load_from_checkpoint(self, i_checkpoint):
 
         if i_checkpoint == 0:
             return None
