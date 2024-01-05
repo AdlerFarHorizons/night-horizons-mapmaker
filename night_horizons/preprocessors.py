@@ -430,7 +430,7 @@ class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
     def __init__(
         self,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        passthrough: bool = False,
+        passthrough: bool = True,
         spatial_error: float = 0.,
         padding_fraction: float = 0.1,
     ):
