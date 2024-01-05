@@ -375,11 +375,11 @@ class Mosaicker(BatchProcessor):
     def transform_to_physical(self, X):
 
         (
-            X['x_off'], X['y_off'],
-            X['x_size'], X['y_size']
-        ) = self.pixel_to_physical(
             X['x_min'], X['x_max'],
             X['y_min'], X['y_max'],
+        ) = self.pixel_to_physical(
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
         )
 
         return X
