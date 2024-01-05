@@ -361,6 +361,12 @@ class SequentialMosaicMaker(MosaicMaker):
             make_image_aligner_blender,
         )
 
+        # We'll include a scorer as well
+        self.container.register_service(
+            'image_scorer',
+            scorers.SimilarityScorer,
+        )
+
         # And the row transformer used for the sequential mosaicker
         def make_processor(
             io_manager: io_manager.IOManager = None,

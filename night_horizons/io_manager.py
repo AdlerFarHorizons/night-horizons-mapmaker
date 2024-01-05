@@ -380,6 +380,7 @@ class MosaicIOManager(IOManager):
             'settings': 'settings.yaml',
             'log': 'log.csv',
             'y_pred': 'y_pred.csv',
+            'referenced_images_dir': 'referenced_images',
             'progress_images_dir': 'progress_images',
         },
         root_dir: str = None,
@@ -390,6 +391,9 @@ class MosaicIOManager(IOManager):
         checkpoint_freq: int = 100,
     ):
         '''The inputs are more-appropriate defaults for mosaics.
+
+        TODO: Consider renaming referenced_images to georeferenced_images
+        everywhere.
 
         Parameters
         ----------
