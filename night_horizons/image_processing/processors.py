@@ -294,7 +294,7 @@ class DatasetUpdater(DatasetProcessor):
         # Store the return code
         row['return_code'] = results['return_code']
 
-        # Save failed images for later debugging
+        # Save some images for later debugging
         # TODO: Currently the format of the saved images is a little weird.
         if 'progress_images_dir' in self.io_manager.output_filepaths:
             progress_images_dir = (

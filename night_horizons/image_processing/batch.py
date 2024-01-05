@@ -223,5 +223,3 @@ class BatchProcessor(
 
     def postprocess(self, X: pd.DataFrame, resources: dict) -> pd.DataFrame:
         return X
-
-
