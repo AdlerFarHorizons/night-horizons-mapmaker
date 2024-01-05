@@ -204,13 +204,17 @@ class SequentialMosaicMaker(MosaicMaker):
             )
         self.container.register_service('steady_filter', make_steady_filter)
 
+        # Preprocessor to order images
         self.container.register_service(
             'order',
             preprocessors.SensorAndDistanceOrder,
         )
 
+        # Put it all together
+        # One of the more common changes is to replace metadata_image_registrar
+        # with geotiff_preprocessor, for testing.
         def make_preprocessor_pipeline(
-            steps = [
+            steps: list[str] = [
                 'metadata_preprocessor',
                 'altitude_filter',
                 'steady_filter',
@@ -224,7 +228,7 @@ class SequentialMosaicMaker(MosaicMaker):
                 for step in steps
             ])
         self.container.register_service(
-            'preprocessor_pipeline',
+            'preprocessor',
             make_preprocessor_pipeline,
         )
 
@@ -263,44 +267,30 @@ class SequentialMosaicMaker(MosaicMaker):
             operators.ImageBlender,
         )
 
-        # And the row transformer typical for mosaickers
-        def make_processor_train(
-            io_manager_train: io_manager.IOManager = None,
-            image_operator_train: operators.BaseImageOperator = None,
-            *args, **kwargs
-        ):
-            if image_operator_train is None:
-                image_operator_train = self.container.get_service(
-                    'image_operator_train')
-            if io_manager_train is None:
-                io_manager_train = self.container.get_service(
-                    'io_manager_train')
-            return processors.DatasetUpdater(
-                io_manager=io_manager_train,
-                image_operator=image_operator_train,
-                *args, **kwargs
-            )
+        # The processor for the training mosaic
         self.container.register_service(
             'processor_train',
-            make_processor_train,
+            lambda io_manager_train, *args, **kwargs:
+                processors.DatasetUpdater(
+                    io_manager=io_manager_train,
+                    image_operator=self.container.get_service(
+                        'image_operator_train'),
+                    *args, **kwargs
+                )
         )
 
+        # The actual training mosaicker
         def make_mosaicker_train(
             io_manager_train: io_manager.IOManager = None,
-            processor_train: processors.Processor = None,
             *args, **kwargs
         ):
             if io_manager_train is None:
                 io_manager_train = self.container.get_service(
                     'io_manager_train')
-            if processor_train is None:
-                processor_train = self.container.get_service(
-                    'processor_train',
-                    io_manager_train=io_manager_train,
-                )
             return mosaicking.Mosaicker(
                 io_manager=io_manager_train,
-                processor=processor_train,
+                processor=self.container.get_service(
+                    'processor_train', io_manager_train=io_manager_train),
                 *args, **kwargs
             )
         self.container.register_service(
