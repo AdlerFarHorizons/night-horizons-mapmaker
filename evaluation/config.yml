@@ -1,21 +1,21 @@
 ###############################################################################
-# Evaluation Configuration File
+# Example Configuration File
 ###############################################################################
 
-data_dir: /Users/Shared/data/nitelite/220513-FH135
+io_manager:
+  input_dir: ./test/test_data
+  input_description:
+    raw_images:
+      directory: images
+      extension: ['raw', 'tif', 'tiff']
+    referenced_images:
+      directory: referenced_images
+      extension: ['tif', 'tiff']
+      pattern: 'Geo\s\d+_\d.tif'
 
-# Relative to data_dir
-paths_relative_to_data_dir:
-  images_dir: images/raw
-  referenced_images_dir: images/referenced
-  mosaics_dir: mosaics
-  img_log_fp: metadata/image.log
-  imu_log_fp: metadata/PresIMULog.csv
-  gps_log_fp: metadata/GPSLog.csv
-
-# Coordinate reference-system employed
-crs: 'EPSG:3857'
+global:
+  # Coordinate reference-system employed
+  crs: 'EPSG:3857'
 
 # Aesthetics
 color_palette: deep
-
