@@ -143,8 +143,10 @@ class ImageAligner(BaseImageOperator):
 
         # Warp image
         warped_img = self.warp(src_img, dst_img, results['M'])
+        warped_bounds = self.warp_bounds(src_img, results['M'])
 
         results['warped_image'] = warped_img
+        results['warped_bounds'] = warped_bounds
 
         return results
 

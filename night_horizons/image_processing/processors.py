@@ -328,6 +328,30 @@ class DatasetUpdater(DatasetProcessor):
         return row
 
 
+class DatasetRegistrar(DatasetUpdater):
+
+    def store_results(
+        self,
+        i: int,
+        row: pd.Series,
+        resources: dict,
+        results: dict,
+    ):
+
+        super().store_results(i, row, resources, results)
+
+        # Store the image
+        if results['return_code'] == 'success':
+            self.save_image_as_dataset(
+                image=results['warped_image'],
+                x_off_orig=row['x_off'],
+                y_off_orig=row['y_off'],
+                x_size_orig=row['x_size'],
+                y_size_orig=row['y_size'],
+                image_bounds=results['new_bounds'],
+            )
+
+
 class DatasetScorer(DatasetProcessor):
 
     def process(

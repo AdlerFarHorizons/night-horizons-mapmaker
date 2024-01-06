@@ -1,0 +1,37 @@
+###############################################################################
+# Example Configuration File
+###############################################################################
+
+# filetree paths are relative to root_dir
+io_manager:
+  root_dir: /Users/Shared/data/nitelite/220513-FH135
+  input_dir: ''
+  input_description:
+    raw_images:
+      directory: images/raw
+      extension: ['raw', 'tif', 'tiff']
+    referenced_images:
+      directory: images/referenced
+      extension: ['tif', 'tiff']
+      pattern: 'Geo\s\d+_\d.tif'
+    cam0_referenced_images:
+      directory: images/referenced
+      extension: ['tif', 'tiff']
+      pattern: 'Geo\s\d+_0.tif'
+    cam1_referenced_images:
+      directory: images/referenced
+      extension: ['tif', 'tiff']
+      pattern: 'Geo\s\d+_1.tif'
+    cam2_referenced_images:
+      directory: images/referenced
+      extension: ['tif', 'tiff']
+      pattern: 'Geo\s\d+_2.tif'
+    img_log: metadata/image.log
+    imu_log: metadata/PresIMULog.csv
+    gps_log: metadata/GPSLog.csv
+
+# Coordinate reference-system employed
+crs: 'EPSG:3857'
+
+# Aesthetics
+color_palette: deep
