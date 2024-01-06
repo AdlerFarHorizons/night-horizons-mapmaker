@@ -342,14 +342,21 @@ class DatasetRegistrar(DatasetUpdater):
 
         # Store the image
         if results['return_code'] == 'success':
-            self.save_image_as_dataset(
-                image=results['warped_image'],
+            self.save_image_as_new_dataset(
+                img=results['warped_image'],
                 x_off_orig=row['x_off'],
                 y_off_orig=row['y_off'],
                 x_size_orig=row['x_size'],
                 y_size_orig=row['y_size'],
                 image_bounds=results['new_bounds'],
             )
+
+    def save_image_as_new_dataset(
+        self,
+        img,
+    ):
+
+        pass
 
 
 class DatasetScorer(DatasetProcessor):
