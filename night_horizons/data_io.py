@@ -80,7 +80,7 @@ class GDALDatasetIO(DataIO):
 
     def load_data(self, filepath):
         data = gdal.Open(filepath, gdal.GA_ReadOnly)
-        data.setProjection(self.crs.to_wkt())
+        data.SetProjection(self.crs.to_wkt())
         return data
 
 
@@ -104,8 +104,7 @@ class TabularDataIO(DataIO):
 
     def load_data(self, filepath):
         df = pd.read_csv(filepath)
-        data = df.values
-        return data
+        return df
 
 
 class YAMLDataIO(DataIO):

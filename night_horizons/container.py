@@ -54,11 +54,11 @@ class DIContainer:
             raise ValueError(f'Service {name} not registered')
 
         # Get the global arguments
-        callargs = inspect.getargspec(constructor).args
+        callargs = inspect.getfullargspec(constructor).args
         global_kwargs = {}
         for arg in callargs:
             if arg in self.config['global']:
-                global_kwargs[arg] = self.config[arg]
+                global_kwargs[arg] = self.config['global'][arg]
         kwargs = {**global_kwargs, **kwargs}
 
         # The used kwargs are a merger of the config values and those passed in
@@ -125,4 +125,4 @@ class DIContainer:
 
         # Register data io services
         for subclass in data_io.DataIO.__subclasses__():
-            self.register_service(subclass.name, subclass)
+            self.register_service(subclass.name + '_io', subclass)
