@@ -5,7 +5,7 @@ import inspect
 import pickle
 
 import cv2
-from osgeo import gdal
+from osgeo import gdal, gdal_array
 import pandas as pd
 
 
@@ -19,12 +19,48 @@ class DataIO(ABC):
         pass
 
 
-class GDALDataIO(DataIO):
-    def save_data(self, data, filepath):
+class RegisteredImageIO(DataIO):
+
+    def __init__(self, crs):
+
+        self.crs = crs
+
+    def save_data(self, data, filepath, x_min, x_max, y_min, y_max, crs):
+
+        # Get data type
+        gdal_dtype = gdal_array.NumericTypeCodeToGDALTypeCode(data.dtype)
+
+        # Create dataset
         driver = gdal.GetDriverByName('GTiff')
-        dataset = driver.Create(filepath, data.shape[1], data.shape[0], 1, gdal.GDT_Float32)
-        dataset.GetRasterBand(1).WriteArray(data)
+        dataset = driver.Create(
+            filepath,
+            data.shape[1],
+            data.shape[0],
+            data.shape[2],
+            gdal_dtype,
+        )
+
+        # Write to the dataset
+        dataset.WriteArray(data.transpose(2, 0, 1))
+
+        # Set CRS properties
+        dataset.SetProjection(crs.to_wkt())
+
+        # Set geotransform
+        dx = (x_max - x_min) / data.shape[1]
+        dy = (y_max - y_min) / data.shape[0]
+        geotransform = (
+            x_min,
+            dx,
+            0,
+            y_max,
+            0,
+            -dy
+        )
+        self.dataset.SetGeoTransform(geotransform)
+
         dataset.FlushCache()
+        dataset = None
 
     def load_data(self, filepath):
         dataset = gdal.Open(filepath)

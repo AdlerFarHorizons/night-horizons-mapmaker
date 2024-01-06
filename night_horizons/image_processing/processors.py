@@ -354,9 +354,23 @@ class DatasetRegistrar(DatasetUpdater):
     def save_image_as_new_dataset(
         self,
         img,
+        row,
+        x_off_new,
+        y_off_new,
     ):
 
-        pass
+        fp_pattern = self.io_manager.output_filepaths['registered_images']
+        fp = fp_pattern.format(row.name)
+
+        self.io_manager.data_ios['registered_images'].save_data(
+            data=img,
+            filepath=fp,
+            x_min=row['x_min'],
+            x_max=row['x_max'],
+            y_min=row['y_min'],
+            y_max=row['y_max'],
+            crs=self.io_manager.globals['crs'],
+        )
 
 
 class DatasetScorer(DatasetProcessor):
