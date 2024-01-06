@@ -33,6 +33,9 @@ class IOManager:
     - Checkpoint files - DONE
     - Save auxiliary files (settings, logs, etc.) - DONE (kinda)
 
+    TODO: There should be a way to specify what files a given class needs
+        and how that's hooked up to IOManager.
+
     NOTE: This *could* be broken into an InputFileManager, an
     OutputFileManager, and a DataIOManager, but that seems like overkill.
 

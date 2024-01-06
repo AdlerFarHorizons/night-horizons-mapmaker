@@ -359,7 +359,7 @@ class DatasetRegistrar(DatasetUpdater):
         y_off_new,
     ):
 
-        fp_pattern = self.io_manager.output_filepaths['registered_images']
+        fp_pattern = self.io_manager.output_filepaths['referenced_images']
         fp = fp_pattern.format(row.name)
 
         self.io_manager.data_ios['registered_images'].save_data(

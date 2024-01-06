@@ -55,10 +55,17 @@ class TestDatasetRegistrar(unittest.TestCase):
         )
         original_image = ReferencedImage.open(expected_fp)
 
+        row = pd.Series({
+            'x_min': original_image.cart_bounds[0][0],
+            'x_max': original_image.cart_bounds[0][1],
+            'y_min': original_image.cart_bounds[1][0],
+            'y_max': original_image.cart_bounds[1][1],
+        })
+        row.name = 0
+
         processor.save_image_as_new_dataset(
             img=original_image.img_int,
-            x_off_orig=0,
-            y_off_orig=0,
+            row=row,
             x_off_new=0,
             y_off_new=0,
         )
