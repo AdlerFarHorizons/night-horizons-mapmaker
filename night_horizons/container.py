@@ -1,4 +1,5 @@
 import os
+import inspect
 
 import cv2
 import numpy as np
@@ -12,7 +13,7 @@ import yaml
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import io_manager, pipelines, preprocessors
+from . import data_io, io_manager, pipelines, preprocessors
 from .image_processing import mosaicking, operators, processors
 
 
@@ -52,9 +53,18 @@ class DIContainer:
         if not constructor:
             raise ValueError(f'Service {name} not registered')
 
+        # Get the global arguments
+        callargs = inspect.getargspec(constructor).args
+        global_kwargs = {}
+        for arg in callargs:
+            if arg in self.config['global']:
+                global_kwargs[arg] = self.config[arg]
+        kwargs = {**global_kwargs, **kwargs}
+
         # The used kwargs are a merger of the config values and those passed in
         if name in self.config:
             kwargs = {**self.config[name], **kwargs}
+
         return constructor(*args, **kwargs)
 
     def update_config(self, old_config, new_config):
@@ -110,3 +120,9 @@ class DIContainer:
             return parsed
 
         return deep_interpret(config)
+
+    def register_dataio_services(self):
+
+        # Register data io services
+        for subclass in data_io.DataIO.__subclasses__():
+            self.register_service(subclass.name, subclass)
