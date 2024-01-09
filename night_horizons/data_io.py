@@ -7,6 +7,7 @@ import pickle
 import cv2
 from osgeo import gdal, gdal_array
 import pandas as pd
+import pyproj
 import yaml
 
 
@@ -45,7 +46,7 @@ class RegisteredImageIO(DataIO):
         dataset.WriteArray(data.transpose(2, 0, 1))
 
         # Set CRS properties
-        dataset.SetProjection(crs.to_wkt())
+        dataset.SetProjection(self.crs.to_wkt())
 
         # Set geotransform
         dx = (x_max - x_min) / data.shape[1]
@@ -72,7 +73,7 @@ class RegisteredImageIO(DataIO):
 class GDALDatasetIO(DataIO):
     name = 'gdal_dataset'
 
-    def __init__(self, crs):
+    def __init__(self, crs: pyproj.CRS = None):
         self.crs = crs
 
     def save_data(self, data, filepath):
@@ -80,7 +81,8 @@ class GDALDatasetIO(DataIO):
 
     def load_data(self, filepath):
         data = gdal.Open(filepath, gdal.GA_ReadOnly)
-        data.SetProjection(self.crs.to_wkt())
+        if self.crs is not None:
+            data.SetProjection(self.crs.to_wkt())
         return data
 
 

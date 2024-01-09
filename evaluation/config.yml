@@ -16,6 +16,7 @@ io_manager:
 global:
   # Coordinate reference-system employed
   crs: 'EPSG:3857'
+  latlon_crs: 'EPSG:4326'
 
 # Aesthetics
 color_palette: deep
