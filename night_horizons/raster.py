@@ -23,6 +23,8 @@ import seaborn as sns
 
 from typing import Tuple, Union
 
+from .exceptions import OutOfBoundsError
+
 
 class Image:
 
@@ -536,8 +538,238 @@ class ReferencedImage(Image):
             bounds_group.add_to(m)
 
 
+class DatasetWrapper:
+    '''This functionality is copied from Mosaicker.
+    TODO: Clean up this and others so we don't have duplicates.
+
+    Parameters
+    ----------
+    Returns
+    -------
+    '''
+
+    def __init__(self, crs: pyproj.CRS):
+        self.crs = crs
+
+    def get_fit_from_dataset(self, dataset):
+
+        # Get the dataset bounds
+        (
+            (self.x_min_, self.x_max_),
+            (self.y_min_, self.y_max_),
+            self.pixel_width_, self.pixel_height_
+        ) = get_bounds_from_dataset(
+            dataset,
+            self.crs,
+        )
+        self.x_size_ = dataset.RasterXSize
+        self.y_size_ = dataset.RasterYSize
+
+        # Close out the dataset for now. (Reduces likelihood of mem leaks.)
+        dataset.FlushCache()
+        dataset = None
+
+    def physical_to_pixel(
+        self,
+        x_min,
+        x_max,
+        y_min,
+        y_max,
+    ):
+        '''
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        # Get physical dimensions
+        x_imgframe = x_min - self.x_min_
+        y_imgframe = self.y_max_ - y_max
+        width = x_max - x_min
+        height = y_max - y_min
+
+        # Convert to pixels
+        x_off = np.round(x_imgframe / self.pixel_width_)
+        y_off = np.round(y_imgframe / -self.pixel_height_)
+        x_size = np.round(width / self.pixel_width_)
+        y_size = np.round(height / -self.pixel_height_)
+
+        try:
+            # Change dtypes
+            x_off = x_off.astype(int)
+            y_off = y_off.astype(int)
+            x_size = x_size.astype(int)
+            y_size = y_size.astype(int)
+
+        # When we're passing in single values.
+        except TypeError:
+            # Change dtypes
+            x_off = int(x_off)
+            y_off = int(y_off)
+            x_size = int(x_size)
+            y_size = int(y_size)
+
+        return x_off, y_off, x_size, y_size
+
+    def pixel_to_physical(self, x_off, y_off, x_size, y_size):
+
+        # Convert to physical units.
+        x_imgframe = x_off * self.pixel_width_
+        y_imgframe = y_off * -self.pixel_height_
+        width = x_size * self.pixel_width_
+        height = y_size * -self.pixel_height_
+
+        # Convert to bounds
+        x_min = x_imgframe + self.x_min_
+        y_max = self.y_max_ - y_imgframe
+        x_max = x_min + width
+        y_min = y_max - height
+
+        return x_min, x_max, y_min, y_max
+
+    def handle_out_of_bounds(self, x_off, y_off, x_size, y_size, trim=False):
+
+        # By default we raise an error
+        if not trim:
+
+            # Validate
+            oob = (
+                (x_off < 0)
+                | (y_off < 0)
+                | (x_off + x_size > self.x_size_)
+                | (y_off + y_size > self.y_size_)
+            )
+            if isinstance(oob, bool):
+                if oob:
+                    raise OutOfBoundsError(
+                        'Tried to convert physical to pixels, but '
+                        'the provided coordinates are outside the bounds '
+                        'of the mosaic'
+                    )
+            else:
+                n_oob = oob.sum()
+                if n_oob > 0:
+                    raise OutOfBoundsError(
+                        'Tried to convert physical to pixels, but '
+                        f'{n_oob} of {oob.size} are outside the bounds '
+                        'of the mosaic'
+                    )
+
+        # But we can also trim
+        else:
+
+            x_off = copy.copy(x_off)
+            y_off = copy.copy(y_off)
+            x_size = copy.copy(x_size)
+            y_size = copy.copy(y_size)
+
+            try:
+                # Handle out-of-bounds
+                x_off[x_off < 0] = 0
+                y_off[y_off < 0] = 0
+                x_size[x_off + x_size > self.x_size_] = self.x_size_ - x_off
+                y_size[y_off + y_size > self.y_size_] = self.y_size_ - y_off
+
+            except TypeError:
+                # Handle out-of-bounds
+                if x_off < 0:
+                    x_off = 0
+                elif x_off + x_size > self.x_size_:
+                    x_size = self.x_size_ - x_off
+                if y_off < 0:
+                    y_off = 0
+                elif y_off + y_size > self.y_size_:
+                    y_size = self.y_size_ - y_off
+
+        return x_off, y_off, x_size, y_size
+
+    def transform_to_pixel(self, X):
+
+        # Convert to pixels
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.physical_to_pixel(
+            X['x_min'], X['x_max'],
+            X['y_min'], X['y_max'],
+        )
+
+        # Check nothing is oob
+        (
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        ) = self.handle_out_of_bounds(
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size'],
+        )
+
+        return X
+
+    def transform_to_physical(self, X):
+
+        (
+            X['x_min'], X['x_max'],
+            X['y_min'], X['y_max'],
+        ) = self.pixel_to_physical(
+            X['x_off'], X['y_off'],
+            X['x_size'], X['y_size']
+        )
+
+        return X
+
+    def get_image_with_bounds(self, dataset, x_min, x_max, y_min, y_max):
+
+        # Out of bounds
+        if (
+            (x_min > self.x_max_)
+            or (x_max < self.x_min_)
+            or (y_min > self.y_max_)
+            or (y_max < self.y_min_)
+        ):
+            raise ValueError(
+                'Tried to retrieve data fully out-of-bounds.'
+            )
+
+        # Only partially out-of-bounds
+        if x_min < self.x_min_:
+            x_min = self.x_min_
+        if x_max > self.x_max_:
+            x_max = self.x_max_
+        if y_min < self.y_min_:
+            y_min = self.y_min_
+        if y_max > self.y_max_:
+            y_max = self.y_max_
+
+        x_off, y_off, x_size, y_size = self.physical_to_pixel(
+            x_min, x_max, y_min, y_max
+        )
+
+        return self.get_image(dataset, x_off, y_off, x_size, y_size)
+
+    def save_image_with_bounds(self, dataset, img, x_min, x_max, y_min, y_max):
+
+        x_off, y_off, _, _ = self.physical_to_pixel(
+            x_min, x_max, y_min, y_max
+        )
+
+        self.save_image(dataset, img, x_off, y_off)
+
+    @staticmethod
+    def check_bounds(coords, x_off, y_off, x_size, y_size):
+
+        in_bounds = (
+            (x_off <= coords[:, 0])
+            & (coords[:, 0] <= x_off + x_size)
+            & (y_off <= coords[:, 1])
+            & (coords[:, 1] <= y_off + y_size)
+        )
+
+        return in_bounds
+
+
 class BoundsDataset(gdal.Dataset):
-    '''Wrapper for GDAL Dataset that better handles
+    '''Somewhat defunct wrapper for GDAL Dataset that better handles
     working with bounds and pixel resolutions instead of
     corners, array dimensions, and pixel resolutions.
     This is useful for mosaics, where the overlap really matters.

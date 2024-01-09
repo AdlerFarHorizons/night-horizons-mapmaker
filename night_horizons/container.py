@@ -53,6 +53,10 @@ class DIContainer:
         if not constructor:
             raise ValueError(f'Service {name} not registered')
 
+        # The used kwargs are a merger of the config values and those passed in
+        if name in self.config:
+            kwargs = {**self.config[name], **kwargs}
+
         # Get the global arguments
         callargs = inspect.getfullargspec(constructor).args
         global_kwargs = {}
@@ -60,10 +64,6 @@ class DIContainer:
             if arg in self.config['global']:
                 global_kwargs[arg] = self.config['global'][arg]
         kwargs = {**global_kwargs, **kwargs}
-
-        # The used kwargs are a merger of the config values and those passed in
-        if name in self.config:
-            kwargs = {**self.config[name], **kwargs}
 
         return constructor(*args, **kwargs)
 
