@@ -58,12 +58,13 @@ class DIContainer:
             kwargs = {**self.config[name], **kwargs}
 
         # Get the global arguments
-        callargs = inspect.getfullargspec(constructor).args
-        global_kwargs = {}
-        for arg in callargs:
-            if arg in self.config['global']:
-                global_kwargs[arg] = self.config['global'][arg]
-        kwargs = {**global_kwargs, **kwargs}
+        if 'global' in self.config:
+            callargs = inspect.getfullargspec(constructor).args
+            global_kwargs = {}
+            for arg in callargs:
+                if arg in self.config['global']:
+                    global_kwargs[arg] = self.config['global'][arg]
+            kwargs = {**global_kwargs, **kwargs}
 
         return constructor(*args, **kwargs)
 
@@ -124,5 +125,10 @@ class DIContainer:
     def register_dataio_services(self):
 
         # Register data io services
+        self.dataio_services = []
         for subclass in data_io.DataIO.__subclasses__():
-            self.register_service(subclass.name + '_io', subclass)
+            key = subclass.name + '_io'
+            self.register_service(key, subclass)
+            self.dataio_services.append(key)
+
+        return self.dataio_services
