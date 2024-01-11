@@ -24,9 +24,12 @@ import seaborn as sns
 from typing import Tuple, Union
 
 from .exceptions import OutOfBoundsError
+from .data_io import ImageDataIO
 
 
 class Image:
+
+    io = ImageDataIO
 
     def __init__(self, img):
         if np.issubdtype(img.dtype, np.floating):
@@ -40,16 +43,15 @@ class Image:
     @classmethod
     def open(cls, fp):
 
-        img = cv2.imread(fp, cv2.IMREAD_UNCHANGED)
-        img = img[:, :, ::-1]
+        img = cls.io.load(fp)
 
         return Image(img)
 
     def save(self, fp, img='img_int'):
 
         img_arr = getattr(self, img)
-        img_arr = img_arr[:, :, ::-1]
-        cv2.imwrite(fp, img_arr)
+
+        self.io.save(img_arr, fp)
 
     @property
     def img(self):

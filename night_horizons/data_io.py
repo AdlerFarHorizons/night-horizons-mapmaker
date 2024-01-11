@@ -14,21 +14,37 @@ import yaml
 
 class DataIO(ABC):
     @abstractmethod
-    def save_data(self, data, filepath):
+    def save(self, data, filepath):
         pass
 
     @abstractmethod
-    def load_data(self, filepath):
+    def load(self, filepath):
         pass
+
+
+class ImageDataIO(DataIO):
+    name = 'image'
+
+    @staticmethod
+    def save(data, filepath):
+
+        data = data[:, :, ::-1]
+        cv2.imwrite(filepath, data)
+
+    @staticmethod
+    def load(filepath):
+
+        data = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+        data = data[:, :, ::-1]
+
+        return data
 
 
 class RegisteredImageIO(DataIO):
     name = 'registered_image'
 
-    def __init__(self, crs: pyproj.CRS = None):
-        self.crs = crs
-
-    def save_data(self, data, filepath, x_min, x_max, y_min, y_max):
+    @staticmethod
+    def save(self, data, filepath, x_min, x_max, y_min, y_max, crs):
 
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
@@ -49,7 +65,7 @@ class RegisteredImageIO(DataIO):
         dataset.WriteArray(data.transpose(2, 0, 1))
 
         # Set CRS properties
-        dataset.SetProjection(self.crs.to_wkt())
+        dataset.SetProjection(crs.to_wkt())
 
         # Set geotransform
         dx = (x_max - x_min) / data.shape[1]
@@ -67,7 +83,8 @@ class RegisteredImageIO(DataIO):
         dataset.FlushCache()
         dataset = None
 
-    def load_data(self, filepath):
+    @staticmethod
+    def load(filepath):
         dataset = gdal.Open(filepath)
         data = dataset.ReadAsArray()
         return data
@@ -76,38 +93,28 @@ class RegisteredImageIO(DataIO):
 class GDALDatasetIO(DataIO):
     name = 'gdal_dataset'
 
-    def __init__(self, crs: pyproj.CRS = None):
-        self.crs = crs
-
-    def save_data(self, data, filepath):
+    @staticmethod
+    def save(data, filepath):
         pass
 
-    def load_data(self, filepath):
+    @staticmethod
+    def load(self, filepath):
         data = gdal.Open(filepath, gdal.GA_ReadOnly)
         if self.crs is not None:
             data.SetProjection(self.crs.to_wkt())
         return data
 
 
-class ImageDataIO(DataIO):
-    name = 'image'
-
-    def save_data(self, data, filepath):
-        cv2.imwrite(filepath, data)
-
-    def load_data(self, filepath):
-        data = cv2.imread(filepath)
-        return data
-
-
 class TabularDataIO(DataIO):
     name = 'tabular'
 
-    def save_data(self, data, filepath):
+    @staticmethod
+    def save(data, filepath):
         df = pd.DataFrame(data)
         df.to_csv(filepath, index=False)
 
-    def load_data(self, filepath):
+    @staticmethod
+    def load(filepath):
         df = pd.read_csv(filepath)
         return df
 
@@ -115,7 +122,8 @@ class TabularDataIO(DataIO):
 class YAMLDataIO(DataIO):
     name = 'yaml'
 
-    def save_data(self, data, filepath):
+    @staticmethod
+    def save(self, data, filepath):
 
         fullargspec = inspect.getfullargspec(type(data))
         settings = {}
@@ -131,5 +139,6 @@ class YAMLDataIO(DataIO):
         with open(self.output_filepaths['settings'], 'w') as file:
             yaml.dump(settings, file)
 
-    def load_data(self, filepath):
+    @staticmethod
+    def load(self, filepath):
         pass
