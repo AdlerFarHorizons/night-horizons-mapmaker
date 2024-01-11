@@ -541,6 +541,9 @@ class ReferencedImage(Image):
 class DatasetWrapper:
     '''This functionality is copied from Mosaicker.
     TODO: Clean up this and others so we don't have duplicates.
+    The best idea is probably to keep this code and others in a separate place
+    as convenience wrappers, but move the internal functionality to a DatasetIO
+    class and something like a DatasetOperations class.
 
     Parameters
     ----------
