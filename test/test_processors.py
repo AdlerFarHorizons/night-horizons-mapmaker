@@ -68,12 +68,12 @@ class TestProcessorBase(unittest.TestCase):
         assert os.path.isfile(actual_fp), f'File {actual_fp} not found.'
         actual_image = ReferencedImage.open(
             actual_fp,
-            cart_crs_code=self.settings['crs'],
+            cart_crs_code=self.settings['global']['crs'],
         )
 
         expected_image = ReferencedImage.open(
             expected_fp,
-            cart_crs_code=self.settings['crs'],
+            cart_crs_code=self.settings['global']['crs'],
         )
 
         # Compare image shape

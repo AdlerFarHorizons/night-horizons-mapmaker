@@ -362,14 +362,13 @@ class DatasetRegistrar(DatasetUpdater):
         fp_pattern = self.io_manager.output_filepaths['referenced_images']
         fp = fp_pattern.format(row.name)
 
-        self.io_manager.data_ios['registered_images'].save_data(
+        self.io_manager.data_ios['registered_image_io'].save_data(
             data=img,
             filepath=fp,
             x_min=row['x_min'],
             x_max=row['x_max'],
             y_min=row['y_min'],
             y_max=row['y_max'],
-            crs=self.io_manager.globals['crs'],
         )
 
 

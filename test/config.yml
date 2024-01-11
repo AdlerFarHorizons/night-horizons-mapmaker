@@ -13,8 +13,9 @@ io_manager:
       extension: ['tif', 'tiff']
       pattern: 'Geo\s\d+_\d.tif'
 
-# Coordinate reference-system employed
-crs: 'EPSG:3857'
+global:
+  # Coordinate reference-system employed
+  crs: 'EPSG:3857'
 
 # Aesthetics
 color_palette: deep

@@ -2,6 +2,7 @@
 '''
 from abc import ABC, abstractmethod
 import inspect
+import os
 import pickle
 
 import cv2
@@ -24,10 +25,12 @@ class DataIO(ABC):
 class RegisteredImageIO(DataIO):
     name = 'registered_image'
 
-    def __init__(self, crs):
+    def __init__(self, crs: pyproj.CRS = None):
         self.crs = crs
 
     def save_data(self, data, filepath, x_min, x_max, y_min, y_max):
+
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         # Get data type
         gdal_dtype = gdal_array.NumericTypeCodeToGDALTypeCode(data.dtype)
@@ -59,14 +62,14 @@ class RegisteredImageIO(DataIO):
             0,
             -dy
         )
-        self.dataset.SetGeoTransform(geotransform)
+        dataset.SetGeoTransform(geotransform)
 
         dataset.FlushCache()
         dataset = None
 
     def load_data(self, filepath):
         dataset = gdal.Open(filepath)
-        data = dataset.GetRasterBand(1).ReadAsArray()
+        data = dataset.ReadAsArray()
         return data
 
 

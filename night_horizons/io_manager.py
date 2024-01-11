@@ -57,6 +57,7 @@ class IOManager:
         checkpoint_subdir: str = 'checkpoints',
         checkpoint_tag: str = '_i{:06d}',
         checkpoint_freq: int = 100,
+        data_ios: dict[str] = None,
     ) -> None:
 
         if root_dir is not None:
@@ -71,6 +72,7 @@ class IOManager:
         self.checkpoint_subdir = checkpoint_subdir
         self.checkpoint_tag = checkpoint_tag
         self.checkpoint_freq = checkpoint_freq
+        self.data_ios = data_ios
 
         # Process input filetree
         self.input_filepaths, self.input_description = \
