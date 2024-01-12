@@ -152,7 +152,7 @@ class TestDatasetRegistrar(TestProcessorBase):
         containing_img = np.zeros(
             (original_image.img_shape[0] + 2 * padding,
              original_image.img_shape[1] + 2 * padding,
-             original_image.img_shape[2]),
+             original_image.img_int.shape[2]),
             dtype=original_image.img_int.dtype,
         )
         containing_img[
@@ -174,13 +174,14 @@ class TestDatasetRegistrar(TestProcessorBase):
             img=containing_img,
             x_bounds=x_bounds_padded,
             y_bounds=y_bounds_padded,
-            crs=original_image.crs,
+            crs=original_image.cart_crs,
             driver='MEM',
         )
         resources = {'dataset': dataset}
 
         # Row containing pre-processing information
         row = pd.Series({
+            'filepath': expected_fp,
             'x_min': original_image.cart_bounds[0][0],
             'x_max': original_image.cart_bounds[0][1],
             'y_min': original_image.cart_bounds[1][0],
@@ -191,6 +192,10 @@ class TestDatasetRegistrar(TestProcessorBase):
             'y_size': original_image.img_shape[0],
         })
         row.name = 0
+
+        # Fit properties
+        processor.x_size_ = dataset.RasterXSize
+        processor.y_size_ = dataset.RasterYSize
 
         # Match to padded image
         row = processor.process_row(
