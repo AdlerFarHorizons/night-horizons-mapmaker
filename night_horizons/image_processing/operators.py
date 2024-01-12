@@ -369,19 +369,14 @@ class ImageAlignerBlender(ImageAligner, ImageBlender):
 
     def operate(self, src_img, dst_img):
 
-        src_img_t, dst_img_t = self.image_transformer.fit_transform(
-            [src_img, dst_img])
-
-        # Try to get a valid homography
-        results = self.find_valid_homography(src_img_t, dst_img_t)
-
-        # Warp image
-        warped_img = self.warp(src_img, dst_img, results['M'])
+        # Align images
+        align_results = super().operate(src_img, dst_img)
 
         # Blend images
-        blended_img = self.blend(warped_img, dst_img)
+        blend_results = super(ImageAligner, self).operate(
+            align_results['warped_image'], dst_img)
 
-        results['blended_image'] = blended_img
+        results = {**align_results, **blend_results}
 
         return results
 
