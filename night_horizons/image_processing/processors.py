@@ -339,14 +339,17 @@ class DatasetRegistrar(DatasetUpdater):
         results: dict,
     ):
 
+        # Update the dataset
         super().store_results(i, row, resources, results)
 
         # Store the image
         if results['return_code'] == 'success':
 
+            # Get filepath
             fp_pattern = self.io_manager.output_filepaths['referenced_images']
             fp = fp_pattern.format(row.name)
 
+            # Save the registered image
             self.io_manager.data_ios['registered_image_io'].save(
                 filepath=fp,
                 img=results['warped_image'],

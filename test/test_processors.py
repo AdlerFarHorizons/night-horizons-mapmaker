@@ -15,7 +15,7 @@ from night_horizons.container import DIContainer
 from night_horizons.io_manager import IOManager
 from night_horizons.raster import ReferencedImage
 from night_horizons.image_processing.processors import DatasetRegistrar
-from night_horizons.image_processing.operators import BaseImageOperator
+from night_horizons.image_processing.operators import ImageAlignerBlender
 from night_horizons.image_processing.scorers import SimilarityScorer
 
 
@@ -46,7 +46,7 @@ class TestProcessorBase(unittest.TestCase):
             return IOManager(data_ios=data_ios, *args, **kwargs)
         container.register_service('io_manager', register_io_manager)
         container.register_service(
-            'image_operator', MagicMock(spec=BaseImageOperator))
+            'image_operator', ImageAlignerBlender)
         container.register_service('image_scorer', SimilarityScorer)
 
         # Register the DatasetRegistrar
@@ -149,9 +149,66 @@ class TestDatasetRegistrar(TestProcessorBase):
 
     def test_consistency(self):
 
-        # Load padded image
-        # (small referenced mosaic that is a single padded image)
+        processor = self.container.get_service('dataset_registrar')
+
+        expected_fp = (
+            './test/test_data/referenced_images/Geo 225856_1473511261_0.tif'
+        )
+        original_image = ReferencedImage.open(expected_fp)
+
+        # Revised version that's padded
+        padding = 100
+        containing_img = np.zeros(
+            (original_image.img_shape[0] + 2 * padding,
+             original_image.img_shape[1] + 2 * padding,
+             original_image.img_shape[2]),
+            dtype=original_image.img_int.dtype,
+        )
+        containing_img[
+            padding:-padding,
+            padding:-padding,
+            :
+        ] = original_image.img_int
+        dx, dy = original_image.get_pixel_widths()
+        x_bounds_padded = (
+            original_image.cart_bounds[0][0] - padding * dx,
+            original_image.cart_bounds[0][1] + padding * dx,
+        )
+        y_bounds_padded = (
+            original_image.cart_bounds[1][0] - padding * dy,
+            original_image.cart_bounds[1][1] + padding * dy,
+        )
+        dataset = original_image.io.save(
+            filepath='',
+            img=containing_img,
+            x_bounds=x_bounds_padded,
+            y_bounds=y_bounds_padded,
+            crs=original_image.crs,
+            driver='MEM',
+        )
+        resources = {'dataset': dataset}
+
+        # Row containing pre-processing information
+        row = pd.Series({
+            'x_min': original_image.cart_bounds[0][0],
+            'x_max': original_image.cart_bounds[0][1],
+            'y_min': original_image.cart_bounds[1][0],
+            'y_max': original_image.cart_bounds[1][1],
+            'x_off': 0,
+            'y_off': 0,
+            'x_size': original_image.img_shape[1],
+            'y_size': original_image.img_shape[0],
+        })
+        row.name = 0
 
         # Match to padded image
+        row = processor.process_row(
+            i=0,
+            row=row,
+            resources=resources,
+        )
 
-        assert False
+        self.compare_referenced_images(
+            expected_fp=expected_fp,
+            actual_fp='./test/test_data/temp/referenced_images/img_000000.tiff'
+        )

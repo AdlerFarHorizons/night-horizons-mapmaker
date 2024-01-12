@@ -7,6 +7,7 @@ import pickle
 from typing import Tuple
 
 import cv2
+import numpy as np
 from osgeo import gdal, gdal_array
 import pandas as pd
 import pyproj
@@ -69,7 +70,7 @@ class GDALDatasetIO(DataIO):
     def get_bounds_from_dataset(
         dataset: gdal.Dataset,
         crs: pyproj.CRS = None,
-    ) -> Tuple[float]:
+    ) -> Tuple[np.ndarray, np.ndarray, float, float, pyproj.CRS]:
         '''Get image bounds in a given coordinate system.
 
         Args:
