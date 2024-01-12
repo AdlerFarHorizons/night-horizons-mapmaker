@@ -51,7 +51,7 @@ class Image:
 
         img_arr = getattr(self, img)
 
-        self.io.save(img_arr, fp)
+        self.io.save(fp, img_arr)
 
     @property
     def img(self):
@@ -261,6 +261,7 @@ class Image:
 class ReferencedImage(Image):
 
     io = data_io.RegisteredImageIO()
+    dataset_io = data_io.GDALDatasetIO()
 
     def __init__(
         self,
@@ -274,12 +275,10 @@ class ReferencedImage(Image):
         super().__init__(img)
 
         self.dataset = self.io.save(
-            data=self.img_int,
             filepath='',
-            x_min=x_bounds[0],
-            x_max=x_bounds[1],
-            y_min=y_bounds[0],
-            y_max=y_bounds[1],
+            img=self.img_int,
+            x_bounds=x_bounds,
+            y_bounds=y_bounds,
             crs=pyproj.CRS(cart_crs_code),
             driver='MEM',
         )
@@ -290,18 +289,13 @@ class ReferencedImage(Image):
     @classmethod
     def open(
         cls,
-        filename,
+        fp,
         cart_crs_code: str = 'EPSG:3857',
         latlon_crs_code: str = 'EPSG:4326',
     ):
 
-        # Get image
-        dataset = gdal.Open(filename, gdal.GA_ReadOnly)
-        img = dataset.ReadAsArray().transpose(1, 2, 0)
-
-        # Get bounds
         cart_crs = pyproj.CRS(cart_crs_code)
-        x_bounds, y_bounds, _, _ = get_bounds_from_dataset(dataset, cart_crs)
+        img, x_bounds, y_bounds, crs = cls.io.load(fp, crs=cart_crs)
 
         return ReferencedImage(
             img,
@@ -360,7 +354,9 @@ class ReferencedImage(Image):
 
     def get_bounds(self, crs: pyproj.CRS):
 
-        x_bounds, y_bounds, _, _ = get_bounds_from_dataset(self.dataset, crs)
+        (
+            x_bounds, y_bounds, pixel_width, pixel_height, crs
+        ) = self.dataset_io.get_bounds_from_dataset(self.dataset, crs)
 
         return x_bounds, y_bounds
 
@@ -1076,53 +1072,6 @@ class BoundsDataset(gdal.Dataset):
 #
 #        img_to_save = img.transpose(2, 0, 1)
 #        self.dataset.WriteArray(img_to_save, xoff=x_offset_count, yoff=y_offset_count)
-
-
-def get_bounds_from_dataset(
-    dataset: gdal.Dataset,
-    crs: pyproj.CRS
-) -> Tuple[float]:
-    '''Get image bounds in a given coordinate system.
-
-    Args:
-        crs: Desired coordinate system.
-
-    Returns:
-        x_bounds: x_min, x_max of the image in the target coordinate system
-        y_bounds: y_min, y_max of the image in the target coordinate system
-        pixel_width
-        pixel_height
-    '''
-
-    # Get the coordinates
-    x_min, pixel_width, x_rot, y_max, y_rot, pixel_height = \
-        dataset.GetGeoTransform()
-
-    # Get bounds
-    x_max = x_min + pixel_width * dataset.RasterXSize
-    y_min = y_max + pixel_height * dataset.RasterYSize
-
-    # Convert to desired crs.
-    dataset_crs = pyproj.CRS(dataset.GetProjection())
-    dataset_to_desired = pyproj.Transformer.from_crs(
-        dataset_crs,
-        crs,
-        always_xy=True
-    )
-    x_bounds, y_bounds = dataset_to_desired.transform(
-        [x_min, x_max],
-        [y_min, y_max],
-    )
-    pixel_width, pixel_height = dataset_to_desired.transform(
-        pixel_width,
-        pixel_height,
-    )
-
-    return (
-        x_bounds,
-        y_bounds,
-        pixel_width, pixel_height
-    )
 
 
 def get_containing_bounds(reffed_images, crs, bordersize=0):
