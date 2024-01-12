@@ -173,10 +173,6 @@ class Mosaicker(BatchProcessor):
         self.x_size_ = dataset.RasterXSize
         self.y_size_ = dataset.RasterYSize
 
-        # Close out the dataset for now. (Reduces likelihood of mem leaks.)
-        dataset.FlushCache()
-        dataset = None
-
     def create_containing_dataset(self, X):
 
         # Get bounds
