@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import cv2
 from sklearn.pipeline import Pipeline
 
@@ -8,24 +9,33 @@ from .image_processing import (
 )
 
 
-class Mapmaker:
+class Mapmaker(ABC):
     def __init__(self, config_filepath: str, local_options: dict = {}):
         self.container = DIContainer(
             config_filepath=config_filepath,
             local_options=local_options,
         )
 
+        self.register_default_services()
+
+    @abstractmethod
+    def register_default_services(self):
+        pass
+
+    def register_default_io(self):
+
+        dataio_services = self.container.register_dataio_services()
+
+        def register_io_manager(*args, **kwargs):
+            data_ios = {
+                name: self.container.get_service(name)
+                for name in dataio_services
+            }
+            return io_manager.IOManager(data_ios=data_ios, *args, **kwargs)
+        self.container.register_service('io_manager', register_io_manager)
+
 
 class MosaicMaker(Mapmaker):
-
-    def __init__(self, config_filepath: str, local_options: dict = {}):
-
-        super().__init__(
-            config_filepath=config_filepath,
-            local_options=local_options,
-        )
-
-        self.register_default_services()
 
     def run(self):
 
@@ -43,11 +53,8 @@ class MosaicMaker(Mapmaker):
 
     def register_default_services(self):
 
-        # What we use for figuring out where to save and load data
-        self.container.register_service(
-            'io_manager',
-            io_manager.MosaicIOManager,
-        )
+        # Services for input/output
+        self.register_default_io()
 
         # What we use for preprocessing
         self.container.register_service(
@@ -161,11 +168,8 @@ class SequentialMosaicMaker(MosaicMaker):
 
     def register_default_services(self):
 
-        # Register file manager typical for mosaickers
-        self.container.register_service(
-            'io_manager',
-            io_manager.MosaicIOManager,
-        )
+        # Services for input/output
+        self.register_default_io()
 
         self.register_default_preprocessors()
 
