@@ -4,6 +4,7 @@ import os
 import cv2
 import numpy as np
 import pandas as pd
+import pyproj
 
 
 import time
@@ -342,34 +343,17 @@ class DatasetRegistrar(DatasetUpdater):
 
         # Store the image
         if results['return_code'] == 'success':
-            self.save_image_as_new_dataset(
+
+            fp_pattern = self.io_manager.output_filepaths['referenced_images']
+            fp = fp_pattern.format(row.name)
+
+            self.io_manager.data_ios['registered_image_io'].save(
+                filepath=fp,
                 img=results['warped_image'],
-                x_off_orig=row['x_off'],
-                y_off_orig=row['y_off'],
-                x_size_orig=row['x_size'],
-                y_size_orig=row['y_size'],
-                image_bounds=results['new_bounds'],
+                x_bounds=results['warped_bounds'][0],
+                y_bounds=results['warped_bounds'][1],
+                crs=pyproj.CRS(resources['dataset'].GetProjection()),
             )
-
-    def save_image_as_new_dataset(
-        self,
-        img,
-        row,
-        x_off_new,
-        y_off_new,
-    ):
-
-        fp_pattern = self.io_manager.output_filepaths['referenced_images']
-        fp = fp_pattern.format(row.name)
-
-        self.io_manager.data_ios['registered_image_io'].save_data(
-            data=img,
-            filepath=fp,
-            x_min=row['x_min'],
-            x_max=row['x_max'],
-            y_min=row['y_min'],
-            y_max=row['y_max'],
-        )
 
 
 class DatasetScorer(DatasetProcessor):

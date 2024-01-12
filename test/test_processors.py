@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 from unittest.mock import MagicMock
 
@@ -62,8 +63,18 @@ class TestProcessorBase(unittest.TestCase):
 
         self.container = container
         self.settings = self.container.config
+        self.io_manager = self.container.get_service('io_manager')
 
-    def compare_referenced_images(self, expected_fp, actual_fp):
+    def tearDown(self):
+        if os.path.isdir(self.io_manager.output_dir):
+            shutil.rmtree(self.io_manager.output_dir)
+
+    def compare_referenced_images(
+        self,
+        expected_fp,
+        actual_fp,
+        acceptance_threshold=0.99,
+    ):
 
         assert os.path.isfile(actual_fp), f'File {actual_fp} not found.'
         actual_image = ReferencedImage.open(
@@ -90,13 +101,15 @@ class TestProcessorBase(unittest.TestCase):
 
         # Compare image contents
         image_scorer = self.container.get_service('image_scorer')
-        score = image_scorer.operate(actual_image, expected_image)
-        assert score > 0.9, f'Image has a score of {score}'
+        score_results = image_scorer.operate(
+            actual_image.img_int, expected_image.img_int)
+        score = score_results['score']
+        assert score > acceptance_threshold, f'Image has a score of {score}'
 
 
 class TestDatasetRegistrar(TestProcessorBase):
 
-    def test_save_image_as_dataset(self):
+    def test_store_results(self):
 
         processor = self.container.get_service('dataset_registrar')
 
@@ -110,14 +123,23 @@ class TestDatasetRegistrar(TestProcessorBase):
             'x_max': original_image.cart_bounds[0][1],
             'y_min': original_image.cart_bounds[1][0],
             'y_max': original_image.cart_bounds[1][1],
+            'x_off': 0,
+            'y_off': 0,
+            'x_size': original_image.img_shape[1],
+            'y_size': original_image.img_shape[0],
         })
         row.name = 0
 
-        processor.save_image_as_new_dataset(
-            img=original_image.img_int,
+        processor.store_results(
+            i=0,
             row=row,
-            x_off_new=0,
-            y_off_new=0,
+            resources={'dataset': original_image.dataset},
+            results={
+                'blended_image': original_image.img_int,
+                'warped_image': original_image.img_int,
+                'warped_bounds': original_image.cart_bounds,
+                'return_code': 'success',
+            },
         )
 
         self.compare_referenced_images(
