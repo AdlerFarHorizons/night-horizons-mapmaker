@@ -269,11 +269,10 @@ class DatasetUpdater(DatasetProcessor):
         )
         self.update_log(self.image_operator.log)
 
-        return {
-            'blended_image': results['blended_image'],
-            'src_image': src['image'],
-            'dst_image': dst['image'],
-        }
+        results['src_image'] = src['image']
+        results['dst_image'] = dst['image']
+
+        return results
 
     def store_results(
         self,
@@ -345,6 +344,17 @@ class DatasetRegistrar(DatasetUpdater):
         # Store the image
         if results['return_code'] == 'success':
 
+            # Get the bounds in physical coordinates
+            x_off, y_off, x_size, y_size = results['warped_bounds']
+            x_bounds = [
+                self.x_min_ + x_off * self.pixel_width_,
+                self.x_min_ + (x_off + x_size) * self.pixel_width_,
+            ]
+            y_bounds = [
+                self.y_max_ + y_off * self.pixel_height_,
+                self.y_max_ + (y_off + y_size) * self.pixel_width_,
+            ]
+
             # Get filepath
             fp_pattern = self.io_manager.output_filepaths['referenced_images']
             fp = fp_pattern.format(row.name)
@@ -353,8 +363,8 @@ class DatasetRegistrar(DatasetUpdater):
             self.io_manager.data_ios['registered_image_io'].save(
                 filepath=fp,
                 img=results['warped_image'],
-                x_bounds=results['warped_bounds'][0],
-                y_bounds=results['warped_bounds'][1],
+                x_bounds=x_bounds,
+                y_bounds=y_bounds,
                 crs=pyproj.CRS(resources['dataset'].GetProjection()),
             )
 
