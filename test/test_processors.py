@@ -124,3 +124,12 @@ class TestDatasetRegistrar(TestProcessorBase):
             expected_fp=expected_fp,
             actual_fp='./test/test_data/temp/referenced_images/img_000000.tiff'
         )
+
+    def test_consistency(self):
+
+        # Load padded image
+        # (small referenced mosaic that is a single padded image)
+
+        # Match to padded image
+
+        assert False
