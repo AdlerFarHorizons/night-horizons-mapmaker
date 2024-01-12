@@ -57,9 +57,14 @@ class DIContainer:
         if name in self.config:
             kwargs = {**self.config[name], **kwargs}
 
-        # Get the global arguments
-        if 'global' in self.config:
+        # Access the global arguments
+        # This only works if we can use inspect
+        try:
             callargs = inspect.getfullargspec(constructor).args
+            callargs_found = True
+        except TypeError:
+            callargs_found = False
+        if callargs_found and ('global' in self.config):
             global_kwargs = {}
             for arg in callargs:
                 if arg in self.config['global']:
