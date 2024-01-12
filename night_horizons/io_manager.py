@@ -80,7 +80,7 @@ class IOManager:
 
         # Process output filetree
         # TODO: Ideally this would be called at the time of the fit.
-        self.output_filepaths, self.output_dir = \
+        self.output_description, self.output_dir = \
             self.get_output_filepaths(
                 output_dir=output_dir,
                 output_description=output_description,
@@ -92,7 +92,7 @@ class IOManager:
         self.checkpoint_filepatterns, self.checkpoint_dir = \
             self.get_checkpoint_filepatterns(
                 output_dir=self.output_dir,
-                output_filepaths=self.output_filepaths,
+                output_description=self.output_description,
                 checkpoint_subdir=self.checkpoint_subdir,
                 checkpoint_tag=self.checkpoint_tag,
             )
@@ -190,10 +190,23 @@ class IOManager:
         if len(output_description) == 0:
             return {}, output_dir
 
+        # Parse the output description
+        modified_output_description = {}
+        for key, value in output_description.items():
+            if isinstance(value, str):
+                # TODO: We could guess types based on the extension
+                modified_output_description[key] = {
+                    'filename': value,
+                    'type': None,
+                }
+            else:
+                modified_output_description[key] = value
+
         # Default to the first key
         if tracked_file_key is None:
-            tracked_file_key = list(output_description.keys())[0]
-        tracked_filename = output_description[tracked_file_key]
+            tracked_file_key = list(modified_output_description.keys())[0]
+        tracked_filename = \
+            modified_output_description[tracked_file_key]['filename']
 
         # Main filepath parameters
         tracked_filepath = os.path.join(output_dir, tracked_filename)
@@ -222,17 +235,16 @@ class IOManager:
                 )
 
         # Auxiliary files
-        output_filepaths = {}
-        for key, tracked_filename in output_description.items():
-            output_filepaths[key] = os.path.join(
+        for key, out_des in modified_output_description.items():
+            modified_output_description[key]['filepath'] = os.path.join(
                 output_dir,
-                tracked_filename,
+                out_des['filename'],
             )
 
         # Ensure directories exist
         os.makedirs(output_dir, exist_ok=True)
 
-        return output_filepaths, output_dir
+        return modified_output_description, output_dir
 
     def save_settings(self, obj):
         '''TODO: Another thing to move into a DataIO
@@ -254,13 +266,13 @@ class IOManager:
             except TypeError:
                 value = 'no string repr'
             settings[setting] = value
-        with open(self.output_filepaths['settings'], 'w') as file:
+        with open(self.output_description['settings'], 'w') as file:
             yaml.dump(settings, file)
 
     def get_checkpoint_filepatterns(
         self,
         output_dir: str,
-        output_filepaths: dict[str],
+        output_description: dict[str],
         checkpoint_subdir: str,
         checkpoint_tag: str,
     ) -> Tuple[dict[str], str]:
@@ -270,7 +282,8 @@ class IOManager:
 
         # Create checkpoint filepatterns
         checkpoint_filepatterns = {}
-        for key, filepath in output_filepaths.items():
+        for key, descr in output_description.items():
+            filepath = descr['filepath']
             base, ext = os.path.splitext(os.path.basename(filepath))
             checkpoint_filepatterns[key] = base + checkpoint_tag + ext
 
@@ -422,7 +435,7 @@ class MosaicIOManager(IOManager):
     def open_dataset(self):
 
         return gdal.Open(
-            self.output_filepaths['mosaic'],
+            self.output_description['mosaic'],
             gdal.GA_Update,
         )
 
@@ -440,16 +453,16 @@ class MosaicIOManager(IOManager):
 
         # Store auxiliary files
         if y_pred is not None:
-            y_pred.to_csv(self.output_filepaths['y_pred'])
+            y_pred.to_csv(self.output_description['y_pred'])
 
         # Make checkpoint files by copying the data
         for key, pattern in self.checkpoint_filepatterns.items():
-            if os.path.isfile(self.output_filepaths[key]):
+            if os.path.isfile(self.output_description[key]):
                 checkpoint_fp = os.path.join(
                     self.checkpoint_dir,
                     pattern.format(i)
                 )
-                shutil.copy(self.output_filepaths[key], checkpoint_fp)
+                shutil.copy(self.output_description[key], checkpoint_fp)
 
         # Re-open dataset
         dataset = self.open_dataset()
@@ -470,10 +483,10 @@ class MosaicIOManager(IOManager):
                 pattern.format(i_checkpoint - 1)
             )
             if os.path.isfile(checkpoint_fp):
-                shutil.copy(checkpoint_fp, self.output_filepaths[key])
+                shutil.copy(checkpoint_fp, self.output_description[key])
 
         # And load the predictions
-        y_pred = pd.read_csv(self.output_filepaths['y_pred'], index_col=0)
+        y_pred = pd.read_csv(self.output_description['y_pred'], index_col=0)
 
         loaded_data = {
             'y_pred': y_pred,

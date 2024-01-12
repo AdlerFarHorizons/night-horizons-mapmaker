@@ -188,8 +188,8 @@ class RegisteredImageIO(DataIO):
         return data
 
 
-class TabularIO(DataIO):
-    name = 'tabular'
+class CSVIO(DataIO):
+    name = 'csv'
 
     @staticmethod
     def save(filepath, data):

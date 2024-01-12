@@ -114,7 +114,13 @@ class TestOutput(unittest.TestCase):
             input_dir=self.input_dir,
             input_description={},
             output_dir=self.output_dir,
-            output_description={'mosaic': 'mosaic.tiff'},
+            output_description={
+                'mosaic': 'mosaic.tiff',
+                'temp_file': {
+                    'filename': 'temp_file.csv',
+                    'type': 'csv'
+                }
+            },
             file_exists='error',
         )
 
@@ -132,7 +138,13 @@ class TestOutput(unittest.TestCase):
                 input_dir=self.input_dir,
                 input_description={},
                 output_dir=self.output_dir,
-                output_description={'mosaic': 'mosaic.tiff'},
+                output_description={
+                    'mosaic': 'mosaic.tiff',
+                    'temp_file': {
+                        'filename': 'temp_file.csv',
+                        'type': 'csv'
+                    }
+                },
                 file_exists='error',
             )
 
@@ -146,7 +158,13 @@ class TestOutput(unittest.TestCase):
             input_dir=self.input_dir,
             input_description={},
             output_dir=self.output_dir,
-            output_description={'mosaic': 'mosaic.tiff'},
+            output_description={
+                'mosaic': 'mosaic.tiff',
+                'temp_file': {
+                    'filename': 'temp_file.csv',
+                    'type': 'csv'
+                }
+            },
             file_exists='overwrite',
         )
 
@@ -164,7 +182,13 @@ class TestOutput(unittest.TestCase):
             input_dir=self.input_dir,
             input_description={},
             output_dir=self.output_dir,
-            output_description={'mosaic': 'mosaic.tiff'},
+            output_description={
+                'mosaic': 'mosaic.tiff',
+                'temp_file': {
+                    'filename': 'temp_file.csv',
+                    'type': 'csv'
+                }
+            },
             file_exists='new',
         )
 
@@ -177,7 +201,13 @@ class TestOutput(unittest.TestCase):
             input_dir=self.input_dir,
             input_description={},
             output_dir=self.output_dir,
-            output_description={'mosaic': 'mosaic.tiff'},
+            output_description={
+                'mosaic': 'mosaic.tiff',
+                'temp_file': {
+                    'filename': 'temp_file.csv',
+                    'type': 'csv'
+                },
+            },
             file_exists='new',
         )
 
