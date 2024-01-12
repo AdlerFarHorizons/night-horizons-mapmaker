@@ -11,12 +11,9 @@ import scipy
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from night_horizons.container import DIContainer
-from night_horizons.io_manager import IOManager
+from night_horizons.image_processing import processors
+from night_horizons.mapmake import SequentialMosaicMaker
 from night_horizons.raster import ReferencedImage
-from night_horizons.image_processing.processors import DatasetRegistrar
-from night_horizons.image_processing.operators import ImageAlignerBlender
-from night_horizons.image_processing.scorers import SimilarityScorer
 
 
 class TestProcessorBase(unittest.TestCase):
@@ -34,34 +31,25 @@ class TestProcessorBase(unittest.TestCase):
         }
 
         # Create container
-        container = DIContainer(
+        mapmaker = SequentialMosaicMaker(
             './test/config.yml', local_options=local_options)
-        dataio_services = container.register_dataio_services()
-
-        # Register specific services
-        def register_io_manager(*args, **kwargs):
-            data_ios = {
-                name: container.get_service(name) for name in dataio_services
-            }
-            return IOManager(data_ios=data_ios, *args, **kwargs)
-        container.register_service('io_manager', register_io_manager)
-        container.register_service(
-            'image_operator', ImageAlignerBlender)
-        container.register_service('image_scorer', SimilarityScorer)
 
         # Register the DatasetRegistrar
-        container.register_service(
+        mapmaker.container.register_service(
             'dataset_registrar',
             lambda use_safe_process=False, *args, **kwargs:
-                DatasetRegistrar(
-                    io_manager=container.get_service('io_manager'),
-                    image_operator=container.get_service('image_operator'),
+                processors.DatasetRegistrar(
+                    io_manager=mapmaker.container.get_service('io_manager'),
+                    image_operator=mapmaker.container.get_service(
+                        'image_operator'),
                     use_safe_process=use_safe_process,
                     *args, **kwargs
                 )
         )
+        self.mapmaker = mapmaker
 
-        self.container = container
+        # Convenient access to container
+        self.container = self.mapmaker.container
         self.settings = self.container.config
         self.io_manager = self.container.get_service('io_manager')
 
@@ -147,7 +135,10 @@ class TestDatasetRegistrar(TestProcessorBase):
             actual_fp='./test/test_data/temp/referenced_images/img_000000.tiff'
         )
 
-    def test_consistency(self):
+    def test_end_to_end(self):
+        '''This test loads a registered image, pads it, and then checks that
+        we can find it again using dataset registrar.
+        '''
 
         processor = self.container.get_service('dataset_registrar')
 
