@@ -330,10 +330,7 @@ class ReferencedImage(Image):
         save_arr = getattr(self, img_key).transpose(2, 0, 1)
         self.dataset.WriteArray(save_arr)
 
-        # Create a copy with a driver that saves to disk
-        save_driver = gdal.GetDriverByName('GTiff')
-        save_dataset = save_driver.CreateCopy(fp, self.dataset, 0)
-        save_dataset.FlushCache()
+        self.dataset_io.save(fp, self.dataset)
 
     def set_projections(self, cart_crs_code, latlon_crs_code):
 

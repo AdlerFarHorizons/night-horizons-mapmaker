@@ -45,11 +45,20 @@ class GDALDatasetIO(DataIO):
     name = 'gdal_dataset'
 
     @staticmethod
-    def save(filepath, data):
-        raise NotImplementedError(
-            'GDAL datasets save during use. '
-            'Use `dataset.FlushCache(); dataset=None` to save.'
-        )
+    def save(filepath, data, driver: str = 'GTiff'):
+        '''The alternative is to flush the cache and then re-open from disk.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        # Create a copy with a driver that saves to disk
+        driver = gdal.GetDriverByName('GTiff')
+        save_dataset = driver.CreateCopy(filepath, data, 0)
+        save_dataset.FlushCache()
+        save_dataset = None
 
     @staticmethod
     def load(filepath):
