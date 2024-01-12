@@ -22,7 +22,7 @@ class DataIO(ABC):
         pass
 
 
-class ImageDataIO(DataIO):
+class ImageIO(DataIO):
     name = 'image'
 
     @staticmethod
@@ -44,16 +44,17 @@ class RegisteredImageIO(DataIO):
     name = 'registered_image'
 
     @staticmethod
-    def save(self, data, filepath, x_min, x_max, y_min, y_max, crs):
+    def save(data, filepath, x_min, x_max, y_min, y_max, crs, driver='GTiff'):
 
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        if filepath != '':
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         # Get data type
         gdal_dtype = gdal_array.NumericTypeCodeToGDALTypeCode(data.dtype)
 
         # Create dataset
-        driver = gdal.GetDriverByName('GTiff')
-        dataset = driver.Create(
+        driver_obj = gdal.GetDriverByName(driver)
+        dataset = driver_obj.Create(
             filepath,
             data.shape[1],
             data.shape[0],
@@ -80,6 +81,10 @@ class RegisteredImageIO(DataIO):
         )
         dataset.SetGeoTransform(geotransform)
 
+        # Stop and return if we want to keep the dataset open
+        if driver == 'MEM':
+            return dataset
+
         dataset.FlushCache()
         dataset = None
 
@@ -105,7 +110,7 @@ class GDALDatasetIO(DataIO):
         return data
 
 
-class TabularDataIO(DataIO):
+class TabularIO(DataIO):
     name = 'tabular'
 
     @staticmethod
@@ -119,7 +124,7 @@ class TabularDataIO(DataIO):
         return df
 
 
-class YAMLDataIO(DataIO):
+class YAMLIO(DataIO):
     name = 'yaml'
 
     @staticmethod

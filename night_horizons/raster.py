@@ -24,12 +24,12 @@ import seaborn as sns
 from typing import Tuple, Union
 
 from .exceptions import OutOfBoundsError
-from .data_io import ImageDataIO
+from . import data_io
 
 
 class Image:
 
-    io = ImageDataIO
+    io = data_io.ImageIO()
 
     def __init__(self, img):
         if np.issubdtype(img.dtype, np.floating):
@@ -260,6 +260,8 @@ class Image:
 
 class ReferencedImage(Image):
 
+    io = data_io.RegisteredImageIO()
+
     def __init__(
         self,
         img,
@@ -271,40 +273,19 @@ class ReferencedImage(Image):
 
         super().__init__(img)
 
-        # Make a gdal dataset
-        gdal_dtype = gdal_array.NumericTypeCodeToGDALTypeCode(
-            self.img_int.dtype
+        self.dataset = self.io.save(
+            data=self.img_int,
+            filepath='',
+            x_min=x_bounds[0],
+            x_max=x_bounds[1],
+            y_min=y_bounds[0],
+            y_max=y_bounds[1],
+            crs=pyproj.CRS(cart_crs_code),
+            driver='MEM',
         )
-        driver = gdal.GetDriverByName('MEM')
-        dataset = driver.Create(
-            '',
-            self.img_int.shape[1],
-            self.img_int.shape[0],
-            self.img_int.shape[2],
-            gdal_dtype
-        )
-
-        self.dataset = dataset
-
-        # Write data
-        for i in range(self.img_int.shape[2]):
-            self.dataset.GetRasterBand(i + 1).WriteArray(self.img_int[:, :, i])
 
         # Set CRS properties
         self.set_projections(cart_crs_code, latlon_crs_code)
-
-        # Set geotransform
-        dx = (x_bounds[1] - x_bounds[0]) / self.img_shape[1]
-        dy = (y_bounds[1] - y_bounds[0]) / self.img_shape[0]
-        geotransform = (
-            x_bounds[0],
-            dx,
-            0,
-            y_bounds[1],
-            0,
-            -dy
-        )
-        self.dataset.SetGeoTransform(geotransform)
 
     @classmethod
     def open(
