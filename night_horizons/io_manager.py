@@ -103,10 +103,10 @@ class IOManager:
     ) -> Tuple[dict[pd.Series], dict[dict]]:
 
         # Validate and store input description
-        modified_input_description = copy.deepcopy(input_description)
-        for key, descr in modified_input_description.items():
+        new_input_description = copy.deepcopy(input_description)
+        for key, descr in new_input_description.items():
             if isinstance(descr, str):
-                modified_input_description[key] = \
+                new_input_description[key] = \
                     os.path.join(self.input_dir, descr)
             else:
                 if 'directory' not in descr:
@@ -114,7 +114,7 @@ class IOManager:
                         f'input_description[{key}] must have a "directory" '
                         'key if it is a dictionary'
                     )
-                modified_input_description[key]['directory'] = \
+                new_input_description[key]['directory'] = \
                     os.path.join(self.input_dir, descr['directory'])
 
         # Find files
@@ -124,10 +124,10 @@ class IOManager:
                 if isinstance(item, dict)
                 else item
             )
-            for key, item in modified_input_description.items()
+            for key, item in new_input_description.items()
         }
 
-        return input_filepaths, modified_input_description
+        return input_filepaths, new_input_description
 
     def find_files(
         self,
@@ -191,22 +191,22 @@ class IOManager:
             return {}, output_dir
 
         # Parse the output description
-        modified_output_description = {}
+        new_output_description = {}
         for key, value in output_description.items():
             if isinstance(value, str):
                 # TODO: We could guess types based on the extension
-                modified_output_description[key] = {
+                new_output_description[key] = {
                     'filename': value,
                     'type': None,
                 }
             else:
-                modified_output_description[key] = value
+                new_output_description[key] = value
 
         # Default to the first key
         if tracked_file_key is None:
-            tracked_file_key = list(modified_output_description.keys())[0]
+            tracked_file_key = list(new_output_description.keys())[0]
         tracked_filename = \
-            modified_output_description[tracked_file_key]['filename']
+            new_output_description[tracked_file_key]['filename']
 
         # Main filepath parameters
         tracked_filepath = os.path.join(output_dir, tracked_filename)
@@ -235,8 +235,8 @@ class IOManager:
                 )
 
         # Auxiliary files
-        for key, out_des in modified_output_description.items():
-            modified_output_description[key]['filepath'] = os.path.join(
+        for key, out_des in new_output_description.items():
+            new_output_description[key]['filepath'] = os.path.join(
                 output_dir,
                 out_des['filename'],
             )
@@ -244,7 +244,7 @@ class IOManager:
         # Ensure directories exist
         os.makedirs(output_dir, exist_ok=True)
 
-        return modified_output_description, output_dir
+        return new_output_description, output_dir
 
     def save_settings(self, obj):
         '''TODO: Another thing to move into a DataIO
