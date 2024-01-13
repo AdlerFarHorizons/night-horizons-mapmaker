@@ -536,8 +536,9 @@ class DatasetWrapper:
         (
             (self.x_min_, self.x_max_),
             (self.y_min_, self.y_max_),
-            self.pixel_width_, self.pixel_height_
-        ) = get_bounds_from_dataset(
+            self.pixel_width_, self.pixel_height_,
+            self.crs,
+        ) = data_io.GDALDatasetIO.get_bounds_from_dataset(
             dataset,
             self.crs,
         )
