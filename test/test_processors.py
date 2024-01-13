@@ -125,7 +125,7 @@ class TestDatasetRegistrar(TestProcessorBase):
             results={
                 'blended_image': original_image.img_int,
                 'warped_image': original_image.img_int,
-                'warped_bounds': original_image.cart_bounds,
+                'warped_bounds': (0, 0, row['x_size'], row['y_size']),
                 'return_code': 'success',
             },
         )
