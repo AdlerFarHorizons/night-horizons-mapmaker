@@ -16,7 +16,7 @@ from sklearn.pipeline import Pipeline
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from .transformers import filter, order, preprocessors
+from .transformers import filters, order, preprocessors
 from .image_processing import registration, mosaicking
 
 
@@ -64,9 +64,9 @@ class PreprocessorPipelines:
             ('metadata',
              metadata_preprocessor),
             ('select_float_phase',
-             filter.AltitudeFilter(column=altitude_column)),
+             filters.AltitudeFilter(column=altitude_column)),
             ('select_steady',
-             filter.SteadyFilter(columns=gyro_columns)),
+             filters.SteadyFilter(columns=gyro_columns)),
             ('georeference', georeferencer),
             ('order', order.SensorAndDistanceOrder()),
         ])

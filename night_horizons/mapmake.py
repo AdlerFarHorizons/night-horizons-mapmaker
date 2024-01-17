@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import cv2
 from sklearn.pipeline import Pipeline
 
-from .transformers import filter, order, preprocessors, raster
+from .transformers import filters, order, preprocessors, raster
 
 from .container import DIContainer
 from . import io_manager
@@ -207,13 +207,13 @@ class SequentialMosaicMaker(MosaicMaker):
         # Preprocessor to filter on altitude
         self.container.register_service(
             'altitude_filter',
-            filter.AltitudeFilter,
+            filters.AltitudeFilter,
         )
 
         # Preprocessor to filter on steadiness
         self.container.register_service(
             'steady_filter',
-            filter.SteadyFilter,
+            filters.SteadyFilter,
         )
 
         # Preprocessor to order images
