@@ -1,6 +1,3 @@
-from abc import abstractmethod, ABC
-import copy
-import glob
 import os
 from typing import Union
 import warnings
@@ -11,11 +8,10 @@ import pandas as pd
 import pyproj
 import scipy
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
 from sklearn.utils.validation import check_is_fitted
 import tqdm
 
-from . import utils
+from .. import utils
 
 GEOTRANSFORM_COLS = [
     'x_min', 'x_max',
@@ -28,25 +24,7 @@ GEOTRANSFORM_COLS = [
 ]
 
 
-class Preprocessor(TransformerMixin, BaseEstimator, ABC):
-    '''Abstract base class for all preprocessors.
-
-    Parameters
-    ----------
-    Returns
-    -------
-    '''
-
-    @abstractmethod
-    def fit(self, X, y=None):
-        pass
-
-    @abstractmethod
-    def transform(self, X, y=None):
-        pass
-
-
-class NITELitePreprocessor(Preprocessor):
+class NITELitePreprocessor(TransformerMixin, BaseEstimator):
     '''Transform filepaths into a metadata dataframe.
 
     Parameters
@@ -428,7 +406,7 @@ class NITELitePreprocessor(Preprocessor):
         return gps_log_df
 
 
-class GeoTIFFPreprocessor(Preprocessor):
+class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
     '''Transform filepaths into geotransform properties.
 
     Parameters
@@ -553,224 +531,3 @@ class GeoTIFFPreprocessor(Preprocessor):
         X = pd.concat([X, new_df], axis='columns')
 
         return X
-
-
-class Filter(Preprocessor):
-    '''Simple estimator to implement easy filtering of rows.
-    Does not actually remove rows, but instead adds a `selected` column.
-
-    Parameters
-    ----------
-    Returns
-    -------
-    '''
-
-    def __init__(self, condition, apply=True):
-        self.condition = condition
-        self.apply = apply
-
-    def fit(self, X, y=None):
-        self.is_fitted_ = True
-        return self
-
-    def transform(self, X):
-        meets_condition = self.condition(X)
-
-        if self.apply:
-            return X.loc[meets_condition]
-
-        if 'selected' in X.columns:
-            X['selected'] = X['selected'] & meets_condition
-        else:
-            X['selected'] = meets_condition
-        return X
-
-
-class AltitudeFilter(Filter):
-
-    def __init__(
-        self,
-        column: str = 'mAltitude',
-        cruising_altitude: float = 13000.,
-    ):
-
-        self.column = column
-        self.cruising_altitude = cruising_altitude
-
-        def condition(X):
-            return X[column] > cruising_altitude
-
-        super().__init__(condition)
-
-
-class SteadyFilter(Filter):
-
-    def __init__(
-        self,
-        columns: list[str] = ['imuGyroX', 'imuGyroY', 'imuGyroZ'],
-        max_gyro: float = 0.075,
-    ):
-
-        self.columns = columns
-        self.max_gyro = max_gyro
-
-        def condition(X):
-            mag = np.linalg.norm(X[columns], axis=1)
-            return mag < max_gyro
-
-        super().__init__(condition)
-
-
-class SensorAndDistanceOrder(Preprocessor):
-    '''Simple estimator to implement ordering of data.
-    For consistency with other transformers, does not actually rearrange data.
-    Instead, adds a column `order` that indicates the order to take.
-
-    The center defaults to that of the first training sample.
-
-    TODO: Breaking this up into multiple individual transforms makes sense,
-        if this is something the user is expected to experiment with.
-
-    Parameters
-    ----------
-    Returns
-    -------
-    '''
-
-    def __init__(
-        self,
-        apply=True,
-        sensor_order_col='camera_num',
-        sensor_order_map={0: 1, 1: 0, 2: 2},
-        coords_cols=['x_center', 'y_center'],
-    ):
-        self.apply = apply
-        self.sensor_order_col = sensor_order_col
-        self.sensor_order_map = sensor_order_map
-        self.coords_cols = coords_cols
-
-    def fit(self, X, y=None):
-
-        # Center defaults to the first training sample
-        self.center_ = X[self.coords_cols].iloc[0]
-        self.is_fitted_ = True
-        return self
-
-    def transform(self, X):
-        X['sensor_order'] = X[self.sensor_order_col].map(self.sensor_order_map)
-
-        offset = X[self.coords_cols] - self.center_
-        X['d_to_center'] = np.linalg.norm(offset, axis=1)
-
-        # Actual sort
-        X_iter = X.sort_values(['sensor_order', 'd_to_center'])
-        X_iter['order'] = np.arange(len(X_iter))
-
-        if self.apply:
-            return X_iter
-
-        X['order'] = X_iter.loc[X.index, 'order']
-
-        return X
-
-
-class ApplyFilterAndOrder(Preprocessor):
-    '''Simple estimator to implement easy filtering of rows.
-    Does not actually remove rows, but instead adds a `selected` column.
-    TODO: Consider deleting this, since we have the option to apply on the fly.
-
-    Parameters
-    ----------
-    Returns
-    -------
-    '''
-
-    def fit(self, X, y=None):
-        self.is_fitted_ = True
-        return self
-
-    # TODO: Replace all X_out with Xt (consistent name in sklearn).
-    def transform(self, X):
-
-        X_valid = X.loc[X['selected']]
-        X_out = X_valid.sort_values('order')
-
-        return X_out
-
-
-class BaseImageTransformer(Preprocessor):
-    '''Transformer for image data.
-
-    Parameters
-    ----------
-    Returns
-    -------
-    '''
-
-    def fit(self, X, y=None):
-        self.is_fitted_ = True
-        return self
-
-    def transform(self, X):
-
-        X_t = []
-        for img in X:
-            img_t = self.transform_image(img)
-            X_t.append(img_t)
-
-        return X_t
-
-    @abstractmethod
-    def transform_image(self, img):
-        pass
-
-
-class PassImageTransformer(BaseImageTransformer):
-
-    def transform_image(self, img):
-
-        return img
-
-
-class LogscaleImageTransformer(BaseImageTransformer):
-
-    def transform_image(self, img):
-
-        assert np.issubdtype(img.dtype, np.integer), \
-            'logscale_img_transform not implemented for imgs with float dtype.'
-
-        # Transform the image
-        # We add 1 because log(0) = nan.
-        # We have to convert the image first because otherwise max values
-        # roll over
-        logscale_img = np.log10(img.astype(np.float32) + 1)
-
-        # Scale
-        dtype_max = np.iinfo(img.dtype).max
-        logscale_img *= dtype_max / np.log10(dtype_max + 1)
-
-        return logscale_img.astype(img.dtype)
-
-
-class CleanImageTransformer(BaseImageTransformer):
-
-    def __init__(self, fraction=0.03):
-        self.fraction = fraction
-
-    def transform_image(self, img):
-
-        img = copy.copy(img)
-
-        assert np.issubdtype(img.dtype, np.integer), \
-            'floor not implemented for imgs with float dtype.'
-
-        value = int(self.fraction * np.iinfo(img.dtype).max)
-        img[img <= value] = 0
-
-        return img
-
-
-CLEAN_LOGSCALE_IMAGE_PIPELINE = Pipeline([
-    ('clean', CleanImageTransformer()),
-    ('logscale', LogscaleImageTransformer()),
-])

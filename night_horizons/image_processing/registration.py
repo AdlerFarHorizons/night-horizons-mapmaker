@@ -8,7 +8,9 @@ import pyproj
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
-from .. import preprocessors, utils
+from ..transformers import preprocessors
+
+from .. import utils
 
 
 class MetadataImageRegistrar(BaseEstimator):

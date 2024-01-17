@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 import cv2
 from sklearn.pipeline import Pipeline
 
+from .transformers import filter, order, preprocessors, raster
+
 from .container import DIContainer
-from . import io_manager, pipelines, preprocessors
+from . import io_manager
 from .image_processing import (
     mosaicking, operators, processors, registration, scorers
 )
@@ -205,19 +207,19 @@ class SequentialMosaicMaker(MosaicMaker):
         # Preprocessor to filter on altitude
         self.container.register_service(
             'altitude_filter',
-            preprocessors.AltitudeFilter,
+            filter.AltitudeFilter,
         )
 
         # Preprocessor to filter on steadiness
         self.container.register_service(
             'steady_filter',
-            preprocessors.SteadyFilter,
+            filter.SteadyFilter,
         )
 
         # Preprocessor to order images
         self.container.register_service(
             'order',
-            preprocessors.SensorAndDistanceOrder,
+            order.SensorAndDistanceOrder,
         )
 
         # Put it all together
@@ -327,7 +329,7 @@ class SequentialMosaicMaker(MosaicMaker):
         # Feature detection and matching
         self.container.register_service(
             'image_transformer',
-            preprocessors.PassImageTransformer,
+            raster.PassImageTransformer,
         )
         self.container.register_service(
             'feature_detector',
@@ -340,7 +342,7 @@ class SequentialMosaicMaker(MosaicMaker):
 
         # Image processing
         def make_image_aligner_blender(
-            image_transformer: preprocessors.PassImageTransformer = None,
+            image_transformer: raster.PassImageTransformer = None,
             feature_detector: cv2.Feature2D = None,
             feature_matcher: cv2.DescriptorMatcher = None,
             *args, **kwargs

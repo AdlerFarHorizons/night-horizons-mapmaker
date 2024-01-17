@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-import night_horizons.preprocessors as preprocessors
+import night_horizons.transformers.preprocessors as preprocessors
 import night_horizons.utils as utils
 
 

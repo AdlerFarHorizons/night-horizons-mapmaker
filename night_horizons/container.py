@@ -8,12 +8,14 @@ import pyproj
 import scipy
 from sklearn.utils import check_random_state
 import yaml
+
+from .transformers import preprocessors
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import data_io, io_manager, pipelines, preprocessors
+from . import data_io, io_manager, pipelines
 from .image_processing import mosaicking, operators, processors
 
 

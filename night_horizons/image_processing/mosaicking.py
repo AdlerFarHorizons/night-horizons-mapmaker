@@ -19,13 +19,14 @@ from sklearn.utils.validation import check_is_fitted
 import tqdm
 import yaml
 
-from night_horizons.exceptions import OutOfBoundsError
+from ..exceptions import OutOfBoundsError
+from ..transformers import preprocessors
 from . import operators
 
 from .batch import BatchProcessor
 
 from .. import (
-    preprocessors, utils, raster
+    utils, raster
 )
 from . import processors
 
