@@ -135,6 +135,39 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
 
         return X_t
 
+    def input_fit(
+        self,
+        x_min,
+        x_max,
+        y_min,
+        y_max,
+        pixel_width,
+        pixel_height,
+        crs,
+        x_size,
+        y_size,
+    ):
+        '''Calling this function is superior to simply setting each attribute,
+        because it ensures all the important parameters are set.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        self.x_min_ = x_min
+        self.x_max_ = x_max
+        self.y_min_ = y_min
+        self.y_max_ = y_max
+        self.pixel_width_ = pixel_width
+        self.pixel_height_ = pixel_height
+        self.crs_ = crs
+        self.x_size_ = x_size
+        self.y_size_ = y_size
+
+        return self
+
     def physical_to_pixel(
         self,
         x_min,

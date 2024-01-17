@@ -107,9 +107,12 @@ class Mosaicker(BatchProcessor):
                     'Cannot both pass in a dataset and load a file')
             dataset = self.io_manager.open_dataset()
 
+        # The transformer for changing between physical and pixel coordinates
+        self.transformer_ = raster.RasterCoordinateTransformer()
+
         # If we have a loaded dataset by this point, get fit params from it
         if dataset is not None:
-            self.get_fit_from_dataset(dataset)
+            self.transformer_.fit(X, dataset=dataset, crs=self.crs)
 
         # Otherwise, make a new dataset
         else:
@@ -120,6 +123,13 @@ class Mosaicker(BatchProcessor):
                     'If creating a new dataset, should start with i = 0.'
                 )
             self.create_containing_dataset(X)
+            self.transformer_.input_fit(
+                self.x_min_, self.x_max_,
+                self.y_min_, self.y_max_,
+                self.pixel_width_, self.pixel_height_,
+                self.crs,
+                self.x_size_, self.y_size_,
+            )
 
         # Fit the processor and scorer too
         # While this is generic and expected for the majority of
@@ -143,11 +153,12 @@ class Mosaicker(BatchProcessor):
         -------
         '''
 
-        X_t = self.transform_to_pixel(X)
+        X_t = self.transformer_.transform_to_pixel(X)
 
         # Get the dataset
         resources = {
             'dataset': self.io_manager.open_dataset(),
+            'coord_transformer': self.transformer_,
         }
 
         return X_t, resources
@@ -228,7 +239,8 @@ class Mosaicker(BatchProcessor):
 
         # Close out the dataset for now. (Reduces likelihood of mem leaks.)
         dataset.FlushCache()
-        dataset = None
+
+        return dataset
 
 # class Mosaicker(BaseMosaicker):
 # 
