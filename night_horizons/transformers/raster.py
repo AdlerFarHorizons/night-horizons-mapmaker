@@ -250,7 +250,7 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
 
         return x_off, y_off, x_size, y_size
 
-    def transform_to_pixel(self, X):
+    def transform_to_pixel(self, X, trim: bool = False):
 
         # Convert to pixels
         (
@@ -268,6 +268,7 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
         ) = self.handle_out_of_bounds(
             X['x_off'], X['y_off'],
             X['x_size'], X['y_size'],
+            trim=trim,
         )
 
         return X
