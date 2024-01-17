@@ -19,6 +19,7 @@ from sklearn.utils.validation import check_is_fitted
 import tqdm
 import yaml
 
+from ..data_io import GDALDatasetIO
 from ..exceptions import OutOfBoundsError
 from ..transformers import preprocessors
 from . import operators
@@ -110,9 +111,9 @@ class Mosaicker(BatchProcessor):
         # The transformer for changing between physical and pixel coordinates
         self.transformer_ = raster.RasterCoordinateTransformer()
 
-        # If we have a loaded dataset by this point, get fit params from it
+        # If a dataset already exists, fit the transformer to it
         if dataset is not None:
-            self.transformer_.fit(X, dataset=dataset, crs=self.crs)
+            self.transformer_.fit_to_dataset(dataset=dataset, crs=self.crs)
 
         # Otherwise, make a new dataset
         else:
@@ -122,13 +123,25 @@ class Mosaicker(BatchProcessor):
                     'but the starting iteration is not 0. '
                     'If creating a new dataset, should start with i = 0.'
                 )
-            self.create_containing_dataset(X)
-            self.transformer_.input_fit(
-                self.x_min_, self.x_max_,
-                self.y_min_, self.y_max_,
-                self.pixel_width_, self.pixel_height_,
-                self.crs,
-                self.x_size_, self.y_size_,
+            self.transformer_.fit(
+                X=X,
+                crs=self.crs,
+                pixel_width=self.pixel_width,
+                pixel_height=self.pixel_height,
+            )
+            # TODO: It's kinda weird to fit the transformer and then create
+            # the dataset.
+            GDALDatasetIO.create(
+                filepath=self.io_manager.output_filepaths['mosaic'],
+                x_min=self.transformer_.x_min_,
+                y_max=self.transformer_.y_max_,
+                pixel_width=self.transformer_.pixel_width_,
+                pixel_height=self.transformer_.pixel_height_,
+                crs=self.transformer_.crs_,
+                x_size=self.transformer_.x_size_,
+                y_size=self.transformer_.y_size_,
+                n_bands=self.n_bands,
+                driver='GTiff',
             )
 
         # Fit the processor and scorer too
@@ -184,63 +197,6 @@ class Mosaicker(BatchProcessor):
     #     )
     #     self.x_size_ = dataset.RasterXSize
     #     self.y_size_ = dataset.RasterYSize
-
-    def create_containing_dataset(self, X):
-
-        # Get bounds
-        max_padding = X['padding'].max()
-        self.x_min_ = X['x_min'].min() - max_padding
-        self.x_max_ = X['x_max'].max() + max_padding
-        self.y_min_ = X['y_min'].min() - max_padding
-        self.y_max_ = X['y_max'].max() + max_padding
-
-        # Pixel resolution
-        if self.pixel_width is None:
-            self.pixel_width_ = np.median(X['pixel_width'])
-        else:
-            self.pixel_width_ = self.pixel_width
-        if self.pixel_height is None:
-            self.pixel_height_ = np.median(X['pixel_height'])
-        else:
-            self.pixel_height_ = self.pixel_height
-
-        # Get dimensions
-        width = self.x_max_ - self.x_min_
-        self.x_size_ = int(np.round(width / self.pixel_width_))
-        height = self.y_max_ - self.y_min_
-        self.y_size_ = int(np.round(height / -self.pixel_height_))
-
-        # Re-record pixel values to account for rounding
-        self.pixel_width_ = width / self.x_size_
-        self.pixel_height_ = -height / self.y_size_
-
-        # Initialize an empty GeoTiff
-        driver = gdal.GetDriverByName('GTiff')
-        dataset = driver.Create(
-            self.io_manager.output_filepaths['mosaic'],
-            xsize=self.x_size_,
-            ysize=self.y_size_,
-            bands=self.n_bands,
-            options=['TILED=YES']
-        )
-
-        # Properties
-        dataset.SetProjection(self.crs.to_wkt())
-        dataset.SetGeoTransform([
-            self.x_min_,
-            self.pixel_width_,
-            0.,
-            self.y_max_,
-            0.,
-            self.pixel_height_,
-        ])
-        if self.n_bands == 4:
-            dataset.GetRasterBand(4).SetMetadataItem('Alpha', '1')
-
-        # Close out the dataset for now. (Reduces likelihood of mem leaks.)
-        dataset.FlushCache()
-
-        return dataset
 
 # class Mosaicker(BaseMosaicker):
 # 

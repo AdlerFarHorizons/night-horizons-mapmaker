@@ -102,9 +102,43 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
         self,
         X,
         y=None,
-        dataset: gdal.Dataset = None,
         crs: pyproj.CRS = None,
+        pixel_width: float = None,
+        pixel_height: float = None,
     ):
+
+        # Get bounds
+        max_padding = X['padding'].max()
+        self.x_min_ = X['x_min'].min() - max_padding
+        self.x_max_ = X['x_max'].max() + max_padding
+        self.y_min_ = X['y_min'].min() - max_padding
+        self.y_max_ = X['y_max'].max() + max_padding
+
+        # Pixel resolution
+        if pixel_width is None:
+            self.pixel_width_ = np.median(X['pixel_width'])
+        else:
+            self.pixel_width_ = self.pixel_width
+        if pixel_height is None:
+            self.pixel_height_ = np.median(X['pixel_height'])
+        else:
+            self.pixel_height_ = self.pixel_height
+
+        # Get dimensions
+        width = self.x_max_ - self.x_min_
+        self.x_size_ = int(np.round(width / self.pixel_width_))
+        height = self.y_max_ - self.y_min_
+        self.y_size_ = int(np.round(height / -self.pixel_height_))
+
+        # Re-record pixel values to account for rounding
+        self.pixel_width_ = width / self.x_size_
+        self.pixel_height_ = -height / self.y_size_
+
+        self.crs_ = crs
+
+        return self
+
+    def fit_to_dataset(self, dataset: gdal.Dataset, crs: pyproj.CRS = None):
 
         if dataset is None:
             raise TypeError('dataset must be provided.')
@@ -135,38 +169,39 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
 
         return X_t
 
-    def input_fit(
-        self,
-        x_min,
-        x_max,
-        y_min,
-        y_max,
-        pixel_width,
-        pixel_height,
-        crs,
-        x_size,
-        y_size,
-    ):
-        '''Calling this function is superior to simply setting each attribute,
-        because it ensures all the important parameters are set.
+    # TODO: Delete this.
+    # def input_fit(
+    #     self,
+    #     x_min,
+    #     x_max,
+    #     y_min,
+    #     y_max,
+    #     pixel_width,
+    #     pixel_height,
+    #     crs,
+    #     x_size,
+    #     y_size,
+    # ):
+    #     '''Calling this function is superior to simply setting each attribute,
+    #     because it ensures all the important parameters are set.
 
-        Parameters
-        ----------
-        Returns
-        -------
-        '''
+    #     Parameters
+    #     ----------
+    #     Returns
+    #     -------
+    #     '''
 
-        self.x_min_ = x_min
-        self.x_max_ = x_max
-        self.y_min_ = y_min
-        self.y_max_ = y_max
-        self.pixel_width_ = pixel_width
-        self.pixel_height_ = pixel_height
-        self.crs_ = crs
-        self.x_size_ = x_size
-        self.y_size_ = y_size
+    #     self.x_min_ = x_min
+    #     self.x_max_ = x_max
+    #     self.y_min_ = y_min
+    #     self.y_max_ = y_max
+    #     self.pixel_width_ = pixel_width
+    #     self.pixel_height_ = pixel_height
+    #     self.crs_ = crs
+    #     self.x_size_ = x_size
+    #     self.y_size_ = y_size
 
-        return self
+    #     return self
 
     def physical_to_pixel(
         self,

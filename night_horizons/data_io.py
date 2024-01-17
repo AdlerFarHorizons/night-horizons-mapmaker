@@ -62,6 +62,54 @@ class GDALDatasetIO(DataIO):
         save_dataset = None
 
     @staticmethod
+    def create(
+        filepath,
+        x_min,
+        y_max,
+        pixel_width,
+        pixel_height,
+        crs,
+        x_size,
+        y_size,
+        n_bands: int = 4,
+        driver: str = 'MEM',
+        return_dataset: bool = True,
+        options: list[str] = ['TILED=YES'],
+        *args, **kwargs
+    ):
+
+        # Initialize an empty GeoTiff
+        driver = gdal.GetDriverByName(driver)
+        dataset = driver.Create(
+            filepath,
+            xsize=x_size,
+            ysize=y_size,
+            bands=n_bands,
+            options=options,
+            *args, **kwargs
+        )
+
+        # Properties
+        dataset.SetProjection(crs.to_wkt())
+        dataset.SetGeoTransform([
+            x_min,
+            pixel_width,
+            0.,
+            y_max,
+            0.,
+            pixel_height,
+        ])
+        if n_bands == 4:
+            dataset.GetRasterBand(4).SetMetadataItem('Alpha', '1')
+
+        if (driver == 'MEM') or return_dataset:
+            return dataset
+
+        # Close out the dataset for now. (Reduces likelihood of mem leaks.)
+        dataset.FlushCache()
+        dataset = None
+
+    @staticmethod
     def load(filepath):
         data = gdal.Open(filepath, gdal.GA_ReadOnly)
         return data
@@ -133,34 +181,26 @@ class RegisteredImageIO(DataIO):
         # Get data type
         gdal_dtype = gdal_array.NumericTypeCodeToGDALTypeCode(img.dtype)
 
-        # Create dataset
-        driver_obj = gdal.GetDriverByName(driver)
-        dataset = driver_obj.Create(
-            filepath,
-            img.shape[1],
-            img.shape[0],
-            img.shape[2],
-            gdal_dtype,
+        # Get pixel size
+        pixel_width = (x_bounds[1] - x_bounds[0]) / img.shape[1]
+        pixel_height = (y_bounds[1] - y_bounds[0]) / img.shape[0]
+
+        dataset = GDALDatasetIO.create(
+            filepath=filepath,
+            x_min=x_bounds[0],
+            y_max=y_bounds[1],
+            pixel_width=pixel_width,
+            pixel_height=pixel_height,
+            crs=crs,
+            x_size=img.shape[1],
+            y_size=img.shape[0],
+            n_bands=img.shape[2],
+            driver=driver,
+            dtype=gdal_dtype,
         )
 
         # Write to the dataset
         dataset.WriteArray(img.transpose(2, 0, 1))
-
-        # Set CRS properties
-        dataset.SetProjection(crs.to_wkt())
-
-        # Set geotransform
-        dx = (x_bounds[1] - x_bounds[0]) / img.shape[1]
-        dy = (y_bounds[1] - y_bounds[0]) / img.shape[0]
-        geotransform = (
-            x_bounds[0],
-            dx,
-            0,
-            y_bounds[1],
-            0,
-            -dy
-        )
-        dataset.SetGeoTransform(geotransform)
 
         # Stop and return if we want to keep the dataset open
         if driver == 'MEM':
