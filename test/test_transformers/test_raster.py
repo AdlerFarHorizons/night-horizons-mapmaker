@@ -38,32 +38,35 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         self.settings = container.config
         self.io_manager = self.container.get_service('io_manager')
 
-    def test_to_pixel(self):
-
-        # Load the example data for the fit
-        dataset = GDALDatasetIO.load(
+        # Load the example data we'll use
+        self.dataset = GDALDatasetIO.load(
             self.io_manager.input_filepaths['referenced_images'][0]
         )
         (
-            x_bounds,
-            y_bounds,
-            pixel_width,
-            pixel_height,
-            crs
-        ) = GDALDatasetIO.get_bounds_from_dataset(dataset)
+            self.x_bounds,
+            self.y_bounds,
+            self.pixel_width,
+            self.pixel_height,
+            self.crs
+        ) = GDALDatasetIO.get_bounds_from_dataset(
+            self.dataset,
+            crs=self.container.config['global']['crs']
+        )
+
+    def test_to_pixel(self):
 
         # Make a dataframe that is a single entry--the full size of the image
         X = pd.Series({
-            'x_min': x_bounds[0],
-            'x_max': x_bounds[1],
-            'y_min': y_bounds[0],
-            'y_max': y_bounds[1],
+            'x_min': self.x_bounds[0],
+            'x_max': self.x_bounds[1],
+            'y_min': self.y_bounds[0],
+            'y_max': self.y_bounds[1],
         })
         X = pd.DataFrame([X])
 
         # Fit the transformer
         transformer = raster.RasterCoordinateTransformer()
-        transformer.fit_to_dataset(dataset)
+        transformer.fit_to_dataset(self.dataset)
 
         # Test that the transformer works
         X_t = transformer.transform(X.copy())
@@ -71,32 +74,51 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         X_expected = pd.Series({
             'x_off': 0,
             'y_off': 0,
-            'x_size': dataset.RasterXSize,
-            'y_size': dataset.RasterYSize,
+            'x_size': self.dataset.RasterXSize,
+            'y_size': self.dataset.RasterYSize,
+        })
+        X_expected = pd.DataFrame([X_expected])
+        pd.testing.assert_frame_equal(X_expected, X_t[X_expected.columns])
+
+    def test_to_physical(self):
+
+        # Make a dataframe that is a single entry--the full size of the image
+        X = pd.Series({
+            'x_off': 0,
+            'y_off': 0,
+            'x_size': self.dataset.RasterXSize,
+            'y_size': self.dataset.RasterYSize,
+        })
+        X = pd.DataFrame([X])
+
+        # Fit the transformer
+        transformer = raster.RasterCoordinateTransformer()
+        transformer.fit_to_dataset(self.dataset, crs=self.crs)
+
+        # Test that the transformer works
+        X_t = transformer.transform(X.copy(), direction='to_physical')
+
+        X_expected = pd.Series({
+            'x_min': self.x_bounds[0],
+            'x_max': self.x_bounds[1],
+            'y_min': self.y_bounds[0],
+            'y_max': self.y_bounds[1],
         })
         X_expected = pd.DataFrame([X_expected])
         pd.testing.assert_frame_equal(X_expected, X_t[X_expected.columns])
 
     def test_consistent(self):
 
-        # Load the example data for the fit
-        dataset = GDALDatasetIO.load(
-            self.io_manager.input_filepaths['referenced_images'][0]
-        )
-        (
-            x_bounds,
-            y_bounds,
-            pixel_width,
-            pixel_height,
-            crs
-        ) = GDALDatasetIO.get_bounds_from_dataset(dataset)
-
         # Create the test data
         X = pd.DataFrame({
-            'x_min': self.random_state.uniform(x_bounds[0], x_bounds[1], 100),
-            'x_max': self.random_state.uniform(x_bounds[0], x_bounds[1], 100),
-            'y_min': self.random_state.uniform(y_bounds[0], y_bounds[1], 100),
-            'y_max': self.random_state.uniform(y_bounds[0], y_bounds[1], 100),
+            'x_min': self.random_state.uniform(
+                self.x_bounds[0], self.x_bounds[1], 100),
+            'x_max': self.random_state.uniform(
+                self.x_bounds[0], self.x_bounds[1], 100),
+            'y_min': self.random_state.uniform(
+                self.y_bounds[0], self.y_bounds[1], 100),
+            'y_max': self.random_state.uniform(
+                self.y_bounds[0], self.y_bounds[1], 100),
         })
         # Fix situations where max < min
         X.loc[X['x_max'] < X['x_min'], 'x_max'] = \
@@ -107,7 +129,11 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         # Fit the transformer
         transformer = raster.RasterCoordinateTransformer()
-        transformer.fit(X, pixel_width=pixel_width, pixel_height=pixel_height)
+        transformer.fit(
+            X,
+            pixel_width=self.pixel_width,
+            pixel_height=self.pixel_height,
+        )
 
         # Test that the transformer works
         X_t = transformer.transform(X.copy())
@@ -122,34 +148,26 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
     def test_consistent_with_dataset_fit(self):
 
-        # Load the example data for the fit
-        dataset = GDALDatasetIO.load(
-            self.io_manager.input_filepaths['referenced_images'][0]
-        )
-        (
-            x_bounds,
-            y_bounds,
-            pixel_width,
-            pixel_height,
-            crs
-        ) = GDALDatasetIO.get_bounds_from_dataset(dataset)
-
         # Create the test data
         X = pd.DataFrame({
-            'x_min': self.random_state.uniform(x_bounds[0], x_bounds[1], 100),
-            'x_max': self.random_state.uniform(x_bounds[0], x_bounds[1], 100),
-            'y_min': self.random_state.uniform(y_bounds[0], y_bounds[1], 100),
-            'y_max': self.random_state.uniform(y_bounds[0], y_bounds[1], 100),
+            'x_min': self.random_state.uniform(
+                self.x_bounds[0], self.x_bounds[1], 100),
+            'x_max': self.random_state.uniform(
+                self.x_bounds[0], self.x_bounds[1], 100),
+            'y_min': self.random_state.uniform(
+                self.y_bounds[0], self.y_bounds[1], 100),
+            'y_max': self.random_state.uniform(
+                self.y_bounds[0], self.y_bounds[1], 100),
         })
         # Fix situations where max < min
-        X.loc[X['x_max'] > X['x_min'], 'x_max'] = \
+        X.loc[X['x_max'] < X['x_min'], 'x_max'] = \
             X['x_min'] - (X['x_max'] - X['x_min'])
-        X.loc[X['y_max'] > X['y_min'], 'y_max'] = \
+        X.loc[X['y_max'] < X['y_min'], 'y_max'] = \
             X['y_min'] - (X['y_max'] - X['y_min'])
 
         # Fit the transformer
         transformer = raster.RasterCoordinateTransformer()
-        transformer.fit_to_dataset(dataset)
+        transformer.fit_to_dataset(self.dataset, self.crs)
 
         # Test that the transformer works
         X_t = transformer.transform(X.copy())
