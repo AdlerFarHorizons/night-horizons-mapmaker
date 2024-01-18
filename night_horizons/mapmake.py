@@ -24,17 +24,18 @@ class Mapmaker(ABC):
     def register_default_services(self):
         pass
 
-    def register_default_io(self):
+    # TODO: Delete
+    # def register_default_io(self):
 
-        dataio_services = self.container.register_dataio_services()
-
-        def register_io_manager(*args, **kwargs):
-            data_ios = {
-                name: self.container.get_service(name)
-                for name in dataio_services
-            }
-            return io_manager.IOManager(data_ios=data_ios, *args, **kwargs)
-        self.container.register_service('io_manager', register_io_manager)
+    #     dataio_services = self.container.register_dataio_services()
+    #     
+    #     def register_io_manager(*args, **kwargs):
+    #         data_ios = {
+    #             name: self.container.get_service(name)
+    #             for name in dataio_services
+    #         }
+    #         return io_manager.IOManager(data_ios=data_ios, *args, **kwargs)
+    #     self.container.register_service('io_manager', register_io_manager)
 
 
 class MosaicMaker(Mapmaker):
@@ -56,7 +57,10 @@ class MosaicMaker(Mapmaker):
     def register_default_services(self):
 
         # Services for input/output
-        self.register_default_io()
+        self.container.register_service(
+            'io_manager',
+            io_manager.MosaicIOManager,
+        )
 
         # What we use for preprocessing
         self.container.register_service(

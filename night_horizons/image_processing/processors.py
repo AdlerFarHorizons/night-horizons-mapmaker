@@ -217,10 +217,10 @@ class DatasetProcessor(Processor):
         '''
 
         assert x_off >= 0, 'x_off cannot be less than 0'
-        assert x_off + x_size <= self.x_size_, \
+        assert x_off + x_size <= dataset.RasterXSize, \
             'x_off + x_size cannot be greater than self.x_size_'
         assert y_off >= 0, 'y_off cannot be less than 0'
-        assert y_off + y_size <= self.y_size_, \
+        assert y_off + y_size <= dataset.RasterYSize, \
             'y_off + y_size cannot be greater than self.y_size_'
 
         # Note that we cast the input as int, in case we the input was numpy
