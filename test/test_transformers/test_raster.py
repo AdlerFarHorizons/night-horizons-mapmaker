@@ -38,7 +38,50 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         self.settings = container.config
         self.io_manager = self.container.get_service('io_manager')
 
-    def test_with_dataset_fit(self):
+    def test_consistent(self):
+
+        # Load the example data for the fit
+        dataset = GDALDatasetIO.load(
+            self.io_manager.input_filepaths['referenced_images'][0]
+        )
+        (
+            x_bounds,
+            y_bounds,
+            pixel_width,
+            pixel_height,
+            crs
+        ) = GDALDatasetIO.get_bounds_from_dataset(dataset)
+
+        # Create the test data
+        X = pd.DataFrame({
+            'x_min': self.random_state.uniform(x_bounds[0], x_bounds[1], 100),
+            'x_max': self.random_state.uniform(x_bounds[0], x_bounds[1], 100),
+            'y_min': self.random_state.uniform(y_bounds[0], y_bounds[1], 100),
+            'y_max': self.random_state.uniform(y_bounds[0], y_bounds[1], 100),
+        })
+        # Fix situations where max < min
+        X.loc[X['x_max'] < X['x_min'], 'x_max'] = \
+            X['x_min'] - (X['x_max'] - X['x_min'])
+        X.loc[X['y_max'] < X['y_min'], 'y_max'] = \
+            X['y_min'] - (X['y_max'] - X['y_min'])
+        X['padding'] = np.abs(X['x_max'] - X['x_min'])
+
+        # Fit the transformer
+        transformer = raster.RasterCoordinateTransformer()
+        transformer.fit(X, pixel_width=pixel_width, pixel_height=pixel_height)
+
+        # Test that the transformer works
+        X_t = transformer.transform(X.copy())
+        X_reversed = transformer.transform(X_t.copy(), direction='to_physical')
+        pd.testing.assert_frame_equal(X, X_reversed[X.columns])
+
+        # Check that a failure does indeed occur
+        transformer.pixel_height_ *= 2
+        X_reversed = transformer.transform(X_t.copy(), direction='to_physical')
+        with self.assertRaises(AssertionError) as context:
+            pd.testing.assert_frame_equal(X, X_reversed[X.columns])
+
+    def test_consistent_with_dataset_fit(self):
 
         # Load the example data for the fit
         dataset = GDALDatasetIO.load(

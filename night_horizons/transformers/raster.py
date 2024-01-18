@@ -102,7 +102,6 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
         self,
         X,
         y=None,
-        crs: pyproj.CRS = None,
         pixel_width: float = None,
         pixel_height: float = None,
         padding: float = None,
@@ -121,11 +120,11 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
         if pixel_width is None:
             self.pixel_width_ = np.median(X['pixel_width'])
         else:
-            self.pixel_width_ = self.pixel_width
+            self.pixel_width_ = pixel_width
         if pixel_height is None:
             self.pixel_height_ = np.median(X['pixel_height'])
         else:
-            self.pixel_height_ = self.pixel_height
+            self.pixel_height_ = pixel_height
 
         # Get dimensions
         width = self.x_max_ - self.x_min_
@@ -136,8 +135,6 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
         # Re-record pixel values to account for rounding
         self.pixel_width_ = width / self.x_size_
         self.pixel_height_ = -height / self.y_size_
-
-        self.crs_ = crs
 
         return self
 
