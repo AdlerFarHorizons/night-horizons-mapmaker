@@ -70,12 +70,12 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         transformer.fit_to_dataset(dataset)
 
         # Test that the transformer works
-        X_t = transformer.transform(X)
-        X_reversed = transformer.transform(X_t, direction='to_physical')
-        pd.testing.assert_frame_equal(X, X_reversed)
+        X_t = transformer.transform(X.copy())
+        X_reversed = transformer.transform(X_t.copy(), direction='to_physical')
+        pd.testing.assert_frame_equal(X, X_reversed[X.columns])
 
         # Check that a failure does indeed occur
         transformer.pixel_height_ *= 2
-        X_reversed = transformer.transform(X_t, direction='to_physical')
+        X_reversed = transformer.transform(X_t.copy(), direction='to_physical')
         with self.assertRaises(AssertionError) as context:
-            pd.testing.assert_frame_equal(X, X_reversed)
+            pd.testing.assert_frame_equal(X, X_reversed[X.columns])
