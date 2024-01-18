@@ -38,6 +38,45 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         self.settings = container.config
         self.io_manager = self.container.get_service('io_manager')
 
+    def test_to_pixel(self):
+
+        # Load the example data for the fit
+        dataset = GDALDatasetIO.load(
+            self.io_manager.input_filepaths['referenced_images'][0]
+        )
+        (
+            x_bounds,
+            y_bounds,
+            pixel_width,
+            pixel_height,
+            crs
+        ) = GDALDatasetIO.get_bounds_from_dataset(dataset)
+
+        # Make a dataframe that is a single entry--the full size of the image
+        X = pd.Series({
+            'x_min': x_bounds[0],
+            'x_max': x_bounds[1],
+            'y_min': y_bounds[0],
+            'y_max': y_bounds[1],
+        })
+        X = pd.DataFrame([X])
+
+        # Fit the transformer
+        transformer = raster.RasterCoordinateTransformer()
+        transformer.fit_to_dataset(dataset)
+
+        # Test that the transformer works
+        X_t = transformer.transform(X.copy())
+
+        X_expected = pd.Series({
+            'x_off': 0,
+            'y_off': 0,
+            'x_size': dataset.RasterXSize,
+            'y_size': dataset.RasterYSize,
+        })
+        X_expected = pd.DataFrame([X_expected])
+        pd.testing.assert_frame_equal(X_expected, X_t[X_expected.columns])
+
     def test_consistent(self):
 
         # Load the example data for the fit
