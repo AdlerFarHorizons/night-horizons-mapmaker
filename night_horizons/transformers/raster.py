@@ -105,14 +105,17 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
         crs: pyproj.CRS = None,
         pixel_width: float = None,
         pixel_height: float = None,
+        padding: float = None,
     ):
 
+        if padding is None:
+            padding = X['padding'].max()
+
         # Get bounds
-        max_padding = X['padding'].max()
-        self.x_min_ = X['x_min'].min() - max_padding
-        self.x_max_ = X['x_max'].max() + max_padding
-        self.y_min_ = X['y_min'].min() - max_padding
-        self.y_max_ = X['y_max'].max() + max_padding
+        self.x_min_ = X['x_min'].min() - padding
+        self.x_max_ = X['x_max'].max() + padding
+        self.y_min_ = X['y_min'].min() - padding
+        self.y_max_ = X['y_max'].max() + padding
 
         # Pixel resolution
         if pixel_width is None:

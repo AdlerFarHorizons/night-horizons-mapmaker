@@ -281,6 +281,7 @@ class ReferencedImage(Image):
             y_bounds=y_bounds,
             crs=pyproj.CRS(cart_crs_code),
             driver='MEM',
+            options=[],
         )
 
         # Set CRS properties
@@ -401,7 +402,13 @@ class ReferencedImage(Image):
 
         return pxs, pys
 
-    def plot_bounds(self, ax, *args, **kwargs):
+    def plot_bounds(
+        self,
+        ax,
+        set_limits=False,
+        limits_padding=0.1,
+        *args, **kwargs
+    ):
 
         used_kwargs = {
             'linewidth': 3,
@@ -424,6 +431,16 @@ class ReferencedImage(Image):
             **used_kwargs
         )
         ax.add_patch(rect)
+
+        if set_limits:
+            ax.set_xlim(
+                x_bounds[0] - width * limits_padding,
+                x_bounds[1] + width * limits_padding,
+            )
+            ax.set_ylim(
+                y_bounds[0] - height * limits_padding,
+                y_bounds[1] + height * limits_padding,
+            )
 
     def plot_kp(self, ax=None, crs_transform='cartesian', *args, **kwargs):
 

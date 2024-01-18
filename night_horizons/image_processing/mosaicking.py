@@ -109,11 +109,11 @@ class Mosaicker(BatchProcessor):
             dataset = self.io_manager.open_dataset()
 
         # The transformer for changing between physical and pixel coordinates
-        self.transformer_ = raster.RasterCoordinateTransformer()
+        self.transformer = raster.RasterCoordinateTransformer()
 
         # If a dataset already exists, fit the transformer to it
         if dataset is not None:
-            self.transformer_.fit_to_dataset(dataset=dataset, crs=self.crs)
+            self.transformer.fit_to_dataset(dataset=dataset, crs=self.crs)
 
         # Otherwise, make a new dataset
         else:
@@ -123,7 +123,7 @@ class Mosaicker(BatchProcessor):
                     'but the starting iteration is not 0. '
                     'If creating a new dataset, should start with i = 0.'
                 )
-            self.transformer_.fit(
+            self.transformer.fit(
                 X=X,
                 crs=self.crs,
                 pixel_width=self.pixel_width,
@@ -133,13 +133,13 @@ class Mosaicker(BatchProcessor):
             # the dataset.
             GDALDatasetIO.create(
                 filepath=self.io_manager.output_filepaths['mosaic'],
-                x_min=self.transformer_.x_min_,
-                y_max=self.transformer_.y_max_,
-                pixel_width=self.transformer_.pixel_width_,
-                pixel_height=self.transformer_.pixel_height_,
-                crs=self.transformer_.crs_,
-                x_size=self.transformer_.x_size_,
-                y_size=self.transformer_.y_size_,
+                x_min=self.transformer.x_min_,
+                y_max=self.transformer.y_max_,
+                pixel_width=self.transformer.pixel_width_,
+                pixel_height=self.transformer.pixel_height_,
+                crs=self.transformer.crs_,
+                x_size=self.transformer.x_size_,
+                y_size=self.transformer.y_size_,
                 n_bands=self.n_bands,
                 driver='GTiff',
             )
@@ -166,12 +166,12 @@ class Mosaicker(BatchProcessor):
         -------
         '''
 
-        X_t = self.transformer_.transform_to_pixel(X)
+        X_t = self.transformer.transform_to_pixel(X)
 
         # Get the dataset
         resources = {
             'dataset': self.io_manager.open_dataset(),
-            'coord_transformer': self.transformer_,
+            'coord_transformer': self.transformer,
         }
 
         return X_t, resources

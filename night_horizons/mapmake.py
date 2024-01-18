@@ -175,7 +175,10 @@ class SequentialMosaicMaker(MosaicMaker):
     def register_default_services(self):
 
         # Services for input/output
-        self.register_default_io()
+        self.container.register_service(
+            'io_manager',
+            io_manager.MosaicIOManager,
+        )
 
         self.register_default_preprocessors()
 

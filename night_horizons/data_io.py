@@ -173,7 +173,15 @@ class RegisteredImageIO(DataIO):
     name = 'registered_image'
 
     @staticmethod
-    def save(filepath, img, x_bounds, y_bounds, crs, driver='GTiff'):
+    def save(
+        filepath,
+        img,
+        x_bounds,
+        y_bounds,
+        crs,
+        driver='GTiff',
+        *args, **kwargs
+    ):
 
         if filepath != '':
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -196,7 +204,8 @@ class RegisteredImageIO(DataIO):
             y_size=img.shape[0],
             n_bands=img.shape[2],
             driver=driver,
-            dtype=gdal_dtype,
+            eType=gdal_dtype,
+            *args, **kwargs
         )
 
         # Write to the dataset
