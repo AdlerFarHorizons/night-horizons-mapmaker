@@ -1,0 +1,24 @@
+###############################################################################
+# Example Configuration File
+###############################################################################
+
+io_manager:
+  input_dir: ./test/test_data
+  input_description:
+    raw_images:
+      directory: images
+      extension: ['raw', 'tif', 'tiff']
+    referenced_images:
+      directory: referenced_images
+      extension: ['tif', 'tiff']
+      pattern: 'Geo\s\d+_\d.tif'
+  output_dir: ./test/test_data/temp
+  output_description:
+    referenced_images: 'referenced_images/img_{:06d}.tiff'
+
+global:
+  # Coordinate reference-system employed
+  crs: 'EPSG:3857'
+
+# Aesthetics
+color_palette: deep

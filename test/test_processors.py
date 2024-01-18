@@ -20,19 +20,19 @@ class TestProcessorBase(unittest.TestCase):
 
     def setUp(self):
 
-        # Register services
-        local_options = {
-            'io_manager': {
-                'output_dir': './test/test_data/temp',
-                'output_description': {
-                    'referenced_images': 'referenced_images/img_{:06d}.tiff',
-                },
-            },
-        }
+        # # Register services
+        # local_options = {
+        #     'io_manager': {
+        #         'output_dir': './test/test_data/temp',
+        #         'output_description': {
+        #             'referenced_images': 'referenced_images/img_{:06d}.tiff',
+        #         },
+        #     },
+        # }
 
         # Create container
         mapmaker = SequentialMosaicMaker(
-            './test/config.yml', local_options=local_options)
+            './test/config.yml', local_options={})
 
         # Register the DatasetRegistrar
         mapmaker.container.register_service(

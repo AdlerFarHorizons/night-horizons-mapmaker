@@ -282,7 +282,7 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
                     raise OutOfBoundsError(
                         'Tried to convert physical to pixels, but '
                         'the provided coordinates are outside the bounds '
-                        'of the mosaic'
+                        'of the raster dataset'
                     )
             else:
                 n_oob = oob.sum()
@@ -290,7 +290,7 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
                     raise OutOfBoundsError(
                         'Tried to convert physical to pixels, but '
                         f'{n_oob} of {oob.size} are outside the bounds '
-                        'of the mosaic'
+                        'of the raster dataset'
                     )
 
         # But we can also trim
