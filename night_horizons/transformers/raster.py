@@ -138,7 +138,7 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
 
         return self
 
-    def fit_to_dataset(self, dataset: gdal.Dataset, crs: pyproj.CRS = None):
+    def fit_to_dataset(self, dataset: gdal.Dataset):
 
         if dataset is None:
             raise TypeError('dataset must be provided.')
@@ -148,10 +148,10 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
             (self.y_min_, self.y_max_),
             self.pixel_width_,
             self.pixel_height_,
-            self.crs_
-        ) = GDALDatasetIO.get_bounds_from_dataset(dataset, crs)
+        ) = GDALDatasetIO.get_bounds_from_dataset(dataset)
         self.x_size_ = dataset.RasterXSize
         self.y_size_ = dataset.RasterYSize
+        self.crs_ = pyproj.CRS(dataset.GetProjection())
 
         return self
 

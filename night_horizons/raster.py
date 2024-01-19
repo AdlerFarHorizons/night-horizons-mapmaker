@@ -353,7 +353,7 @@ class ReferencedImage(Image):
     def get_bounds(self, crs: pyproj.CRS):
 
         (
-            x_bounds, y_bounds, pixel_width, pixel_height, crs
+            x_bounds, y_bounds, pixel_width, pixel_height
         ) = self.dataset_io.get_bounds_from_dataset(self.dataset, crs)
 
         return x_bounds, y_bounds
@@ -543,20 +543,20 @@ class DatasetWrapper:
     def __init__(
         self,
         dataset: Union[str, gdal.Dataset],
-        x_min: float,
-        x_max: float,
-        y_min: float,
-        y_max: float,
+        x_bounds: np.ndarray,
+        y_bounds: np.ndarray,
         pixel_width: float,
         pixel_height: float,
         n_bands: int = 4,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
     ):
 
+        assert False, 'Deprecated'
+
         # Get dimensions
-        width = x_max - x_min
+        width = x_bounds[1] - x_bounds[0]
         xsize = int(np.round(width / pixel_width))
-        height = y_max - y_min
+        height = y_bounds[1] - y_bounds[0]
         ysize = int(np.round(height / -pixel_height))
 
         # Re-record pixel values to account for rounding
@@ -628,19 +628,15 @@ class DatasetWrapper:
 
         # Get bounds
         (
-            x_min, x_max,
-            y_min, y_max,
+            x_bounds, y_bounds,
             pixel_width, pixel_height,
-            crs
         ) = cls.io.get_bounds_from_dataset(
             dataset,
-            crs,
         )
 
         return cls(
             dataset,
-            x_min, x_max,
-            y_min, y_max,
+            x_bounds, y_bounds,
             pixel_width, pixel_height,
             n_bands=dataset.RasterCount,
             crs=crs,

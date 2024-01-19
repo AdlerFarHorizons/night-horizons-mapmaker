@@ -43,10 +43,8 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
             self.y_bounds,
             self.pixel_width,
             self.pixel_height,
-            self.crs
         ) = GDALDatasetIO.get_bounds_from_dataset(
             self.dataset,
-            crs=crs
         )
 
     def test_to_pixel(self):

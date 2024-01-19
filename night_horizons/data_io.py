@@ -283,16 +283,13 @@ class RegisteredImageIO(DataIO):
     def load(filepath, crs: pyproj.CRS = None):
 
         # Get image
-        dataset = GDALDatasetIO.load(filepath)
+        dataset = GDALDatasetIO.load(filepath, crs=crs)
         img = dataset.ReadAsArray().transpose(1, 2, 0)
 
         # Get bounds
         (
-            x_bounds, y_bounds, dx, dy, crs
-        ) = GDALDatasetIO.get_bounds_from_dataset(
-            dataset=dataset,
-            crs=crs,
-        )
+            x_bounds, y_bounds, dx, dy
+        ) = GDALDatasetIO.get_bounds_from_dataset(dataset)
 
         data = (img, x_bounds, y_bounds, crs)
 
