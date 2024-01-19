@@ -266,33 +266,36 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
 
         return x_min, x_max, y_min, y_max
 
+    def check_bounds(self, x_off, y_off, x_size, y_size):
+
+        # Validate
+        oob = (
+            (x_off < 0)
+            | (y_off < 0)
+            | (x_off + x_size > self.x_size_)
+            | (y_off + y_size > self.y_size_)
+        )
+        if isinstance(oob, bool):
+            if oob:
+                raise OutOfBoundsError(
+                    'Tried to convert physical to pixels, but '
+                    'the provided coordinates are outside the bounds '
+                    'of the raster dataset'
+                )
+        else:
+            n_oob = oob.sum()
+            if n_oob > 0:
+                raise OutOfBoundsError(
+                    'Tried to convert physical to pixels, but '
+                    f'{n_oob} of {oob.size} are outside the bounds '
+                    'of the raster dataset'
+                )
+
     def handle_out_of_bounds(self, x_off, y_off, x_size, y_size, trim=False):
 
         # By default we raise an error
         if not trim:
-
-            # Validate
-            oob = (
-                (x_off < 0)
-                | (y_off < 0)
-                | (x_off + x_size > self.x_size_)
-                | (y_off + y_size > self.y_size_)
-            )
-            if isinstance(oob, bool):
-                if oob:
-                    raise OutOfBoundsError(
-                        'Tried to convert physical to pixels, but '
-                        'the provided coordinates are outside the bounds '
-                        'of the raster dataset'
-                    )
-            else:
-                n_oob = oob.sum()
-                if n_oob > 0:
-                    raise OutOfBoundsError(
-                        'Tried to convert physical to pixels, but '
-                        f'{n_oob} of {oob.size} are outside the bounds '
-                        'of the raster dataset'
-                    )
+            self.check_bounds(x_off, y_off, x_size, y_size)
 
         # But we can also trim
         else:

@@ -113,7 +113,7 @@ class Mosaicker(BatchProcessor):
 
         # If a dataset already exists, fit the transformer to it
         if dataset is not None:
-            self.transformer.fit_to_dataset(dataset=dataset, crs=self.crs)
+            self.transformer.fit_to_dataset(dataset=dataset)
 
         # Otherwise, make a new dataset
         else:
