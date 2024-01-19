@@ -53,6 +53,29 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
             crs=self.container.config['global']['crs']
         )
 
+    def test_differing_crs(self):
+
+        # Fit the transformer
+        transformer = raster.RasterCoordinateTransformer()
+        transformer.fit_to_dataset(self.dataset, crs=None)
+
+        # Fit the transformer in a different CRS
+        transformer2 = raster.RasterCoordinateTransformer()
+        transformer2.fit_to_dataset(self.dataset, crs=self.crs)
+
+        # Ensure they are different
+        attrs_to_check = [
+            'x_min_', 'x_max_',
+            'y_min_', 'y_max_',
+            'pixel_width_', 'pixel_height_',
+        ]
+        for attr in attrs_to_check:
+            with self.assertRaises(AssertionError) as context:
+                np.testing.assert_allclose(
+                    getattr(transformer, attr),
+                    getattr(transformer2, attr),
+                )
+
     def test_to_pixel(self):
 
         # Make a dataframe that is a single entry--the full size of the image
@@ -66,7 +89,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         # Fit the transformer
         transformer = raster.RasterCoordinateTransformer()
-        transformer.fit_to_dataset(self.dataset)
+        transformer.fit_to_dataset(self.dataset, crs=self.crs)
 
         # Test that the transformer works
         X_t = transformer.transform(X.copy())
