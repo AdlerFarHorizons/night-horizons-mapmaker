@@ -354,7 +354,7 @@ class ReferencedImage(Image):
 
         (
             x_bounds, y_bounds, pixel_width, pixel_height
-        ) = self.dataset_io.get_bounds_from_dataset(self.dataset, crs)
+        ) = self.dataset_io.get_bounds_from_dataset(self.dataset)
 
         return x_bounds, y_bounds
 
