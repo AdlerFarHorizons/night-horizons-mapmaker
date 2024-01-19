@@ -149,14 +149,12 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         X.loc[X['y_max'] < X['y_min'], 'y_max'] = \
             X['y_min'] - (X['y_max'] - X['y_min'])
         X['padding'] = np.abs(X['x_max'] - X['x_min'])
+        X['pixel_width'] = self.pixel_width
+        X['pixel_height'] = self.pixel_height
 
         # Fit the transformer
         transformer = raster.RasterCoordinateTransformer()
-        transformer.fit(
-            X,
-            pixel_width=self.pixel_width,
-            pixel_height=self.pixel_height,
-        )
+        transformer.fit(X)
 
         # Test that the transformer works
         X_t = transformer.transform(X.copy())
@@ -169,7 +167,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         with self.assertRaises(AssertionError) as context:
             pd.testing.assert_frame_equal(X, X_reversed[X.columns])
 
-    def test_consistent_with_dataset_fit(self):
+    def test_consistent_fit_methods(self):
 
         # Create the test data
         X = pd.DataFrame({
@@ -187,18 +185,26 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
             X['x_min'] - (X['x_max'] - X['x_min'])
         X.loc[X['y_max'] < X['y_min'], 'y_max'] = \
             X['y_min'] - (X['y_max'] - X['y_min'])
+        X['padding'] = np.abs(X['x_max'] - X['x_min'])
+        X['pixel_width'] = self.pixel_width
+        X['pixel_height'] = self.pixel_height
 
         # Fit the transformer
         transformer = raster.RasterCoordinateTransformer()
-        transformer.fit_to_dataset(self.dataset, self.crs)
+        transformer.fit(X)
 
-        # Test that the transformer works
-        X_t = transformer.transform(X.copy())
-        X_reversed = transformer.transform(X_t.copy(), direction='to_physical')
-        pd.testing.assert_frame_equal(X, X_reversed[X.columns])
+        # Fit the transformer
+        transformer2 = raster.RasterCoordinateTransformer()
+        transformer2.fit_to_dataset(self.dataset, self.crs)
 
-        # Check that a failure does indeed occur
-        transformer.pixel_height_ *= 2
-        X_reversed = transformer.transform(X_t.copy(), direction='to_physical')
-        with self.assertRaises(AssertionError) as context:
-            pd.testing.assert_frame_equal(X, X_reversed[X.columns])
+        attrs_to_check = [
+            'x_min_', 'x_max_',
+            'y_min_', 'y_max_',
+            'pixel_width_', 'pixel_height_',
+            'x_size_', 'y_size_',
+        ]
+        for attr in attrs_to_check:
+            np.testing.assert_allclose(
+                getattr(transformer, attr),
+                getattr(transformer2, attr),
+            )
