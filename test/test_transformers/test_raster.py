@@ -7,6 +7,7 @@ import unittest
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
+import pyproj
 
 from night_horizons.container import DIContainer
 from night_horizons.data_io import GDALDatasetIO, RegisteredImageIO
@@ -20,16 +21,6 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         self.random_state = check_random_state(42)
 
-        x_bounds = np.array([-9599524.7998918, -9590579.50992268])
-        y_bounds = np.array([4856260.998546081, 4862299.303607852])
-        X = pd.Series({
-            'x_min': x_bounds[0],
-            'x_max': x_bounds[1],
-            'y_min': y_bounds[0],
-            'y_max': y_bounds[1],
-        })
-        X = pd.DataFrame([X])
-
         container = DIContainer('./test/test_transformers/config.yml')
         container.register_service('io_manager', IOManager)
 
@@ -37,6 +28,10 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         self.container = container
         self.settings = container.config
         self.io_manager = self.container.get_service('io_manager')
+
+        self.get_fit()
+
+    def get_fit(self, crs: pyproj.CRS = None):
 
         # Load the example data we'll use
         self.dataset = GDALDatasetIO.load(
@@ -50,31 +45,8 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
             self.crs
         ) = GDALDatasetIO.get_bounds_from_dataset(
             self.dataset,
-            crs=self.container.config['global']['crs']
+            crs=crs
         )
-
-    def test_differing_crs(self):
-
-        # Fit the transformer
-        transformer = raster.RasterCoordinateTransformer()
-        transformer.fit_to_dataset(self.dataset, crs=None)
-
-        # Fit the transformer in a different CRS
-        transformer2 = raster.RasterCoordinateTransformer()
-        transformer2.fit_to_dataset(self.dataset, crs=self.crs)
-
-        # Ensure they are different
-        attrs_to_check = [
-            'x_min_', 'x_max_',
-            'y_min_', 'y_max_',
-            'pixel_width_', 'pixel_height_',
-        ]
-        for attr in attrs_to_check:
-            with self.assertRaises(AssertionError) as context:
-                np.testing.assert_allclose(
-                    getattr(transformer, attr),
-                    getattr(transformer2, attr),
-                )
 
     def test_to_pixel(self):
 
@@ -167,27 +139,29 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         with self.assertRaises(AssertionError) as context:
             pd.testing.assert_frame_equal(X, X_reversed[X.columns])
 
-    def test_consistent_fit_methods(self):
+    def test_consistent_fit_params(self):
 
         # Create the test data
+        n = 10000
         X = pd.DataFrame({
             'x_min': self.random_state.uniform(
-                self.x_bounds[0], self.x_bounds[1], 100),
+                self.x_bounds[0], self.x_bounds[1], n),
             'x_max': self.random_state.uniform(
-                self.x_bounds[0], self.x_bounds[1], 100),
+                self.x_bounds[0], self.x_bounds[1], n),
             'y_min': self.random_state.uniform(
-                self.y_bounds[0], self.y_bounds[1], 100),
+                self.y_bounds[0], self.y_bounds[1], n),
             'y_max': self.random_state.uniform(
-                self.y_bounds[0], self.y_bounds[1], 100),
+                self.y_bounds[0], self.y_bounds[1], n),
         })
-        # Fix situations where max < min
-        X.loc[X['x_max'] < X['x_min'], 'x_max'] = \
-            X['x_min'] - (X['x_max'] - X['x_min'])
-        X.loc[X['y_max'] < X['y_min'], 'y_max'] = \
-            X['y_min'] - (X['y_max'] - X['y_min'])
-        X['padding'] = np.abs(X['x_max'] - X['x_min'])
+        # Drop situations where max < min
+        X = X.drop(X[X['x_max'] < X['x_min']].index)
+        X = X.drop(X[X['y_max'] < X['y_min']].index)
+        X['padding'] = 0.
         X['pixel_width'] = self.pixel_width
         X['pixel_height'] = self.pixel_height
+        dx_between_avg = (self.x_bounds[1] - self.x_bounds[0]) / len(X)
+        dy_between_avg = (self.y_bounds[1] - self.y_bounds[0]) / len(X)
+        d_between_avg = np.sqrt(dx_between_avg**2 + dy_between_avg**2)
 
         # Fit the transformer
         transformer = raster.RasterCoordinateTransformer()
@@ -204,7 +178,44 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
             'x_size_', 'y_size_',
         ]
         for attr in attrs_to_check:
+            # This checks that the fit parameters are equal, assuming the
+            # random sample fills out the full range of the dataset
+            # (+- a few times the average distance between points).
+            # This can still fail for an unlucky seed.
             np.testing.assert_allclose(
                 getattr(transformer, attr),
                 getattr(transformer2, attr),
+                atol=2 * d_between_avg
             )
+
+
+class TestRasterCoordinateTransformerWithProvidedCRS(
+        TestRasterCoordinateTransformer):
+
+    def setUp(self):
+        super().setUp()
+
+        self.get_fit(self.settings['global']['crs'])
+
+    def test_differing_crs(self):
+
+        # Fit the transformer
+        transformer = raster.RasterCoordinateTransformer()
+        transformer.fit_to_dataset(self.dataset, crs=None)
+
+        # Fit the transformer in a different CRS
+        transformer2 = raster.RasterCoordinateTransformer()
+        transformer2.fit_to_dataset(self.dataset, crs=self.crs)
+
+        # Ensure they are different
+        attrs_to_check = [
+            'x_min_', 'x_max_',
+            'y_min_', 'y_max_',
+            'pixel_width_', 'pixel_height_',
+        ]
+        for attr in attrs_to_check:
+            with self.assertRaises(AssertionError) as context:
+                np.testing.assert_allclose(
+                    getattr(transformer, attr),
+                    getattr(transformer2, attr),
+                )
