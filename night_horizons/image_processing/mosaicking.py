@@ -125,7 +125,6 @@ class Mosaicker(BatchProcessor):
                 )
             self.transformer.fit(
                 X=X,
-                crs=self.crs,
                 pixel_width=self.pixel_width,
                 pixel_height=self.pixel_height,
             )
