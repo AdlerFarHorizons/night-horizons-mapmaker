@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import scipy
 from sklearn.utils.validation import check_array
+import pyproj
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
@@ -25,6 +26,8 @@ def discover_data(
     pattern: str = None,
 ) -> pd.Series:
     '''
+    TODO: Delete?
+
     Parameters
     ----------
         directory:
@@ -74,6 +77,7 @@ def load_image(
     img_shape: Tuple = (1200, 1920),
 ):
     '''Load an image from disk.
+    TODO: Delete?
 
     Parameters
     ----------
@@ -118,6 +122,21 @@ def load_image(
     img = (img * np.iinfo(dtype).max).astype(dtype)
 
     return img
+
+
+def get_distance(crs, x1, y1, x2, y2):
+
+    if crs.is_geographic:
+
+        geod = crs.get_geod()
+        _, _, distance = geod.inv(
+            lons1=x1, lats1=y1,
+            lons2=x2, lats2=y2,
+        )
+    else:
+        distance = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+    return distance
 
 
 def check_filepaths_input(
