@@ -14,9 +14,6 @@ from night_horizons.data_io import GDALDatasetIO
 
 class TestGDALDatasetIO(unittest.TestCase):
 
-    def setUp(self):
-        pass
-
     def test_convert(self):
 
         fp = './test/test_data/referenced_images/Geo 836109848_1.tif'
