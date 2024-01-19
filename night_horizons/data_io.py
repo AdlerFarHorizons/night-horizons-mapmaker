@@ -110,8 +110,8 @@ class GDALDatasetIO(DataIO):
         dataset = None
 
     @staticmethod
-    def load(filepath):
-        data = gdal.Open(filepath, gdal.GA_ReadOnly)
+    def load(filepath, mode: int = gdal.GA_ReadOnly):
+        data = gdal.Open(filepath, mode)
         return data
 
     @staticmethod
