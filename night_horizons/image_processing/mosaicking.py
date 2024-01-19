@@ -354,7 +354,7 @@ class SequentialMosaicker(Mosaicker):
         # Get state of output data
         if self.checkpoint_state_ is None:
             X_t = self.get_search_zone(X)
-            X_t = self.transform_to_pixel(X_t)
+            X_t = self.transformer.transform_to_pixel(X_t)
 
             # And the logs too
             self.logs = []
