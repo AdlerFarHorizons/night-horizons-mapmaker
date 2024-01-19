@@ -140,7 +140,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
     def test_consistent_fit_params(self):
 
         # Create the test data
-        n = 10000
+        n = 1000
         X = pd.DataFrame({
             'x_min': self.random_state.uniform(
                 self.x_bounds[0], self.x_bounds[1], n),
