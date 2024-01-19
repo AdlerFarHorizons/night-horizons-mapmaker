@@ -371,9 +371,9 @@ class SequentialMosaicker(Mosaicker):
     def postprocess(self, y_pred, resources):
 
         # Convert to pixels
-        y_pred = self.transform_to_physical(y_pred)
-        y_pred['pixel_width'] = self.pixel_width_
-        y_pred['pixel_height'] = self.pixel_height_
+        y_pred = self.transformer.transform_to_physical(y_pred)
+        y_pred['pixel_width'] = self.transformer.pixel_width_
+        y_pred['pixel_height'] = self.transformer.pixel_height_
         y_pred['x_center'] = 0.5 * (y_pred['x_min'] + y_pred['x_max'])
         y_pred['y_center'] = 0.5 * (y_pred['y_min'] + y_pred['y_max'])
 
