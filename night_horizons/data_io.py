@@ -196,7 +196,7 @@ class RegisteredImageIO(DataIO):
 
         # Get pixel size
         pixel_width = (x_bounds[1] - x_bounds[0]) / img.shape[1]
-        pixel_height = (y_bounds[1] - y_bounds[0]) / img.shape[0]
+        pixel_height = -(y_bounds[1] - y_bounds[0]) / img.shape[0]
 
         dataset = GDALDatasetIO.create(
             filepath=filepath,
