@@ -20,6 +20,8 @@ from sklearn.model_selection import train_test_split
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
+from night_horizons.data_io import GDALDatasetIO
+
 
 class IOManager:
     '''
@@ -420,10 +422,14 @@ class MosaicIOManager(IOManager):
         )
 
     def open_dataset(self):
+        '''
+        TODO: Kind of awkard that this is one of the only convenience functions
+        for opening/loading data.
+        '''
 
-        return gdal.Open(
+        return GDALDatasetIO.load(
             self.output_filepaths['mosaic'],
-            gdal.GA_Update,
+            mode=gdal.GA_Update,
         )
 
     def save_to_checkpoint(self, i, dataset, y_pred=None):

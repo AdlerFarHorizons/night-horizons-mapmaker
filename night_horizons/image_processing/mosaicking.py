@@ -136,7 +136,7 @@ class Mosaicker(BatchProcessor):
                 y_max=self.transformer.y_max_,
                 pixel_width=self.transformer.pixel_width_,
                 pixel_height=self.transformer.pixel_height_,
-                crs=self.transformer.crs_,
+                crs=self.crs,
                 x_size=self.transformer.x_size_,
                 y_size=self.transformer.y_size_,
                 n_bands=self.n_bands,
@@ -172,6 +172,9 @@ class Mosaicker(BatchProcessor):
             'dataset': self.io_manager.open_dataset(),
             'coord_transformer': self.transformer,
         }
+
+        if pyproj.CRS(resources['dataset'].GetProjection()) != self.crs:
+            raise ValueError('Mosaic dataset has the wrong CRS.')
 
         return X_t, resources
 
