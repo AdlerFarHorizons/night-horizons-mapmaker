@@ -67,8 +67,13 @@ class GDALDatasetIO(DataIO):
         save_dataset = None
 
     @staticmethod
-    def load(filepath, mode: int = gdal.GA_ReadOnly):
+    def load(filepath, mode: int = gdal.GA_ReadOnly, crs: pyproj.CRS = None):
         data = gdal.Open(filepath, mode)
+
+        # Convert to desired crs.
+        if crs is not None:
+            data = GDALDatasetIO.convert(data, crs)
+
         return data
 
     @staticmethod
