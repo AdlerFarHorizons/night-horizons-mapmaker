@@ -39,5 +39,5 @@ class TestGDALDatasetIO(unittest.TestCase):
         )
         np.testing.assert_allclose(
             y_bounds[1] - y_bounds[0],
-            pixel_height * dataset2.RasterYSize,
+            -pixel_height * dataset2.RasterYSize,
         )
