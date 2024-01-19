@@ -21,6 +21,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         self.random_state = check_random_state(42)
 
+        # TODO: Using a container is overkill
         container = DIContainer('./test/test_transformers/config.yml')
         container.register_service('io_manager', IOManager)
 
