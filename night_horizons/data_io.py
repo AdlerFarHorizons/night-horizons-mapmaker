@@ -155,10 +155,15 @@ class GDALDatasetIO(DataIO):
                 x_bounds,
                 y_bounds,
             )
-            pixel_width, pixel_height = dataset_to_desired.transform(
-                pixel_width,
-                pixel_height,
-            )
+
+            # We cannot convert pixel width and pixel height directly because
+            # one CRS may be polar and the other CRS may be cartesian.
+            # Instead we deduce what the pixel width and height should be
+            # based on the width of the image and the number of pixels,
+            # and similarly for height.
+            # Note that convention is for pixel height to be negative.
+            pixel_width = (x_bounds[1] - x_bounds[0]) / dataset.RasterXSize
+            pixel_height = -(y_bounds[1] - y_bounds[0]) / dataset.RasterYSize
 
         return (
             x_bounds,

@@ -115,12 +115,10 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
             'y_max': self.random_state.uniform(
                 self.y_bounds[0], self.y_bounds[1], 100),
         })
-        # Fix situations where max < min
-        X.loc[X['x_max'] < X['x_min'], 'x_max'] = \
-            X['x_min'] - (X['x_max'] - X['x_min'])
-        X.loc[X['y_max'] < X['y_min'], 'y_max'] = \
-            X['y_min'] - (X['y_max'] - X['y_min'])
-        X['padding'] = np.abs(X['x_max'] - X['x_min'])
+        # Drop situations where max < min
+        X = X.drop(X[X['x_max'] < X['x_min']].index)
+        X = X.drop(X[X['y_max'] < X['y_min']].index)
+        X['padding'] = 0.
         X['pixel_width'] = self.pixel_width
         X['pixel_height'] = self.pixel_height
 
