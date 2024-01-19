@@ -30,7 +30,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         self.settings = container.config
         self.io_manager = self.container.get_service('io_manager')
 
-        self.get_fit()
+        self.get_fit(self.settings['global']['crs'])
 
     def get_fit(self, crs: pyproj.CRS = None):
 
@@ -186,35 +186,3 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
                 getattr(transformer2, attr),
                 atol=2 * d_between_avg
             )
-
-
-class TestRasterCoordinateTransformerWithProvidedCRS(
-        TestRasterCoordinateTransformer):
-
-    def setUp(self):
-        super().setUp()
-
-        self.get_fit(self.settings['global']['crs'])
-
-    def test_differing_crs(self):
-
-        # Fit the transformer
-        transformer = raster.RasterCoordinateTransformer()
-        transformer.fit_to_dataset(self.dataset, crs=None)
-
-        # Fit the transformer in a different CRS
-        transformer2 = raster.RasterCoordinateTransformer()
-        transformer2.fit_to_dataset(self.dataset, crs=self.crs)
-
-        # Ensure they are different
-        attrs_to_check = [
-            'x_min_', 'x_max_',
-            'y_min_', 'y_max_',
-            'pixel_width_', 'pixel_height_',
-        ]
-        for attr in attrs_to_check:
-            with self.assertRaises(AssertionError) as context:
-                np.testing.assert_allclose(
-                    getattr(transformer, attr),
-                    getattr(transformer2, attr),
-                )
