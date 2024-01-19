@@ -36,7 +36,8 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         # Load the example data we'll use
         self.dataset = GDALDatasetIO.load(
-            self.io_manager.input_filepaths['referenced_images'][0]
+            self.io_manager.input_filepaths['referenced_images'][0],
+            crs=crs,
         )
         (
             self.x_bounds,
@@ -46,6 +47,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         ) = GDALDatasetIO.get_bounds_from_dataset(
             self.dataset,
         )
+        self.crs = pyproj.CRS(self.dataset.GetProjection())
 
     def test_to_pixel(self):
 
@@ -60,7 +62,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         # Fit the transformer
         transformer = raster.RasterCoordinateTransformer()
-        transformer.fit_to_dataset(self.dataset, crs=self.crs)
+        transformer.fit_to_dataset(self.dataset)
 
         # Test that the transformer works
         X_t = transformer.transform(X.copy())
@@ -87,7 +89,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         # Fit the transformer
         transformer = raster.RasterCoordinateTransformer()
-        transformer.fit_to_dataset(self.dataset, crs=self.crs)
+        transformer.fit_to_dataset(self.dataset)
 
         # Test that the transformer works
         X_t = transformer.transform(X.copy(), direction='to_physical')
@@ -166,7 +168,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         # Fit the transformer
         transformer2 = raster.RasterCoordinateTransformer()
-        transformer2.fit_to_dataset(self.dataset, self.crs)
+        transformer2.fit_to_dataset(self.dataset)
 
         attrs_to_check = [
             'x_min_', 'x_max_',

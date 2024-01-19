@@ -91,6 +91,7 @@ CLEAN_LOGSCALE_IMAGE_PIPELINE = Pipeline([
 
 class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
     '''Transforms physical coordinates to/from pixel coordinates.
+    Assumes Cartesian coordinates! Distances don't work otherwise.
 
     Parameters
     ----------
@@ -105,6 +106,7 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
         pixel_width: float = None,
         pixel_height: float = None,
         padding: float = None,
+        crs: pyproj.CRS = None,
     ):
 
         if padding is None:
@@ -135,6 +137,8 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
         # Re-record pixel values to account for rounding
         self.pixel_width_ = width / self.x_size_
         self.pixel_height_ = -height / self.y_size_
+
+        self.crs_ = crs
 
         return self
 
