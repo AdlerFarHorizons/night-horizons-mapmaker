@@ -8,9 +8,12 @@ from typing import Tuple
 
 import cv2
 import numpy as np
+import osgeo
 from osgeo import gdal, gdal_array
+from osgeo.osr import SpatialReference
 import pandas as pd
 import pyproj
+from pyproj.enums import WktVersion
 import yaml
 
 from .utils import get_distance
@@ -64,6 +67,11 @@ class GDALDatasetIO(DataIO):
         save_dataset = None
 
     @staticmethod
+    def load(filepath, mode: int = gdal.GA_ReadOnly):
+        data = gdal.Open(filepath, mode)
+        return data
+
+    @staticmethod
     def create(
         filepath,
         x_min,
@@ -112,9 +120,28 @@ class GDALDatasetIO(DataIO):
         dataset = None
 
     @staticmethod
-    def load(filepath, mode: int = gdal.GA_ReadOnly):
-        data = gdal.Open(filepath, mode)
-        return data
+    def convert(dataset: gdal.Dataset, target_crs: pyproj.CRS):
+
+        # Check current CRS
+        current_crs = pyproj.CRS(dataset.GetProjection())
+        if current_crs == target_crs:
+            return dataset
+
+        # Change CRS to SRS so gdal knows what to do
+        srs = SpatialReference()
+        if osgeo.version_info.major < 3:
+            srs.ImportFromWkt(target_crs.to_wkt(WktVersion.WKT1_GDAL))
+        else:
+            srs.ImportFromWkt(target_crs.to_wkt())
+
+        converted_dataset = gdal.Warp(
+            '',
+            dataset,
+            format='MEM',
+            dstSRS=srs,
+        )
+
+        return converted_dataset
 
     @staticmethod
     def get_bounds_from_dataset(
