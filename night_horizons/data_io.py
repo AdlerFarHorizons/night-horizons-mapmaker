@@ -119,7 +119,6 @@ class GDALDatasetIO(DataIO):
     @staticmethod
     def get_bounds_from_dataset(
         dataset: gdal.Dataset,
-        crs: pyproj.CRS = None,
     ) -> Tuple[np.ndarray, np.ndarray, float, float, pyproj.CRS]:
         '''Get image bounds in a given coordinate system.
 
@@ -143,58 +142,59 @@ class GDALDatasetIO(DataIO):
         x_bounds = [x_min, x_max]
         y_bounds = [y_min, y_max]
 
-        # Convert to desired crs.
-        dataset_crs = pyproj.CRS(dataset.GetProjection())
-        if crs is None:
-            crs = dataset_crs
-        else:
-            dataset_to_desired = pyproj.Transformer.from_crs(
-                dataset_crs,
-                crs,
-                always_xy=True
-            )
-            x_bounds, y_bounds = dataset_to_desired.transform(
-                x_bounds,
-                y_bounds,
-            )
+        # TODO: Delete this. Converting to the desired CRS requires a full
+        # resampling, not just a change in the CRS.
+        # # Convert to desired crs.
+        # dataset_crs = pyproj.CRS(dataset.GetProjection())
+        # if crs is None:
+        #     crs = dataset_crs
+        # else:
+        #     dataset_to_desired = pyproj.Transformer.from_crs(
+        #         dataset_crs,
+        #         crs,
+        #         always_xy=True
+        #     )
+        #     x_bounds, y_bounds = dataset_to_desired.transform(
+        #         x_bounds,
+        #         y_bounds,
+        #     )
 
-            # Calculate the pixel width
-            width = get_distance(
-                crs=crs,
-                x1=x_bounds[0], y1=y_bounds[0],
-                x2=x_bounds[1], y2=y_bounds[0],
-            )
-            width2 = get_distance(
-                crs=crs,
-                x1=x_bounds[0], y1=y_bounds[1],
-                x2=x_bounds[1], y2=y_bounds[1],
-            )
-            pixel_width = width / dataset.RasterXSize
+        #     # Calculate the pixel width
+        #     width = get_distance(
+        #         crs=crs,
+        #         x1=x_bounds[0], y1=y_bounds[0],
+        #         x2=x_bounds[1], y2=y_bounds[0],
+        #     )
+        #     width2 = get_distance(
+        #         crs=crs,
+        #         x1=x_bounds[0], y1=y_bounds[1],
+        #         x2=x_bounds[1], y2=y_bounds[1],
+        #     )
+        #     pixel_width = width / dataset.RasterXSize
 
-            # Calculate the distance
-            height = get_distance(
-                crs=crs,
-                x1=x_bounds[0], y1=y_bounds[0],
-                x2=x_bounds[0], y2=y_bounds[1],
-            )
-            pixel_height = height / dataset.RasterYSize
+        #     # Calculate the distance
+        #     height = get_distance(
+        #         crs=crs,
+        #         x1=x_bounds[0], y1=y_bounds[0],
+        #         x2=x_bounds[0], y2=y_bounds[1],
+        #     )
+        #     pixel_height = height / dataset.RasterYSize
 
-            # TODO: Delete
-            # # We cannot convert pixel width and pixel height directly because
-            # # one CRS may be polar and the other CRS may be cartesian.
-            # # Instead we deduce what the pixel width and height should be
-            # # based on the width of the image and the number of pixels,
-            # # and similarly for height.
-            # # Note that convention is for pixel height to be negative.
-            # pixel_width = (x_bounds[1] - x_bounds[0]) / dataset.RasterXSize
-            # pixel_height = -(y_bounds[1] - y_bounds[0]) / dataset.RasterYSize
+        #     # TODO: Delete
+        #     # # We cannot convert pixel width and pixel height directly because
+        #     # # one CRS may be polar and the other CRS may be cartesian.
+        #     # # Instead we deduce what the pixel width and height should be
+        #     # # based on the width of the image and the number of pixels,
+        #     # # and similarly for height.
+        #     # # Note that convention is for pixel height to be negative.
+        #     # pixel_width = (x_bounds[1] - x_bounds[0]) / dataset.RasterXSize
+        #     # pixel_height = -(y_bounds[1] - y_bounds[0]) / dataset.RasterYSize
 
         return (
             x_bounds,
             y_bounds,
             pixel_width,
             pixel_height,
-            crs
         )
 
 
