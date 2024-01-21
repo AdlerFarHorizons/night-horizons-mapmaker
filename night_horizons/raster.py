@@ -308,7 +308,7 @@ class ReferencedImage(Image):
 
     def save(self, fp, img_key='img_int'):
 
-        save_arr = getattr(self, img_key).transpose(2, 0, 1)
+        save_arr = getattr(self, img_key)
         x_bounds, y_bounds = self.cart_bounds
 
         self.io.save(
