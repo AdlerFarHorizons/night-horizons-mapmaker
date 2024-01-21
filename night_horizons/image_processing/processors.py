@@ -11,7 +11,7 @@ import time
 from abc import ABC, abstractmethod
 
 from night_horizons import exceptions, utils
-from night_horizons.data_io import RegisteredImageIO
+from night_horizons.data_io import ImageIO, RegisteredImageIO
 from night_horizons.transformers.raster import RasterCoordinateTransformer
 
 
@@ -192,10 +192,16 @@ class DatasetProcessor(Processor):
 
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
 
-        src_img = utils.load_image(
+        src_img = ImageIO.load(
             row['filepath'],
             dtype=self.dtype,
         )
+
+        # TODO: Delete
+        # src_img = utils.load_image(
+        #     row['filepath'],
+        #     dtype=self.dtype,
+        # )
 
         return {'image': src_img}
 

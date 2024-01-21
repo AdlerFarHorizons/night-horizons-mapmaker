@@ -157,10 +157,10 @@ class TestDatasetRegistrar(TestProcessorBase):
         the registered image with a simpler one
         '''
 
-        expected_fp = (
+        original_fp = (
             './test/test_data/referenced_images/Geo 225856_1473511261_0.tif'
         )
-        original_image = ReferencedImage.open(expected_fp)
+        original_image = ReferencedImage.open(original_fp)
 
         # Overwrite the image with a simpler one
         original_image.img_int = np.zeros(
@@ -171,9 +171,14 @@ class TestDatasetRegistrar(TestProcessorBase):
         original_image.img_int[50:, :, :3] = 255
         original_image.img_int[:, :50, :3] = 255
         original_image.img_int[:, 50:, :3] = 255
-        original_image.img = original_image.img_int / 255
 
-        self.end_to_end_test(expected_fp, original_image)
+        # Save the image
+        expected_fp = './test/test_data/temp/source/img_000000.tiff'
+        if os.path.isfile(expected_fp):
+            os.remove(expected_fp)
+        original_image.save(expected_fp)
+
+        self.end_to_end_test(expected_fp)
 
     def test_realistic_end_to_end(self):
         '''This test loads a registered image, pads it, and then checks that
@@ -190,8 +195,9 @@ class TestDatasetRegistrar(TestProcessorBase):
     def end_to_end_test(
         self,
         expected_fp: str,
-        original_image: ReferencedImage,
     ):
+
+        original_image = ReferencedImage.open(expected_fp)
 
         processor = self.container.get_service('dataset_registrar')
 
