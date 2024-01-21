@@ -11,6 +11,8 @@ import time
 from abc import ABC, abstractmethod
 
 from night_horizons import exceptions, utils
+from night_horizons.data_io import RegisteredImageIO
+from night_horizons.transformers.raster import RasterCoordinateTransformer
 
 
 class Processor(utils.LoggerMixin, ABC):
@@ -344,27 +346,24 @@ class DatasetRegistrar(DatasetUpdater):
         # Store the image
         if results['return_code'] == 'success':
 
+            transformer: RasterCoordinateTransformer = resources['transformer']
+
             # Get the bounds in physical coordinates
             x_off, y_off, x_size, y_size = results['warped_bounds']
-            x_bounds = [
-                self.x_min_ + x_off * self.pixel_width_,
-                self.x_min_ + (x_off + x_size) * self.pixel_width_,
-            ]
-            y_bounds = [
-                self.y_max_ + y_off * self.pixel_height_,
-                self.y_max_ + (y_off + y_size) * self.pixel_width_,
-            ]
+            x_min, x_max, y_min, y_max = transformer.pixel_to_physical(
+                x_off, y_off, x_size, y_size
+            )
 
             # Get filepath
             fp_pattern = self.io_manager.output_filepaths['referenced_images']
             fp = fp_pattern.format(row.name)
 
             # Save the registered image
-            self.io_manager.data_ios['registered_image_io'].save(
+            RegisteredImageIO.save(
                 filepath=fp,
                 img=results['warped_image'],
-                x_bounds=x_bounds,
-                y_bounds=y_bounds,
+                x_bounds=[x_min, x_max],
+                y_bounds=[y_min, y_max],
                 crs=pyproj.CRS(resources['dataset'].GetProjection()),
             )
 

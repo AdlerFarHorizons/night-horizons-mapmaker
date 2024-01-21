@@ -14,25 +14,26 @@ import scipy
 from night_horizons.image_processing import processors
 from night_horizons.mapmake import SequentialMosaicMaker
 from night_horizons.raster import ReferencedImage
+from night_horizons.transformers.raster import RasterCoordinateTransformer
 
 
 class TestProcessorBase(unittest.TestCase):
 
     def setUp(self):
 
-        # # Register services
-        # local_options = {
-        #     'io_manager': {
-        #         'output_dir': './test/test_data/temp',
-        #         'output_description': {
-        #             'referenced_images': 'referenced_images/img_{:06d}.tiff',
-        #         },
-        #     },
-        # }
+        # Register services
+        local_options = {
+            'io_manager': {
+                'output_dir': './test/test_data/temp',
+                'output_description': {
+                    'referenced_images': 'referenced_images/img_{:06d}.tiff',
+                },
+            },
+        }
 
         # Create container
         mapmaker = SequentialMosaicMaker(
-            './test/config.yml', local_options={})
+            './test/config.yml', local_options=local_options)
 
         # Register the DatasetRegistrar
         mapmaker.container.register_service(
@@ -101,11 +102,15 @@ class TestDatasetRegistrar(TestProcessorBase):
 
         processor = self.container.get_service('dataset_registrar')
 
+        # Dataset
         expected_fp = (
             './test/test_data/referenced_images/Geo 225856_1473511261_0.tif'
         )
         original_image = ReferencedImage.open(expected_fp)
+        transformer = RasterCoordinateTransformer()
+        transformer.fit_to_dataset(original_image.dataset)
 
+        # X data
         row = pd.Series({
             'x_min': original_image.cart_bounds[0][0],
             'x_max': original_image.cart_bounds[0][1],
@@ -121,7 +126,10 @@ class TestDatasetRegistrar(TestProcessorBase):
         processor.store_results(
             i=0,
             row=row,
-            resources={'dataset': original_image.dataset},
+            resources={
+                'dataset': original_image.dataset,
+                'transformer': transformer,
+            },
             results={
                 'blended_image': original_image.img_int,
                 'warped_image': original_image.img_int,
