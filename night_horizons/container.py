@@ -55,23 +55,34 @@ class DIContainer:
         if not constructor:
             raise ValueError(f'Service {name} not registered')
 
-        # The used kwargs are a merger of the config values and those passed in
+        # Get config values
         if name in self.config:
             kwargs = {**self.config[name], **kwargs}
 
-        # Access the global arguments
-        # This only works if we can use inspect
         try:
-            callargs = inspect.getfullargspec(constructor).args
-            callargs_found = True
-        except TypeError:
-            callargs_found = False
-        if callargs_found and ('global' in self.config):
-            global_kwargs = {}
-            for arg in callargs:
-                if arg in self.config['global']:
-                    global_kwargs[arg] = self.config['global'][arg]
-            kwargs = {**global_kwargs, **kwargs}
+            signature = inspect.signature(constructor)
+            signature_found = True
+        except ValueError:
+            # We use a boolean here (instead of placing the logic in the try
+            # statement) to avoid catching other TypeErrors
+            signature_found = False
+
+        if signature_found:
+
+            # Access the global arguments
+            if 'global' in self.config:
+                global_kwargs = {}
+                for key in signature.parameters.keys():
+                    if key in self.config['global']:
+                        global_kwargs[key] = self.config['global'][key]
+                kwargs = {**global_kwargs, **kwargs}
+
+            # Advanced: when the values are dictionaries, blend them
+            #           this is important for input and output descriptions
+            for key, value in kwargs.items():
+                default_value = signature.parameters[key].default
+                if isinstance(value, dict) and isinstance(default_value, dict):
+                    kwargs[key] = {**default_value, **value}
 
         return constructor(*args, **kwargs)
 
