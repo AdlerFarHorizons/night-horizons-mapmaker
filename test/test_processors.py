@@ -162,15 +162,19 @@ class TestDatasetRegistrar(TestProcessorBase):
         )
         original_image = ReferencedImage.open(original_fp)
 
-        # Overwrite the image with a simpler one
+        # Overwrite the image with a simpler one:
+        # An example image with a white frame around the border of the
+        # original image
         original_image.img_int = np.zeros(
             original_image.img_int.shape,
             dtype=original_image.img_int.dtype,
         )
+        # White frame
         original_image.img_int[:50, :, :3] = 255
         original_image.img_int[-50:, :, :3] = 255
         original_image.img_int[:, :50, :3] = 255
         original_image.img_int[:, -50:, :3] = 255
+        # Example image
         example_image = Image.open(
             './test/test_data/feature_matching/tree_4.1.06.tiff',
             dtype=original_image.img_int.dtype,
