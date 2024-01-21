@@ -39,12 +39,60 @@ class ImageIO(DataIO):
         cv2.imwrite(filepath, data)
 
     @staticmethod
-    def load(filepath):
+    def load(
+        filepath: str,
+        dtype: type = np.uint8,
+        img_shape: Tuple = (1200, 1920),
+    ):
+        '''Load an image from disk.
 
-        data = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
-        data = data[:, :, ::-1]
+        Parameters
+        ----------
+            filepath
+                Location of the image.
+            dtype
+                Datatype. Defaults to integer from 0 to 255
+        Returns
+        -------
+        '''
 
-        return data
+        if not os.path.isfile(filepath):
+            raise FileNotFoundError(f'File {filepath} not found')
+
+        ext = os.path.splitext(filepath)[1]
+
+        # Load and reshape raw image data.
+        if ext == '.raw':
+
+            raw_img = np.fromfile(filepath, dtype=np.uint16)
+            raw_img = raw_img.reshape(img_shape)
+
+            img = cv2.cvtColor(raw_img, cv2.COLOR_BAYER_BG2RGB)
+            img_max = 2**12 - 1
+
+        elif ext in ['.tiff', '.tif']:
+            img = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+
+            # CV2 defaults to BGR, but RGB is more standard for our purposes
+            img = img[:, :, ::-1]
+            img_max = np.iinfo(img.dtype).max
+
+        else:
+            raise IOError('Cannot read filetype {}'.format(ext))
+
+        # TODO: Delete this
+        # if img is None:
+        #     return img
+
+        # When no conversion needs to be done
+        if img.dtype == dtype:
+            return img
+
+        # Rescale
+        img = img / img_max
+        img = (img * np.iinfo(dtype).max).astype(dtype)
+
+        return img
 
 
 class GDALDatasetIO(DataIO):
