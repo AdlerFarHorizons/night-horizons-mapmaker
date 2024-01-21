@@ -64,6 +64,14 @@ class TestProcessorBase(unittest.TestCase):
         actual_fp,
         acceptance_threshold=0.99,
     ):
+        """Compare two referenced images.
+
+        Args:
+            expected_fp (str): File path of the expected image.
+            actual_fp (str): File path of the actual image.
+            acceptance_threshold (float, optional): Threshold for accepting
+                the image similarity score. Defaults to 0.99.
+        """
 
         assert os.path.isfile(actual_fp), f'File {actual_fp} not found.'
         actual_image = ReferencedImage.open(
@@ -145,15 +153,47 @@ class TestDatasetRegistrar(TestProcessorBase):
 
     def test_end_to_end(self):
         '''This test loads a registered image, pads it, and then checks that
-        we can find it again using dataset registrar.
+        we can find it again using dataset registrar. But first it overwrites
+        the registered image with a simpler one
         '''
-
-        processor = self.container.get_service('dataset_registrar')
 
         expected_fp = (
             './test/test_data/referenced_images/Geo 225856_1473511261_0.tif'
         )
         original_image = ReferencedImage.open(expected_fp)
+
+        # Overwrite the image with a simpler one
+        original_image.img_int = np.zeros(
+            original_image.img_int.shape,
+            dtype=original_image.img_int.dtype,
+        )
+        original_image.img_int[:50, :, :3] = 255
+        original_image.img_int[50:, :, :3] = 255
+        original_image.img_int[:, :50, :3] = 255
+        original_image.img_int[:, 50:, :3] = 255
+        original_image.img = original_image.img_int / 255
+
+        self.end_to_end_test(expected_fp, original_image)
+
+    def test_realistic_end_to_end(self):
+        '''This test loads a registered image, pads it, and then checks that
+        we can find it again using dataset registrar.
+        '''
+
+        expected_fp = (
+            './test/test_data/referenced_images/Geo 225856_1473511261_0.tif'
+        )
+        original_image = ReferencedImage.open(expected_fp)
+
+        self.end_to_end_test(expected_fp, original_image)
+
+    def end_to_end_test(
+        self,
+        expected_fp: str,
+        original_image: ReferencedImage,
+    ):
+
+        processor = self.container.get_service('dataset_registrar')
 
         # Revised version that's padded
         padding = 100
@@ -185,7 +225,12 @@ class TestDatasetRegistrar(TestProcessorBase):
             crs=original_image.cart_crs,
             driver='MEM',
         )
-        resources = {'dataset': dataset}
+        transformer = RasterCoordinateTransformer()
+        transformer.fit_to_dataset(dataset)
+        resources = {
+            'dataset': dataset,
+            'transformer': transformer,
+        }
 
         # Row containing pre-processing information
         row = pd.Series({
