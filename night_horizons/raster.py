@@ -306,6 +306,19 @@ class ReferencedImage(Image):
             latlon_crs_code=latlon_crs_code
         )
 
+    def save(self, fp, img_key='img_int'):
+
+        save_arr = getattr(self, img_key).transpose(2, 0, 1)
+        x_bounds, y_bounds = self.cart_bounds
+
+        self.io.save(
+            filepath=fp,
+            img=save_arr,
+            x_bounds=x_bounds,
+            y_bounds=y_bounds,
+            crs=self.cart_crs,
+        )
+
     @property
     def latlon_bounds(self):
         if not hasattr(self, '_latlon_bounds'):
@@ -324,14 +337,6 @@ class ReferencedImage(Image):
             return self._img.shape[:2]
         else:
             return (self.dataset.RasterYSize, self.dataset.RasterXSize)
-
-    def save(self, fp, img_key='img_int'):
-
-        # Store to in-memory data first
-        save_arr = getattr(self, img_key).transpose(2, 0, 1)
-        self.dataset.WriteArray(save_arr)
-
-        self.dataset_io.save(fp, self.dataset)
 
     def set_projections(self, cart_crs_code, latlon_crs_code):
 
