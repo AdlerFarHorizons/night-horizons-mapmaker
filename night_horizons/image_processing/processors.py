@@ -354,20 +354,31 @@ class DatasetRegistrar(DatasetUpdater):
 
             transformer: RasterCoordinateTransformer = resources['transformer']
 
-            # Get the bounds in physical coordinates
-            x_off, y_off, x_size, y_size = results['warped_bounds']
-            x_min, x_max, y_min, y_max = transformer.pixel_to_physical(
-                x_off, y_off, x_size, y_size
-            )
-
             # Get filepath
             fp_pattern = self.io_manager.output_filepaths['referenced_images']
             fp = fp_pattern.format(row.name)
 
+            # Get the bounds in physical coordinates
+            (
+                x_off_dstframe, y_off_dstframe,
+                x_size, y_size,
+            ) = [int(np.round(_)) for _ in results['warped_bounds']]
+            x_off = row['x_off'] + x_off_dstframe
+            y_off = row['y_off'] + y_off_dstframe
+            x_min, x_max, y_min, y_max = transformer.pixel_to_physical(
+                x_off, y_off, x_size, y_size
+            )
+
+            # Get the (trimmed) image
+            warped_image = results['warped_image'][
+                y_off_dstframe:y_off_dstframe + y_size,
+                x_off_dstframe:x_off_dstframe + x_size,
+            ]
+
             # Save the registered image
             RegisteredImageIO.save(
                 filepath=fp,
-                img=results['warped_image'],
+                img=warped_image,
                 x_bounds=[x_min, x_max],
                 y_bounds=[y_min, y_max],
                 crs=pyproj.CRS(resources['dataset'].GetProjection()),
