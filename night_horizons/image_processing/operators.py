@@ -311,6 +311,11 @@ class ImageAligner(BaseImageOperator):
 
     def validate_homography(self, M):
 
+        if M is None:
+            raise exceptions.HomographyTransformError(
+                'Transform matrix not found.'
+            )
+
         abs_det_M = np.abs(np.linalg.det(M))
 
         det_in_range = (
