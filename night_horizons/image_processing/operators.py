@@ -313,7 +313,7 @@ class ImageAligner(BaseImageOperator):
 
         if M is None:
             raise exceptions.HomographyTransformError(
-                'Transform matrix not found.'
+                'Transform matrix M is None'
             )
 
         abs_det_M = np.abs(np.linalg.det(M))
