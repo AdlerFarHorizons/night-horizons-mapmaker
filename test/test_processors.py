@@ -196,9 +196,8 @@ class TestDatasetRegistrar(TestProcessorBase):
         expected_fp = (
             './test/test_data/referenced_images/Geo 225856_1473511261_0.tif'
         )
-        original_image = ReferencedImage.open(expected_fp)
 
-        self.end_to_end_test(expected_fp, original_image)
+        self.end_to_end_test(expected_fp)
 
     def end_to_end_test(
         self,
