@@ -13,7 +13,7 @@ import scipy
 
 from night_horizons.image_processing import processors
 from night_horizons.mapmake import SequentialMosaicMaker
-from night_horizons.raster import ReferencedImage
+from night_horizons.raster import Image, ReferencedImage
 from night_horizons.transformers.raster import RasterCoordinateTransformer
 
 
@@ -168,9 +168,17 @@ class TestDatasetRegistrar(TestProcessorBase):
             dtype=original_image.img_int.dtype,
         )
         original_image.img_int[:50, :, :3] = 255
-        original_image.img_int[50:, :, :3] = 255
+        original_image.img_int[-50:, :, :3] = 255
         original_image.img_int[:, :50, :3] = 255
-        original_image.img_int[:, 50:, :3] = 255
+        original_image.img_int[:, -50:, :3] = 255
+        example_image = Image.open(
+            './test/test_data/feature_matching/tree_4.1.06.tiff',
+            dtype=original_image.img_int.dtype,
+        )
+        original_image.img_int[
+            50:50 + example_image.img_shape[0],
+            50:50 + example_image.img_shape[0],
+        ] = example_image.img_int
 
         # Save the image
         expected_fp = './test/test_data/temp/source/img_000000.tiff'
@@ -230,6 +238,7 @@ class TestDatasetRegistrar(TestProcessorBase):
             y_bounds=y_bounds_padded,
             crs=original_image.cart_crs,
             driver='MEM',
+            options=[],
         )
         transformer = RasterCoordinateTransformer()
         transformer.fit_to_dataset(dataset)
@@ -247,8 +256,8 @@ class TestDatasetRegistrar(TestProcessorBase):
             'y_max': original_image.cart_bounds[1][1],
             'x_off': 0,
             'y_off': 0,
-            'x_size': original_image.img_shape[1],
-            'y_size': original_image.img_shape[0],
+            'x_size': containing_img.shape[1],
+            'y_size': containing_img.shape[0],
         })
         row.name = 0
 
