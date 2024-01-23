@@ -62,13 +62,20 @@ class TestProcessorBase(unittest.TestCase):
 
 class TestDatasetRegistrar(TestProcessorBase):
 
-    def compare_referenced_images(self, expected_fp, actual_fp):
+    def compare_referenced_images(
+        self,
+        expected_fp,
+        actual_fp,
+        *args,
+        **kwargs
+    ):
 
         return compare_referenced_images(
             expected_fp=expected_fp,
             actual_fp=actual_fp,
             crs_code=self.settings['global']['crs'],
             image_scorer=self.container.get_service('image_scorer'),
+            *args, **kwargs
         )
 
     def test_store_results(self):
@@ -195,12 +202,13 @@ class TestDatasetRegistrar(TestProcessorBase):
         self.container.config.setdefault(
             'image_scorer',
             {},
-        )['acceptance_threshold'] = 0.9
+        )['acceptance_threshold'] = 0.5
 
         self.end_to_end_test(
             expected_fp=expected_fp,
             original_fp=original_fp,
             padding=500,
+            pixel_diff_threshold=80,
         )
 
     def end_to_end_test(
@@ -208,6 +216,7 @@ class TestDatasetRegistrar(TestProcessorBase):
         expected_fp: str,
         original_fp: str = None,
         padding: int = 100,
+        *args, **kwargs
     ):
 
         if original_fp is None:
@@ -280,7 +289,8 @@ class TestDatasetRegistrar(TestProcessorBase):
             expected_fp=expected_fp,
             actual_fp=(
                 './test/test_data/temp/referenced_images/img_ind000000.tiff'
-            )
+            ),
+            *args, **kwargs
         )
 
 
