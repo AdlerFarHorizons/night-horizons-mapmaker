@@ -80,6 +80,8 @@ class DIContainer:
             # Advanced: when the values are dictionaries, blend them
             #           this is important for input and output descriptions
             for key, value in kwargs.items():
+                if key not in signature.parameters.keys():
+                    continue
                 default_value = signature.parameters[key].default
                 if isinstance(value, dict) and isinstance(default_value, dict):
                     kwargs[key] = {**default_value, **value}
