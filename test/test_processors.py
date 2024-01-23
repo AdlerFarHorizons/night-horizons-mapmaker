@@ -162,6 +162,7 @@ class TestDatasetRegistrar(TestProcessorBase):
     def test_realistic_end_to_end(self):
         '''This test loads a registered image, pads it, and then checks that
         we can find it again using dataset registrar.
+        It does this twice.
         '''
 
         test_dir = './test/test_data/referenced_images'
@@ -180,14 +181,37 @@ class TestDatasetRegistrar(TestProcessorBase):
             expected_fp = os.path.join(test_dir, filename)
             self.end_to_end_test(expected_fp)
 
+    def test_sequential_end_to_end(self):
+        '''This test loads a registered image, pads it, and then matches
+        an overlapping registered image to it and checks the results.
+        This is the main logic of the sequential mosaic maker.
+        '''
+
+        test_dir = './test/test_data/referenced_images'
+        original_fp = os.path.join(test_dir, 'Geo 836109848_1.tif')
+        expected_fp = os.path.join(test_dir, 'Geo 843083290_1.tif')
+
+        # Lower threshold, since realistic images are more complex
+        self.container.config.setdefault(
+            'image_scorer',
+            {},
+        )['acceptance_threshold'] = 0.9
+
+        self.end_to_end_test(expected_fp=expected_fp, original_fp=original_fp)
+
     def end_to_end_test(
         self,
         expected_fp: str,
+        original_fp: str = None,
     ):
 
-        original_image = ReferencedImage.open(expected_fp)
+        if original_fp is None:
+            original_fp = expected_fp
 
-        processor = self.container.get_service('dataset_registrar')
+        original_image = ReferencedImage.open(original_fp)
+
+        processor: processors.DatasetRegistrar = \
+            self.container.get_service('dataset_registrar')
 
         # Revised version that's padded
         padding = 100
@@ -230,10 +254,10 @@ class TestDatasetRegistrar(TestProcessorBase):
         # Row containing pre-processing information
         row = pd.Series({
             'filepath': expected_fp,
-            'x_min': original_image.cart_bounds[0][0],
-            'x_max': original_image.cart_bounds[0][1],
-            'y_min': original_image.cart_bounds[1][0],
-            'y_max': original_image.cart_bounds[1][1],
+            'x_min': x_bounds_padded[0],
+            'x_max': x_bounds_padded[1],
+            'y_min': y_bounds_padded[0],
+            'y_max': y_bounds_padded[1],
             'x_off': 0,
             'y_off': 0,
             'x_size': containing_img.shape[1],
