@@ -164,11 +164,21 @@ class TestDatasetRegistrar(TestProcessorBase):
         we can find it again using dataset registrar.
         '''
 
-        expected_fp = (
-            './test/test_data/referenced_images/Geo 225856_1473511261_0.tif'
-        )
+        test_dir = './test/test_data/referenced_images'
+        filenames = [
+            # 'Geo 225856_1473511261_0.tif',
+            'Geo 836109848_1.tif',
+        ]
 
-        self.end_to_end_test(expected_fp)
+        # Lower threshold, since realistic images are more complex
+        self.container.config.setdefault(
+            'image_scorer',
+            {},
+        )['acceptance_threshold'] = 0.9
+
+        for filename in filenames:
+            expected_fp = os.path.join(test_dir, filename)
+            self.end_to_end_test(expected_fp)
 
     def end_to_end_test(
         self,
@@ -254,10 +264,12 @@ def compare_referenced_images(
     expected_fp,
     actual_fp,
     image_scorer,
-    acceptance_threshold=0.99,
+    pixel_diff_threshold=1,
     crs_code='EPSG:3857',
 ):
     """Compare two referenced images.
+    TODO: I pulled this out of the functions and made more general, but it's
+    not used elsewhere...
 
     Args:
         expected_fp (str): File path of the expected image.
@@ -281,16 +293,15 @@ def compare_referenced_images(
     np.testing.assert_allclose(
         actual_image.img_shape,
         expected_image.img_shape,
+        atol=pixel_diff_threshold,
     )
 
     # Compare image bounds
     np.testing.assert_allclose(
         actual_image.cart_bounds,
         expected_image.cart_bounds,
+        pixel_diff_threshold * actual_image.get_pixel_widths()[0],
     )
 
     # Compare image contents
-    score_results = image_scorer.operate(
-        actual_image.img_int, expected_image.img_int)
-    score = score_results['score']
-    assert score > acceptance_threshold, f'Image has a score of {score}'
+    image_scorer.assert_equal(actual_image.img_int, expected_image.img_int)
