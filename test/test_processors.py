@@ -59,53 +59,17 @@ class TestProcessorBase(unittest.TestCase):
         if os.path.isdir(self.io_manager.output_dir):
             shutil.rmtree(self.io_manager.output_dir)
 
-    def compare_referenced_images(
-        self,
-        expected_fp,
-        actual_fp,
-        acceptance_threshold=0.99,
-    ):
-        """Compare two referenced images.
-
-        Args:
-            expected_fp (str): File path of the expected image.
-            actual_fp (str): File path of the actual image.
-            acceptance_threshold (float, optional): Threshold for accepting
-                the image similarity score. Defaults to 0.99.
-        """
-
-        assert os.path.isfile(actual_fp), f'File {actual_fp} not found.'
-        actual_image = ReferencedImage.open(
-            actual_fp,
-            cart_crs_code=self.settings['global']['crs'],
-        )
-
-        expected_image = ReferencedImage.open(
-            expected_fp,
-            cart_crs_code=self.settings['global']['crs'],
-        )
-
-        # Compare image shape
-        np.testing.assert_allclose(
-            actual_image.img_shape,
-            expected_image.img_shape,
-        )
-
-        # Compare image bounds
-        np.testing.assert_allclose(
-            actual_image.cart_bounds,
-            expected_image.cart_bounds,
-        )
-
-        # Compare image contents
-        image_scorer = self.container.get_service('image_scorer')
-        score_results = image_scorer.operate(
-            actual_image.img_int, expected_image.img_int)
-        score = score_results['score']
-        assert score > acceptance_threshold, f'Image has a score of {score}'
-
 
 class TestDatasetRegistrar(TestProcessorBase):
+
+    def compare_referenced_images(self, expected_fp, actual_fp):
+
+        return compare_referenced_images(
+            expected_fp=expected_fp,
+            actual_fp=actual_fp,
+            crs_code=self.settings['global']['crs'],
+            image_scorer=self.container.get_service('image_scorer'),
+        )
 
     def test_store_results(self):
 
@@ -284,3 +248,49 @@ class TestDatasetRegistrar(TestProcessorBase):
                 './test/test_data/temp/referenced_images/img_ind000000.tiff'
             )
         )
+
+
+def compare_referenced_images(
+    expected_fp,
+    actual_fp,
+    image_scorer,
+    acceptance_threshold=0.99,
+    crs_code='EPSG:3857',
+):
+    """Compare two referenced images.
+
+    Args:
+        expected_fp (str): File path of the expected image.
+        actual_fp (str): File path of the actual image.
+        acceptance_threshold (float, optional): Threshold for accepting
+            the image similarity score. Defaults to 0.99.
+    """
+
+    assert os.path.isfile(actual_fp), f'File {actual_fp} not found.'
+    actual_image = ReferencedImage.open(
+        actual_fp,
+        cart_crs_code=crs_code,
+    )
+
+    expected_image = ReferencedImage.open(
+        expected_fp,
+        cart_crs_code=crs_code,
+    )
+
+    # Compare image shape
+    np.testing.assert_allclose(
+        actual_image.img_shape,
+        expected_image.img_shape,
+    )
+
+    # Compare image bounds
+    np.testing.assert_allclose(
+        actual_image.cart_bounds,
+        expected_image.cart_bounds,
+    )
+
+    # Compare image contents
+    score_results = image_scorer.operate(
+        actual_image.img_int, expected_image.img_int)
+    score = score_results['score']
+    assert score > acceptance_threshold, f'Image has a score of {score}'
