@@ -17,7 +17,7 @@ from night_horizons.raster import Image, ReferencedImage
 from night_horizons.transformers.raster import RasterCoordinateTransformer
 
 
-class TestProcessorBase(unittest.TestCase):
+class TestDatasetRegistrar(unittest.TestCase):
 
     def setUp(self):
 
@@ -58,9 +58,6 @@ class TestProcessorBase(unittest.TestCase):
     def tearDown(self):
         if os.path.isdir(self.io_manager.output_dir):
             shutil.rmtree(self.io_manager.output_dir)
-
-
-class TestDatasetRegistrar(TestProcessorBase):
 
     def compare_referenced_images(
         self,
