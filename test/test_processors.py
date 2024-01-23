@@ -265,10 +265,6 @@ class TestDatasetRegistrar(TestProcessorBase):
         })
         row.name = 0
 
-        # Fit properties
-        processor.x_size_ = dataset.RasterXSize
-        processor.y_size_ = dataset.RasterYSize
-
         # Match to padded image
         row = processor.process_row(
             i=0,
