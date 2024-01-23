@@ -347,7 +347,7 @@ class DatasetRegistrar(DatasetUpdater):
     ):
 
         # Update the dataset
-        super().store_results(i, row, resources, results)
+        row = super().store_results(i, row, resources, results)
 
         # Store the image
         if results['return_code'] == 'success':
@@ -383,6 +383,8 @@ class DatasetRegistrar(DatasetUpdater):
                 y_bounds=[y_min, y_max],
                 crs=pyproj.CRS(resources['dataset'].GetProjection()),
             )
+
+        return row
 
 
 class DatasetScorer(DatasetProcessor):

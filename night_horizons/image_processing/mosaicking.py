@@ -364,6 +364,7 @@ class SequentialMosaicker(Mosaicker):
         # Get the dataset
         resources = {
             'dataset': self.io_manager.open_dataset(),
+            'transformer': self.transformer,
         }
 
         return X_t, resources

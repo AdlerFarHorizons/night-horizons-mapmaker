@@ -390,7 +390,7 @@ class SequentialMosaicMaker(MosaicMaker):
                 io_manager = self.container.get_service('io_manager')
             if image_operator is None:
                 image_operator = self.container.get_service('image_operator')
-            return processors.DatasetUpdater(
+            return processors.DatasetRegistrar(
                 io_manager=io_manager,
                 image_operator=image_operator,
                 *args, **kwargs
