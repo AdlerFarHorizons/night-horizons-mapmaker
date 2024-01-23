@@ -197,12 +197,17 @@ class TestDatasetRegistrar(TestProcessorBase):
             {},
         )['acceptance_threshold'] = 0.9
 
-        self.end_to_end_test(expected_fp=expected_fp, original_fp=original_fp)
+        self.end_to_end_test(
+            expected_fp=expected_fp,
+            original_fp=original_fp,
+            padding=500,
+        )
 
     def end_to_end_test(
         self,
         expected_fp: str,
         original_fp: str = None,
+        padding: int = 100,
     ):
 
         if original_fp is None:
@@ -214,7 +219,6 @@ class TestDatasetRegistrar(TestProcessorBase):
             self.container.get_service('dataset_registrar')
 
         # Revised version that's padded
-        padding = 100
         containing_img = np.zeros(
             (original_image.img_shape[0] + 2 * padding,
              original_image.img_shape[1] + 2 * padding,
