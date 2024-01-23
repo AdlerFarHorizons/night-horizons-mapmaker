@@ -384,6 +384,11 @@ class DatasetRegistrar(DatasetUpdater):
                 crs=pyproj.CRS(resources['dataset'].GetProjection()),
             )
 
+            # Update the row values
+            row[['x_off', 'y_off', 'x_size', 'y_size']] = [
+                x_off, y_off, x_size, y_size
+            ]
+
         return row
 
 
