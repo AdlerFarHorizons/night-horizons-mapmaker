@@ -12,11 +12,13 @@ class SimilarityScorer(BaseImageOperator):
         compare_nonzero: bool = True,
         tm_metric=cv2.TM_CCOEFF_NORMED,
         log_keys: list[str] = [],
-    ):
+        acceptance_threshold: float = 0.99,
+    ) -> None:
         self.allow_resize = allow_resize
         self.compare_nonzero = compare_nonzero
         self.tm_metric = tm_metric
         self.log_keys = log_keys
+        self.acceptance_threshold = acceptance_threshold
 
     def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
 
@@ -43,3 +45,9 @@ class SimilarityScorer(BaseImageOperator):
         r = cv2.matchTemplate(src_img, dst_img, self.tm_metric)[0][0]
 
         return {'score': r}
+
+    def assert_equal(self, src_img: np.ndarray, dst_img: np.ndarray) -> None:
+        results = self.operate(src_img, dst_img)
+        assert results['score'] > self.acceptance_threshold, (
+            f'Images have a score of {results["score"]}'
+        )
