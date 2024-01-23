@@ -26,7 +26,8 @@ class TestProcessorBase(unittest.TestCase):
             'io_manager': {
                 'output_dir': './test/test_data/temp',
                 'output_description': {
-                    'referenced_images': 'referenced_images/img_{:06d}.tiff',
+                    'referenced_images':
+                        'referenced_images/img_ind{:06d}.tiff',
                 },
             },
         }
@@ -148,7 +149,9 @@ class TestDatasetRegistrar(TestProcessorBase):
 
         self.compare_referenced_images(
             expected_fp=expected_fp,
-            actual_fp='./test/test_data/temp/referenced_images/img_000000.tiff'
+            actual_fp=(
+                './test/test_data/temp/referenced_images/img_ind000000.tiff'
+            ),
         )
 
     def test_end_to_end(self):
@@ -277,5 +280,7 @@ class TestDatasetRegistrar(TestProcessorBase):
 
         self.compare_referenced_images(
             expected_fp=expected_fp,
-            actual_fp='./test/test_data/temp/referenced_images/img_000000.tiff'
+            actual_fp=(
+                './test/test_data/temp/referenced_images/img_ind000000.tiff'
+            )
         )
