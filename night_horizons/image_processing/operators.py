@@ -254,6 +254,16 @@ class ImageAligner(BaseImageOperator):
 
     @staticmethod
     def warp_bounds(src_img, M):
+        '''Warp the bounds of the source image to get the bounds of the
+        warped image in the frame of the destination image. The viable
+        range in the destination image frame is (0, dst_img.shape[1]) in the
+        x-direction, and (0, dst_img.shape[0]) in the y direction.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
 
         bounds = np.array([
             [0., 0.],
@@ -275,6 +285,16 @@ class ImageAligner(BaseImageOperator):
         y_off = py_min
         x_size = px_max - px_min
         y_size = py_max - py_min
+        
+        if (
+            (x_off < 0)
+            | (y_off < 0)
+            | (x_off + x_size > src_img.shape[1])
+            | (y_off + y_size > src_img.shape[0])
+        ):
+            raise exceptions.OutOfBoundsError(
+                'Warping results in out-of-bounds image'
+            )
 
         return x_off, y_off, x_size, y_size
 
