@@ -30,8 +30,9 @@ io_manager:
     imu_log: metadata/PresIMULog.csv
     gps_log: metadata/GPSLog.csv
 
-# Coordinate reference-system employed
-crs: 'EPSG:3857'
+global:
+  # Coordinate reference-system employed
+  crs: 'EPSG:3857'
 
 # Aesthetics
 color_palette: deep
