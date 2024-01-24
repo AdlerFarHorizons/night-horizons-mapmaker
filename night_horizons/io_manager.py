@@ -57,6 +57,7 @@ class IOManager:
         file_exists: str = 'error',
         tracked_file_key: str = None,
         checkpoint_subdir: str = 'checkpoints',
+        checkpoint_selection: list[str] = None,
         checkpoint_tag: str = '_i{:06d}',
         checkpoint_freq: int = 100,
         data_ios: dict[str] = {},
@@ -66,12 +67,16 @@ class IOManager:
             input_dir = os.path.join(root_dir, input_dir)
             output_dir = os.path.join(root_dir, output_dir)
 
+        if checkpoint_selection is None:
+            checkpoint_selection = list(output_description.keys())
+
         self.input_dir = input_dir
         self.output_description = output_description
         self.root_dir = root_dir
         self.file_exists = file_exists
         self.tracked_file_key = tracked_file_key
         self.checkpoint_subdir = checkpoint_subdir
+        self.checkpoint_selection = checkpoint_selection
         self.checkpoint_tag = checkpoint_tag
         self.checkpoint_freq = checkpoint_freq
         self.data_ios = data_ios
@@ -96,6 +101,7 @@ class IOManager:
                 output_dir=self.output_dir,
                 output_filepaths=self.output_filepaths,
                 checkpoint_subdir=self.checkpoint_subdir,
+                checkpoint_selection=self.checkpoint_selection,
                 checkpoint_tag=self.checkpoint_tag,
             )
 
@@ -264,6 +270,7 @@ class IOManager:
         output_dir: str,
         output_filepaths: dict[str],
         checkpoint_subdir: str,
+        checkpoint_selection: list[str],
         checkpoint_tag: str,
     ) -> Tuple[dict[str], str]:
 
@@ -272,7 +279,8 @@ class IOManager:
 
         # Create checkpoint filepatterns
         checkpoint_filepatterns = {}
-        for key, filepath in output_filepaths.items():
+        for key in checkpoint_selection:
+            filepath = output_filepaths[key]
             base, ext = os.path.splitext(os.path.basename(filepath))
             checkpoint_filepatterns[key] = base + checkpoint_tag + ext
 
@@ -394,6 +402,8 @@ class MosaicIOManager(IOManager):
         file_exists: str = 'error',
         tracked_file_key: str = 'mosaic',
         checkpoint_subdir: str = 'checkpoints',
+        checkpoint_selection: list[str] = [
+            'mosaic', 'settings', 'log', 'y_pred'],
         checkpoint_tag: str = '_i{:06d}',
         checkpoint_freq: int = 100,
     ):
@@ -417,6 +427,7 @@ class MosaicIOManager(IOManager):
             file_exists=file_exists,
             tracked_file_key=tracked_file_key,
             checkpoint_subdir=checkpoint_subdir,
+            checkpoint_selection=checkpoint_selection,
             checkpoint_tag=checkpoint_tag,
             checkpoint_freq=checkpoint_freq,
         )
