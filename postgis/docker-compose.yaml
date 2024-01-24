@@ -1,6 +1,6 @@
 services:
-  postgis:
-    image: postgis/postgis
+  night-horizons:
+    image: night-horizons
     restart: always
     environment: 
       POSTGRES_DB: gis
