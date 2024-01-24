@@ -115,7 +115,11 @@ class GDALDatasetIO(DataIO):
         save_dataset = None
 
     @staticmethod
-    def load(filepath, mode: int = gdal.GA_ReadOnly, crs: pyproj.CRS = None):
+    def load(
+        filepath: str,
+        mode: int = gdal.GA_ReadOnly,
+        crs: pyproj.CRS = None
+    ) -> gdal.Dataset:
         data = gdal.Open(filepath, mode)
 
         # Convert to desired crs.
@@ -123,6 +127,79 @@ class GDALDatasetIO(DataIO):
             data = GDALDatasetIO.convert(data, crs)
 
         return data
+
+    @staticmethod
+    def load_from_viirs_hdf5(
+        filepath: str,
+        output_filepath: str = None,
+    ) -> gdal.Dataset:
+        '''Load a VIIRS HDF5 file.
+
+        Parameters
+        ----------
+        filepath
+            Path to the VIIRS HDF5 file.
+        crs
+            Desired coordinate system. Defaults to None, which means the
+            coordinate system of the VIIRS file will be used.
+
+        Returns
+        -------
+        data
+            Image data.
+        '''
+
+        if output_filepath is None:
+            output_filepath = filepath.replace('.h5', '.tiff')
+
+        # If the conversion is already done
+        if os.path.isfile(output_filepath):
+            return GDALDatasetIO.load(output_filepath)
+
+        # Open HDF file
+        hdflayer = gdal.Open(filepath, gdal.GA_ReadOnly)
+
+        # Open raster layer
+        # hdflayer.GetSubDatasets()[0][0] - for first layer
+        # hdflayer.GetSubDatasets()[1][0] - for second layer ...etc
+        subhdflayer = hdflayer.GetSubDatasets()[0][0]
+        rlayer = gdal.Open(subhdflayer, gdal.GA_ReadOnly)
+
+        # collect bounding box coordinates
+        HorizontalTileNumber = int(
+            rlayer.GetMetadata_Dict()["HorizontalTileNumber"]
+        )
+        VerticalTileNumber = int(
+            rlayer.GetMetadata_Dict()["VerticalTileNumber"]
+        )
+            
+        WestBoundCoord = (10 * HorizontalTileNumber) - 180
+        NorthBoundCoord = 90 - (10 * VerticalTileNumber)
+        EastBoundCoord = WestBoundCoord + 10
+        SouthBoundCoord = NorthBoundCoord - 10
+
+        # WGS84
+        EPSG = "-a_srs EPSG:4326"
+
+        translateOptionText = (
+            EPSG
+            + " -a_ullr "
+            + str(WestBoundCoord)
+            + " " + str(NorthBoundCoord)
+            + " " + str(EastBoundCoord)
+            + " " + str(SouthBoundCoord)
+        )
+        translateoptions = gdal.TranslateOptions(
+            gdal.ParseCommandLine(translateOptionText)
+        )
+
+        translated = gdal.Translate(
+            output_filepath,
+            rlayer,
+            options=translateoptions
+        )
+
+        return GDALDatasetIO.load(output_filepath)
 
     @staticmethod
     def create(
