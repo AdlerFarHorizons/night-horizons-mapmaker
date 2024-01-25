@@ -409,14 +409,18 @@ class RegisteredImageIO(DataIO):
 
         # Get image
         dataset = GDALDatasetIO.load(filepath, crs=crs)
-        img = dataset.ReadAsArray().transpose(1, 2, 0)
+        img = dataset.ReadAsArray()
+
+        # For multiple bands, format accordingly
+        if len(img.shape) == 3:
+            img = img.transpose(1, 2, 0)
 
         # Get bounds
         (
             x_bounds, y_bounds, dx, dy
         ) = GDALDatasetIO.get_bounds_from_dataset(dataset)
 
-        data = (img, x_bounds, y_bounds, crs)
+        data = (img, x_bounds, y_bounds)
 
         return data
 
