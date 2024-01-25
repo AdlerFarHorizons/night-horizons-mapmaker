@@ -60,3 +60,9 @@ class TestGDALDatasetIO(unittest.TestCase):
         io = GDALDatasetIO()
         dataset = io.load_from_viirs_hdf5(self.viirs_fp)
         assert dataset is not None
+        assert pyproj.CRS(dataset.GetProjection()) == pyproj.CRS('EPSG:4326')
+        dataset.FlushCache()
+        dataset = None
+
+        dataset2 = io.load(self.viirs_output_fp)
+        assert pyproj.CRS(dataset2.GetProjection()) == pyproj.CRS('EPSG:4326')

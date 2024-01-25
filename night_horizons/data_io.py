@@ -199,7 +199,7 @@ class GDALDatasetIO(DataIO):
             options=translateoptions
         )
 
-        return GDALDatasetIO.load(output_filepath)
+        return translated
 
     @staticmethod
     def create(
