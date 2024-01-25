@@ -1,3 +1,4 @@
+import os
 import unittest
 
 import numpy as np
@@ -13,6 +14,21 @@ from night_horizons.data_io import GDALDatasetIO
 
 
 class TestGDALDatasetIO(unittest.TestCase):
+
+    def setUp(self):
+
+        self.viirs_fp = (
+            './test/test_data/other/'
+            'VNP46A2.A2022353.h09v04.001.2022361121713.h5'
+        )
+
+        self.viirs_output_fp = self.viirs_fp.replace('.h5', '.tiff')
+        if os.path.isfile(self.viirs_output_fp):
+            os.remove(self.viirs_output_fp)
+
+    def tearDown(self):
+        if os.path.isfile(self.viirs_output_fp):
+            os.remove(self.viirs_output_fp)
 
     def test_convert(self):
 
@@ -38,3 +54,9 @@ class TestGDALDatasetIO(unittest.TestCase):
             y_bounds[1] - y_bounds[0],
             -pixel_height * dataset2.RasterYSize,
         )
+
+    def test_from_viirs_hdf5(self):
+
+        io = GDALDatasetIO()
+        dataset = io.load_from_viirs_hdf5(self.viirs_fp)
+        assert dataset is not None
