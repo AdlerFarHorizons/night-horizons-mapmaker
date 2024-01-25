@@ -296,7 +296,7 @@ class ReferencedImage(Image):
     ):
 
         cart_crs = pyproj.CRS(cart_crs_code)
-        img, x_bounds, y_bounds, crs = cls.io.load(fp, crs=cart_crs)
+        img, x_bounds, y_bounds = cls.io.load(fp, crs=cart_crs)
 
         return ReferencedImage(
             img,
