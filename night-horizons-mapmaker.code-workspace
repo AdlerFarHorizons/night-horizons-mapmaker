@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../NITELite-mapmaker"
+		},
+		{
+			"path": "../NITELite-pipeline"
 		}
 	],
 	"settings": {}
