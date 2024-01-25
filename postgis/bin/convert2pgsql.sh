@@ -1,5 +1,5 @@
 # docker exec postgis-night-horizons-1
-raster2pgsql -s 3857 "/home/Geo 997767400_1.tif" public.nitelite \
+raster2pgsql -s 3857 /home/*.tif public.nitelite2 \
 | psql -U gis -d gis
 # Register the raster as an out-of-db (filesystem) raster.
 #  -s 3857 -C -R -t 100x100 
