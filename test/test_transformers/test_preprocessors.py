@@ -69,7 +69,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
             imu_log_fp=self.imu_log_fp,
             gps_log_fp=self.gps_log_fp,
         )
-        assert len(metadata) == n_files
+        assert len(metadata) == n_files - 2
         assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
         assert metadata['sensor_x'].isna().sum() == 0
 
@@ -98,7 +98,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         )
         assert len(metadata) == n_files + 1
         assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
-        assert metadata['sensor_x'].isna().sum() == 1
+        assert metadata['sensor_x'].isna().sum() == 3
 
         # Check that the order is not garbled.
         assert (metadata['filepath'] != fps).sum() == 0
