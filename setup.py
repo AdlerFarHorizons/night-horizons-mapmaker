@@ -7,11 +7,12 @@ setuptools.setup(
     name="night_horizons",
     packages=setuptools.find_packages(),
     install_requires=[
+        'pytest',
         'numpy',
         'pandas',
+        'gdal',
         'matplotlib',
         'seaborn',
-        'pytest',
         'jupyterlab',
         'jupyter_contrib_nbextensions',
     ],

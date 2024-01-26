@@ -1,0 +1,13 @@
+pytest
+numpy
+scipy
+pandas
+scikit-learn
+tqdm
+PyYAML
+gdal
+pyproj
+matplotlib
+seaborn
+folium
+jupyterlab
