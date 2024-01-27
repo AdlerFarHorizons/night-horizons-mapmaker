@@ -18,7 +18,7 @@ class TestGDALDatasetIO(unittest.TestCase):
     def setUp(self):
 
         self.viirs_fp = (
-            './test/test_data/other/'
+            '/data/test_data/other/'
             'VNP46A2.A2022353.h09v04.001.2022361121713.h5'
         )
 
@@ -32,7 +32,7 @@ class TestGDALDatasetIO(unittest.TestCase):
 
     def test_convert(self):
 
-        fp = './test/test_data/referenced_images/Geo 836109848_1.tif'
+        fp = '/data/test_data/referenced_images/Geo 836109848_1.tif'
         new_crs = pyproj.CRS('EPSG:3857')
 
         io = GDALDatasetIO()

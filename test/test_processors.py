@@ -24,7 +24,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         # Register services
         local_options = {
             'io_manager': {
-                'output_dir': './test/test_data/temp',
+                'output_dir': '/data/test_data/temp',
                 'output_description': {
                     'referenced_images':
                         'referenced_images/img_ind{:06d}.tiff',
@@ -81,7 +81,7 @@ class TestDatasetRegistrar(unittest.TestCase):
 
         # Dataset
         expected_fp = (
-            './test/test_data/referenced_images/Geo 225856_1473511261_0.tif'
+            '/data/test_data/referenced_images/Geo 225856_1473511261_0.tif'
         )
         original_image = ReferencedImage.open(expected_fp)
         transformer = RasterCoordinateTransformer()
@@ -118,7 +118,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         self.compare_referenced_images(
             expected_fp=expected_fp,
             actual_fp=(
-                './test/test_data/temp/referenced_images/img_ind000000.tiff'
+                '/data/test_data/temp/referenced_images/img_ind000000.tiff'
             ),
         )
 
@@ -129,7 +129,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         '''
 
         original_fp = (
-            './test/test_data/referenced_images/Geo 225856_1473511261_0.tif'
+            '/data/test_data/referenced_images/Geo 225856_1473511261_0.tif'
         )
         original_image = ReferencedImage.open(original_fp)
 
@@ -147,7 +147,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         original_image.img_int[:, -50:, :3] = 255
         # Example image
         example_image = Image.open(
-            './test/test_data/feature_matching/tree_4.1.06.tiff',
+            '/data/test_data/feature_matching/tree_4.1.06.tiff',
             dtype=original_image.img_int.dtype,
         )
         original_image.img_int[
@@ -156,7 +156,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         ] = example_image.img_int
 
         # Save the image
-        expected_fp = './test/test_data/temp/source/img_000000.tiff'
+        expected_fp = '/data/test_data/temp/source/img_000000.tiff'
         if os.path.isfile(expected_fp):
             os.remove(expected_fp)
         original_image.save(expected_fp)
@@ -169,7 +169,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         It does this twice.
         '''
 
-        test_dir = './test/test_data/referenced_images'
+        test_dir = '/data/test_data/referenced_images'
         filenames = [
             # 'Geo 225856_1473511261_0.tif',
             'Geo 836109848_1.tif',
@@ -191,7 +191,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         This is the main logic of the sequential mosaic maker.
         '''
 
-        test_dir = './test/test_data/referenced_images'
+        test_dir = '/data/test_data/referenced_images'
         original_fp = os.path.join(test_dir, 'Geo 836109848_1.tif')
         expected_fp = os.path.join(test_dir, 'Geo 843083290_1.tif')
 
@@ -285,7 +285,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         self.compare_referenced_images(
             expected_fp=expected_fp,
             actual_fp=(
-                './test/test_data/temp/referenced_images/img_ind000000.tiff'
+                '/data/test_data/temp/referenced_images/img_ind000000.tiff'
             ),
             *args, **kwargs
         )

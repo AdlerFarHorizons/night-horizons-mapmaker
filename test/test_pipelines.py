@@ -18,12 +18,12 @@ class BaseTester(unittest.TestCase):
 
     def setUp(self):
 
-        self.mosaic_fp = './test/test_data/mosaics/temp.tiff'
+        self.mosaic_fp = '/data/test_data/mosaics/temp.tiff'
         os.makedirs(os.path.dirname(self.mosaic_fp), exist_ok=True)
         if os.path.isfile(self.mosaic_fp):
             os.remove(self.mosaic_fp)
 
-        image_dir = './test/test_data/referenced_images'
+        image_dir = '/data/test_data/referenced_images'
         self.fps = utils.discover_data(image_dir, extension=['tif', 'tiff'])
 
     def tearDown(self):
