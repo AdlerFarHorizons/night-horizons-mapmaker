@@ -28,7 +28,7 @@ class MetadataImageRegistrar(BaseEstimator):
         use_direct_estimate: bool = True,
         camera_angles: dict[float] = {0: 30., 1: 0., 2: 30.},
         angle_error: float = 5.,
-        padding_fraction: float = 1.0,
+        padding_fraction: float = 1.5,
     ):
         self.crs = crs
         self.passthrough = passthrough
