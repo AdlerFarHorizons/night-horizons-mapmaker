@@ -7,7 +7,7 @@ from sklearn.pipeline import Pipeline
 from night_horizons.transformers import filters, order, preprocessors, raster
 
 from night_horizons.container import DIContainer
-from night_horizons import io_manager
+from night_horizons.io_manager import IOManager, MosaicIOManager
 from night_horizons.image_processing import (
     mosaicking, operators, processors, registration, scorers
 )
@@ -45,7 +45,7 @@ class Mapmaker(ABC):
     #             name: self.container.get_service(name)
     #             for name in dataio_services
     #         }
-    #         return io_manager.IOManager(data_ios=data_ios, *args, **kwargs)
+    #         return IOManager(data_ios=data_ios, *args, **kwargs)
     #     self.container.register_service('io_manager', register_io_manager)
 
 
@@ -86,7 +86,7 @@ class MosaicMaker(Mapmaker):
         # Services for input/output
         self.container.register_service(
             'io_manager',
-            io_manager.MosaicIOManager,
+            MosaicIOManager,
         )
 
         # What we use for preprocessing
@@ -132,7 +132,7 @@ class MosaicMaker(Mapmaker):
 
         # Finally, the mosaicker itself, which is a batch processor
         def make_mosaicker(
-            io_manager: io_manager.IOManager = None,
+            io_manager: IOManager = None,
             *args, **kwargs
         ):
             if io_manager is None:
@@ -157,7 +157,7 @@ class SequentialMosaicMaker(MosaicMaker):
         settings = self.container.config
 
         # Get the filepaths
-        io_manager = self.container.get_service('io_manager')
+        io_manager: IOManager = self.container.get_service('io_manager')
         fps_train, fps_test, fps = io_manager.train_test_production_split(
             train_size=settings['train_size'],
             random_state=settings['random_state'],
@@ -204,7 +204,7 @@ class SequentialMosaicMaker(MosaicMaker):
         # Services for input/output
         self.container.register_service(
             'io_manager',
-            io_manager.MosaicIOManager,
+            MosaicIOManager,
         )
 
         self.register_default_preprocessors()
@@ -338,7 +338,7 @@ class SequentialMosaicMaker(MosaicMaker):
 
         # The actual training mosaicker
         def make_mosaicker_train(
-            io_manager_train: io_manager.IOManager = None,
+            io_manager_train: IOManager = None,
             *args, **kwargs
         ):
             if io_manager_train is None:
@@ -409,7 +409,7 @@ class SequentialMosaicMaker(MosaicMaker):
 
         # And the row transformer used for the sequential mosaicker
         def make_processor(
-            io_manager: io_manager.IOManager = None,
+            io_manager: IOManager = None,
             image_operator: operators.BaseImageOperator = None,
             *args, **kwargs
         ):
@@ -429,7 +429,7 @@ class SequentialMosaicMaker(MosaicMaker):
 
         # Finally, the mosaicker itself
         def make_mosaicker(
-            io_manager: io_manager.IOManager = None,
+            io_manager: IOManager = None,
             processor: processors.Processor = None,
             mosaicker_train: mosaicking.Mosaicker = None,
             *args, **kwargs

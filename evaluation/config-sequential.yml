@@ -2,6 +2,14 @@
 # Example Configuration File
 ###############################################################################
 
+# General settings
+random_state: 1942893
+use_raw_images: False
+train_size:
+  0: 0
+  1: 40
+  2: 0
+
 global:
   # Coordinate reference-system employed
   crs: 'EPSG:3857'
@@ -17,6 +25,6 @@ io_manager:
     referenced_images:
       directory: images/referenced
       extension: ['tif', 'tiff']
-      pattern: 'Geo\s\d+_\d.tif'
-  output_dir: /data/220513-FH135/mosaics/referenced
+      pattern: 'Geo\s\d+_1.tif'
+  output_dir: /data/220513-FH135/mosaics/sequential
   file_exists: new
