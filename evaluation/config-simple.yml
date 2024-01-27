@@ -2,16 +2,20 @@
 # Example Configuration File
 ###############################################################################
 
+mosaic_type: simple
+
 io_manager:
-  input_dir: /data/test_data
+  input_dir: /data/220513-FH135
   input_description:
     raw_images:
-      directory: images
+      directory: images/raw
       extension: ['raw', 'tif', 'tiff']
     referenced_images:
-      directory: referenced_images
+      directory: images/referenced
       extension: ['tif', 'tiff']
       pattern: 'Geo\s\d+_\d.tif'
+  output_dir: /data/220513-FH135/mosaics/referenced
+  file_exists: new
 
 global:
   # Coordinate reference-system employed

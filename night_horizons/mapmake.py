@@ -1,22 +1,33 @@
 from abc import ABC, abstractmethod
+
 import cv2
+from osgeo import gdal
 from sklearn.pipeline import Pipeline
 
-from .transformers import filters, order, preprocessors, raster
+from night_horizons.transformers import filters, order, preprocessors, raster
 
-from .container import DIContainer
-from . import io_manager
-from .image_processing import (
+from night_horizons.container import DIContainer
+from night_horizons import io_manager
+from night_horizons.image_processing import (
     mosaicking, operators, processors, registration, scorers
 )
 
 
 class Mapmaker(ABC):
-    def __init__(self, config_filepath: str, local_options: dict = {}):
+    def __init__(
+        self,
+        config_filepath: str,
+        local_options: dict = {},
+        verbose: bool = True
+    ):
+        self.verbose = verbose
+
         self.container = DIContainer(
             config_filepath=config_filepath,
             local_options=local_options,
         )
+
+        gdal.UseExceptions()
 
         self.register_default_services()
 
@@ -42,17 +53,33 @@ class MosaicMaker(Mapmaker):
 
     def run(self):
 
+        if self.verbose:
+            print('Starting mosaic creation.')
+
         # Get the filepaths
         io_manager = self.container.get_service('io_manager')
-        referenced_fps = io_manager.filepaths['referenced_images']
+        referenced_fps = io_manager.input_filepaths['referenced_images']
+
+        if self.verbose:
+            print(f'Saving output in {io_manager.output_dir}')
 
         # Preprocessing
+        if self.verbose:
+            print('Preprocessing...')
         preprocessor = self.container.get_service('preprocessor')
         X = preprocessor.fit_transform(referenced_fps)
 
         # Mosaicking
+        if self.verbose:
+            print('Making mosaic...')
         mosaicker = self.container.get_service('mosaicker')
         X_out = mosaicker.fit_transform(X)
+
+        if self.verbose:
+            print(
+                'Done!\n'
+                f'Output saved at {io_manager.output_filepaths["mosaic"]}'
+            )
 
     def register_default_services(self):
 
@@ -429,7 +456,16 @@ if __name__ == "__main__":
         print("Please provide a config file path.")
         sys.exit(1)
 
-    config_filepath = sys.argv[1]
+    mosaic_type = sys.argv[1]
+    config_filepath = sys.argv[2]
 
-    mapmaker = MosaicMaker(config_filepath=config_filepath)
+    if mosaic_type == 'simple':
+        mapmaker = MosaicMaker(config_filepath=config_filepath)
+    elif mosaic_type == 'sequential':
+        mapmaker = SequentialMosaicMaker(config_filepath=config_filepath)
+    else:
+        print("Please provide a valid mosaic type.")
+        sys.exit(1)
+
+    # Execute
     mapmaker.run()
