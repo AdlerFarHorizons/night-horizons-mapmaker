@@ -4,7 +4,7 @@
 
 # filetree paths are relative to root_dir
 io_manager:
-  root_dir: /data/220513-F135
+  root_dir: /data/220513-FH135
   input_dir: ''
   input_description:
     raw_images:
