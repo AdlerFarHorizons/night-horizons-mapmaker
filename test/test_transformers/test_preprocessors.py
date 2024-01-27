@@ -16,7 +16,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
     def setUp(self):
 
         # Metadata filetree info
-        metadata_dir = './test/test_data/metadata'
+        metadata_dir = '/data/test_data/metadata'
         self.img_log_fp = os.path.join(metadata_dir, 'image.log')
         self.imu_log_fp = os.path.join(metadata_dir, 'PresIMULog.csv')
         self.gps_log_fp = os.path.join(metadata_dir, 'GPSLog.csv')
@@ -32,7 +32,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         '''
 
         # Image filetree info
-        image_dir = './test/test_data/images'
+        image_dir = '/data/test_data/images'
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
@@ -59,7 +59,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
     def test_output_referenced_files(self):
 
         # Image filetree info
-        image_dir = './test/test_data/referenced_images'
+        image_dir = '/data/test_data/referenced_images'
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
@@ -69,7 +69,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
             imu_log_fp=self.imu_log_fp,
             gps_log_fp=self.gps_log_fp,
         )
-        assert len(metadata) == n_files - 2
+        assert len(metadata) == n_files - 1
         assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
         assert metadata['sensor_x'].isna().sum() == 0
 
@@ -80,7 +80,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         self.transformer.unhandled_files = 'warn and passthrough'
 
         # Image filetree info
-        image_dir = './test/test_data/referenced_images'
+        image_dir = '/data/test_data/referenced_images'
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
         fps = pd.concat([pd.Series(['not_a_file']), fps], ignore_index=True)
@@ -98,7 +98,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         )
         assert len(metadata) == n_files + 1
         assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
-        assert metadata['sensor_x'].isna().sum() == 3
+        assert metadata['sensor_x'].isna().sum() == 2
 
         # Check that the order is not garbled.
         assert (metadata['filepath'] != fps).sum() == 0
@@ -110,10 +110,10 @@ class TestGeoTIFFPreprocessor(unittest.TestCase):
     def test_output(self):
 
         # Image filetree info
-        image_dir = './test/test_data/images'
+        image_dir = '/data/test_data/images'
         fps = utils.discover_data(image_dir)
         n_files_unreffed = len(fps)
-        referenced_image_dir = './test/test_data/referenced_images'
+        referenced_image_dir = '/data/test_data/referenced_images'
         fps2 = utils.discover_data(
             referenced_image_dir,
             extension=['tif', 'tiff']

@@ -3,7 +3,7 @@
 ###############################################################################
 
 io_manager:
-  input_dir: ./test/test_data
+  input_dir: /data/test_data
   input_description:
     raw_images:
       directory: images
