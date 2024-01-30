@@ -19,16 +19,7 @@ class TestMapmake(unittest.TestCase):
         if os.path.isdir(self.out_dir):
             shutil.rmtree(self.out_dir)
 
-    def test_mosaicmaker(self):
-
-        local_options = {
-            'io_manager': {
-                'output_dir': self.out_dir,
-            }
-        }
-
-        mapmaker = mapmake.MosaicMaker('./test/config.yml', local_options)
-        X_out, io_manager = mapmaker.run()
+    def check_output(self, X_out, io_manager, skip_keys=[]):
 
         # Check basic structure of X_out
         self.assertEqual(
@@ -37,7 +28,6 @@ class TestMapmake(unittest.TestCase):
         )
 
         # Check files exist
-        skip_keys = ['y_pred', 'progress_images_dir', 'referenced_images']
         for key, filepath in io_manager.output_filepaths.items():
             if key in skip_keys:
                 continue
@@ -45,3 +35,37 @@ class TestMapmake(unittest.TestCase):
                 os.path.isfile(filepath),
                 'Missing file: {}'.format(key),
             )
+
+    def test_mosaicmaker(self):
+
+        local_options = {
+            'io_manager': {
+                'output_dir': self.out_dir,
+            }
+        }
+
+        mosaicmaker = mapmake.MosaicMaker('./test/config.yml', local_options)
+        X_out, io_manager = mosaicmaker.run()
+
+        skip_keys = ['y_pred', 'progress_images_dir', 'referenced_images']
+
+        self.check_output(X_out, io_manager, skip_keys)
+
+    def test_sequential_mosaickmaker(self):
+
+        local_options = {
+            'io_manager': {
+                'output_dir': self.out_dir,
+            },
+            'train_size': 1,
+            'random_state': 1523,
+            'use_raw_images': True,
+        }
+
+        mosaicmaker = mapmake.SequentialMosaicMaker(
+            './test/config.yml',
+            local_options
+        )
+        y_pred, io_manager = mosaicmaker.run()
+
+        self.check_output(y_pred, io_manager)
