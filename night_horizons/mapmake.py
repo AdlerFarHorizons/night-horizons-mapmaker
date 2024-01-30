@@ -81,6 +81,8 @@ class MosaicMaker(Mapmaker):
                 f'Output saved at {io_manager.output_filepaths["mosaic"]}'
             )
 
+        return X_out, io_manager
+
     def register_default_services(self):
 
         # Services for input/output
