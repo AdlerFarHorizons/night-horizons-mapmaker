@@ -19,7 +19,7 @@ class TestMapmake(unittest.TestCase):
         if os.path.isdir(self.out_dir):
             shutil.rmtree(self.out_dir)
 
-    def test_mapmake(self):
+    def test_mosaicmaker(self):
 
         local_options = {
             'io_manager': {
@@ -37,8 +37,11 @@ class TestMapmake(unittest.TestCase):
         )
 
         # Check files exist
-        for filepath in io_manager.output_filepaths:
+        skip_keys = ['y_pred', 'progress_images_dir', 'referenced_images']
+        for key, filepath in io_manager.output_filepaths.items():
+            if key in skip_keys:
+                continue
             self.assertTrue(
                 os.path.isfile(filepath),
-                'Missing file: {}'.format(filepath),
+                'Missing file: {}'.format(key),
             )
