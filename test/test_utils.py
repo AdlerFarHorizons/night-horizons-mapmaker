@@ -33,40 +33,39 @@ class TestLoadImage(unittest.TestCase):
 
 class TestDiscoverData(unittest.TestCase):
 
-    def test_discover_data(self):
+    def setUp(self):
 
-        image_dir = '/data/test_data/images'
-        expected_fps = [
+        self.expected_fps_raw = [
             ('/data/test_data/images/23085686/'
              '20220413_221313_1020286912_0_50_3.raw'),
             ('/data/test_data/images/23085687/'
              '20220413_202740_745696_1_50_0.raw'),
+            ('/data/test_data/images/23085687/'
+             'Geo 836109848_1.tif'),
         ]
 
+    def test_discover_data(self):
+
+        image_dir = '/data/test_data/images'
+
         fps = utils.discover_data(image_dir)
-        assert list(fps) == expected_fps
+        assert list(fps) == self.expected_fps_raw
 
     def test_discover_data_exts(self):
 
         image_dir = '/data/test_data'
-        expected_fps_a = [
-            ('/data/test_data/images/23085686/'
-             '20220413_221313_1020286912_0_50_3.raw'),
-            ('/data/test_data/images/23085687/'
-             '20220413_202740_745696_1_50_0.raw'),
-        ]
 
-        fps = utils.discover_data(image_dir, ['raw', 'tif', 'tif'])
+        fps = utils.discover_data(image_dir, extension=['raw', 'tif', 'tiff'])
 
         actual_fps_a = [_ for _ in list(fps) if 'test_data/images' in _]
-        assert list(actual_fps_a) == expected_fps_a
+        assert list(actual_fps_a) == self.expected_fps_raw
 
-        actual_fps_b = [_ for _ in list(fps) if 'referenced_images' in _ ]
+        actual_fps_b = [_ for _ in list(fps) if 'referenced_images' in _]
         assert len(actual_fps_b) > 0
 
     def test_discover_data_pattern(self):
 
-        image_dir = '/data/test_data'
+        image_dir = '/data/test_data/referenced_images'
         expected_fps = [
             '/data/test_data/referenced_images/Geo 843083290_1.tif',
             '/data/test_data/referenced_images/Geo 836109848_1.tif',

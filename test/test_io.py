@@ -12,6 +12,15 @@ class TestInput(unittest.TestCase):
         self.input_dir = '/data/test_data'
         self.output_dir = '/data/test_data/mosaics/temp'
 
+        self.expected_fps_raw = [
+            ('/data/test_data/images/23085686/'
+             '20220413_221313_1020286912_0_50_3.raw'),
+            ('/data/test_data/images/23085687/'
+             '20220413_202740_745696_1_50_0.raw'),
+            ('/data/test_data/images/23085687/'
+             'Geo 836109848_1.tif'),
+        ]
+
     def test_find_files(self):
 
         io_manager = IOManager(
@@ -24,15 +33,8 @@ class TestInput(unittest.TestCase):
             output_description={},
         )
 
-        expected_fps = [
-            ('/data/test_data/images/23085686/'
-             '20220413_221313_1020286912_0_50_3.raw'),
-            ('/data/test_data/images/23085687/'
-             '20220413_202740_745696_1_50_0.raw'),
-        ]
-
         fps = io_manager.input_filepaths['raw_images']
-        assert list(fps) == expected_fps
+        assert list(fps) == self.expected_fps_raw
 
         assert io_manager.input_filepaths['test'] == \
             '/data/test_data/this/dir.txt'
@@ -55,14 +57,8 @@ class TestInput(unittest.TestCase):
             output_description={},
         )
 
-        expected_fps_a = [
-            ('/data/test_data/images/23085686/'
-             '20220413_221313_1020286912_0_50_3.raw'),
-            ('/data/test_data/images/23085687/'
-             '20220413_202740_745696_1_50_0.raw'),
-        ]
         actual_fps_a = io_manager.input_filepaths['raw_images']
-        assert list(actual_fps_a) == expected_fps_a
+        assert list(actual_fps_a) == self.expected_fps_raw[:-1]
 
         actual_fps_b = io_manager.input_filepaths['referenced_images']
         assert len(actual_fps_b) > 0
@@ -73,7 +69,7 @@ class TestInput(unittest.TestCase):
             input_dir=self.input_dir,
             input_description={
                 'referenced_images': {
-                    'directory': '',
+                    'directory': 'referenced_images',
                     'extension': ['tif', 'tiff'],
                     'pattern': r'Geo\s\d+_\d.tif',
                 },
