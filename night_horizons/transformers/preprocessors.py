@@ -92,9 +92,9 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
 
         # Get the raw metadata
         log_df = self.get_logs(
-            img_log_fp=self.io_manager['input_filepaths']['img_log'],
-            imu_log_fp=self.io_manager['input_filepaths']['imu_log'],
-            gps_log_fp=self.io_manager['input_filepaths']['gps_log'],
+            img_log_fp=self.io_manager.input_filepaths['img_log'],
+            imu_log_fp=self.io_manager.input_filepaths['imu_log'],
+            gps_log_fp=self.io_manager.input_filepaths['gps_log'],
         )
 
         # Merge, assuming filenames remain the same.

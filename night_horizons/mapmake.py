@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+import os
+import shutil
 
 import cv2
 from osgeo import gdal
@@ -20,6 +22,9 @@ class Mapmaker(ABC):
         local_options: dict = {},
         verbose: bool = True
     ):
+
+        gdal.UseExceptions()
+
         self.verbose = verbose
 
         self.container = DIContainer(
@@ -27,13 +32,25 @@ class Mapmaker(ABC):
             local_options=local_options,
         )
 
-        gdal.UseExceptions()
-
         self.register_default_services()
 
-    @abstractmethod
     def register_default_services(self):
-        pass
+
+        # Services for input/output
+        self.container.register_service(
+            'io_manager',
+            IOManager,
+        )
+
+    def cleanup(self):
+
+        io_manager = self.container.get_service(
+            'io_manager',
+            file_exists='pass',
+        )
+
+        if os.path.isdir(io_manager.output_dir):
+            shutil.rmtree(io_manager.output_dir)
 
     # TODO: Delete
     # def register_default_io(self):

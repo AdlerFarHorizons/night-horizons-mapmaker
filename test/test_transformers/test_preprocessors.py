@@ -9,23 +9,25 @@ import pandas as pd
 
 import night_horizons.transformers.preprocessors as preprocessors
 import night_horizons.utils as utils
+from night_horizons.mapmake import Mapmaker
 
 
 class TestNITELitePreprocessor(unittest.TestCase):
 
     def setUp(self):
 
-        # Metadata filetree info
-        metadata_dir = '/data/test_data/metadata'
-        self.img_log_fp = os.path.join(metadata_dir, 'image.log')
-        self.imu_log_fp = os.path.join(metadata_dir, 'PresIMULog.csv')
-        self.gps_log_fp = os.path.join(metadata_dir, 'GPSLog.csv')
+        self.mapmaker = Mapmaker('./test/config.yml')
 
         # Preprocessor construction
         self.expected_cols = ['filepath', 'sensor_x', 'sensor_y']
         self.transformer = preprocessors.NITELitePreprocessor(
-            output_columns=self.expected_cols
+            io_manager=self.mapmaker.container.get_service('io_manager'),
+            output_columns=self.expected_cols,
         )
+
+    def tearDown(self):
+
+        self.mapmaker.cleanup()
 
     def test_output(self):
         '''The output prior to any form of georeferencing.
@@ -42,12 +44,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         fps['sensor_x'] = np.nan
         self.transformer.passthrough = ['test_column', 'sensor_x']
 
-        metadata = self.transformer.fit_transform(
-            fps,
-            img_log_fp=self.img_log_fp,
-            imu_log_fp=self.imu_log_fp,
-            gps_log_fp=self.gps_log_fp,
-        )
+        metadata = self.transformer.fit_transform(fps)
         assert len(metadata) == n_files
         utils.check_columns(
             actual=metadata.columns,
@@ -63,12 +60,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
-        metadata = self.transformer.fit_transform(
-            fps,
-            img_log_fp=self.img_log_fp,
-            imu_log_fp=self.imu_log_fp,
-            gps_log_fp=self.gps_log_fp,
-        )
+        metadata = self.transformer.fit_transform(fps)
         assert len(metadata) == n_files - 1
         assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
         assert metadata['sensor_x'].isna().sum() == 0
@@ -90,12 +82,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         new_index = rng.choice(np.arange(100), size=len(fps), replace=False)
         fps.index = new_index
 
-        metadata = self.transformer.fit_transform(
-            fps,
-            img_log_fp=self.img_log_fp,
-            imu_log_fp=self.imu_log_fp,
-            gps_log_fp=self.gps_log_fp,
-        )
+        metadata = self.transformer.fit_transform(fps)
         assert len(metadata) == n_files + 1
         assert (~metadata.columns.isin(self.expected_cols)).sum() == 0
         assert metadata['sensor_x'].isna().sum() == 2

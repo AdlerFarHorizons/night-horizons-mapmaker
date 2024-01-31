@@ -12,6 +12,12 @@ io_manager:
       directory: referenced_images
       extension: ['tif', 'tiff']
       pattern: 'Geo\s\d+_\d.tif'
+    img_log: metadata/image.log
+    imu_log: metadata/PresIMULog.csv
+    gps_log: metadata/GPSLog.csv
+  output_dir: ./test/test_data/temp
+  output_description: {}
+  file_exists: overwrite
 
 global:
   # Coordinate reference-system employed
