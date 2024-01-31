@@ -156,24 +156,17 @@ class SequentialMosaicMaker(MosaicMaker):
 
     def run(self):
 
-        settings = self.container.config
-
         # Get the filepaths
         io_manager: IOManager = self.container.get_service('io_manager')
-        fps_train, fps_test, fps = io_manager.train_test_production_split(
-            train_size=settings['train_size'],
-            random_state=settings['random_state'],
-            use_raw_images=settings['use_raw_images'],
-        )
+        fps_train = io_manager.input_filepaths['referenced_images']
+        fps = io_manager.input_filepaths['raw_images']
 
         # Y preprocessing
         preprocessor_y = self.container.get_service('preprocessor_y')
         y_train = preprocessor_y.fit_transform(fps_train)
-        y_test = preprocessor_y.fit_transform(fps_test)
 
         # X preprocessing
         preprocessor = self.container.get_service('preprocessor')
-        # Fit the pipeline
         preprocessor = preprocessor.fit(
             X=fps_train,
             y=y_train,
@@ -187,19 +180,23 @@ class SequentialMosaicMaker(MosaicMaker):
                 io_manager.input_filepaths['gps_log']
             ),
         )
-        X_train = preprocessor.fit_transform(fps_train)
-        X = preprocessor.fit_transform(fps)
+        X_train = preprocessor.transform(fps_train)
+        X = preprocessor.transform(fps)
+
+        # First guess at image registration
+        y_approx = X[preprocessors.GEOTRANSFORM_COLS]
 
         # Mosaicking
-        mosaicker = self.container.get_service('mosaicker')
-        # TODO: It's unintuitive that we use X=y_train here, and approx_y=X.
+        mosaicker: mosaicking.SequentialMosaicker = \
+            self.container.get_service('mosaicker')
         mosaicker = mosaicker.fit(
-            X=y_train,
-            approx_y=X,
+            X=X_train,
+            y=y_train,
+            y_approx=y_approx,
         )
-        y_pred = mosaicker.fit_transform(X)
+        y_pred = mosaicker.predict(X)
 
-        return y_pred
+        return y_pred, io_manager
 
     def register_default_services(self):
 

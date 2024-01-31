@@ -9,7 +9,7 @@ class TestMapmake(unittest.TestCase):
 
     def setUp(self):
 
-        self.out_dir = './test/temp'
+        self.out_dir = './test/test_data/temp'
 
         if os.path.isdir(self.out_dir):
             shutil.rmtree(self.out_dir)
@@ -57,9 +57,6 @@ class TestMapmake(unittest.TestCase):
             'io_manager': {
                 'output_dir': self.out_dir,
             },
-            'train_size': 1,
-            'random_state': 1523,
-            'use_raw_images': True,
         }
 
         mosaicmaker = mapmake.SequentialMosaicMaker(
