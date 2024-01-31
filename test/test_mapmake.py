@@ -24,17 +24,24 @@ class TestMapmake(unittest.TestCase):
         # Check basic structure of X_out
         self.assertEqual(
             len(X_out),
-            len(io_manager.input_filepaths['referenced_images'])
+            len(io_manager.input_filepaths['raw_images'])
         )
 
         # Check files exist
         for key, filepath in io_manager.output_filepaths.items():
             if key in skip_keys:
                 continue
-            self.assertTrue(
-                os.path.isfile(filepath),
-                'Missing file: {}'.format(key),
-            )
+            if not (os.path.isdir(filepath) or os.path.isfile(filepath)):
+                if '{' in filepath:
+                    listed = os.listdir(os.path.dirname(filepath))
+                    if len(listed) == 0:
+                        raise AssertionError(
+                            f'Missing file(s), {key}: {filepath}'
+                        )
+                else:
+                    raise AssertionError(
+                        f'Missing file, {key}: {filepath}'
+                    )
 
     def test_mosaicmaker(self):
 
@@ -61,6 +68,9 @@ class TestMapmake(unittest.TestCase):
                 # So we don't filter anything out
                 'float_altitude': 100.,
             },
+            'processor': {
+                'save_return_codes': ['bad_det', 'out_of_bounds'],
+            }
         }
 
         mosaicmaker = mapmake.SequentialMosaicMaker(
@@ -72,5 +82,4 @@ class TestMapmake(unittest.TestCase):
         self.check_output(
             y_pred,
             io_manager,
-            skip_keys=['progress_images_dir'],
         )

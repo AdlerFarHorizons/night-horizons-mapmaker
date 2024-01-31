@@ -316,6 +316,19 @@ class DatasetUpdater(DatasetProcessor):
                 and (results['return_code'] in self.save_return_codes)
             ):
 
+                # Get the images to save
+                src_img = ImageIO.load(
+                    row['filepath'],
+                    dtype=self.dtype,
+                )
+                dst_img = self.get_image_from_dataset(
+                    resources['dataset'],
+                    row['x_off'],
+                    row['y_off'],
+                    row['x_size'],
+                    row['y_size'],
+                )
+
                 # Make a progress images dir
                 os.makedirs(progress_images_dir, exist_ok=True)
 
@@ -330,8 +343,8 @@ class DatasetUpdater(DatasetProcessor):
                     f'{n_tests_existing:06d}_src.tiff'
                 )
 
-                cv2.imwrite(src_fp, results['src_image'][:, :, ::-1])
-                cv2.imwrite(dst_fp, results['dst_image'][:, :, ::-1])
+                cv2.imwrite(src_fp, src_img[:, :, ::-1])
+                cv2.imwrite(dst_fp, dst_img[:, :, ::-1])
 
                 if 'blended_img' in results:
                     blended_fp = os.path.join(
