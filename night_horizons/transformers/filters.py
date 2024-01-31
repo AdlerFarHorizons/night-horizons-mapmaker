@@ -56,13 +56,13 @@ class AltitudeFilter(Filter):
     def __init__(
         self,
         column: str = 'mAltitude',
-        cruising_altitude: float = 13000.,
+        float_altitude: float = 13000.,
     ):
 
         self.column = column
-        self.cruising_altitude = cruising_altitude
+        self.float_altitude = float_altitude
 
         def condition(X):
-            return X[column] > cruising_altitude
+            return X[column] > float_altitude
 
         super().__init__(condition)

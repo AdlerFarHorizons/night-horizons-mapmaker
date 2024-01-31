@@ -41,7 +41,7 @@ class TestMapmake(unittest.TestCase):
         local_options = {
             'io_manager': {
                 'output_dir': self.out_dir,
-            }
+            },
         }
 
         mosaicmaker = mapmake.MosaicMaker('./test/config.yml', local_options)
@@ -56,6 +56,10 @@ class TestMapmake(unittest.TestCase):
         local_options = {
             'io_manager': {
                 'output_dir': self.out_dir,
+            },
+            'altitude_filter': {
+                # So we don't filter anything out
+                'float_altitude': 100.,
             },
         }
 
