@@ -33,7 +33,10 @@ class DIContainer:
         -------
         '''
 
+        # Internal services (constructors)
         self._services = {}
+        # Publicly accessible services (instantiated)
+        self.services = {}
 
         # Load the config
         with open(config_filepath, 'r', encoding='UTF-8') as file:
@@ -43,17 +46,25 @@ class DIContainer:
 
         self.config = self.parse_config(self.config)
 
-    def register_service(self, name, constructor):
-        self._services[name] = constructor
+    def register_service(self, name, constructor, singleton: bool = False):
+        self._services[name] = {
+            'constructor': constructor,
+            'singleton': singleton,
+        }
 
     def get_service(self, name, *args, **kwargs):
         '''
         TODO: Add parameter validation.
         '''
 
-        constructor = self._services.get(name)
-        if not constructor:
+        constructor_dict = self._services.get(name)
+        if not constructor_dict:
             raise ValueError(f'Service {name} not registered')
+
+        # Parse constructor parameters
+        if constructor_dict['singleton'] and name in self.services:
+            return self.services[name]
+        constructor = constructor_dict['constructor']
 
         # Get config values
         if name in self.config:

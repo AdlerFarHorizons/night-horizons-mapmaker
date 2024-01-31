@@ -2,6 +2,7 @@
 '''
 
 import os
+import shutil
 import unittest
 
 import numpy as np
@@ -9,14 +10,14 @@ import pandas as pd
 
 import night_horizons.transformers.preprocessors as preprocessors
 import night_horizons.utils as utils
-from night_horizons.mapmake import Mapmaker
+from night_horizons.mapmake import TesterMapmaker
 
 
 class TestNITELitePreprocessor(unittest.TestCase):
 
     def setUp(self):
 
-        self.mapmaker = Mapmaker('./test/config.yml')
+        self.mapmaker = TesterMapmaker('./test/config.yml')
 
         # Preprocessor construction
         self.expected_cols = ['filepath', 'sensor_x', 'sensor_y']
@@ -27,7 +28,13 @@ class TestNITELitePreprocessor(unittest.TestCase):
 
     def tearDown(self):
 
-        self.mapmaker.cleanup()
+        io_manager = self.mapmaker.container.get_service(
+            'io_manager',
+            file_exists='pass',
+        )
+
+        if os.path.isdir(io_manager.output_dir):
+            shutil.rmtree(io_manager.output_dir)
 
     def test_output(self):
         '''The output prior to any form of georeferencing.

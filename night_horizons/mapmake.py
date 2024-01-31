@@ -15,7 +15,7 @@ from night_horizons.image_processing import (
 )
 
 
-class Mapmaker(ABC):
+class Mapmaker:
     def __init__(
         self,
         config_filepath: str,
@@ -42,21 +42,11 @@ class Mapmaker(ABC):
             IOManager,
         )
 
-    def cleanup(self):
-
-        io_manager = self.container.get_service(
-            'io_manager',
-            file_exists='pass',
-        )
-
-        if os.path.isdir(io_manager.output_dir):
-            shutil.rmtree(io_manager.output_dir)
-
     # TODO: Delete
     # def register_default_io(self):
 
     #     dataio_services = self.container.register_dataio_services()
-    #     
+    #
     #     def register_io_manager(*args, **kwargs):
     #         data_ios = {
     #             name: self.container.get_service(name)
@@ -187,15 +177,6 @@ class SequentialMosaicMaker(MosaicMaker):
         preprocessor = preprocessor.fit(
             X=fps_train,
             y=y_train,
-            metadata_preprocessor__img_log_fp=(
-                io_manager.input_filepaths['img_log']
-            ),
-            metadata_preprocessor__imu_log_fp=(
-                io_manager.input_filepaths['imu_log']
-            ),
-            metadata_preprocessor__gps_log_fp=(
-                io_manager.input_filepaths['gps_log']
-            ),
         )
         X = preprocessor.transform(fps)
 
@@ -233,7 +214,10 @@ class SequentialMosaicMaker(MosaicMaker):
         # Preprocessor to get metadata
         self.container.register_service(
             'metadata_preprocessor',
-            preprocessors.NITELitePreprocessor,
+            lambda io_manager, *args, **kwargs: preprocessors.NITELitePreprocessor(
+                io_manager=self.container.get_service('io_manager'),
+                *args, **kwargs
+            )
         )
 
         # Preprocessor to use metadata to georeference
