@@ -498,7 +498,7 @@ class MosaicIOManager(IOManager):
         return loaded_data
 
 
-class TrainMosaicIOManager(IOManager):
+class TrainMosaicIOManager(MosaicIOManager):
 
     def __init__(
         self,

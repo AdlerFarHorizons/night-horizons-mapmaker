@@ -179,7 +179,7 @@ class SequentialMosaicMaker(MosaicMaker):
         X = preprocessor.transform(fps)
 
         # First guess at image registration
-        y_pred_estimate = X[preprocessors.GEOTRANSFORM_COLS]
+        y_pred_estimate = X[['filepath'] + preprocessors.GEOTRANSFORM_COLS]
 
         # Mosaicking
         mosaicker: mosaicking.SequentialMosaicker = \

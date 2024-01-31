@@ -327,7 +327,11 @@ class SequentialMosaicker(Mosaicker):
         if self.i_start_ == 0:
             dataset = self.io_manager.open_dataset()
             try:
-                self.mosaicker_train.fit_transform(y, dataset=dataset)
+                self.mosaicker_train.fit_transform(
+                    X=y,
+                    dataset=dataset,
+                    i_start=0
+                )
             except OutOfBoundsError as e:
                 raise OutOfBoundsError(
                     "Some of the fitted referenced images are out of bounds. "
