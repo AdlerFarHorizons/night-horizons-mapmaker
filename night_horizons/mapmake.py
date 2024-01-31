@@ -161,21 +161,32 @@ class SequentialMosaicMaker(MosaicMaker):
 
     def run(self):
 
+        if self.verbose:
+            print('Starting mosaic creation.')
+
         # Get the filepaths
         io_manager: IOManager = self.container.get_service('io_manager')
         fps_train = io_manager.input_filepaths['referenced_images']
         fps = io_manager.input_filepaths['raw_images']
 
+        if self.verbose:
+            print(f'Saving output in {io_manager.output_dir}')
+
+        # Preprocessing
+        if self.verbose:
+            print('Preprocessing...')
+
         # Y preprocessing
+        if self.verbose:
+            print('    Preparing referenced images...')
         preprocessor_y = self.container.get_service('preprocessor_y')
         y_train = preprocessor_y.fit_transform(fps_train)
 
         # X preprocessing
+        if self.verbose:
+            print('    Preparing unreferenced images...')
         preprocessor = self.container.get_service('preprocessor')
-        preprocessor = preprocessor.fit(
-            X=fps_train,
-            y=y_train,
-        )
+        preprocessor = preprocessor.fit(X=fps_train, y=y_train)
         X = preprocessor.transform(fps)
 
         # First guess at image registration
@@ -184,12 +195,22 @@ class SequentialMosaicMaker(MosaicMaker):
         # Mosaicking
         mosaicker: mosaicking.SequentialMosaicker = \
             self.container.get_service('mosaicker')
+        if self.verbose:
+            print('Creating starting mosaic...')
         mosaicker = mosaicker.fit(
             X=None,
             y=y_train,
             y_pred_estimate=y_pred_estimate,
         )
+        if self.verbose:
+            print('Mosaicking unreferenced images...')
         y_pred = mosaicker.predict(X)
+
+        if self.verbose:
+            print(
+                'Done!\n'
+                f'Output saved at {io_manager.output_filepaths["mosaic"]}'
+            )
 
         return y_pred, io_manager
 
