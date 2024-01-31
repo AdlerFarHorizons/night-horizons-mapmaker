@@ -9,7 +9,9 @@ from sklearn.pipeline import Pipeline
 from night_horizons.transformers import filters, order, preprocessors, raster
 
 from night_horizons.container import DIContainer
-from night_horizons.io_manager import IOManager, MosaicIOManager
+from night_horizons.io_manager import (
+    IOManager, MosaicIOManager, TrainMosaicIOManager
+)
 from night_horizons.image_processing import (
     mosaicking, operators, processors, registration, scorers
 )
@@ -40,6 +42,7 @@ class Mapmaker:
         self.container.register_service(
             'io_manager',
             IOManager,
+            singleton=True,
         )
 
     # TODO: Delete
@@ -93,9 +96,12 @@ class MosaicMaker(Mapmaker):
     def register_default_services(self):
 
         # Services for input/output
+        # By passing singleton=True we ensure that once an instance is made
+        # we use it throughout, without needing to explicitly pass it
         self.container.register_service(
             'io_manager',
             MosaicIOManager,
+            singleton=True,
         )
 
         # What we use for preprocessing
@@ -116,8 +122,8 @@ class MosaicMaker(Mapmaker):
         # the same io_manager throughout
         self.container.register_service(
             'processor',
-            lambda io_manager, *args, **kwargs: processors.DatasetUpdater(
-                io_manager=io_manager,
+            lambda *args, **kwargs: processors.DatasetUpdater(
+                io_manager=self.container.get_service('io_manager'),
                 image_operator=self.container.get_service('image_operator'),
                 *args, **kwargs
             )
@@ -132,31 +138,23 @@ class MosaicMaker(Mapmaker):
         # This is the corresponding processor for scoring images
         self.container.register_service(
             'scorer',
-            lambda io_manager, *args, **kwargs: processors.DatasetScorer(
-                io_manager=io_manager,
+            lambda *args, **kwargs: processors.DatasetScorer(
+                io_manager=self.container.get_service('io_manager'),
                 image_operator=self.container.get_service('image_scorer'),
                 *args, **kwargs
             )
         )
 
         # Finally, the mosaicker itself, which is a batch processor
-        def make_mosaicker(
-            io_manager: IOManager = None,
-            *args, **kwargs
-        ):
-            if io_manager is None:
-                io_manager = self.container.get_service('io_manager')
-            processor = self.container.get_service(
-                'processor', io_manager=io_manager)
-            scorer = self.container.get_service(
-                'scorer', io_manager=io_manager)
-            return mosaicking.Mosaicker(
-                io_manager=io_manager,
-                processor=processor,
-                scorer=scorer,
+        self.container.register_service(
+            'mosaicker',
+            lambda *args, **kwargs: mosaicking.Mosaicker(
+                io_manager=self.container.get_service('io_manager'),
+                processor=self.container.get_service('processor'),
+                scorer=self.container.get_service('scorer'),
                 *args, **kwargs
             )
-        self.container.register_service('mosaicker', make_mosaicker)
+        )
 
 
 class SequentialMosaicMaker(MosaicMaker):
@@ -201,6 +199,7 @@ class SequentialMosaicMaker(MosaicMaker):
         self.container.register_service(
             'io_manager',
             MosaicIOManager,
+            singleton=True,
         )
 
         self.register_default_preprocessors()
@@ -214,7 +213,7 @@ class SequentialMosaicMaker(MosaicMaker):
         # Preprocessor to get metadata
         self.container.register_service(
             'metadata_preprocessor',
-            lambda io_manager, *args, **kwargs: preprocessors.NITELitePreprocessor(
+            lambda *args, **kwargs: preprocessors.NITELitePreprocessor(
                 io_manager=self.container.get_service('io_manager'),
                 *args, **kwargs
             )
@@ -290,32 +289,15 @@ class SequentialMosaicMaker(MosaicMaker):
 
     def register_default_train_services(self):
 
-        # The io manager
-        def make_io_manager_train(
-            output_description: dict = {
-                'mosaic': 'mosaic.tiff',
-                'settings': 'settings_train.yaml',
-                'log': 'log_train.yaml',
-                'y_pred': 'y_pred_train.csv',
-                'progress_images_dir_train': 'progress_images_train',
-            },
-            file_exists: str = 'pass',
-            *args, **kwargs
-        ):
-            '''TODO: It is a requirement that the mosaic output descriptions
-            match between io_manager and io_manager_train, but that is not
-            enforced in the code.
-            '''
-            return self.container.get_service(
-                'io_manager',
-                output_description=output_description,
-                file_exists=file_exists,
-                *args, **kwargs
-            )
+        # The io manager for the training mosaic uses the same parameters
+        # as the main io manager, but with some minor modifications
         self.container.register_service(
             'io_manager_train',
-            make_io_manager_train,
+            TrainMosaicIOManager,
+            singleton=True,
+            args_key='io_manager',
         )
+        # TODO: List all the design patterns I used. Singleton, DI, etc.
 
         # For the training mosaic
         self.container.register_service(
@@ -326,32 +308,22 @@ class SequentialMosaicMaker(MosaicMaker):
         # The processor for the training mosaic
         self.container.register_service(
             'processor_train',
-            lambda io_manager_train, *args, **kwargs:
-                processors.DatasetUpdater(
-                    io_manager=io_manager_train,
-                    image_operator=self.container.get_service(
-                        'image_operator_train'),
-                    *args, **kwargs
-                )
+            lambda *args, **kwargs: processors.DatasetUpdater(
+                io_manager=self.container.get_service('io_manager_train'),
+                image_operator=self.container.get_service(
+                    'image_operator_train'),
+                *args, **kwargs
+            )
         )
 
         # The actual training mosaicker
-        def make_mosaicker_train(
-            io_manager_train: IOManager = None,
-            *args, **kwargs
-        ):
-            if io_manager_train is None:
-                io_manager_train = self.container.get_service(
-                    'io_manager_train')
-            return mosaicking.Mosaicker(
-                io_manager=io_manager_train,
-                processor=self.container.get_service(
-                    'processor_train', io_manager_train=io_manager_train),
-                *args, **kwargs
-            )
         self.container.register_service(
             'mosaicker_train',
-            make_mosaicker_train,
+            lambda *args, **kwargs: mosaicking.Mosaicker(
+                io_manager=self.container.get_service('io_manager_train'),
+                processor=self.container.get_service('processor_train'),
+                *args, **kwargs
+            )
         )
 
     def register_default_batch_processor(self):
@@ -373,31 +345,18 @@ class SequentialMosaicMaker(MosaicMaker):
             cv2.BFMatcher.create,
         )
 
-        # Image processing
-        def make_image_aligner_blender(
-            image_transformer: raster.PassImageTransformer = None,
-            feature_detector: cv2.Feature2D = None,
-            feature_matcher: cv2.DescriptorMatcher = None,
-            *args, **kwargs
-        ):
-            if image_transformer is None:
-                image_transformer = self.container.get_service(
-                    'image_transformer')
-            if feature_detector is None:
-                feature_detector = self.container.get_service(
-                    'feature_detector')
-            if feature_matcher is None:
-                feature_matcher = self.container.get_service(
-                    'feature_matcher')
-            return operators.ImageAlignerBlender(
-                image_transformer=image_transformer,
-                feature_detector=feature_detector,
-                feature_matcher=feature_matcher,
-                *args, **kwargs
-            )
+        # Operator for the sequential mosaicker--align and blend
         self.container.register_service(
             'image_operator',
-            make_image_aligner_blender,
+            lambda *args, **kwargs: operators.ImageAlignerBlender(
+                image_transformer=self.container.get_service(
+                    'image_transformer'),
+                feature_detector=self.container.get_service(
+                    'feature_detector'),
+                feature_matcher=self.container.get_service(
+                    'feature_matcher'),
+                *args, **kwargs
+            )
         )
 
         # We'll include a scorer as well
@@ -406,46 +365,26 @@ class SequentialMosaicMaker(MosaicMaker):
             scorers.SimilarityScorer,
         )
 
-        # And the row transformer used for the sequential mosaicker
-        def make_processor(
-            io_manager: IOManager = None,
-            image_operator: operators.BaseImageOperator = None,
-            *args, **kwargs
-        ):
-            if io_manager is None:
-                io_manager = self.container.get_service('io_manager')
-            if image_operator is None:
-                image_operator = self.container.get_service('image_operator')
-            return processors.DatasetRegistrar(
-                io_manager=io_manager,
-                image_operator=image_operator,
-                *args, **kwargs
-            )
+        # The processor for the sequential mosaicker
         self.container.register_service(
             'processor',
-            make_processor
+            lambda *args, **kwargs: processors.DatasetRegistrar(
+                io_manager=self.container.get_service('io_manager'),
+                image_operator=self.container.get_service('image_operator'),
+                *args, **kwargs
+            )
         )
 
         # Finally, the mosaicker itself
-        def make_mosaicker(
-            io_manager: IOManager = None,
-            processor: processors.Processor = None,
-            mosaicker_train: mosaicking.Mosaicker = None,
-            *args, **kwargs
-        ):
-            if io_manager is None:
-                io_manager = self.container.get_service('io_manager')
-            if processor is None:
-                processor = self.container.get_service('processor')
-            if mosaicker_train is None:
-                mosaicker_train = self.container.get_service('mosaicker_train')
-            return mosaicking.SequentialMosaicker(
-                io_manager=io_manager,
-                processor=processor,
-                mosaicker_train=mosaicker_train,
+        self.container.register_service(
+            'mosaicker',
+            lambda *args, **kwargs: mosaicking.SequentialMosaicker(
+                io_manager=self.container.get_service('io_manager'),
+                processor=self.container.get_service('processor'),
+                mosaicker_train=self.container.get_service('mosaicker_train'),
                 *args, **kwargs
             )
-        self.container.register_service('mosaicker', make_mosaicker)
+        )
 
 
 if __name__ == "__main__":

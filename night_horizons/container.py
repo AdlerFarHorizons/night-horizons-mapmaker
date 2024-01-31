@@ -46,10 +46,17 @@ class DIContainer:
 
         self.config = self.parse_config(self.config)
 
-    def register_service(self, name, constructor, singleton: bool = False):
+    def register_service(
+        self,
+        name,
+        constructor,
+        singleton: bool = False,
+        args_key: str = None,
+    ):
         self._services[name] = {
             'constructor': constructor,
             'singleton': singleton,
+            'args_key': args_key,
         }
 
     def get_service(self, name, *args, **kwargs):
@@ -57,6 +64,7 @@ class DIContainer:
         TODO: Add parameter validation.
         '''
 
+        # Get parameters for constructing the service
         constructor_dict = self._services.get(name)
         if not constructor_dict:
             raise ValueError(f'Service {name} not registered')
@@ -65,6 +73,17 @@ class DIContainer:
         if constructor_dict['singleton'] and name in self.services:
             return self.services[name]
         constructor = constructor_dict['constructor']
+
+        # Get the used arguments
+        if constructor_dict['args_key'] is None:
+            args_key = name
+        else:
+            args_key = constructor_dict['args_key']
+        kwargs = self.get_service_args(args_key, constructor, **kwargs)
+
+        return constructor(*args, **kwargs)
+
+    def get_service_args(self, name, constructor=None, **kwargs):
 
         # Get config values
         if name in self.config:
@@ -97,7 +116,7 @@ class DIContainer:
                 if isinstance(value, dict) and isinstance(default_value, dict):
                     kwargs[key] = {**default_value, **value}
 
-        return constructor(*args, **kwargs)
+        return kwargs
 
     def update_config(self, old_config, new_config):
 

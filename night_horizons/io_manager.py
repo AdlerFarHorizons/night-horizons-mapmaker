@@ -496,3 +496,33 @@ class MosaicIOManager(IOManager):
             'y_pred': y_pred,
         }
         return loaded_data
+
+
+class TrainMosaicIOManager(IOManager):
+
+    def __init__(
+        self,
+        output_description: dict = {
+            'mosaic': 'mosaic.tiff',
+            'settings': 'settings_train.yaml',
+            'log': 'log_train.yaml',
+            'y_pred': 'y_pred_train.csv',
+            'progress_images_dir_train': 'progress_images_train',
+        },
+        file_exists: str = 'pass',
+        *args, **kwargs
+    ):
+        '''The inputs are those suited for a training mosaic.
+        See MosaicIOManager for all keyword arguments.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        super().__init__(
+            output_description=output_description,
+            file_exists=file_exists,
+            *args, **kwargs
+        )
