@@ -180,19 +180,18 @@ class SequentialMosaicMaker(MosaicMaker):
                 io_manager.input_filepaths['gps_log']
             ),
         )
-        X_train = preprocessor.transform(fps_train)
         X = preprocessor.transform(fps)
 
         # First guess at image registration
-        y_approx = X[preprocessors.GEOTRANSFORM_COLS]
+        y_pred_estimate = X[preprocessors.GEOTRANSFORM_COLS]
 
         # Mosaicking
         mosaicker: mosaicking.SequentialMosaicker = \
             self.container.get_service('mosaicker')
         mosaicker = mosaicker.fit(
-            X=X_train,
+            X=None,
             y=y_train,
-            y_approx=y_approx,
+            y_pred_estimate=y_pred_estimate,
         )
         y_pred = mosaicker.predict(X)
 

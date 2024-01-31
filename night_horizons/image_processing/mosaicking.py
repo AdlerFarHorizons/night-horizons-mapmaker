@@ -299,30 +299,35 @@ class SequentialMosaicker(Mosaicker):
 
     def fit(
         self,
-        X: pd.DataFrame,
+        X=None,
         y=None,
-        approx_y: pd.DataFrame = None,
+        y_pred_estimate: pd.DataFrame = None,
         dataset: gdal.Dataset = None,
         i_start: Union[int, str] = 'checkpoint',
     ):
 
-        assert approx_y is not None, \
-            'Must pass approx_y.'
+        assert X is None, (
+            'X should not be passed to SequentialMosaicker.fit '
+            'because the fitting is X-independent.'
+        )
+        assert y_pred_estimate is not None, \
+            'Must pass a first guess for georeferencing, y_pred_estimate.'
 
         # General fitting
-        super().fit(approx_y, dataset=dataset, i_start=i_start)
+        super().fit(X=y_pred_estimate, dataset=dataset, i_start=i_start)
 
-        # Make a progress images dir
-        os.makedirs(
-            self.io_manager.output_filepaths['progress_images_dir'],
-            exist_ok=True
-        )
+        # TODO: Delete
+        # # Make a progress images dir
+        # os.makedirs(
+        #     self.io_manager.output_filepaths['progress_images_dir'],
+        #     exist_ok=True
+        # )
 
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
             dataset = self.io_manager.open_dataset()
             try:
-                self.mosaicker_train.fit_transform(X, dataset=dataset)
+                self.mosaicker_train.fit_transform(y, dataset=dataset)
             except OutOfBoundsError as e:
                 raise OutOfBoundsError(
                     "Some of the fitted referenced images are out of bounds. "
