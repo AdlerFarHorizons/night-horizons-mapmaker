@@ -132,6 +132,8 @@ class Processor(utils.LoggerMixin, ABC):
             return_code = 'dst_dark_frame'
         except np.linalg.LinAlgError:
             return_code = 'linalg_err'
+        except exceptions.OutOfBoundsError:
+            return_code = 'out_of_bounds'
 
         duration = time.time() - start
         results['duration'] = duration
@@ -308,10 +310,15 @@ class DatasetUpdater(DatasetProcessor):
             progress_images_dir = (
                 self.io_manager.output_filepaths['progress_images_dir']
             )
+
             if (
                 (progress_images_dir is not None)
                 and (results['return_code'] in self.save_return_codes)
             ):
+
+                # Make a progress images dir
+                os.makedirs(progress_images_dir, exist_ok=True)
+
                 n_tests_existing = len(glob.glob(os.path.join(
                     progress_images_dir, '*_dst.tiff')))
                 dst_fp = os.path.join(

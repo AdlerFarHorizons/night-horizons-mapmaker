@@ -316,13 +316,6 @@ class SequentialMosaicker(Mosaicker):
         # General fitting
         super().fit(X=y_pred_estimate, dataset=dataset, i_start=i_start)
 
-        # TODO: Delete
-        # # Make a progress images dir
-        # os.makedirs(
-        #     self.io_manager.output_filepaths['progress_images_dir'],
-        #     exist_ok=True
-        # )
-
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
             dataset = self.io_manager.open_dataset()

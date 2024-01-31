@@ -69,4 +69,8 @@ class TestMapmake(unittest.TestCase):
         )
         y_pred, io_manager = mosaicmaker.run()
 
-        self.check_output(y_pred, io_manager)
+        self.check_output(
+            y_pred,
+            io_manager,
+            skip_keys=['progress_images_dir'],
+        )
