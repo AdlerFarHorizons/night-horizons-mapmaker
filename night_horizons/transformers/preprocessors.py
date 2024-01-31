@@ -11,7 +11,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 import tqdm
 
-from .. import utils
+from .. import io_manager, utils
 
 GEOTRANSFORM_COLS = [
     'x_min', 'x_max',
@@ -43,11 +43,13 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
+        io_manager: io_manager.IOManager,
         output_columns: list[str] = None,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         unhandled_files: str = 'warn and drop',
         passthrough: list[str] = [],
     ):
+        self.io_manager = io_manager
         self.output_columns = output_columns
         self.crs = crs
         self.unhandled_files = unhandled_files
@@ -58,11 +60,7 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
         self,
         X: Union[np.ndarray[str], list[str], pd.DataFrame],
         y=None,
-        img_log_fp: str = None,
-        imu_log_fp: str = None,
-        gps_log_fp: str = None,
     ):
-        '''TODO: Another area to rework with DataIO'''
 
         # Check the input is good.
         X = utils.check_filepaths_input(
@@ -73,14 +71,6 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
         # Convert CRS as needed
         if isinstance(self.crs, str):
             self.crs = pyproj.CRS(self.crs)
-
-        # Check and set log fps
-        assert img_log_fp is not None, 'Must pass img_log filepath.'
-        assert imu_log_fp is not None, 'Must pass imu_log filepath.'
-        assert gps_log_fp is not None, 'Must pass gps_log filepath.'
-        self.img_log_fp_ = img_log_fp
-        self.imu_log_fp_ = imu_log_fp
-        self.gps_log_fp_ = gps_log_fp
 
         self.is_fitted_ = True
         return self
@@ -102,9 +92,9 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
 
         # Get the raw metadata
         log_df = self.get_logs(
-            self.img_log_fp_,
-            self.imu_log_fp_,
-            self.gps_log_fp_,
+            img_log_fp=self.io_manager['input_filepaths']['img_log'],
+            imu_log_fp=self.io_manager['input_filepaths']['imu_log'],
+            gps_log_fp=self.io_manager['input_filepaths']['gps_log'],
         )
 
         # Merge, assuming filenames remain the same.
