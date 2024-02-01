@@ -11,7 +11,7 @@ import scipy
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from night_horizons.image_processing import processors
+from night_horizons.image_processing import processors, scorers
 from night_horizons.mapmake import SequentialMosaicMaker
 from night_horizons.raster import Image, ReferencedImage
 from night_horizons.transformers.raster import RasterCoordinateTransformer
@@ -48,6 +48,11 @@ class TestDatasetRegistrar(unittest.TestCase):
                     *args, **kwargs
                 )
         )
+        # Also the scorer we use
+        mapmaker.container.register_service(
+            'image_scorer',
+            scorers.SimilarityScoreOperator
+        )
         self.mapmaker = mapmaker
 
         # Convenient access to container
@@ -63,17 +68,47 @@ class TestDatasetRegistrar(unittest.TestCase):
         self,
         expected_fp,
         actual_fp,
-        *args,
-        **kwargs
+        pixel_diff_threshold=1,
     ):
+        """Compare two referenced images.
+        TODO: I pulled this out of the functions and made more general, but it's
+        not used elsewhere...
 
-        return compare_referenced_images(
-            expected_fp=expected_fp,
-            actual_fp=actual_fp,
-            crs_code=self.settings['global']['crs'],
-            image_scorer=self.container.get_service('image_scorer'),
-            *args, **kwargs
+        Args:
+            expected_fp (str): File path of the expected image.
+            actual_fp (str): File path of the actual image.
+            acceptance_threshold (float, optional): Threshold for accepting
+                the image similarity score. Defaults to 0.99.
+        """
+
+        assert os.path.isfile(actual_fp), f'File {actual_fp} not found.'
+        actual_image = ReferencedImage.open(
+            actual_fp,
+            cart_crs=self.container.get_service('crs'),
         )
+
+        expected_image = ReferencedImage.open(
+            expected_fp,
+            cart_crs=self.container.get_service('crs'),
+        )
+
+        # Compare image shape
+        np.testing.assert_allclose(
+            actual_image.img_shape,
+            expected_image.img_shape,
+            atol=pixel_diff_threshold,
+        )
+
+        # Compare image bounds
+        np.testing.assert_allclose(
+            actual_image.cart_bounds,
+            expected_image.cart_bounds,
+            pixel_diff_threshold * actual_image.get_pixel_widths()[0],
+        )
+
+        # Compare image contents
+        image_scorer = self.container.get_service('image_scorer')
+        image_scorer.assert_equal(actual_image.img_int, expected_image.img_int)
 
     def test_store_results(self):
 
@@ -290,49 +325,3 @@ class TestDatasetRegistrar(unittest.TestCase):
             *args, **kwargs
         )
 
-
-def compare_referenced_images(
-    expected_fp,
-    actual_fp,
-    image_scorer,
-    pixel_diff_threshold=1,
-    crs_code='EPSG:3857',
-):
-    """Compare two referenced images.
-    TODO: I pulled this out of the functions and made more general, but it's
-    not used elsewhere...
-
-    Args:
-        expected_fp (str): File path of the expected image.
-        actual_fp (str): File path of the actual image.
-        acceptance_threshold (float, optional): Threshold for accepting
-            the image similarity score. Defaults to 0.99.
-    """
-
-    assert os.path.isfile(actual_fp), f'File {actual_fp} not found.'
-    actual_image = ReferencedImage.open(
-        actual_fp,
-        cart_crs_code=crs_code,
-    )
-
-    expected_image = ReferencedImage.open(
-        expected_fp,
-        cart_crs_code=crs_code,
-    )
-
-    # Compare image shape
-    np.testing.assert_allclose(
-        actual_image.img_shape,
-        expected_image.img_shape,
-        atol=pixel_diff_threshold,
-    )
-
-    # Compare image bounds
-    np.testing.assert_allclose(
-        actual_image.cart_bounds,
-        expected_image.cart_bounds,
-        pixel_diff_threshold * actual_image.get_pixel_widths()[0],
-    )
-
-    # Compare image contents
-    image_scorer.assert_equal(actual_image.img_int, expected_image.img_int)

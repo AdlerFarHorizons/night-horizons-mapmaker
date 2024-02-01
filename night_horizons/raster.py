@@ -268,9 +268,11 @@ class ReferencedImage(Image):
         img,
         x_bounds,
         y_bounds,
-        cart_crs_code: str = 'EPSG:3857',
-        latlon_crs_code: str = 'EPSG:4326',
+        cart_crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+        latlon_crs: Union[str, pyproj.CRS] = 'EPSG:4326',
     ):
+
+        cart_crs
 
         super().__init__(img)
 
@@ -279,31 +281,31 @@ class ReferencedImage(Image):
             img=self.img_int,
             x_bounds=x_bounds,
             y_bounds=y_bounds,
-            crs=pyproj.CRS(cart_crs_code),
+            crs=pyproj.CRS(cart_crs),
             driver='MEM',
             options=[],
         )
 
         # Set CRS properties
-        self.set_projections(cart_crs_code, latlon_crs_code)
+        self.set_projections(cart_crs, latlon_crs)
 
     @classmethod
     def open(
         cls,
         fp,
-        cart_crs_code: str = 'EPSG:3857',
-        latlon_crs_code: str = 'EPSG:4326',
+        cart_crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+        latlon_crs: Union[str, pyproj.CRS] = 'EPSG:4326',
     ):
 
-        cart_crs = pyproj.CRS(cart_crs_code)
+        cart_crs = pyproj.CRS(cart_crs)
         img, x_bounds, y_bounds = cls.io.load(fp, crs=cart_crs)
 
         return ReferencedImage(
             img,
             x_bounds,
             y_bounds,
-            cart_crs_code=cart_crs_code,
-            latlon_crs_code=latlon_crs_code
+            cart_crs=cart_crs,
+            latlon_crs=latlon_crs,
         )
 
     def save(self, fp, img_key='img_int'):
@@ -338,13 +340,11 @@ class ReferencedImage(Image):
         else:
             return (self.dataset.RasterYSize, self.dataset.RasterXSize)
 
-    def set_projections(self, cart_crs_code, latlon_crs_code):
+    def set_projections(self, cart_crs, latlon_crs):
 
         # Establish CRS and conversions
-        self.cart_crs_code = cart_crs_code
-        self.latlon_crs_code = latlon_crs_code
-        self.cart_crs = pyproj.CRS(cart_crs_code)
-        self.latlon_crs = pyproj.CRS(latlon_crs_code)
+        self.cart_crs = pyproj.CRS(cart_crs)
+        self.latlon_crs = pyproj.CRS(latlon_crs)
         self.cart_to_latlon = pyproj.Transformer.from_crs(
             self.cart_crs,
             self.latlon_crs
@@ -353,7 +353,6 @@ class ReferencedImage(Image):
             self.latlon_crs,
             self.cart_crs
         )
-        self.dataset.SetProjection(self.cart_crs.to_wkt())
 
     def get_bounds(self, crs: pyproj.CRS):
 
