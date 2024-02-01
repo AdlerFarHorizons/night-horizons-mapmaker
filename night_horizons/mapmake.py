@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 import os
 import shutil
+from typing import Tuple
 
 import cv2
 from osgeo import gdal
+import pandas as pd
 from sklearn.pipeline import Pipeline
 
 from night_horizons.transformers import filters, order, preprocessors, raster
@@ -15,6 +17,7 @@ from night_horizons.io_manager import (
 from night_horizons.image_processing import (
     mosaicking, operators, processors, registration, scorers
 )
+from night_horizons.utils import ReferencedRawSplit
 
 
 class Mapmaker:
@@ -164,33 +167,33 @@ class SequentialMosaicMaker(MosaicMaker):
         if self.verbose:
             print('Starting mosaic creation.')
 
-        # Get the filepaths
+        # Get the file management
         io_manager: IOManager = self.container.get_service('io_manager')
-        fps_train = io_manager.input_filepaths['referenced_images']
-        fps = io_manager.input_filepaths['raw_images']
-
         if self.verbose:
             print(f'Saving output in {io_manager.output_dir}')
 
-        # Preprocessing
+        # Split up the data
+        splitter: ReferencedRawSplit = self.container.get_service(
+            'data_splitter')
+        fps_train, fps_test, fps = splitter.train_test_production_split()
+
+        # Preprocessing for referenced images
         if self.verbose:
             print('Preprocessing...')
-
-        # Y preprocessing
-        if self.verbose:
             print('    Preparing referenced images...')
-        preprocessor_y = self.container.get_service('preprocessor_y')
-        y_train = preprocessor_y.fit_transform(fps_train)
+        preprocessor_train = self.container.get_service('preprocessor_train')
+        X_train = preprocessor_train.fit_transform(fps_train)
+        # For the referenced images there is no difference in the dataframe
+        # before and after mosaicking, so y_train = X_train
+        y_train = X_train
 
-        # X preprocessing
+        # Preprocessing for raw images
         if self.verbose:
             print('    Preparing unreferenced images...')
         preprocessor = self.container.get_service('preprocessor')
+        # The preprocessor is fit to the training sample
         preprocessor = preprocessor.fit(X=fps_train, y=y_train)
         X = preprocessor.transform(fps)
-
-        # First guess at image registration
-        y_pred_estimate = X[['filepath'] + preprocessors.GEOTRANSFORM_COLS]
 
         # Mosaicking
         mosaicker: mosaicking.SequentialMosaicker = \
@@ -198,9 +201,8 @@ class SequentialMosaicMaker(MosaicMaker):
         if self.verbose:
             print('Creating starting mosaic...')
         mosaicker = mosaicker.fit(
-            X=None,
-            y=y_train,
-            y_pred_estimate=y_pred_estimate,
+            X=X,
+            X_train=X_train,
         )
         if self.verbose:
             print('Mosaicking unreferenced images...')
@@ -230,6 +232,15 @@ class SequentialMosaicMaker(MosaicMaker):
         self.register_default_batch_processor()
 
     def register_default_preprocessors(self):
+
+        # First preprocessing step is to split up the data
+        self.container.register_service(
+            'data_splitter',
+            lambda *args, **kwargs: ReferencedRawSplit(
+                io_manager=self.container.get_service('io_manager'),
+                *args, **kwargs
+            )
+        )
 
         # Preprocessor to get metadata
         self.container.register_service(
@@ -300,15 +311,15 @@ class SequentialMosaicMaker(MosaicMaker):
             make_preprocessor_pipeline,
         )
 
-        # Preprocessor for the y values is just a geotiff preprocessor
+    def register_default_train_services(self):
+
+        # Preprocessor for the referenced mosaic is just a GeoTIFFPreprocessor
         self.container.register_service(
-            'preprocessor_y',
+            'preprocessor_train',
             lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
                 *args, **kwargs
             )
         )
-
-    def register_default_train_services(self):
 
         # The io manager for the training mosaic uses the same parameters
         # as the main io manager, but with some minor modifications

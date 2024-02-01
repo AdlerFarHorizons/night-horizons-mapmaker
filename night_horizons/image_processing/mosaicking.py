@@ -299,29 +299,25 @@ class SequentialMosaicker(Mosaicker):
 
     def fit(
         self,
-        X=None,
+        X: pd.DataFrame,
         y=None,
-        y_pred_estimate: pd.DataFrame = None,
+        X_train: pd.DataFrame = None,
         dataset: gdal.Dataset = None,
         i_start: Union[int, str] = 'checkpoint',
     ):
 
-        assert X is None, (
-            'X should not be passed to SequentialMosaicker.fit '
-            'because the fitting is X-independent.'
-        )
-        assert y_pred_estimate is not None, \
-            'Must pass a first guess for georeferencing, y_pred_estimate.'
+        assert X_train is not None, \
+            'Must pass X_train: some referenced images to build a base mosaic.'
 
         # General fitting
-        super().fit(X=y_pred_estimate, dataset=dataset, i_start=i_start)
+        super().fit(X=X, dataset=dataset, i_start=i_start)
 
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:
             dataset = self.io_manager.open_dataset()
             try:
                 self.mosaicker_train.fit_transform(
-                    X=y,
+                    X=X_train,
                     dataset=dataset,
                     i_start=0
                 )

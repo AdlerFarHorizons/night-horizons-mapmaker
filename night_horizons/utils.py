@@ -12,6 +12,7 @@ import cv2
 import numpy as np
 import pandas as pd
 import scipy
+from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import check_array
 import pyproj
 # This is a draft---don't overengineer!
@@ -372,6 +373,47 @@ def store_parameters(constructor):
             setattr(self, param_key, param_value)
 
     return wrapped_constructor
+
+
+class ReferencedRawSplit:
+
+    def __init__(
+        self,
+        io_manager,
+        test_size: Union[int, float] = 0.2,
+        random_state: Union[int, np.random.RandomState] = None,
+    ):
+
+        self.io_manager = io_manager
+        self.test_size = test_size
+        self.random_state = random_state
+
+    def train_test_production_split(self) -> Tuple[pd.Series, pd.Series, pd.Series]:
+        '''TODO: This is an awkward spot for this function.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        referenced_fps = self.io_manager.input_filepaths['referenced_images']
+        raw_fps = self.io_manager.input_filepaths['raw_images']
+
+        fps_train, fps_test = train_test_split(
+            referenced_fps,
+            test_size=self.test_size,
+            random_state=self.random_state,
+            shuffle=True,
+        )
+        fps = pd.concat([fps_test, raw_fps])
+        fps = fps.sample(
+            n=fps.size,
+            replace=False,
+            random_state=self.random_state,
+        )
+
+        return fps_train, fps_test, fps
 
 
 class LoggerMixin:

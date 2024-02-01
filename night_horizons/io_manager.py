@@ -334,54 +334,6 @@ class IOManager:
 
         return i_resume, loaded_data
 
-    def train_test_production_split(
-        self,
-        train_size: dict[str],
-        random_state: int,
-        use_raw_images: bool = False,
-    ) -> Tuple[pd.Series, pd.Series]:
-        '''TODO: This is an awkward spot for this function.
-
-        Parameters
-        ----------
-        Returns
-        -------
-        '''
-
-        # Get the referenced fps
-        referenced_fps_train = []
-        referenced_fps_test = []
-        for i, train_size_i in train_size.items():
-
-            cam_reffed_fps = self.input_filepaths[f'cam{i}_referenced_images']
-
-            # When there's no training for this camera
-            if train_size_i == 0:
-                referenced_fps_test.append(cam_reffed_fps)
-                continue
-
-            referenced_fps_train_i, referenced_fps_test_i = train_test_split(
-                cam_reffed_fps,
-                train_size=train_size_i,
-                random_state=random_state,
-                shuffle=True,
-            )
-            referenced_fps_train.append(referenced_fps_train_i)
-            referenced_fps_test.append(referenced_fps_test_i)
-
-        fps_train = pd.concat(referenced_fps_train, ignore_index=True)
-        fps_test = pd.concat(referenced_fps_test, ignore_index=True)
-
-        # Include the raw images
-        if use_raw_images:
-            raw_fps = self.input_filepaths['raw_images']
-            raw_fps.index += fps_test.size
-            fps = pd.concat([fps_test, raw_fps])
-        else:
-            fps = fps_test
-
-        return fps_train, fps_test, fps
-
 
 class MosaicIOManager(IOManager):
 
