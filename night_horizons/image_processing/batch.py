@@ -85,6 +85,12 @@ class BatchProcessor(
         y=None,
     ):
 
+        # This checks both the input and the state of the class
+        # (e.g. is it fitted?)
+        # This also makes X a copy,
+        # so we don't accidentally modify the original
+        X = self.validate_readiness(X)
+
         return self.batch_process(
             self.processor,
             X,
@@ -108,6 +114,9 @@ class BatchProcessor(
         y=None,
     ) -> pd.Series:
 
+        # Make a copy so we don't directly alter the data
+        X = X.copy()
+
         X_out = self.batch_process(
             self.scorer,
             X,
@@ -122,12 +131,6 @@ class BatchProcessor(
         X: pd.DataFrame,
         y=None,
     ):
-
-        # This checks both the input and the state of the class
-        # (e.g. is it fitted?)
-        # This also makes X a copy,
-        # so we don't accidentally modify the original
-        X = self.validate_readiness(X)
 
         # TODO: We could avoid passing around the log filepath here, and
         #       keep it as an attribute instead...
