@@ -96,7 +96,7 @@ class TestMapmake(unittest.TestCase):
 
         # Check the score
         avg_score = y_pred.loc[
-            y_pred['result_code'] == 'success',
+            y_pred['return_code'] == 'success',
             'score'
         ].mean()
         assert avg_score < 500.

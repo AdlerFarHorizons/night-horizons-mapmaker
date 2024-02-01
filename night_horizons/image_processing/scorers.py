@@ -110,6 +110,7 @@ class ReferencedImageScorer(Processor):
 
         src_dataset = GDALDatasetIO.load(
             row['filepath'],
+            crs=self.crs,
         )
 
         return {'dataset': src_dataset}
@@ -121,6 +122,7 @@ class ReferencedImageScorer(Processor):
 
         dst_dataset = GDALDatasetIO.load(
             row['output_filepath'],
+            crs=self.crs,
         )
 
         return {'dataset': dst_dataset}

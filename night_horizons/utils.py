@@ -157,6 +157,31 @@ def update_row(df, row):
     return df
 
 
+def get_method_parameters(cls, method_name):
+    '''
+    Function to get the signature of a method from a class and its parents
+    This was useful when I was trying to figure out how to ensure we have the
+    same crs used throughout. But really, that's part of the dependency
+    injection framework. It can be subsumed into that.
+
+    TODO: Delete this.
+
+    Parameters
+    ----------
+    Returns
+    -------
+    '''
+
+    parameters = {}
+    for ancestor in inspect.getmro(cls):
+        if hasattr(ancestor, method_name):
+            method = getattr(ancestor, method_name)
+            signature = inspect.signature(method)
+            parameters = {**signature.parameters, **parameters}
+
+    return parameters
+
+
 def check_filepaths_input(
     X: Union[np.ndarray[str], list[str], pd.DataFrame],
     required_columns: list[str] = ['filepath'],

@@ -15,8 +15,8 @@ from .transformers import preprocessors
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from . import data_io, io_manager, pipelines
-from .image_processing import mosaicking, operators, processors
+from . import data_io
+from .utils import get_method_parameters
 
 
 class DIContainer:
@@ -83,14 +83,17 @@ class DIContainer:
 
         return constructor(*args, **kwargs)
 
-    def get_service_args(self, name, constructor=None, **kwargs):
+    def get_service_args(self, name, constructor, **kwargs):
 
         # Get config values
         if name in self.config:
             kwargs = {**self.config[name], **kwargs}
 
         try:
-            signature = inspect.signature(constructor)
+            signature = get_method_parameters(
+                constructor.__self__.__class__,
+                '__init__',
+            )
             signature_found = True
         except ValueError:
             # We use a boolean here (instead of placing the logic in the try
