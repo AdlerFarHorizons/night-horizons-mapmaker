@@ -110,6 +110,8 @@ class DIContainer:
 
             # Advanced: when the values are dictionaries, blend them
             #           this is important for input and output descriptions
+            # TODO: This currently only works for defaults, but we should
+            #       also be able to blend dictionaries for config vs passed-in
             for key, value in kwargs.items():
                 if key not in signature.parameters.keys():
                     continue

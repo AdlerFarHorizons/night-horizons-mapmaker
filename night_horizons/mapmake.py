@@ -19,7 +19,7 @@ from night_horizons.io_manager import (
 from night_horizons.image_processing import (
     mosaicking, operators, processors, registration, scorers
 )
-from night_horizons.utils import ReferencedRawSplit
+from night_horizons.utils import ReferencedRawSplitter
 
 
 class Mapmaker:
@@ -200,7 +200,7 @@ class SequentialMosaicMaker(MosaicMaker):
             print(f'Saving output in {io_manager.output_dir}')
 
         # Split up the data
-        splitter: ReferencedRawSplit = self.container.get_service(
+        splitter: ReferencedRawSplitter = self.container.get_service(
             'data_splitter')
         fps_train, fps_test, fps = splitter.train_test_production_split()
 
@@ -265,7 +265,7 @@ class SequentialMosaicMaker(MosaicMaker):
         # For splitting the data
         self.container.register_service(
             'data_splitter',
-            lambda *args, **kwargs: ReferencedRawSplit(
+            lambda *args, **kwargs: ReferencedRawSplitter(
                 io_manager=self.container.get_service('io_manager'),
                 random_state=self.container.get_service('random_state'),
                 *args, **kwargs

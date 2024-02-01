@@ -65,7 +65,7 @@ class TestMapmake(unittest.TestCase):
                 'output_dir': self.out_dir,
             },
             'data_splitter': {
-                'test_size': 1,
+                'use_test_dir': True,
             },
             'altitude_filter': {
                 # So we don't filter anything out
@@ -89,10 +89,11 @@ class TestMapmake(unittest.TestCase):
             n_raw + mosaicmaker.container.config['data_splitter']['test_size']
         )
 
-        self.check_output(
-            y_pred,
-            io_manager,
-        )
+        # Check the number of successes
+        # Only 1, because that's the number of overlapping images we put in
+        assert (y_pred['return_code'] == 'success').sum() == 1
+
+        self.check_output(y_pred, io_manager)
 
         # Check the score
         avg_score = y_pred.loc[

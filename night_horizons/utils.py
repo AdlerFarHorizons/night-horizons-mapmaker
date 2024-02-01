@@ -417,18 +417,20 @@ def store_parameters(constructor):
     return wrapped_constructor
 
 
-class ReferencedRawSplit:
+class ReferencedRawSplitter:
 
     def __init__(
         self,
         io_manager,
         test_size: Union[int, float] = 0.2,
         random_state: Union[int, np.random.RandomState] = None,
+        use_test_dir: bool = False,
     ):
 
         self.io_manager = io_manager
         self.test_size = test_size
         self.random_state = random_state
+        self.use_test_dir = use_test_dir
 
     def train_test_production_split(
         self
@@ -444,12 +446,16 @@ class ReferencedRawSplit:
         referenced_fps = self.io_manager.input_filepaths['referenced_images']
         raw_fps = self.io_manager.input_filepaths['raw_images']
 
-        fps_train, fps_test = train_test_split(
-            referenced_fps,
-            test_size=self.test_size,
-            random_state=self.random_state,
-            shuffle=True,
-        )
+        if self.use_test_dir:
+            fps_test = self.io_manager.input_filepaths['test_images']
+            fps_train = referenced_fps
+        else:
+            fps_train, fps_test = train_test_split(
+                referenced_fps,
+                test_size=self.test_size,
+                random_state=self.random_state,
+                shuffle=True,
+            )
 
         # Combine raw fps and test fps
         raw_fps.index += referenced_fps.size
