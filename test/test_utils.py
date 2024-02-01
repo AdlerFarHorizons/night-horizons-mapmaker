@@ -122,16 +122,16 @@ class TestUpdateRow(unittest.TestCase):
         new_row['score'] = 0.5
         new_row.name = df.index[2]
 
-        expected_columns = pd.concat([
+        expected_columns = pd.Index(pd.concat([
             original_columns.to_series(),
             pd.Series(['new_class', 'score'])
-        ])
+        ]))
 
         # Function call
         df = utils.update_row(df, new_row)
 
         # Check
-        pd.testing.assert_series_equal(df.columns, expected_columns)
+        pd.testing.assert_index_equal(df.columns, expected_columns)
         pd.testing.assert_series_equal(
             new_row,
             df.loc[new_row.name]

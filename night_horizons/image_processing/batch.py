@@ -175,15 +175,7 @@ class BatchProcessor(
             # Process the row
             row = processor.process_row(i, row, resources)
 
-            # Incorporate the row into the output DataFrame
-            # We drop and append because concat handles adding new columns,
-            # while Z_out.loc[ind] = row does not.
-            # The cost of this is scrambling the data (it's probably also slow)
-            Z_out = Z_out.drop(ind)
-            if len(Z_out) > 0:
-                Z_out = pd.concat([Z_out, row.to_frame().T])
-            else:
-                Z_out = row.to_frame().T
+            Z_out = utils.update_row(Z_out, row)
 
             # Snapshot the memory usage
             log = processor.log
