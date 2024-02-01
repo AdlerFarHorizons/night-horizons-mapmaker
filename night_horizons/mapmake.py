@@ -135,13 +135,13 @@ class MosaicMaker(Mapmaker):
         # This is the operator for scoring images
         self.container.register_service(
             'image_scorer',
-            scorers.SimilarityScorer,
+            scorers.SimilarityScoreOperator,
         )
 
         # This is the corresponding processor for scoring images
         self.container.register_service(
             'scorer',
-            lambda *args, **kwargs: processors.DatasetScorer(
+            lambda *args, **kwargs: scorers.DatasetScorer(
                 io_manager=self.container.get_service('io_manager'),
                 image_operator=self.container.get_service('image_scorer'),
                 *args, **kwargs
@@ -394,7 +394,7 @@ class SequentialMosaicMaker(MosaicMaker):
         # We'll include a scorer as well
         self.container.register_service(
             'image_scorer',
-            scorers.SimilarityScorer,
+            scorers.SimilarityScoreOperator,
         )
 
         # The processor for the sequential mosaicker

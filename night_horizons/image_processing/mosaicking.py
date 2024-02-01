@@ -264,6 +264,7 @@ class SequentialMosaicker(Mosaicker):
         io_manager,
         processor,
         mosaicker_train,
+        scorer: processors.Processor = None,
         progress_images_subdir: str = 'progress_images',
         save_return_codes: list[str] = [],
         memory_snapshot_freq: int = 10,
@@ -281,6 +282,7 @@ class SequentialMosaicker(Mosaicker):
         super().__init__(
             io_manager=io_manager,
             processor=processor,
+            scorer=scorer,
             crs=crs,
             pixel_width=pixel_width,
             pixel_height=pixel_height,
