@@ -74,9 +74,6 @@ class TestMapmake(unittest.TestCase):
             'processor': {
                 'save_return_codes': ['bad_det', 'out_of_bounds'],
             },
-            'general': {
-                'random_state': 1235,
-            },
         }
 
         mosaicmaker = mapmake.SequentialMosaicMaker(
@@ -95,3 +92,10 @@ class TestMapmake(unittest.TestCase):
             y_pred,
             io_manager,
         )
+
+        # Check the score
+        avg_score = y_pred.loc[
+            y_pred['result_code'] == 'success',
+            'score'
+        ].mean()
+        assert avg_score < 500.

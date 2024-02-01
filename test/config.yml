@@ -22,6 +22,7 @@ io_manager:
 global:
   # Coordinate reference-system employed
   crs: 'EPSG:3857'
+  random_state: 159234
 
 # Aesthetics
 color_palette: deep

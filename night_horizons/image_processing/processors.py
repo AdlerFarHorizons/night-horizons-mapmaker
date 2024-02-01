@@ -403,6 +403,7 @@ class DatasetRegistrar(DatasetUpdater):
                 y_bounds=[y_min, y_max],
                 crs=pyproj.CRS(resources['dataset'].GetProjection()),
             )
+            row['output_filepath'] = fp
 
             # Update the row values
             row[['x_off', 'y_off', 'x_size', 'y_size']] = [

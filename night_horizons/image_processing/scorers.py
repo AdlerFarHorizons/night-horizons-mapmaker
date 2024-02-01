@@ -103,7 +103,6 @@ class ReferencedImageScorer(Processor):
 
         src_dataset = GDALDatasetIO.load(
             row['filepath'],
-            dtype=self.dtype,
         )
 
         return {'dataset': src_dataset}
@@ -112,7 +111,6 @@ class ReferencedImageScorer(Processor):
 
         dst_dataset = GDALDatasetIO.load(
             row['output_filepath'],
-            dtype=self.dtype,
         )
 
         return {'dataset': dst_dataset}
@@ -167,7 +165,8 @@ class ReferencedImageScorer(Processor):
         results: dict,
     ) -> pd.Series:
 
+        # Combine
         results = pd.Series(results)
-        row[results.columns] = results
+        row = pd.concat([row, results])
 
         return row
