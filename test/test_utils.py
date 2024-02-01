@@ -97,3 +97,40 @@ class TestStoreParameters(unittest.TestCase):
         assert my_class.a == 'sentence'
         assert my_class.b == b
         assert my_class.c == 3
+
+
+class TestUpdateRow(unittest.TestCase):
+
+    def test_functional(self):
+
+        # Make test dataframe
+        rng = np.random.default_rng()
+        df = pd.DataFrame(
+            rng.uniform(size=(10, 3)),
+        )
+        df.index = pd.date_range('2022-01-01', periods=10, freq='D')
+        df['class'] = 'a'
+        original_columns = df.columns
+
+        # Test row
+        new_row = pd.Series(
+            rng.uniform(size=(3,)),
+            index=original_columns[:-1]
+        )
+        new_row['class'] = 'a'
+        new_row['new_class'] = 'c'
+        new_row['score'] = 0.5
+        new_row.name = df.index[2]
+
+        expected_columns = pd.concat([
+            original_columns, pd.Index(['new_class', 'score'])])
+
+        # Function call
+        df = utils.update_row(df, new_row)
+
+        # Check
+        pd.testing.assert_series_equal(df.columns, expected_columns)
+        pd.testing.assert_series_equal(
+            new_row,
+            df.loc[new_row.name]
+        )
