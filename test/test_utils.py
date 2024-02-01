@@ -123,7 +123,9 @@ class TestUpdateRow(unittest.TestCase):
         new_row.name = df.index[2]
 
         expected_columns = pd.concat([
-            original_columns, pd.Index(['new_class', 'score'])])
+            original_columns.to_series(),
+            pd.Series(['new_class', 'score'])
+        ])
 
         # Function call
         df = utils.update_row(df, new_row)
