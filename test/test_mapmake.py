@@ -74,6 +74,9 @@ class TestMapmake(unittest.TestCase):
             'processor': {
                 'save_return_codes': ['bad_det', 'out_of_bounds'],
             },
+            'general': {
+                'random_state': 1235,
+            },
         }
 
         mosaicmaker = mapmake.SequentialMosaicMaker(

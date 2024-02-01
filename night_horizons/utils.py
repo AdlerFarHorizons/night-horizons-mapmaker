@@ -388,7 +388,9 @@ class ReferencedRawSplit:
         self.test_size = test_size
         self.random_state = random_state
 
-    def train_test_production_split(self) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    def train_test_production_split(
+        self
+    ) -> Tuple[pd.Series, pd.Series, pd.Series]:
         '''TODO: This is an awkward spot for this function.
 
         Parameters
@@ -406,7 +408,11 @@ class ReferencedRawSplit:
             random_state=self.random_state,
             shuffle=True,
         )
+
+        # Combine raw fps and test fps
+        raw_fps.index += referenced_fps.size
         fps = pd.concat([fps_test, raw_fps])
+
         fps = fps.sample(
             n=fps.size,
             replace=False,
