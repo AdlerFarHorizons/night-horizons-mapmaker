@@ -211,7 +211,7 @@ class SequentialMosaicMaker(MosaicMaker):
         # Score the mosaicked images
         y_test = y_pred.loc[fps_test.index]
         y_test = mosaicker.score(y_test)
-        y_pred.loc[y_test.index, y_test.columns] = y_test
+        y_test = y_pred.combine_first(y_test)
 
         if self.verbose:
             print(

@@ -175,7 +175,8 @@ class BatchProcessor(
             # Process the row
             row = processor.process_row(i, row, resources)
 
-            Z_out = utils.update_row(Z_out, row)
+            # Combine
+            Z_out = row.to_frame().T.combine_first(Z_out)
 
             # Snapshot the memory usage
             log = processor.log

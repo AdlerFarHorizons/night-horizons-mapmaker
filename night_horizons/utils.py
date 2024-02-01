@@ -143,9 +143,8 @@ def get_distance(crs, x1, y1, x2, y2):
 def update_row(df, row):
     '''
     Incorporate the row into the output DataFrame
-    We drop and append because concat handles adding new columns,
-    while Z_out.loc[ind] = row does not.
-    As set up, this is probably pretty slow.
+    The pandas functionality is simple enough that this shouldn't actually
+    be used, but exists as a reminder of how this operation is done.
 
     Parameters
     ----------
@@ -153,19 +152,9 @@ def update_row(df, row):
     -------
     '''
 
-    # Check index, and preserve
-    assert row.name in df.index, 'Row name not in index.'
-    original_index = df.index
+    df = row.to_frame().T.combine_first(df)
 
-    # Drop so that we avoid duplicates
-    df = df.drop(row.name)
-
-    if len(df) > 0:
-        df = pd.concat([df, row.to_frame().T])
-    else:
-        df = row.to_frame().T
-
-    return df.loc[original_index]
+    return df
 
 
 def check_filepaths_input(

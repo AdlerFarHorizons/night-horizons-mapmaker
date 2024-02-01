@@ -113,14 +113,10 @@ class TestUpdateRow(unittest.TestCase):
         original_columns = df.columns
 
         # Test row
-        new_row = pd.Series(
-            rng.uniform(size=(3,)),
-            index=original_columns[:-1]
-        )
-        new_row['class'] = 'a'
+        new_row = df.iloc[3]
+        new_row[0] = -1.0
         new_row['new_class'] = 'c'
         new_row['score'] = 0.5
-        new_row.name = df.index[2]
 
         expected_columns = pd.Index(pd.concat([
             original_columns.to_series(),
