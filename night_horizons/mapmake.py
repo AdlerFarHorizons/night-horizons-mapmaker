@@ -208,6 +208,11 @@ class SequentialMosaicMaker(MosaicMaker):
             print('Mosaicking unreferenced images...')
         y_pred = mosaicker.predict(X)
 
+        # Score the mosaicked images
+        y_test = y_pred.loc[fps_test.index]
+        y_test = mosaicker.score(y_test)
+        y_pred.loc[y_test.index, y_test.columns] = y_test
+
         if self.verbose:
             print(
                 'Done!\n'
@@ -225,15 +230,17 @@ class SequentialMosaicMaker(MosaicMaker):
             singleton=True,
         )
 
+        self.register_validation_services()
+
         self.register_default_preprocessors()
 
         self.register_default_train_services()
 
         self.register_default_batch_processor()
 
-    def register_default_preprocessors(self):
+    def register_validation_services(self):
 
-        # First preprocessing step is to split up the data
+        # For splitting the data
         self.container.register_service(
             'data_splitter',
             lambda *args, **kwargs: ReferencedRawSplit(
@@ -241,6 +248,19 @@ class SequentialMosaicMaker(MosaicMaker):
                 *args, **kwargs
             )
         )
+
+        # Our scorer.
+        # We default to not using an image operator because that's expensive
+        self.container.register_service(
+            'scorer',
+            lambda *args, **kwargs: scorers.ReferencedImageScorer(
+                io_manager=self.container.get_service('io_manager'),
+                image_operator=None,
+                *args, **kwargs
+            )
+        )
+
+    def register_default_preprocessors(self):
 
         # Preprocessor to get metadata
         self.container.register_service(
@@ -391,12 +411,6 @@ class SequentialMosaicMaker(MosaicMaker):
             )
         )
 
-        # We'll include a scorer as well
-        self.container.register_service(
-            'image_scorer',
-            scorers.SimilarityScoreOperator,
-        )
-
         # The processor for the sequential mosaicker
         self.container.register_service(
             'processor',
@@ -414,6 +428,7 @@ class SequentialMosaicMaker(MosaicMaker):
                 io_manager=self.container.get_service('io_manager'),
                 processor=self.container.get_service('processor'),
                 mosaicker_train=self.container.get_service('mosaicker_train'),
+                scorer=self.container.get_service('scorer'),
                 *args, **kwargs
             )
         )

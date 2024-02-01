@@ -155,6 +155,8 @@ class ReferencedImageScorer(Processor):
                 dst['dataset'].ReadAsArray(),
             )
 
+        results['score'] = results['center_diff']
+
         return results
 
     def store_results(

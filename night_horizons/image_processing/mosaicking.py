@@ -309,7 +309,7 @@ class SequentialMosaicker(Mosaicker):
     ):
 
         assert X_train is not None, \
-            'Must pass X_train: some referenced images to build a base mosaic.'
+            'Must pass X_train (referenced images to build a base mosaic)'
 
         # General fitting
         super().fit(X=X, dataset=dataset, i_start=i_start)

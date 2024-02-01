@@ -64,13 +64,16 @@ class TestMapmake(unittest.TestCase):
             'io_manager': {
                 'output_dir': self.out_dir,
             },
+            'data_splitter': {
+                'test_size': 1,
+            },
             'altitude_filter': {
                 # So we don't filter anything out
                 'float_altitude': 100.,
             },
             'processor': {
                 'save_return_codes': ['bad_det', 'out_of_bounds'],
-            }
+            },
         }
 
         mosaicmaker = mapmake.SequentialMosaicMaker(
