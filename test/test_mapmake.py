@@ -86,12 +86,12 @@ class TestMapmake(unittest.TestCase):
         n_raw = len(io_manager.input_filepaths['raw_images'])
         self.assertEqual(
             len(y_pred),
-            n_raw + mosaicmaker.container.config['data_splitter']['test_size']
+            n_raw + len(io_manager.input_filepaths['test_images'])
         )
 
         # Check the number of successes
-        # Only 1, because that's the number of overlapping images we put in
-        assert (y_pred['return_code'] == 'success').sum() == 1
+        # Only 2 -> the test image and also a copy of it we put in the raw dir
+        assert (y_pred['return_code'] == 'success').sum() == 2
 
         self.check_output(y_pred, io_manager)
 

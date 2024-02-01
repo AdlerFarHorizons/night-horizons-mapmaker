@@ -71,8 +71,8 @@ class TestDatasetRegistrar(unittest.TestCase):
         pixel_diff_threshold=1,
     ):
         """Compare two referenced images.
-        TODO: I pulled this out of the functions and made more general, but it's
-        not used elsewhere...
+        TODO: I pulled this out of the functions and made more general, but
+        it's not used elsewhere...
 
         Args:
             expected_fp (str): File path of the expected image.
