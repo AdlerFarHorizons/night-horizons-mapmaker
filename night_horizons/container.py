@@ -90,10 +90,7 @@ class DIContainer:
             kwargs = {**self.config[name], **kwargs}
 
         try:
-            signature = get_method_parameters(
-                constructor.__self__.__class__,
-                '__init__',
-            )
+            signature = inspect.signature(constructor)
             signature_found = True
         except ValueError:
             # We use a boolean here (instead of placing the logic in the try
@@ -102,13 +99,14 @@ class DIContainer:
 
         if signature_found:
 
-            # Access the global arguments
-            if 'global' in self.config:
-                global_kwargs = {}
-                for key in signature.parameters.keys():
-                    if key in self.config['global']:
-                        global_kwargs[key] = self.config['global'][key]
-                kwargs = {**global_kwargs, **kwargs}
+            # TODO: Delete
+            # # Access the global arguments
+            # if 'global' in self.config:
+            #     global_kwargs = {}
+            #     for key in signature.parameters.keys():
+            #         if key in self.config['global']:
+            #             global_kwargs[key] = self.config['global'][key]
+            #     kwargs = {**global_kwargs, **kwargs}
 
             # Advanced: when the values are dictionaries, blend them
             #           this is important for input and output descriptions

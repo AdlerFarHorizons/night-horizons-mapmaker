@@ -7,6 +7,8 @@ import cv2
 from osgeo import gdal
 import pandas as pd
 from sklearn.pipeline import Pipeline
+from sklearn.utils import check_random_state
+from pyproj import CRS
 
 from night_horizons.transformers import filters, order, preprocessors, raster
 
@@ -98,19 +100,15 @@ class MosaicMaker(Mapmaker):
 
     def register_default_services(self):
 
-        # Services for input/output
-        # By passing singleton=True we ensure that once an instance is made
-        # we use it throughout, without needing to explicitly pass it
-        self.container.register_service(
-            'io_manager',
-            MosaicIOManager,
-            singleton=True,
-        )
+        self.register_fundamental_services()
 
         # What we use for preprocessing
         self.container.register_service(
             'preprocessor',
-            preprocessors.GeoTIFFPreprocessor
+            lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
+                crs=self.container.get_service('crs'),
+                *args, **kwargs
+            )
         )
 
         # Standard image operator for mosaickers is just a blender
@@ -155,8 +153,37 @@ class MosaicMaker(Mapmaker):
                 io_manager=self.container.get_service('io_manager'),
                 processor=self.container.get_service('processor'),
                 scorer=self.container.get_service('scorer'),
+                crs=self.container.get_service('crs'),
                 *args, **kwargs
             )
+        )
+
+    def register_fundamental_services(self):
+        '''Services that are used almost-ubiquitously by others.
+
+        By passing singleton=True we ensure that once an instance is made
+        we use it throughout, without needing to explicitly pass it
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        self.container.register_service(
+            'io_manager',
+            MosaicIOManager,
+            singleton=True,
+        )
+        self.container.register_service(
+            'crs',
+            CRS,
+            singleton=True,
+        )
+        self.container.register_service(
+            'random_state',
+            check_random_state,
+            singleton=True,
         )
 
 
@@ -223,12 +250,7 @@ class SequentialMosaicMaker(MosaicMaker):
 
     def register_default_services(self):
 
-        # Services for input/output
-        self.container.register_service(
-            'io_manager',
-            MosaicIOManager,
-            singleton=True,
-        )
+        self.register_fundamental_services()
 
         self.register_validation_services()
 
@@ -245,6 +267,7 @@ class SequentialMosaicMaker(MosaicMaker):
             'data_splitter',
             lambda *args, **kwargs: ReferencedRawSplit(
                 io_manager=self.container.get_service('io_manager'),
+                random_state=self.container.get_service('random_state'),
                 *args, **kwargs
             )
         )
@@ -254,6 +277,7 @@ class SequentialMosaicMaker(MosaicMaker):
         self.container.register_service(
             'scorer',
             lambda *args, **kwargs: scorers.ReferencedImageScorer(
+                crs=self.container.get_service('crs'),
                 io_manager=self.container.get_service('io_manager'),
                 image_operator=None,
                 *args, **kwargs
@@ -267,6 +291,7 @@ class SequentialMosaicMaker(MosaicMaker):
             'metadata_preprocessor',
             lambda *args, **kwargs: preprocessors.NITELitePreprocessor(
                 io_manager=self.container.get_service('io_manager'),
+                crs=self.container.get_service('crs'),
                 *args, **kwargs
             )
         )
@@ -276,6 +301,7 @@ class SequentialMosaicMaker(MosaicMaker):
             'metadata_image_registrar',
             lambda passthrough=['filepath', 'camera_num'], *args, **kwargs: (
                 registration.MetadataImageRegistrar(
+                    crs=self.container.get_service('crs'),
                     passthrough=passthrough,
                     *args, **kwargs
                 )
@@ -285,7 +311,10 @@ class SequentialMosaicMaker(MosaicMaker):
         # Preprocessor to get geotiff metadata (which includes georeferencing)
         self.container.register_service(
             'geotiff_preprocessor',
-            preprocessors.GeoTIFFPreprocessor
+            lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
+                crs=self.container.get_service('crs'),
+                *args, **kwargs
+            )
         )
 
         # Preprocessor to filter on altitude
@@ -337,6 +366,7 @@ class SequentialMosaicMaker(MosaicMaker):
         self.container.register_service(
             'preprocessor_train',
             lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
+                crs=self.container.get_service('crs'),
                 *args, **kwargs
             )
         )
@@ -374,6 +404,7 @@ class SequentialMosaicMaker(MosaicMaker):
             lambda *args, **kwargs: mosaicking.Mosaicker(
                 io_manager=self.container.get_service('io_manager_train'),
                 processor=self.container.get_service('processor_train'),
+                crs=self.container.get_service('crs'),
                 *args, **kwargs
             )
         )
@@ -429,6 +460,7 @@ class SequentialMosaicMaker(MosaicMaker):
                 processor=self.container.get_service('processor'),
                 mosaicker_train=self.container.get_service('mosaicker_train'),
                 scorer=self.container.get_service('scorer'),
+                crs=self.container.get_service('crs'),
                 *args, **kwargs
             )
         )
