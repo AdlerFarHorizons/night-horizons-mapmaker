@@ -59,6 +59,7 @@ class Mosaicker(BatchProcessor):
         log_keys: list[str] = ['ind', 'return_code'],
         passthrough: Union[list[str], bool] = True,
     ):
+        # TODO: Following conventions, dont repeat each arg
 
         super().__init__(
             processor=processor,

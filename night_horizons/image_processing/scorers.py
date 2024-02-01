@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import pandas as pd
+import pyproj
 
 from .operators import BaseImageOperator
 from .processors import Processor, DatasetProcessor
@@ -99,6 +100,12 @@ class DatasetScorer(DatasetProcessor):
 class ReferencedImageScorer(Processor):
     # TODO: Consistent naming: registered images or referenced images
 
+    def __init__(self, crs: pyproj.CRS = None, *args, **kwargs):
+
+        self.crs = crs
+
+        super().__init__(*args, **kwargs)
+
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
 
         src_dataset = GDALDatasetIO.load(
@@ -166,7 +173,10 @@ class ReferencedImageScorer(Processor):
     ) -> pd.Series:
 
         # Combine
+        name = row.name
         results = pd.Series(results)
         row = pd.concat([row, results])
+        # Put the name back
+        row.name = name
 
         return row

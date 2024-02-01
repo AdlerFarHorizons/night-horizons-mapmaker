@@ -123,7 +123,7 @@ class BatchProcessor(
             y,
         )
 
-        return X_out['score']
+        return X_out
 
     def batch_process(
         self,
@@ -180,7 +180,10 @@ class BatchProcessor(
             # while Z_out.loc[ind] = row does not.
             # The cost of this is scrambling the data (it's probably also slow)
             Z_out = Z_out.drop(ind)
-            Z_out = pd.concat([Z_out, row.to_frame().T])
+            if len(Z_out) > 0:
+                Z_out = pd.concat([Z_out, row.to_frame().T])
+            else:
+                Z_out = row.to_frame().T
 
             # Snapshot the memory usage
             log = processor.log
