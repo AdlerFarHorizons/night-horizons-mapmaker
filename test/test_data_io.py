@@ -55,6 +55,24 @@ class TestGDALDatasetIO(unittest.TestCase):
             -pixel_height * dataset2.RasterYSize,
         )
 
+    def test_load_with_new_crs(self):
+
+        fp = '/data/test_data/referenced_images/Geo 836109848_1.tif'
+        new_crs = pyproj.CRS('EPSG:3857')
+
+        io = GDALDatasetIO()
+        dataset_with_old_crs = io.load(fp)
+        dataset = io.load(fp, crs=new_crs)
+
+        self.assertNotEqual(
+            pyproj.CRS(dataset_with_old_crs.GetProjection()),
+            new_crs
+        )
+        self.assertEqual(
+            pyproj.CRS(dataset.GetProjection()),
+            new_crs
+        )
+
     def test_from_viirs_hdf5(self):
 
         expected_crs = pyproj.CRS('EPSG:4326')
