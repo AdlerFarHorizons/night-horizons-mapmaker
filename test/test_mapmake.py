@@ -83,9 +83,10 @@ class TestMapmake(unittest.TestCase):
         y_pred, io_manager = mosaicmaker.run()
 
         # Check basic structure of X_out
+        n_raw = len(io_manager.input_filepaths['raw_images'])
         self.assertEqual(
             len(y_pred),
-            len(io_manager.input_filepaths['raw_images'])
+            n_raw + mosaicmaker.container.config['data_splitter']['test_size']
         )
 
         self.check_output(

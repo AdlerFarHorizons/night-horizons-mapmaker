@@ -116,6 +116,9 @@ class ReferencedImageScorer(Processor):
 
     def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:
 
+        if pd.isna(row['output_filepath']):
+            return {'dataset': None}
+
         dst_dataset = GDALDatasetIO.load(
             row['output_filepath'],
         )
@@ -130,6 +133,9 @@ class ReferencedImageScorer(Processor):
         src: dict,
         dst: dict,
     ) -> dict:
+
+        if dst['dataset'] is None:
+            return {}
 
         src_x_bounds, src_y_bounds, src_pixel_width, src_pixel_height = \
             GDALDatasetIO.get_bounds_from_dataset(src['dataset'])
@@ -173,10 +179,7 @@ class ReferencedImageScorer(Processor):
     ) -> pd.Series:
 
         # Combine
-        name = row.name
-        results = pd.Series(results)
-        row = pd.concat([row, results])
-        # Put the name back
-        row.name = name
+        for key, item in results.items():
+            row[key] = item
 
         return row
