@@ -435,7 +435,7 @@ class ReferencedRawSplitter:
     def train_test_production_split(
         self
     ) -> Tuple[pd.Series, pd.Series, pd.Series]:
-        '''TODO: This is an awkward spot for this function.
+        '''
 
         Parameters
         ----------

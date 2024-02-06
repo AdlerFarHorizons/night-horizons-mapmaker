@@ -10,14 +10,14 @@ import pandas as pd
 
 import night_horizons.transformers.preprocessors as preprocessors
 import night_horizons.utils as utils
-from night_horizons.mapmake import TesterMapmaker
+from night_horizons.mapmake import SequentialMosaicMaker
 
 
 class TestNITELitePreprocessor(unittest.TestCase):
 
     def setUp(self):
 
-        self.mapmaker = TesterMapmaker('./test/config.yml')
+        self.mapmaker = SequentialMosaicMaker('./test/config.yml')
 
         # Preprocessor construction
         self.expected_cols = ['filepath', 'sensor_x', 'sensor_y']
