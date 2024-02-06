@@ -27,19 +27,14 @@ from night_horizons.utils import ReferencedRawSplitter
 class Mapmaker:
     def __init__(
         self,
-        config_filepath: str,
-        local_options: dict = {},
+        container: DIContainer,
         verbose: bool = True
     ):
 
         gdal.UseExceptions()
 
+        self.container = container
         self.verbose = verbose
-
-        self.container = DIContainer(
-            config_filepath=config_filepath,
-            local_options=local_options,
-        )
 
         self.register_default_services()
 
@@ -468,6 +463,29 @@ class SequentialMosaicMaker(MosaicMaker):
         )
 
 
+def create_mapmaker(config_filepath, local_options={}):
+
+    container = DIContainer(
+        config_filepath=config_filepath,
+        local_options=local_options,
+    )
+
+    def mapmaker_constructor(map_type, container, *args, **kwargs):
+
+        if map_type == 'mosaic':
+            return MosaicMaker(container, *args, **kwargs)
+        elif map_type == 'sequential':
+            return SequentialMosaicker(container, *args, **kwargs)
+        else:
+            raise ValueError(f'Unknown mapmaker type: {map_type}')
+
+    container.register_service(
+        'mapmaker',
+        mapmaker_constructor
+    )
+
+    return container.get_service('mapmaker', container=container)
+
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
@@ -477,12 +495,6 @@ if __name__ == "__main__":
     # Set up the argparser
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        'mosaic_type',
-        type=str,
-        choices=['simple', 'sequential'],
-        help='The type of mosaic to make.'
-    )
-    parser.add_argument(
         'config_filepath',
         type=str,
         help='Location of config file.',
@@ -491,10 +503,8 @@ if __name__ == "__main__":
     # Parse the arguments
     args = parser.parse_args()
 
-    if args.mosaic_type == 'simple':
-        mapmaker = MosaicMaker(config_filepath=args.config_filepath)
-    elif args.mosaic_type == 'sequential':
-        mapmaker = SequentialMosaicMaker(config_filepath=args.config_filepath)
+    # Create the mapmaker
+    mapmaker = create_mapmaker(args.config_filepath)
 
     # Execute
     mapmaker.run()
