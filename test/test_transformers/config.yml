@@ -15,10 +15,3 @@ io_manager:
   output_dir: /data/test_data/temp
   output_description:
     referenced_images: 'referenced_images/img_{:06d}.tiff'
-
-global:
-  # Coordinate reference-system employed
-  crs: 'EPSG:3857'
-
-# Aesthetics
-color_palette: deep
