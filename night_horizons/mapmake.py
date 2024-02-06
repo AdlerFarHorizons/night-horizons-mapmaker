@@ -3,11 +3,13 @@ import os
 import shutil
 from typing import Tuple
 
+import argparse
 import cv2
 from osgeo import gdal
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.utils import check_random_state
+import sys
 from pyproj import CRS
 
 from night_horizons.transformers import filters, order, preprocessors, raster
@@ -467,22 +469,32 @@ class SequentialMosaicMaker(MosaicMaker):
 
 
 if __name__ == "__main__":
-    import sys
 
     if len(sys.argv) < 2:
         print("Please provide a config file path.")
         sys.exit(1)
 
-    mosaic_type = sys.argv[1]
-    config_filepath = sys.argv[2]
+    # Set up the argparser
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'mosaic_type',
+        type=str,
+        choices=['simple', 'sequential'],
+        help='The type of mosaic to make.'
+    )
+    parser.add_argument(
+        'config_filepath',
+        type=str,
+        help='Location of config file.',
+    )
 
-    if mosaic_type == 'simple':
-        mapmaker = MosaicMaker(config_filepath=config_filepath)
-    elif mosaic_type == 'sequential':
-        mapmaker = SequentialMosaicMaker(config_filepath=config_filepath)
-    else:
-        print("Please provide a valid mosaic type.")
-        sys.exit(1)
+    # Parse the arguments
+    args = parser.parse_args()
+
+    if args.mosaic_type == 'simple':
+        mapmaker = MosaicMaker(config_filepath=args.config_filepath)
+    elif args.mosaic_type == 'sequential':
+        mapmaker = SequentialMosaicMaker(config_filepath=args.config_filepath)
 
     # Execute
     mapmaker.run()
