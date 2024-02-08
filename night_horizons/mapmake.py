@@ -201,6 +201,12 @@ class SequentialMosaicMaker(MosaicMaker):
         splitter: ReferencedRawSplitter = self.container.get_service(
             'data_splitter')
         fps_train, fps_test, fps = splitter.train_test_production_split()
+        if self.verbose:
+            print(
+                f'    Found {len(fps_train) + len(fps_test)} '
+                'georeferenced images.'
+            )
+            print(f'    Found {len(fps)} images to georeference.')
 
         # Preprocessing for referenced images
         if self.verbose:
@@ -219,6 +225,14 @@ class SequentialMosaicMaker(MosaicMaker):
         # The preprocessor is fit to the training sample
         preprocessor = preprocessor.fit(X=fps_train, y=y_train)
         X = preprocessor.transform(fps)
+
+        # Report on preprocessing
+        if self.verbose:
+            print(
+                f'    Using {len(X_train)} images for the starting mosaic.\n'
+                f'    Georeferencing {len(X)} images,\n'
+                f'    of which {len(fps_test)} images can be validated.\n'
+            )
 
         # Mosaicking
         mosaicker: mosaicking.SequentialMosaicker = \
