@@ -505,11 +505,8 @@ def create_mapmaker(config_filepath, local_options={}):
 
     return container.get_service('mapmaker', container=container)
 
-if __name__ == "__main__":
 
-    if len(sys.argv) < 2:
-        print("Please provide a config file path.")
-        sys.exit(1)
+if __name__ == "__main__":
 
     # Set up the argparser
     parser = argparse.ArgumentParser()
@@ -517,6 +514,7 @@ if __name__ == "__main__":
         'config_filepath',
         type=str,
         help='Location of config file.',
+        required=True,
     )
 
     # Parse the arguments
