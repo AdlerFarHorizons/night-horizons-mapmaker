@@ -312,8 +312,11 @@ class SequentialMosaicker(Mosaicker):
         assert X_train is not None, \
             'Must pass X_train (referenced images to build a base mosaic)'
 
-        # General fitting
-        super().fit(X=X, dataset=dataset, i_start=i_start)
+        # Create the initial mosaic.
+        # This is fit to the both the training and the search regions for the
+        # actual data.
+        X_for_fit = pd.concat([X, X_train])
+        super().fit(X=X_for_fit, dataset=dataset, i_start=i_start)
 
         # Create the initial mosaic, if not starting from a checkpoint file
         if self.i_start_ == 0:

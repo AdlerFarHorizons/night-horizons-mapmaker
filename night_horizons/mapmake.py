@@ -514,7 +514,6 @@ if __name__ == "__main__":
         'config_filepath',
         type=str,
         help='Location of config file.',
-        required=True,
     )
 
     # Parse the arguments

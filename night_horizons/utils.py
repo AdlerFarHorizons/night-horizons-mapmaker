@@ -438,6 +438,10 @@ class ReferencedRawSplitter:
         self
     ) -> Tuple[pd.Series, pd.Series, pd.Series]:
         '''
+        How indices are handled:
+        - fps_train has indices running from 0 to len(fps_train)
+        - fps has indices running from 0 to len(fps)
+        - fps_test has indices that are a subset of fps
 
         Parameters
         ----------
