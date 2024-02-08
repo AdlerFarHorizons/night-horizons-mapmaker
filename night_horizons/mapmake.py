@@ -97,7 +97,14 @@ class MosaicMaker(Mapmaker):
         referenced_fps = io_manager.input_filepaths['referenced_images']
 
         if self.verbose:
+            print(f'Retrieving input from {io_manager.input_dir}')
             print(f'Saving output in {io_manager.output_dir}')
+            print(f'Using {len(referenced_fps)} referenced images.')
+
+        assert len(referenced_fps) > 0, (
+            'No referenced images found. Input description:\n'
+            f'{io_manager.input_description["referenced_images"]}'
+        )
 
         # Preprocessing
         if self.verbose:
@@ -183,7 +190,7 @@ class SequentialMosaicMaker(MosaicMaker):
     def run(self):
 
         if self.verbose:
-            print('Starting mosaic creation.')
+            print('Starting sequential mosaic creation.')
 
         # Get the file management
         io_manager: IOManager = self.container.get_service('io_manager')
