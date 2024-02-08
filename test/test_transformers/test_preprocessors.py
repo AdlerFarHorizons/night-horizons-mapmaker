@@ -41,7 +41,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         '''
 
         # Image filetree info
-        image_dir = '/data/test_data/images'
+        image_dir = '/data/night_horizons_test_data/images'
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
@@ -63,7 +63,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
     def test_output_referenced_files(self):
 
         # Image filetree info
-        image_dir = '/data/test_data/referenced_images'
+        image_dir = '/data/night_horizons_test_data/referenced_images'
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
@@ -79,7 +79,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         self.transformer.unhandled_files = 'warn and passthrough'
 
         # Image filetree info
-        image_dir = '/data/test_data/referenced_images'
+        image_dir = '/data/night_horizons_test_data/referenced_images'
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
         fps = pd.concat([pd.Series(['not_a_file']), fps], ignore_index=True)
@@ -104,10 +104,10 @@ class TestGeoTIFFPreprocessor(unittest.TestCase):
     def test_output(self):
 
         # Image filetree info
-        image_dir = '/data/test_data/images'
+        image_dir = '/data/night_horizons_test_data/images'
         raw_fps = utils.discover_data(image_dir, extension=['raw'])
         n_files_unreffed = len(raw_fps)
-        referenced_image_dir = '/data/test_data/referenced_images'
+        referenced_image_dir = '/data/night_horizons_test_data/referenced_images'
         referenced_fps = utils.discover_data(
             referenced_image_dir,
             extension=['tif', 'tiff']

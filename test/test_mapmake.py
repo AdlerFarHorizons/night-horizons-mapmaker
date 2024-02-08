@@ -40,12 +40,14 @@ class TestMapmake(unittest.TestCase):
     def test_mosaicmaker(self):
 
         local_options = {
-            'io_manager': {
-                'output_dir': self.out_dir,
-            },
+            'mapmaker': {'map_type': 'mosaic'},
+            'io_manager': {'output_dir': self.out_dir},
         }
 
-        mosaicmaker = mapmake.MosaicMaker('./test/config.yml', local_options)
+        mosaicmaker = mapmake.create_mapmaker(
+            './test/config.yml',
+            local_options,
+        )
         X_out, io_manager = mosaicmaker.run()
 
         skip_keys = ['y_pred', 'progress_images_dir', 'referenced_images']
@@ -61,6 +63,9 @@ class TestMapmake(unittest.TestCase):
     def test_sequential_mosaickmaker(self):
 
         local_options = {
+            'mapmaker': {
+                'map_type': 'sequential',
+            },
             'io_manager': {
                 'output_dir': self.out_dir,
             },
@@ -76,7 +81,7 @@ class TestMapmake(unittest.TestCase):
             },
         }
 
-        mosaicmaker = mapmake.SequentialMosaicMaker(
+        mosaicmaker: mapmake.SequentialMosaicMaker = mapmake.create_mapmaker(
             './test/config.yml',
             local_options
         )

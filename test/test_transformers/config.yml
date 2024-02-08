@@ -3,7 +3,7 @@
 ###############################################################################
 
 io_manager:
-  input_dir: /data/test_data
+  input_dir: /data/night_horizons_test_data
   input_description:
     raw_images:
       directory: images
@@ -12,7 +12,7 @@ io_manager:
       directory: referenced_images
       extension: ['tif', 'tiff']
       pattern: 'Geo\s\d+_\d.tif'
-  output_dir: /data/test_data/temp
+  output_dir: /data/night_horizons_test_data/temp
   output_description:
     referenced_images: 'referenced_images/img_{:06d}.tiff'
 

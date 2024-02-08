@@ -9,15 +9,15 @@ class TestInput(unittest.TestCase):
 
     def setUp(self):
 
-        self.input_dir = '/data/test_data'
-        self.output_dir = '/data/test_data/mosaics/temp'
+        self.input_dir = '/data/night_horizons_test_data'
+        self.output_dir = '/data/night_horizons_test_data/mosaics/temp'
 
         self.expected_fps_raw = [
-            ('/data/test_data/images/23085686/'
+            ('/data/night_horizons_test_data/images/23085686/'
              '20220413_221313_1020286912_0_50_3.raw'),
-            ('/data/test_data/images/23085687/'
+            ('/data/night_horizons_test_data/images/23085687/'
              '20220413_202740_745696_1_50_0.raw'),
-            ('/data/test_data/images/23085687/'
+            ('/data/night_horizons_test_data/images/23085687/'
              'Geo 836109848_1.tif'),
         ]
 
@@ -37,7 +37,7 @@ class TestInput(unittest.TestCase):
         assert list(fps) == self.expected_fps_raw
 
         assert io_manager.input_filepaths['test'] == \
-            '/data/test_data/this/dir.txt'
+            '/data/night_horizons_test_data/this/dir.txt'
 
     def test_find_files_exts(self):
 
@@ -79,8 +79,8 @@ class TestInput(unittest.TestCase):
         )
 
         expected_fps = [
-            '/data/test_data/referenced_images/Geo 843083290_1.tif',
-            '/data/test_data/referenced_images/Geo 836109848_1.tif',
+            '/data/night_horizons_test_data/referenced_images/Geo 843083290_1.tif',
+            '/data/night_horizons_test_data/referenced_images/Geo 836109848_1.tif',
         ]
 
         fps = io_manager.input_filepaths['referenced_images']
@@ -91,8 +91,8 @@ class TestOutput(unittest.TestCase):
 
     def setUp(self):
 
-        self.input_dir = '/data/test_data'
-        self.output_dir = '/data/test_data/mosaics/temp'
+        self.input_dir = '/data/night_horizons_test_data'
+        self.output_dir = '/data/night_horizons_test_data/mosaics/temp'
 
         # Start with a clean slate
         if os.path.exists(self.output_dir):
@@ -154,7 +154,7 @@ class TestOutput(unittest.TestCase):
         filepath = os.path.join(self.output_dir, 'mosaic.tiff')
         os.makedirs(self.output_dir)
         open(filepath, 'w').close()
-        new_outdir = '/data/test_data/mosaics/temp_v000'
+        new_outdir = '/data/night_horizons_test_data/mosaics/temp_v000'
 
         io_manager = IOManager(
             input_dir=self.input_dir,

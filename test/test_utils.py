@@ -14,14 +14,14 @@ class TestLoadImage(unittest.TestCase):
 
     def test_tiff(self):
 
-        fp = '/data/test_data/referenced_images/Geo 843083290_1.tif'
+        fp = '/data/night_horizons_test_data/referenced_images/Geo 843083290_1.tif'
         img = utils.load_image(fp)
 
         assert len(img.shape) == 3
 
     def test_raw(self):
 
-        fp = ('/data/test_data/images/23085686/'
+        fp = ('/data/night_horizons_test_data/images/23085686/'
               '20220413_221313_1020286912_0_50_3.raw')
         img = utils.load_image(fp)
 
@@ -36,24 +36,24 @@ class TestDiscoverData(unittest.TestCase):
     def setUp(self):
 
         self.expected_fps_raw = [
-            ('/data/test_data/images/23085686/'
+            ('/data/night_horizons_test_data/images/23085686/'
              '20220413_221313_1020286912_0_50_3.raw'),
-            ('/data/test_data/images/23085687/'
+            ('/data/night_horizons_test_data/images/23085687/'
              '20220413_202740_745696_1_50_0.raw'),
-            ('/data/test_data/images/23085687/'
+            ('/data/night_horizons_test_data/images/23085687/'
              'Geo 836109848_1.tif'),
         ]
 
     def test_discover_data(self):
 
-        image_dir = '/data/test_data/images'
+        image_dir = '/data/night_horizons_test_data/images'
 
         fps = utils.discover_data(image_dir)
         assert list(fps) == self.expected_fps_raw
 
     def test_discover_data_exts(self):
 
-        image_dir = '/data/test_data'
+        image_dir = '/data/night_horizons_test_data'
 
         fps = utils.discover_data(image_dir, extension=['raw', 'tif', 'tiff'])
 
@@ -65,10 +65,10 @@ class TestDiscoverData(unittest.TestCase):
 
     def test_discover_data_pattern(self):
 
-        image_dir = '/data/test_data/referenced_images'
+        image_dir = '/data/night_horizons_test_data/referenced_images'
         expected_fps = [
-            '/data/test_data/referenced_images/Geo 843083290_1.tif',
-            '/data/test_data/referenced_images/Geo 836109848_1.tif',
+            '/data/night_horizons_test_data/referenced_images/Geo 843083290_1.tif',
+            '/data/night_horizons_test_data/referenced_images/Geo 836109848_1.tif',
         ]
 
         fps = utils.discover_data(
