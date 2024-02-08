@@ -2,6 +2,9 @@
 # Example Configuration File
 ###############################################################################
 
+mapmaker:
+  map_type: base
+
 io_manager:
   input_dir: /data/test_data
   input_description:
