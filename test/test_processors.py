@@ -12,7 +12,7 @@ import scipy
 # TODO: Remove this when the draft is done.
 
 from night_horizons.image_processing import processors, scorers
-from night_horizons.mapmake import SequentialMosaicMaker
+from night_horizons.mapmake import create_mapmaker
 from night_horizons.raster import Image, ReferencedImage
 from night_horizons.transformers.raster import RasterCoordinateTransformer
 
@@ -23,6 +23,7 @@ class TestDatasetRegistrar(unittest.TestCase):
 
         # Register services
         local_options = {
+            'mapmaker': {'map_type': 'sequential'},
             'io_manager': {
                 'output_dir': '/data/test_data/temp',
                 'output_description': {
@@ -33,8 +34,10 @@ class TestDatasetRegistrar(unittest.TestCase):
         }
 
         # Create container
-        mapmaker = SequentialMosaicMaker(
-            './test/config.yml', local_options=local_options)
+        mapmaker = create_mapmaker(
+            './test/config.yml',
+            local_options=local_options,
+        )
 
         # Register the DatasetRegistrar
         mapmaker.container.register_service(
