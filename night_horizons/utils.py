@@ -425,12 +425,14 @@ class ReferencedRawSplitter:
         test_size: Union[int, float] = 0.2,
         random_state: Union[int, np.random.RandomState] = None,
         use_test_dir: bool = False,
+        drop_raw_images: bool = False,
     ):
 
         self.io_manager = io_manager
         self.test_size = test_size
         self.random_state = random_state
         self.use_test_dir = use_test_dir
+        self.drop_raw_images = drop_raw_images
 
     def train_test_production_split(
         self
@@ -444,7 +446,6 @@ class ReferencedRawSplitter:
         '''
 
         referenced_fps = self.io_manager.input_filepaths['referenced_images']
-        raw_fps = self.io_manager.input_filepaths['raw_images']
 
         if self.use_test_dir:
             fps_test = self.io_manager.input_filepaths['test_images']
@@ -458,8 +459,12 @@ class ReferencedRawSplitter:
             )
 
         # Combine raw fps and test fps
-        raw_fps.index += referenced_fps.size
-        fps = pd.concat([fps_test, raw_fps])
+        if not self.drop_raw_images:
+            raw_fps = self.io_manager.input_filepaths['raw_images']
+            raw_fps.index += referenced_fps.size
+            fps = pd.concat([fps_test, raw_fps])
+        else:
+            fps = fps_test
 
         fps = fps.sample(
             n=fps.size,
