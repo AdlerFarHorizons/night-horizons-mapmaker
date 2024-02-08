@@ -2,9 +2,11 @@ pytest
 numpy
 scipy
 pandas
+pyarrow
 scikit-learn
 tqdm
 PyYAML
+opencv-python
 gdal
 pyproj
 matplotlib
