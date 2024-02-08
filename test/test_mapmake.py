@@ -61,6 +61,9 @@ class TestMapmake(unittest.TestCase):
         self.check_output(X_out, io_manager, skip_keys)
 
     def test_sequential_mosaickmaker(self):
+        '''TODO: This fails some fraction of the time, with the Python process
+        being killed.
+        '''
 
         local_options = {
             'mapmaker': {
