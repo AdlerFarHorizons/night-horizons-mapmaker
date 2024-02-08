@@ -472,10 +472,12 @@ def create_mapmaker(config_filepath, local_options={}):
 
     def mapmaker_constructor(map_type, container, *args, **kwargs):
 
-        if map_type == 'mosaic':
+        if map_type == 'base':
+            return Mapmaker(container, *args, **kwargs)
+        elif map_type == 'mosaic':
             return MosaicMaker(container, *args, **kwargs)
         elif map_type == 'sequential':
-            return SequentialMosaicker(container, *args, **kwargs)
+            return SequentialMosaicMaker(container, *args, **kwargs)
         else:
             raise ValueError(f'Unknown mapmaker type: {map_type}')
 
