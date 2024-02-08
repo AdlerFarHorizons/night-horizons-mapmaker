@@ -105,14 +105,14 @@ class TestGeoTIFFPreprocessor(unittest.TestCase):
 
         # Image filetree info
         image_dir = '/data/test_data/images'
-        fps = utils.discover_data(image_dir)
-        n_files_unreffed = len(fps)
+        raw_fps = utils.discover_data(image_dir, extension=['raw'])
+        n_files_unreffed = len(raw_fps)
         referenced_image_dir = '/data/test_data/referenced_images'
-        fps2 = utils.discover_data(
+        referenced_fps = utils.discover_data(
             referenced_image_dir,
             extension=['tif', 'tiff']
         )
-        fps = pd.concat([fps, fps2], ignore_index=True)
+        fps = pd.concat([raw_fps, referenced_fps], ignore_index=True)
         n_files = len(fps)
 
         transformer = preprocessors.GeoTIFFPreprocessor()
