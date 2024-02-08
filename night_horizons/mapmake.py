@@ -36,14 +36,38 @@ class Mapmaker:
         self.container = container
         self.verbose = verbose
 
+        self.register_fundamental_services()
+
         self.register_default_services()
 
     def register_default_services(self):
+        pass
 
-        # Services for input/output
+    def register_fundamental_services(self):
+        '''Services that are used almost-ubiquitously by others.
+
+        By passing singleton=True we ensure that once an instance is made
+        we use it throughout, without needing to explicitly pass it
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
         self.container.register_service(
             'io_manager',
-            IOManager,
+            MosaicIOManager,
+            singleton=True,
+        )
+        self.container.register_service(
+            'crs',
+            CRS,
+            singleton=True,
+        )
+        self.container.register_service(
+            'random_state',
+            check_random_state,
             singleton=True,
         )
 
@@ -96,8 +120,6 @@ class MosaicMaker(Mapmaker):
         return X_out, io_manager
 
     def register_default_services(self):
-
-        self.register_fundamental_services()
 
         # What we use for preprocessing
         self.container.register_service(
@@ -153,34 +175,6 @@ class MosaicMaker(Mapmaker):
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
             )
-        )
-
-    def register_fundamental_services(self):
-        '''Services that are used almost-ubiquitously by others.
-
-        By passing singleton=True we ensure that once an instance is made
-        we use it throughout, without needing to explicitly pass it
-
-        Parameters
-        ----------
-        Returns
-        -------
-        '''
-
-        self.container.register_service(
-            'io_manager',
-            MosaicIOManager,
-            singleton=True,
-        )
-        self.container.register_service(
-            'crs',
-            CRS,
-            singleton=True,
-        )
-        self.container.register_service(
-            'random_state',
-            check_random_state,
-            singleton=True,
         )
 
 
@@ -246,8 +240,6 @@ class SequentialMosaicMaker(MosaicMaker):
         return y_pred, io_manager
 
     def register_default_services(self):
-
-        self.register_fundamental_services()
 
         self.register_validation_services()
 
@@ -470,8 +462,11 @@ def create_mapmaker(config_filepath, local_options={}):
         local_options=local_options,
     )
 
-    def mapmaker_constructor(map_type, container, *args, **kwargs):
-
+    def mapmaker_constructor(
+        container,
+        map_type: str = 'base',
+        *args, **kwargs
+    ):
         if map_type == 'base':
             return Mapmaker(container, *args, **kwargs)
         elif map_type == 'mosaic':

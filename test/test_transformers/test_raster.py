@@ -13,6 +13,7 @@ from night_horizons.container import DIContainer
 from night_horizons.data_io import GDALDatasetIO, RegisteredImageIO
 from night_horizons.io_manager import IOManager
 import night_horizons.transformers.raster as raster
+from night_horizons.mapmake import create_mapmaker
 
 
 class TestRasterCoordinateTransformer(unittest.TestCase):
@@ -21,23 +22,13 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         self.random_state = check_random_state(42)
 
-        # TODO: Using a container is overkill
-        container = DIContainer('./test/test_transformers/config.yml')
-        container.register_service('io_manager', IOManager)
-
-        # Convenient access to container
-        self.container = container
-        self.settings = container.config
-        self.io_manager = self.container.get_service('io_manager')
-
-        self.get_fit(self.settings['global']['crs'])
-
-    def get_fit(self, crs: pyproj.CRS = None):
+        self.mapmaker = create_mapmaker('./test/test_transformers/config.yml')
+        self.io_manager = self.mapmaker.container.get_service('io_manager')
 
         # Load the example data we'll use
         self.dataset = GDALDatasetIO.load(
             self.io_manager.input_filepaths['referenced_images'][0],
-            crs=crs,
+            crs=self.mapmaker.container.get_service('crs'),
         )
         (
             self.x_bounds,
@@ -47,7 +38,6 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
         ) = GDALDatasetIO.get_bounds_from_dataset(
             self.dataset,
         )
-        self.crs = pyproj.CRS(self.dataset.GetProjection())
 
     def test_to_pixel(self):
 
