@@ -18,23 +18,22 @@ class TestNITELitePreprocessor(unittest.TestCase):
     def setUp(self):
 
         self.mapmaker = create_mapmaker('./test/config.yml')
+        self.io_manager = self.mapmaker.container.get_service('io_manager')
 
         # Preprocessor construction
         self.expected_cols = ['filepath', 'sensor_x', 'sensor_y']
         self.transformer = preprocessors.NITELitePreprocessor(
-            io_manager=self.mapmaker.container.get_service('io_manager'),
+            io_manager=self.io_manager,
             output_columns=self.expected_cols,
         )
 
+        if os.path.isdir(self.io_manager.output_dir):
+            shutil.rmtree(self.io_manager.output_dir)
+
     def tearDown(self):
 
-        io_manager = self.mapmaker.container.get_service(
-            'io_manager',
-            file_exists='pass',
-        )
-
-        if os.path.isdir(io_manager.output_dir):
-            shutil.rmtree(io_manager.output_dir)
+        if os.path.isdir(self.io_manager.output_dir):
+            shutil.rmtree(self.io_manager.output_dir)
 
     def test_output(self):
         '''The output prior to any form of georeferencing.
@@ -102,12 +101,16 @@ class TestNITELitePreprocessor(unittest.TestCase):
 class TestGeoTIFFPreprocessor(unittest.TestCase):
 
     def test_output(self):
+        '''TODO: This fails when run alongside the other tests in
+        test_preprocessors, but not by itself.
+        '''
 
         # Image filetree info
         image_dir = '/data/night_horizons_test_data/images'
         raw_fps = utils.discover_data(image_dir, extension=['raw'])
         n_files_unreffed = len(raw_fps)
-        referenced_image_dir = '/data/night_horizons_test_data/referenced_images'
+        referenced_image_dir = \
+            '/data/night_horizons_test_data/referenced_images'
         referenced_fps = utils.discover_data(
             referenced_image_dir,
             extension=['tif', 'tiff']
