@@ -195,6 +195,7 @@ class SequentialMosaicMaker(MosaicMaker):
         # Get the file management
         io_manager: IOManager = self.container.get_service('io_manager')
         if self.verbose:
+            print(f'Retrieving input from {io_manager.input_dir}')
             print(f'Saving output in {io_manager.output_dir}')
 
         # Split up the data
@@ -229,10 +230,11 @@ class SequentialMosaicMaker(MosaicMaker):
         # Report on preprocessing
         if self.verbose:
             print(
-                'Some images were filtered during preprocessing.\n'
+                'Preprocessing determined what images to actually use.\n'
                 f'    Using {len(X_train)} georeferenced images.\n'
                 f'    Georeferencing {len(X)} images, '
-                f'of which {len(fps_test)} are referenced and can be tested.\n'
+                f'of which {len(fps_test)} have known references '
+                'and can be tested.'
             )
 
         # Mosaicking
@@ -248,7 +250,18 @@ class SequentialMosaicMaker(MosaicMaker):
             print('Mosaicking unreferenced images...')
         y_pred = mosaicker.predict(X)
 
+        # DEBUG
+        print('\n\nDEBUG:')
+        print(y_pred['x_off'].min(), y_pred['y_off'].min())
+        print(
+            mosaicker.transformer.x_size_ - (y_pred['x_off'] + y_pred['x_size']).max(),
+            mosaicker.transformer.y_size_ - (y_pred['y_off'] + y_pred['y_size']).max(),
+        )
+        print(':DEBUG\n\n')
+
         # Score the mosaicked images
+        if self.verbose and len(fps_test) > 0:
+            print('Scoring the mosaicked test images...')
         y_test = y_pred.loc[fps_test.index]
         y_test = mosaicker.score(y_test)
         y_pred = y_pred.combine_first(y_test)
