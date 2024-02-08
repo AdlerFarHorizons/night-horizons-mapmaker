@@ -46,7 +46,7 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
         io_manager: io_manager.IOManager,
         output_columns: list[str] = None,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        unhandled_files: str = 'warn and drop',
+        unhandled_files: str = 'drop',
         passthrough: list[str] = [],
     ):
         self.io_manager = io_manager

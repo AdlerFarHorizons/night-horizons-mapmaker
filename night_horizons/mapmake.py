@@ -229,9 +229,10 @@ class SequentialMosaicMaker(MosaicMaker):
         # Report on preprocessing
         if self.verbose:
             print(
-                f'    Using {len(X_train)} images for the starting mosaic.\n'
-                f'    Georeferencing {len(X)} images,\n'
-                f'    of which {len(fps_test)} images can be validated.\n'
+                'Some images were filtered during preprocessing.\n'
+                f'    Using {len(X_train)} georeferenced images.\n'
+                f'    Georeferencing {len(X)} images, '
+                f'of which {len(fps_test)} are referenced and can be tested.\n'
             )
 
         # Mosaicking
