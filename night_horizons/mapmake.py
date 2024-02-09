@@ -28,12 +28,14 @@ class Mapmaker:
     def __init__(
         self,
         container: DIContainer,
+        score_output: bool = False,
         verbose: bool = True
     ):
 
         gdal.UseExceptions()
 
         self.container = container
+        self.score_output = score_output
         self.verbose = verbose
 
         self.register_fundamental_services()
@@ -260,11 +262,12 @@ class SequentialMosaicMaker(MosaicMaker):
         print(':DEBUG\n\n')
 
         # Score the mosaicked images
-        if self.verbose and len(fps_test) > 0:
-            print('Scoring the mosaicked test images...')
-        y_test = y_pred.loc[fps_test.index]
-        y_test = mosaicker.score(y_test)
-        y_pred = y_pred.combine_first(y_test)
+        if len(fps_test) > 0 and self.score_output:
+            if self.verbose:
+                print('Scoring the mosaicked test images...')
+            y_test = y_pred.loc[fps_test.index]
+            y_test = mosaicker.score(y_test)
+            y_pred = y_pred.combine_first(y_test)
 
         if self.verbose:
             print(
