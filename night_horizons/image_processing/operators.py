@@ -182,6 +182,7 @@ class ImageAligner(BaseImageOperator):
 
         # Get keypoints
         src_kp, src_des = self.detect_and_compute(src_img)
+        # TODO: This is a point at which the process can be killed
         dst_kp, dst_des = self.detect_and_compute(dst_img)
         results['src_kp'] = src_kp
         results['src_des'] = src_des

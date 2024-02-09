@@ -68,6 +68,7 @@ class TestMapmake(unittest.TestCase):
         local_options = {
             'mapmaker': {
                 'map_type': 'sequential',
+                'score_output': True,
             },
             'io_manager': {
                 'output_dir': self.out_dir,
