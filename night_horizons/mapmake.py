@@ -5,8 +5,6 @@ from typing import Tuple
 
 import argparse
 import cv2
-from osgeo import gdal
-import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.utils import check_random_state
 import sys
@@ -31,8 +29,6 @@ class Mapmaker:
         score_output: bool = False,
         verbose: bool = True
     ):
-
-        gdal.UseExceptions()
 
         self.container = container
         self.score_output = score_output

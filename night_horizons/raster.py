@@ -14,6 +14,7 @@ import os
 
 import cv2
 from osgeo import gdal, gdal_array
+gdal.UseExceptions()
 import pyproj
 
 import matplotlib

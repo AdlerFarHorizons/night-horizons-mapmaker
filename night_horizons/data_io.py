@@ -11,6 +11,7 @@ import numpy as np
 import osgeo
 from osgeo import gdal, gdal_array
 from osgeo.osr import SpatialReference
+gdal.UseExceptions()
 import pandas as pd
 import pyproj
 from pyproj.enums import WktVersion

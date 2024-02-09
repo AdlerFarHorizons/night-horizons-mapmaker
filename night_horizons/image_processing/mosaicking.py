@@ -12,6 +12,7 @@ import warnings
 import cv2
 import numpy as np
 from osgeo import gdal
+gdal.UseExceptions()
 import pandas as pd
 import pyproj
 import scipy

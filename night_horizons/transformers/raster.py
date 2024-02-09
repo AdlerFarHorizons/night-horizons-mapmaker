@@ -3,6 +3,7 @@ import copy
 
 import numpy as np
 from osgeo import gdal
+gdal.UseExceptions()
 import pyproj
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline

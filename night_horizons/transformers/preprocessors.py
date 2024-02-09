@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 from osgeo import gdal
+gdal.UseExceptions()
 import pandas as pd
 import pyproj
 import scipy
@@ -463,7 +464,14 @@ class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
         for i, fp in enumerate(tqdm.tqdm(X['filepath'], ncols=80)):
 
             # Try to load the dataset
-            dataset = gdal.Open(fp, gdal.GA_ReadOnly)
+            try:
+                dataset = gdal.Open(fp, gdal.GA_ReadOnly)
+            except Exception as e:
+                # We have to be kind of obtuse about catching this error
+                # because gdal doesn't have nice error classes
+                if gdal.GetLastErrorType() != gdal.CPLE_FileIO:
+                    raise e
+                dataset = None
             if dataset is None:
                 row = pd.Series(
                     [np.nan,] * len(GEOTRANSFORM_COLS),

@@ -9,6 +9,7 @@ import shutil
 from typing import Tuple, Union
 
 from osgeo import gdal
+gdal.UseExceptions()
 import yaml
 
 import numpy as np
