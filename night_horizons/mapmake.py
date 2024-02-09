@@ -252,15 +252,6 @@ class SequentialMosaicMaker(MosaicMaker):
             print('Mosaicking unreferenced images...')
         y_pred = mosaicker.predict(X)
 
-        # DEBUG
-        print('\n\nDEBUG:')
-        print(y_pred['x_off'].min(), y_pred['y_off'].min())
-        print(
-            mosaicker.transformer.x_size_ - (y_pred['x_off'] + y_pred['x_size']).max(),
-            mosaicker.transformer.y_size_ - (y_pred['y_off'] + y_pred['y_size']).max(),
-        )
-        print(':DEBUG\n\n')
-
         # Score the mosaicked images
         if len(fps_test) > 0 and self.score_output:
             if self.verbose:

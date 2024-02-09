@@ -371,15 +371,6 @@ class SequentialMosaicker(Mosaicker):
             'transformer': self.transformer,
         }
 
-        print('\n\nDEBUG:')
-        print('X_t')
-        print(X_t['x_off'].min(), X_t['y_off'].min())
-        print(
-            self.transformer.x_size_ - (X_t['x_off'] + X_t['x_size']).max(),
-            self.transformer.y_size_ - (X_t['y_off'] + X_t['y_size']).max(),
-        )
-        print('DEBUG\n\n')
-
         return X_t, resources
 
     def postprocess(self, y_pred, resources):
