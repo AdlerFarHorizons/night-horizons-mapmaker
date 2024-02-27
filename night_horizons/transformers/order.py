@@ -1,5 +1,33 @@
 import numpy as np
+import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
+
+
+class OrderTransformer(TransformerMixin, BaseEstimator):
+
+    def __init__(self, order_columns, apply=True, ascending=True):
+
+        self.order_columns = order_columns
+        self.apply = apply
+        self.ascending = ascending
+
+    def fit(self, X, y=None):
+
+        self.is_fitted_ = True
+        return self
+
+    def transform(self, X: pd.DataFrame):
+
+        # Actual sort
+        X_sorted = X.sort_values(self.order_columns, ascending=self.ascending)
+        X_sorted['order'] = np.arange(len(X_sorted))
+
+        if self.apply:
+            return X_sorted
+
+        X['order'] = X_sorted.loc[X.index, 'order']
+
+        return X
 
 
 class SensorAndDistanceOrder(TransformerMixin, BaseEstimator):
@@ -25,10 +53,14 @@ class SensorAndDistanceOrder(TransformerMixin, BaseEstimator):
         sensor_order_map={0: 1, 1: 0, 2: 2},
         coords_cols=['x_center', 'y_center'],
     ):
-        self.apply = apply
         self.sensor_order_col = sensor_order_col
         self.sensor_order_map = sensor_order_map
         self.coords_cols = coords_cols
+
+        super().__init__(
+            apply=apply,
+            order_columns=['sensor_order', 'd_to_center']
+        )
 
     def fit(self, X, y=None):
 
@@ -38,18 +70,10 @@ class SensorAndDistanceOrder(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
+
         X['sensor_order'] = X[self.sensor_order_col].map(self.sensor_order_map)
 
         offset = X[self.coords_cols] - self.center_
         X['d_to_center'] = np.linalg.norm(offset, axis=1)
 
-        # Actual sort
-        X_iter = X.sort_values(['sensor_order', 'd_to_center'])
-        X_iter['order'] = np.arange(len(X_iter))
-
-        if self.apply:
-            return X_iter
-
-        X['order'] = X_iter.loc[X.index, 'order']
-
-        return X
+        return super().transform(X)

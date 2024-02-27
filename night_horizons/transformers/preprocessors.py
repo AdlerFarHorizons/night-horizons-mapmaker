@@ -335,6 +335,12 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
         imu_log_df.loc[imu_log_df['mAltitude'] < 0., ac_columns] = np.nan
         imu_log_df.loc[imu_log_df['mAltitude'] > 20000., ac_columns] = np.nan
 
+        # Get gyro magnitude
+        imu_log_df['imuGyroMag'] = np.linalg.norm(
+            imu_log_df['imuGyroX', 'imuGyroY', 'imuGyroZ'],
+            axis=1
+        )
+
         return imu_log_df
 
     def load_gps_log(

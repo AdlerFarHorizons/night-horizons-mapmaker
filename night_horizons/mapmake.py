@@ -100,7 +100,7 @@ class MosaicMaker(Mapmaker):
             print(f'Using {len(referenced_fps)} referenced images.')
 
         assert len(referenced_fps) > 0, (
-            'No referenced images found. Input description:\n'
+            'No referenced images found. Search parameters:\n'
             f'{io_manager.input_description["referenced_images"]}'
         )
 
@@ -126,14 +126,72 @@ class MosaicMaker(Mapmaker):
 
     def register_default_services(self):
 
-        # What we use for preprocessing
+        self.register_default_preprocessors()
+        self.register_default_processors()
+
+    def register_default_preprocessors(self):
+
+        # Preprocessor to get metadata
         self.container.register_service(
-            'preprocessor',
+            'metadata_preprocessor',
+            lambda *args, **kwargs: preprocessors.NITELitePreprocessor(
+                io_manager=self.container.get_service('io_manager'),
+                crs=self.container.get_service('crs'),
+                *args, **kwargs
+            )
+        )
+
+        # Preprocessor to get geotiff metadata (which includes georeferencing)
+        self.container.register_service(
+            'geotiff_preprocessor',
             lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
             )
         )
+
+        # Preprocessor to filter on altitude
+        self.container.register_service(
+            'altitude_filter',
+            filters.AltitudeFilter,
+        )
+
+        # Preprocessor to filter on steadiness
+        self.container.register_service(
+            'steady_filter',
+            filters.SteadyFilter,
+        )
+
+        # Preprocessor to order images
+        self.container.register_service(
+            'quality_order',
+            lambda quality_col='imuGyroMag', *args, **kwargs:
+                order.OrderTransformer(
+                    order_columns=quality_col,
+                    *args, **kwargs
+                )
+        )
+
+        # Put it all together
+        def make_preprocessor_pipeline(
+            steps: list[str] = [
+                'geotiff_preprocessor',
+            ],
+            *args, **kwargs
+        ):
+            return Pipeline(
+                [
+                    (step, self.container.get_service(step))
+                    for step in steps
+                ],
+                *args, **kwargs
+            )
+        self.container.register_service(
+            'preprocessor',
+            make_preprocessor_pipeline,
+        )
+
+    def register_default_processors(self):
 
         # Standard image operator for mosaickers is just a blender
         self.container.register_service(
@@ -272,7 +330,7 @@ class SequentialMosaicMaker(MosaicMaker):
 
         self.register_default_train_services()
 
-        self.register_default_batch_processor()
+        self.register_default_processors()
 
     def register_validation_services(self):
 
@@ -423,7 +481,7 @@ class SequentialMosaicMaker(MosaicMaker):
             )
         )
 
-    def register_default_batch_processor(self):
+    def register_default_processors(self):
         '''
         TODO: This could be cleaned up more, at the cost of flexibility.
         '''

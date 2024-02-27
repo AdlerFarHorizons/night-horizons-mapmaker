@@ -37,16 +37,15 @@ class SteadyFilter(Filter):
 
     def __init__(
         self,
-        columns: list[str] = ['imuGyroX', 'imuGyroY', 'imuGyroZ'],
+        column: str = 'imuGyroMag',
         max_gyro: float = 0.075,
     ):
 
-        self.columns = columns
+        self.column = column
         self.max_gyro = max_gyro
 
         def condition(X):
-            mag = np.linalg.norm(X[columns], axis=1)
-            return mag < max_gyro
+            return X[self.column] < max_gyro
 
         super().__init__(condition)
 
