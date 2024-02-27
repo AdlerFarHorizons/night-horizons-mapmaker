@@ -150,18 +150,6 @@ class MosaicMaker(Mapmaker):
             )
         )
 
-        # Preprocessor to filter on altitude
-        self.container.register_service(
-            'altitude_filter',
-            filters.AltitudeFilter,
-        )
-
-        # Preprocessor to filter on steadiness
-        self.container.register_service(
-            'steady_filter',
-            filters.SteadyFilter,
-        )
-
         # Preprocessor to order images
         self.container.register_service(
             'quality_order',
@@ -189,6 +177,20 @@ class MosaicMaker(Mapmaker):
         self.container.register_service(
             'preprocessor',
             make_preprocessor_pipeline,
+        )
+
+        # These are the steps for making a finalized, polished referenced image
+        hq_steps = [
+            'metadata_preprocessor',
+            'geotiff_preprocesor',
+            'quality_order',
+        ]
+        self.container.register_service(
+            'hq_preprocessor',
+            lambda steps=hq_steps, *args, **kwargs: make_preprocessor_pipeline(
+                steps=steps,
+                *args, **kwargs
+            )
         )
 
     def register_default_processors(self):
