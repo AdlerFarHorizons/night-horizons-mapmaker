@@ -179,20 +179,6 @@ class MosaicMaker(Mapmaker):
             make_preprocessor_pipeline,
         )
 
-        # These are the steps for making a finalized, polished referenced image
-        hq_steps = [
-            'metadata_preprocessor',
-            'geotiff_preprocesor',
-            'quality_order',
-        ]
-        self.container.register_service(
-            'hq_preprocessor',
-            lambda steps=hq_steps, *args, **kwargs: make_preprocessor_pipeline(
-                steps=steps,
-                *args, **kwargs
-            )
-        )
-
     def register_default_processors(self):
 
         # Standard image operator for mosaickers is just a blender

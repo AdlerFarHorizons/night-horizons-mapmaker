@@ -260,6 +260,14 @@ class DatasetProcessor(Processor):
 
 
 class DatasetUpdater(DatasetProcessor):
+    '''
+    # TODO: Extend this to employ image operators (plural) to enable more calcs
+
+    Parameters
+    ----------
+    Returns
+    -------
+    '''
 
     def process(
         self,
