@@ -564,6 +564,11 @@ if __name__ == "__main__":
         type=str,
         help='Location of config file.',
     )
+    parser.add_argument(
+        '--validate_only',
+        action='store_true',
+        help='If True, only validate the config file.'
+    )
 
     # Parse the arguments
     args = parser.parse_args()
@@ -572,4 +577,9 @@ if __name__ == "__main__":
     mapmaker = create_mapmaker(args.config_filepath)
 
     # Execute
-    mapmaker.run()
+    if not args.validate_only:
+        mapmaker.run()
+    else:
+        print('Validating pipeline setup...')
+        io_manager = mapmaker.container.get_service('io_manager')
+        print(io_manager.input_filepaths)
