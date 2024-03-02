@@ -30,7 +30,7 @@ class OrderTransformer(TransformerMixin, BaseEstimator):
         return X
 
 
-class SensorAndDistanceOrder(TransformerMixin, BaseEstimator):
+class SensorAndDistanceOrder(OrderTransformer):
     '''Simple estimator to implement ordering of data.
     For consistency with other transformers, does not actually rearrange data.
     Instead, adds a column `order` that indicates the order to take.

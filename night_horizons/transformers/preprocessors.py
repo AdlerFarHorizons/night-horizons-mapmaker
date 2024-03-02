@@ -337,7 +337,7 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
 
         # Get gyro magnitude
         imu_log_df['imuGyroMag'] = np.linalg.norm(
-            imu_log_df['imuGyroX', 'imuGyroY', 'imuGyroZ'],
+            imu_log_df[['imuGyroX', 'imuGyroY', 'imuGyroZ']],
             axis=1
         )
 
