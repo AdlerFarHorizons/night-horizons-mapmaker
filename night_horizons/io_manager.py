@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import scipy
 from sklearn.model_selection import train_test_split
+from sqlalchemy import create_engine
 # This is a draft---don't overengineer!
 # NO renaming!
 # NO refactoring!
@@ -334,6 +335,15 @@ class IOManager:
         loaded_data = self.load_from_checkpoint(i_resume)
 
         return i_resume, loaded_data
+
+    def get_connection(self, url=None):
+
+        if url is None:
+            url = os.getenv('DATABASE_URL')
+            url = url.replace('postgres://', 'postgresql+pyscopg2://')
+        engine = create_engine(url)
+
+        return engine
 
 
 class MosaicIOManager(IOManager):

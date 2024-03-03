@@ -8,6 +8,7 @@ import cv2
 from sklearn.pipeline import Pipeline
 from sklearn.utils import check_random_state
 import sys
+import pandas as pd
 from pyproj import CRS
 
 from night_horizons.transformers import filters, order, preprocessors, raster
@@ -110,8 +111,30 @@ class MetadataProcessor(Mapmaker):
 
         # Get the filepaths
         io_manager = self.container.get_service('io_manager')
-        image_fps = io_manager.input_filepaths['images']
-        
+        image_fps = io_manager.input_filepaths['raw_images']
+
+        metadata_preprocessor = self.container.get_service(
+            'metadata_preprocessor')
+        metadata: pd.DataFrame = metadata_preprocessor.fit_transform(image_fps)
+
+        # Store the metadata in the database
+        conn = io_manager.get_connection()
+        metadata.copy().to_sql(os.getenv('FLIGHT_ID'), conn, if_exists='replace')
+
+        return metadata
+
+    def register_default_services(self):
+
+        # Preprocessor to get metadata
+        self.container.register_service(
+            'metadata_preprocessor',
+            lambda *args, **kwargs: preprocessors.NITELitePreprocessor(
+                io_manager=self.container.get_service('io_manager'),
+                crs=self.container.get_service('crs'),
+                *args, **kwargs
+            )
+        )
+
 
 class MosaicMaker(Mapmaker):
 
