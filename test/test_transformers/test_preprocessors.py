@@ -10,7 +10,7 @@ import pandas as pd
 
 import night_horizons.transformers.preprocessors as preprocessors
 import night_horizons.utils as utils
-from night_horizons.mapmake import create_mapmaker
+from night_horizons.pipeline import create_mapmaker
 
 
 class TestNITELitePreprocessor(unittest.TestCase):

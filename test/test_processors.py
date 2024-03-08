@@ -12,7 +12,7 @@ import scipy
 # TODO: Remove this when the draft is done.
 
 from night_horizons.image_processing import processors, scorers
-from night_horizons.mapmake import create_mapmaker
+from night_horizons.pipeline import create_mapmaker
 from night_horizons.raster import Image, ReferencedImage
 from night_horizons.transformers.raster import RasterCoordinateTransformer
 

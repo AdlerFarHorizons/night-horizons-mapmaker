@@ -13,7 +13,7 @@ from night_horizons.container import DIContainer
 from night_horizons.data_io import GDALDatasetIO, RegisteredImageIO
 from night_horizons.io_manager import IOManager
 import night_horizons.transformers.raster as raster
-from night_horizons.mapmake import create_mapmaker
+from night_horizons.pipeline import create_mapmaker
 
 
 class TestRasterCoordinateTransformer(unittest.TestCase):

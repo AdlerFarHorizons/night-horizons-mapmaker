@@ -2,7 +2,7 @@ import os
 import shutil
 import unittest
 
-from night_horizons import mapmake
+from night_horizons import pipeline
 
 
 class TestMapmake(unittest.TestCase):
@@ -44,7 +44,7 @@ class TestMapmake(unittest.TestCase):
             'io_manager': {'output_dir': self.out_dir},
         }
 
-        mosaicmaker = mapmake.create_mapmaker(
+        mosaicmaker = pipeline.create_mapmaker(
             './test/config.yml',
             local_options,
         )
@@ -85,7 +85,7 @@ class TestMapmake(unittest.TestCase):
             },
         }
 
-        mosaicmaker: mapmake.SequentialMosaicMaker = mapmake.create_mapmaker(
+        mosaicmaker: pipeline.SequentialMosaicMaker = pipeline.create_mapmaker(
             './test/config.yml',
             local_options
         )

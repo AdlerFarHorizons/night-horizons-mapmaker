@@ -2,7 +2,7 @@ import os
 import unittest
 import psycopg2
 
-from night_horizons.mapmake import create_mapmaker
+from night_horizons.pipeline import create_mapmaker
 import pandas as pd
 from sqlalchemy import create_engine, sql
 
@@ -50,3 +50,18 @@ class TestMetadataProcessing(unittest.TestCase):
 # 
 #         # Assert that the dataframe is not empty
 #         self.assertFalse(df.empty)
+
+    def test_metadata_processing_output(self):
+
+        local_options = {'mapmaker': {'map_type': 'metadata_processor'}}
+        metadata_processor = create_mapmaker(
+            './test/config.yml',
+            local_options=local_options
+        )
+        # metadata_processor.run()
+
+        io_manager = metadata_processor.container.get_service('io_manager')
+        df = pd.read_csv(io_manager.output_filepaths['metadata'])
+
+        # Assert that the dataframe is not empty
+        self.assertFalse(df.empty)

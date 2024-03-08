@@ -23,7 +23,7 @@ from night_horizons.image_processing import (
 from night_horizons.utils import ReferencedRawSplitter
 
 
-class Mapmaker:
+class Stage:
     def __init__(
         self,
         container: DIContainer,
@@ -102,7 +102,7 @@ class Mapmaker:
     #     self.container.register_service('io_manager', register_io_manager)
 
 
-class MetadataProcessor(Mapmaker):
+class MetadataProcessor(Stage):
 
     def run(self):
 
@@ -132,7 +132,7 @@ class MetadataProcessor(Mapmaker):
         )
 
 
-class MosaicMaker(Mapmaker):
+class MosaicMaker(Stage):
 
     def run(self):
 
@@ -590,7 +590,7 @@ def create_mapmaker(config_filepath, local_options={}):
         if map_type == 'metadata_processor':
             return MetadataProcessor(container, *args, **kwargs)
         elif map_type == 'base':
-            return Mapmaker(container, *args, **kwargs)
+            return Stage(container, *args, **kwargs)
         elif map_type == 'mosaic':
             return MosaicMaker(container, *args, **kwargs)
         elif map_type == 'sequential':
