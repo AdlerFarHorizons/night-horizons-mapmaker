@@ -117,10 +117,6 @@ class MetadataProcessor(Mapmaker):
             'metadata_preprocessor')
         metadata: pd.DataFrame = metadata_preprocessor.fit_transform(image_fps)
 
-        # Store the metadata in the database
-        conn = io_manager.get_connection()
-        metadata.copy().to_sql(os.getenv('FLIGHT_ID'), conn, if_exists='replace')
-
         return metadata
 
     def register_default_services(self):
