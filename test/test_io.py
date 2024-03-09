@@ -79,8 +79,8 @@ class TestInput(unittest.TestCase):
         )
 
         expected_fps = [
-            '/data/referenced_images/Geo 843083290_1.tif',
-            '/data/referenced_images/Geo 836109848_1.tif',
+            '/data/referenced_images/220513-FH135/Geo 843083290_1.tif',
+            '/data/referenced_images/220513-FH135/Geo 836109848_1.tif',
         ]
 
         fps = io_manager.input_filepaths['referenced_images']

@@ -14,7 +14,7 @@ io_manager:
       pattern: 'Geo\s\d+_\d.tif'
   output_dir: /data/temp
   output_description:
-    referenced_images: 'referenced_images/img_{:06d}.tiff'
+    referenced_images: 'referenced_images/220513-FH135/img_{:06d}.tiff'
 
 # Coordinate reference-system employed
 crs:
