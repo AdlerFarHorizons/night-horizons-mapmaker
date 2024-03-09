@@ -15,7 +15,7 @@ from night_horizons.transformers import filters, order, preprocessors, raster
 
 from night_horizons.container import DIContainer
 from night_horizons.io_manager import (
-    IOManager, MosaicIOManager, TrainMosaicIOManager
+    IOManager, MosaicIOManager, SequentialMosaicIOManager, TrainMosaicIOManager
 )
 from night_horizons.image_processing import (
     mosaicking, operators, processors, registration, scorers
@@ -380,7 +380,7 @@ class SequentialMosaicMaker(MosaicMaker):
         # Overwrite the io manager
         self.container.register_service(
             'io_manager',
-            MosaicIOManager,
+            SequentialMosaicIOManager,
             singleton=True,
         )
 

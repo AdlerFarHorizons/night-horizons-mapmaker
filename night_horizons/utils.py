@@ -464,7 +464,7 @@ class ReferencedRawSplitter:
 
         # Combine raw fps and test fps
         if not self.drop_raw_images:
-            raw_fps = self.io_manager.input_filepaths['raw_images']
+            raw_fps = self.io_manager.input_filepaths['images']
             raw_fps.index += referenced_fps.size
             fps = pd.concat([fps_test, raw_fps])
         else:

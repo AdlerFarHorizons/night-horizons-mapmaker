@@ -449,10 +449,11 @@ class SequentialMosaicIOManager(MosaicIOManager):
         self,
         output_description: dict = {
             'mosaic': 'mosaic.tiff',
-            'settings': 'settings_train.yaml',
-            'log': 'log_train.yaml',
-            'y_pred': 'y_pred_train.csv',
-            'progress_images_dir_train': 'progress_images_train',
+            'settings': 'settings.yaml',
+            'log': 'log.yaml',
+            'y_pred': 'y_pred.csv',
+            'progress_images_dir': 'progress_images',
+            'referenced_images': 'referenced_images/img_ind{:06d}.tiff',
         },
         checkpoint_selection: list[str] = [
             'mosaic', 'settings', 'log', 'y_pred'],

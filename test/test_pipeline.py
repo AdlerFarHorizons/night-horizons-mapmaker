@@ -111,9 +111,9 @@ class TestSequentialMosaicMaker(TestStage):
             'pipeline': {
                 'score_output': True,
             },
-            'data_splitter': {
-                'use_test_dir': True,
-            },
+            # 'data_splitter': {
+            #     'use_test_dir': True,
+            # },
             'altitude_filter': {
                 # So we don't filter anything out
                 'float_altitude': 100.,
