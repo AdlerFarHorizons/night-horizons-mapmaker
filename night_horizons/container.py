@@ -81,7 +81,12 @@ class DIContainer:
             args_key = constructor_dict['args_key']
         kwargs = self.get_service_args(args_key, constructor, **kwargs)
 
-        return constructor(*args, **kwargs)
+        # Construct the service
+        service = constructor(*args, **kwargs)
+        if constructor_dict['singleton']:
+            self.services[name] = service
+
+        return service
 
     def get_service_args(self, name, constructor, **kwargs):
 
