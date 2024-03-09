@@ -70,8 +70,7 @@ class TestInput(unittest.TestCase):
             input_description={
                 'referenced_images': {
                     'directory': 'referenced_images',
-                    'extension': ['tif', 'tiff'],
-                    'pattern': r'Geo\s\d+_\d.tif',
+                    'pattern': r'Geo\s\d+_\d.tif$',
                 },
             },
             output_dir=self.output_dir,

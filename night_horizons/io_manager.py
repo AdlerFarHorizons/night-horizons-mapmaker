@@ -172,6 +172,8 @@ class IOManager:
         if extension is not None:
             if pattern is None:
                 pattern = '.*'
+            else:
+                pattern += '.*'
             # When a single extension
             if isinstance(extension, str):
                 pattern += f'{extension}$'
