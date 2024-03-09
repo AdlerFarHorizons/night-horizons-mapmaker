@@ -162,3 +162,5 @@ class TestSequentialMosaicMaker(TestStage):
             'score'
         ].mean()
         assert avg_score < 500.
+
+# TODO: TestScoreSequentialMosaicker

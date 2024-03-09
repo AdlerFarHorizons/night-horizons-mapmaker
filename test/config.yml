@@ -6,7 +6,7 @@ mapmaker:
   map_type: base
 
 io_manager:
-  input_dir: /data/night_horizons_test_data
+  input_dir: /data
   input_description:
     raw_images:
       directory: images

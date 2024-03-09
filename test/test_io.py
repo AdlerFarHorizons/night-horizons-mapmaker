@@ -79,8 +79,8 @@ class TestInput(unittest.TestCase):
         )
 
         expected_fps = [
-            '/data/night_horizons_test_data/referenced_images/Geo 843083290_1.tif',
-            '/data/night_horizons_test_data/referenced_images/Geo 836109848_1.tif',
+            '/data/referenced_images/Geo 843083290_1.tif',
+            '/data/referenced_images/Geo 836109848_1.tif',
         ]
 
         fps = io_manager.input_filepaths['referenced_images']
@@ -92,7 +92,7 @@ class TestOutput(unittest.TestCase):
     def setUp(self):
 
         self.input_dir = '/data/'
-        self.output_dir = '/data/night_horizons_test_data/mosaics/temp'
+        self.output_dir = '/data/mosaics/temp'
 
         # Start with a clean slate
         if os.path.exists(self.output_dir):
@@ -154,7 +154,7 @@ class TestOutput(unittest.TestCase):
         filepath = os.path.join(self.output_dir, 'mosaic.tiff')
         os.makedirs(self.output_dir)
         open(filepath, 'w').close()
-        new_outdir = '/data/night_horizons_test_data/mosaics/temp_v000'
+        new_outdir = '/data/mosaics/temp_v000'
 
         io_manager = IOManager(
             input_dir=self.input_dir,
