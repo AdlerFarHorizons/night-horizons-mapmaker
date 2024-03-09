@@ -3,6 +3,7 @@ import shutil
 import unittest
 from unittest.mock import MagicMock
 
+import cv2
 import numpy as np
 import pandas as pd
 import scipy
@@ -11,10 +12,12 @@ import scipy
 # NO refactoring!
 # TODO: Remove this when the draft is done.
 
-from night_horizons.image_processing import processors, scorers
+from night_horizons.image_processing import processors, scorers, operators
 from night_horizons.pipeline import create_stage
 from night_horizons.raster import Image, ReferencedImage
-from night_horizons.transformers.raster import RasterCoordinateTransformer
+from night_horizons.transformers.raster import (
+    RasterCoordinateTransformer, PassImageTransformer
+)
 
 
 class TestDatasetRegistrar(unittest.TestCase):
@@ -37,6 +40,34 @@ class TestDatasetRegistrar(unittest.TestCase):
         mapmaker = create_stage(
             './test/config.yml',
             local_options=local_options,
+        )
+
+        # Feature detection and matching
+        mapmaker.container.register_service(
+            'image_transformer',
+            PassImageTransformer,
+        )
+        mapmaker.container.register_service(
+            'feature_detector',
+            cv2.AKAZE.create,
+        )
+        mapmaker.container.register_service(
+            'feature_matcher',
+            cv2.BFMatcher.create,
+        )
+
+        # Operator for the sequential mosaicker--align and blend
+        mapmaker.container.register_service(
+            'image_operator',
+            lambda *args, **kwargs: operators.ImageAlignerBlender(
+                image_transformer=mapmaker.container.get_service(
+                    'image_transformer'),
+                feature_detector=mapmaker.container.get_service(
+                    'feature_detector'),
+                feature_matcher=mapmaker.container.get_service(
+                    'feature_matcher'),
+                *args, **kwargs
+            )
         )
 
         # Register the DatasetRegistrar
@@ -119,7 +150,7 @@ class TestDatasetRegistrar(unittest.TestCase):
 
         # Dataset
         expected_fp = (
-            '/data/referenced_images/Geo 225856_1473511261_0.tif'
+            '/data/referenced_images/220513-FH135/Geo 225856_1473511261_0.tif'
         )
         original_image = ReferencedImage.open(expected_fp)
         transformer = RasterCoordinateTransformer()
@@ -167,7 +198,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         '''
 
         original_fp = (
-            '/data/referenced_images/Geo 225856_1473511261_0.tif'
+            '/data/referenced_images/220513-FH135/Geo 225856_1473511261_0.tif'
         )
         original_image = ReferencedImage.open(original_fp)
 
