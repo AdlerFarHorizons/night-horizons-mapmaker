@@ -63,19 +63,22 @@ class TestStage(unittest.TestCase):
 
 class TestMetadataProcessor(TestStage):
 
-    def test_metadata_processing_output(self):
+    def test_metadata_processor(self):
 
         metadata_processor: pipeline.MetadataProcessor = \
             self.create_stage('./configs/metadata.yml')
         X_out = metadata_processor.run()
 
-        # Check also that the dataframe is not empty
+        # Check we found some images
         io_manager = metadata_processor.container.get_service('io_manager')
+        assert len(io_manager.input_filepaths['images']) > 0
+
+        # Test for existence
+        self.check_output(metadata_processor)
+
+        # Check also that the dataframe is not empty
         df = pd.read_csv(io_manager.output_filepaths['metadata'])
         self.assertFalse(df.empty)
-
-        # Check any other files
-        self.check_output(metadata_processor)
 
 
 class TestMosaicMaker(TestStage):
@@ -94,7 +97,7 @@ class TestMosaicMaker(TestStage):
         )
 
         # Check rest of output
-        skip_keys = ['y_pred', 'progress_images_dir', 'referenced_images']
+        skip_keys = [] # 'y_pred', 'progress_images_dir', 'referenced_images']
         self.check_output(mosaicmaker, skip_keys=skip_keys)
 
 
@@ -127,6 +130,13 @@ class TestSequentialMosaicMaker(TestStage):
         )
         y_pred = mosaicmaker.run()
 
+        # Check the number of successes
+        # Only 2 -> the test image and also a copy of it we put in the raw dir
+        assert (y_pred['return_code'] == 'success').sum() == 2
+
+        # Test for existence
+        self.check_output(y_pred)
+
         # Check basic structure of X_out
         io_manager = mosaicmaker.container.get_service('io_manager')
         n_raw = len(io_manager.input_filepaths['raw_images'])
@@ -134,13 +144,6 @@ class TestSequentialMosaicMaker(TestStage):
             len(y_pred),
             n_raw + len(io_manager.input_filepaths['test_images'])
         )
-
-        # Check the number of successes
-        # Only 2 -> the test image and also a copy of it we put in the raw dir
-        assert (y_pred['return_code'] == 'success').sum() == 2
-
-        # Check rest of output
-        self.check_output(y_pred, io_manager)
 
         # Check the score
         avg_score = y_pred.loc[

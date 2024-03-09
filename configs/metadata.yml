@@ -12,9 +12,17 @@ io_manager:
   # Specifies the input data
   input_dir: /data/
   input_description:
+    # Metadata files. This is the path relative to the input_dir.
     img_log: metadata/220513-FH135/image.log
     imu_log: metadata/220513-FH135/PresIMULog.csv
     gps_log: metadata/220513-FH135/GPSLog.csv
+    # Images without georeferencing.
+    images:
+      # Relative to input_dir
+      # 23085687 is the ID of the nadir camera. Delete it to process all images.
+      directory: images/220513-FH135/23085687
+      # Only files with these extensions will be considered.
+      extension: ['raw', 'tif', 'tiff']
   # Where the output files will be saved
   output_dir: /data/
   output_description:

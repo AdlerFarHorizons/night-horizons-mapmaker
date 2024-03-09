@@ -56,7 +56,7 @@ class Stage:
 
         self.container.register_service(
             'io_manager',
-            MosaicIOManager,
+            IOManager,
             singleton=True,
         )
         self.container.register_service(
@@ -111,11 +111,20 @@ class MetadataProcessor(Stage):
 
         # Get the filepaths
         io_manager = self.container.get_service('io_manager')
-        image_fps = io_manager.input_filepaths['raw_images']
+        image_fps = io_manager.input_filepaths['images']
 
+        # Run the processing
         metadata_preprocessor = self.container.get_service(
             'metadata_preprocessor')
         metadata: pd.DataFrame = metadata_preprocessor.fit_transform(image_fps)
+
+        # Save the output
+        output_fp = io_manager.output_filepaths['metadata']
+        os.makedirs(
+            os.path.abspath(os.path.dirname(output_fp)),
+            exist_ok=True
+        )
+        metadata.to_csv(output_fp)
 
         return metadata
 
@@ -174,6 +183,13 @@ class MosaicMaker(Stage):
         return X_out, io_manager
 
     def register_default_services(self):
+
+        # Overwrite the io manager
+        self.container.register_service(
+            'io_manager',
+            MosaicIOManager,
+            singleton=True,
+        )
 
         self.register_default_preprocessors()
         self.register_default_processors()
@@ -360,6 +376,13 @@ class SequentialMosaicMaker(MosaicMaker):
         return y_pred, io_manager
 
     def register_default_services(self):
+
+        # Overwrite the io manager
+        self.container.register_service(
+            'io_manager',
+            MosaicIOManager,
+            singleton=True,
+        )
 
         self.register_validation_services()
 
