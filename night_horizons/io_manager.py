@@ -141,6 +141,7 @@ class IOManager:
     def find_files(
         self,
         directory: str,
+        extension: str = None,
         pattern: str = None,
     ) -> pd.Series:
         '''
@@ -166,6 +167,17 @@ class IOManager:
             for name in files:
                 fps.append(os.path.join(root, name))
         fps = pd.Series(fps)
+
+        # Handle extensions.
+        if extension is not None:
+            if pattern is None:
+                pattern = '.*'
+            # When a single extension
+            if isinstance(extension, str):
+                pattern += f'{extension}$'
+            # When a list of extensions
+            else:
+                pattern += '(' + '|'.join(extension) + ')$'
 
         # Filter to select particular files
         if pattern is not None:
