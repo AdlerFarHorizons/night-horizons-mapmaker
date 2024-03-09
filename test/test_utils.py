@@ -53,7 +53,7 @@ class TestDiscoverData(unittest.TestCase):
 
     def test_discover_data_exts(self):
 
-        image_dir = '/data/night_horizons_test_data'
+        image_dir = '/data/'
 
         fps = utils.discover_data(image_dir, extension=['raw', 'tif', 'tiff'])
 

@@ -9,15 +9,15 @@ class TestInput(unittest.TestCase):
 
     def setUp(self):
 
-        self.input_dir = '/data/night_horizons_test_data'
-        self.output_dir = '/data/night_horizons_test_data/mosaics/temp'
+        self.input_dir = '/data/'
+        self.output_dir = '/data/mosaics/temp'
 
         self.expected_fps_raw = [
-            ('/data/night_horizons_test_data/images/23085686/'
+            ('/data/images/220513-FH135/23085686/'
              '20220413_221313_1020286912_0_50_3.raw'),
-            ('/data/night_horizons_test_data/images/23085687/'
+            ('/data/images/220513-FH135/23085687/'
              '20220413_202740_745696_1_50_0.raw'),
-            ('/data/night_horizons_test_data/images/23085687/'
+            ('/data/images/220513-FH135/23085687/'
              'Geo 836109848_1.tif'),
         ]
 
@@ -26,25 +26,25 @@ class TestInput(unittest.TestCase):
         io_manager = IOManager(
             input_dir=self.input_dir,
             input_description={
-                'raw_images': {'directory': 'images'},
+                'images': {'directory': 'images'},
                 'test': 'this/dir.txt',
             },
             output_dir=self.output_dir,
             output_description={},
         )
 
-        fps = io_manager.input_filepaths['raw_images']
+        fps = io_manager.input_filepaths['images']
         assert list(fps) == self.expected_fps_raw
 
         assert io_manager.input_filepaths['test'] == \
-            '/data/night_horizons_test_data/this/dir.txt'
+            '/data/this/dir.txt'
 
     def test_find_files_exts(self):
 
         io_manager = IOManager(
             input_dir=self.input_dir,
             input_description={
-                'raw_images': {
+                'images': {
                     'directory': 'images',
                     'extension': 'raw',
                 },
@@ -57,7 +57,7 @@ class TestInput(unittest.TestCase):
             output_description={},
         )
 
-        actual_fps_a = io_manager.input_filepaths['raw_images']
+        actual_fps_a = io_manager.input_filepaths['images']
         assert list(actual_fps_a) == self.expected_fps_raw[:-1]
 
         actual_fps_b = io_manager.input_filepaths['referenced_images']
@@ -91,7 +91,7 @@ class TestOutput(unittest.TestCase):
 
     def setUp(self):
 
-        self.input_dir = '/data/night_horizons_test_data'
+        self.input_dir = '/data/'
         self.output_dir = '/data/night_horizons_test_data/mosaics/temp'
 
         # Start with a clean slate
