@@ -111,9 +111,16 @@ class TestSequentialMosaicMaker(TestStage):
             'pipeline': {
                 'score_output': True,
             },
-            # 'data_splitter': {
-            #     'use_test_dir': True,
-            # },
+            'data_splitter': {
+                'use_test_dir': True,
+            },
+            'io_manager': {
+                'output_description': {
+                    'test_referenced_images': {
+                        'directory': 'test_referenced_images/220513-FH135',
+                    },
+                },
+            },
             'altitude_filter': {
                 # So we don't filter anything out
                 'float_altitude': 100.,

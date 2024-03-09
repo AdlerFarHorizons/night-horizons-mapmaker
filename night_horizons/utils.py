@@ -452,7 +452,8 @@ class ReferencedRawSplitter:
         referenced_fps = self.io_manager.input_filepaths['referenced_images']
 
         if self.use_test_dir:
-            fps_test = self.io_manager.input_filepaths['test_images']
+            fps_test = \
+                self.io_manager.input_filepaths['test_referenced_images']
             fps_train = referenced_fps
         else:
             fps_train, fps_test = train_test_split(
