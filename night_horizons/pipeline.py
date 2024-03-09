@@ -373,7 +373,7 @@ class SequentialMosaicMaker(MosaicMaker):
                 f'Output saved at {io_manager.output_filepaths["mosaic"]}'
             )
 
-        return y_pred, io_manager
+        return y_pred
 
     def register_default_services(self):
 

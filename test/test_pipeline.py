@@ -115,7 +115,7 @@ class TestSequentialMosaicMaker(TestStage):
                 'use_test_dir': True,
             },
             'io_manager': {
-                'output_description': {
+                'input_description': {
                     'test_referenced_images': {
                         'directory': 'test_referenced_images/220513-FH135',
                     },
