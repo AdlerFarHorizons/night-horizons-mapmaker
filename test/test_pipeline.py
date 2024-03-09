@@ -97,8 +97,7 @@ class TestMosaicMaker(TestStage):
         )
 
         # Check rest of output
-        skip_keys = [] # 'y_pred', 'progress_images_dir', 'referenced_images']
-        self.check_output(mosaicmaker, skip_keys=skip_keys)
+        self.check_output(mosaicmaker)
 
 
 class TestSequentialMosaicMaker(TestStage):

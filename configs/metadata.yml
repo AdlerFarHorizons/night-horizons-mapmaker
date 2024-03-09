@@ -1,8 +1,8 @@
 ###############################################################################
-# Example Configuration File
+# Example Metadata Processor Config
 ###############################################################################
 
-# Indicate what type of map we want to create
+# Indicate what stage of the pipeline to run
 pipeline:
   stage: metadata_processor
 

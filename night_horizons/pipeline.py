@@ -614,9 +614,9 @@ def create_stage(config_filepath, local_options={}):
             return Stage(container, *args, **kwargs)
         elif stage == 'metadata_processor':
             return MetadataProcessor(container, *args, **kwargs)
-        elif stage == 'mosaic':
+        elif stage == 'mosaicker':
             return MosaicMaker(container, *args, **kwargs)
-        elif stage == 'sequential':
+        elif stage == 'sequential_mosaicker':
             return SequentialMosaicMaker(container, *args, **kwargs)
         else:
             raise ValueError(f'Unknown stage: {stage}')

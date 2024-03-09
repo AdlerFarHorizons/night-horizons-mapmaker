@@ -1,18 +1,16 @@
 ###############################################################################
-# Example Configuration File
+# Example Mosaicker Config
 ###############################################################################
 
-# Indicate what type of map we want to create
-mapmaker:
-  map_type: mosaic
+# Indicate what stage of the pipeline to run
+pipeline:
+  stage: mosaicker
 
 # I/O settings
 # These settings assume that the user has mounted their data directory at /data
 io_manager:
-  # Directory containing input files. Filepaths in input_description
-  # are relative to this directory.
-  input_dir: /data/input
   # Specifies the input data
+  input_dir: /data/
   input_description:
     # Images with georeferencing. We perform a search for matching files.
     referenced_images:
@@ -23,10 +21,11 @@ io_manager:
       # This is a RegEx pattern. The "1" selects nadir images only.
       pattern: '^Geo\s\d+_1.(tif|tiff)$'
   # Where the output files will be saved
-  output_dir: /data/output
+  output_dir: /data/
+  output_description: {}
   # If the output directory already exists then a new directory is created
   # with a new ID attached.
-  file_exists: new
+  file_exists: overwrite
 
 # Coordinate reference-system employed
 crs:
