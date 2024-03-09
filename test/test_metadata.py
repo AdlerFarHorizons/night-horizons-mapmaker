@@ -2,7 +2,7 @@ import os
 import unittest
 import psycopg2
 
-from night_horizons.pipeline import create_mapmaker
+from night_horizons.pipeline import create_stage
 import pandas as pd
 from sqlalchemy import create_engine, sql
 
@@ -54,7 +54,7 @@ class TestMetadataProcessing(unittest.TestCase):
     def test_metadata_processing_output(self):
 
         local_options = {'mapmaker': {'map_type': 'metadata_processor'}}
-        metadata_processor = create_mapmaker(
+        metadata_processor = create_stage(
             './test/config.yml',
             local_options=local_options
         )

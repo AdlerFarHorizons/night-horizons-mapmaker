@@ -10,14 +10,14 @@ import pandas as pd
 
 import night_horizons.transformers.preprocessors as preprocessors
 import night_horizons.utils as utils
-from night_horizons.pipeline import create_mapmaker
+from night_horizons.pipeline import create_stage
 
 
 class TestNITELitePreprocessor(unittest.TestCase):
 
     def setUp(self):
 
-        self.mapmaker = create_mapmaker('./test/config.yml')
+        self.mapmaker = create_stage('./test/config.yml')
         self.io_manager = self.mapmaker.container.get_service('io_manager')
 
         # Preprocessor construction

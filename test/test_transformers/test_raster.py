@@ -13,7 +13,7 @@ from night_horizons.container import DIContainer
 from night_horizons.data_io import GDALDatasetIO, RegisteredImageIO
 from night_horizons.io_manager import IOManager
 import night_horizons.transformers.raster as raster
-from night_horizons.pipeline import create_mapmaker
+from night_horizons.pipeline import create_stage
 
 
 class TestRasterCoordinateTransformer(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         self.random_state = check_random_state(42)
 
-        self.mapmaker = create_mapmaker('./test/test_transformers/config.yml')
+        self.mapmaker = create_stage('./test/test_transformers/config.yml')
         self.io_manager = self.mapmaker.container.get_service('io_manager')
 
         # Load the example data we'll use

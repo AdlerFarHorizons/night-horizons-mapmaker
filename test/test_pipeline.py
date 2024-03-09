@@ -2,24 +2,47 @@ import os
 import shutil
 import unittest
 
+import pandas as pd
+
 from night_horizons import pipeline
 
 
-class TestMapmake(unittest.TestCase):
+class TestStage(unittest.TestCase):
 
     def setUp(self):
 
-        self.out_dir = './test/test_data/temp'
+        self.output_dir = './test/test_data/temp'
+        self.default_local_options = {
+            'io_manager': {
+                'output_dir': self.output_dir,
+            },
+        }
 
-        if os.path.isdir(self.out_dir):
-            shutil.rmtree(self.out_dir)
+        if os.path.isdir(self.output_dir):
+            shutil.rmtree(self.output_dir)
 
     def tearDown(self):
 
-        if os.path.isdir(self.out_dir):
-            shutil.rmtree(self.out_dir)
+        if os.path.isdir(self.output_dir):
+            shutil.rmtree(self.output_dir)
 
-    def check_output(self, X_out, io_manager, skip_keys=[]):
+    def create_stage(self, config_path, local_options={}):
+        '''Wrapper for create_stage so we can direct the output to a
+        temporary directory.
+        '''
+
+        local_options = {**self.default_local_options, **local_options}
+
+        stage = pipeline.create_stage(
+            config_path,
+            local_options=local_options
+        )
+
+        return stage
+
+    def check_output(self, stage, skip_keys=[]):
+
+        io_manager = stage.container.get_service('io_manager')
 
         # Check files exist
         for key, filepath in io_manager.output_filepaths.items():
@@ -37,28 +60,45 @@ class TestMapmake(unittest.TestCase):
                         f'Missing file, {key}: {filepath}'
                     )
 
+
+class TestMetadataProcessor(TestStage):
+
+    def test_metadata_processing_output(self):
+
+        metadata_processor: pipeline.MetadataProcessor = \
+            self.create_stage('./configs/metadata.yml')
+        X_out = metadata_processor.run()
+
+        # Check also that the dataframe is not empty
+        io_manager = metadata_processor.container.get_service('io_manager')
+        df = pd.read_csv(io_manager.output_filepaths['metadata'])
+        self.assertFalse(df.empty)
+
+        # Check any other files
+        self.check_output(metadata_processor)
+
+
+class TestMosaicMaker(TestStage):
+
     def test_mosaicmaker(self):
 
-        local_options = {
-            'mapmaker': {'map_type': 'mosaic'},
-            'io_manager': {'output_dir': self.out_dir},
-        }
-
-        mosaicmaker = pipeline.create_mapmaker(
-            './test/config.yml',
-            local_options,
-        )
-        X_out, io_manager = mosaicmaker.run()
-
-        skip_keys = ['y_pred', 'progress_images_dir', 'referenced_images']
+        mosaicmaker: pipeline.MosaicMaker = \
+            self.create_stage('./configs/mosaic.yml')
+        X_out = mosaicmaker.run()
 
         # Check basic structure of X_out
+        io_manager = mosaicmaker.container.get_service('io_manager')
         self.assertEqual(
             len(X_out),
             len(io_manager.input_filepaths['referenced_images'])
         )
 
-        self.check_output(X_out, io_manager, skip_keys)
+        # Check rest of output
+        skip_keys = ['y_pred', 'progress_images_dir', 'referenced_images']
+        self.check_output(mosaicmaker, skip_keys=skip_keys)
+
+
+class TestSequentialMosaicMaker(TestStage):
 
     def test_sequential_mosaickmaker(self):
         '''TODO: This fails some fraction of the time, with the Python process
@@ -66,12 +106,8 @@ class TestMapmake(unittest.TestCase):
         '''
 
         local_options = {
-            'mapmaker': {
-                'map_type': 'sequential',
+            'pipeline': {
                 'score_output': True,
-            },
-            'io_manager': {
-                'output_dir': self.out_dir,
             },
             'data_splitter': {
                 'use_test_dir': True,
@@ -85,13 +121,14 @@ class TestMapmake(unittest.TestCase):
             },
         }
 
-        mosaicmaker: pipeline.SequentialMosaicMaker = pipeline.create_mapmaker(
-            './test/config.yml',
+        mosaicmaker: pipeline.SequentialMosaicMaker = self.create_stage(
+            './configs/sequential-mosaic.yml',
             local_options
         )
-        y_pred, io_manager = mosaicmaker.run()
+        y_pred = mosaicmaker.run()
 
         # Check basic structure of X_out
+        io_manager = mosaicmaker.container.get_service('io_manager')
         n_raw = len(io_manager.input_filepaths['raw_images'])
         self.assertEqual(
             len(y_pred),
@@ -102,6 +139,7 @@ class TestMapmake(unittest.TestCase):
         # Only 2 -> the test image and also a copy of it we put in the raw dir
         assert (y_pred['return_code'] == 'success').sum() == 2
 
+        # Check rest of output
         self.check_output(y_pred, io_manager)
 
         # Check the score

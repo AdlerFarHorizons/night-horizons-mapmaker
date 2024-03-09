@@ -575,35 +575,35 @@ class SequentialMosaicMaker(MosaicMaker):
         )
 
 
-def create_mapmaker(config_filepath, local_options={}):
+def create_stage(config_filepath, local_options={}):
 
     container = DIContainer(
         config_filepath=config_filepath,
         local_options=local_options,
     )
 
-    def mapmaker_constructor(
+    def stage_constructor(
         container,
-        map_type: str = 'base',
+        stage: str = 'base',
         *args, **kwargs
     ):
-        if map_type == 'metadata_processor':
-            return MetadataProcessor(container, *args, **kwargs)
-        elif map_type == 'base':
+        if stage == 'base':
             return Stage(container, *args, **kwargs)
-        elif map_type == 'mosaic':
+        elif stage == 'metadata_processor':
+            return MetadataProcessor(container, *args, **kwargs)
+        elif stage == 'mosaic':
             return MosaicMaker(container, *args, **kwargs)
-        elif map_type == 'sequential':
+        elif stage == 'sequential':
             return SequentialMosaicMaker(container, *args, **kwargs)
         else:
-            raise ValueError(f'Unknown mapmaker type: {map_type}')
+            raise ValueError(f'Unknown stage: {stage}')
 
     container.register_service(
-        'mapmaker',
-        mapmaker_constructor
+        'pipeline',
+        stage_constructor
     )
 
-    return container.get_service('mapmaker', container=container)
+    return container.get_service('pipeline', container=container)
 
 
 if __name__ == "__main__":
@@ -625,7 +625,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Create the mapmaker
-    mapmaker = create_mapmaker(args.config_filepath)
+    mapmaker = create_stage(args.config_filepath)
 
     # Execute
     if not args.validate_only:
