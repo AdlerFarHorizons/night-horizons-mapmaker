@@ -157,6 +157,8 @@ class IOManager:
                 Data filepaths.
         '''
 
+        assert os.path.isdir(directory), f'{directory} is not a directory.'
+
         # Walk the tree to get files
         # This may not work in AWS
         fps = []
