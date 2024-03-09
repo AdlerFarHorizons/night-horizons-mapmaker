@@ -330,7 +330,7 @@ class SequentialMosaicMaker(MosaicMaker):
 
         # Preprocessing for raw images
         if self.verbose:
-            print('    Preparing unreferenced images...')
+            print('    Preparing raw images...')
         preprocessor = self.container.get_service('preprocessor')
         # The preprocessor is fit to the training sample
         preprocessor = preprocessor.fit(X=fps_train, y=y_train)

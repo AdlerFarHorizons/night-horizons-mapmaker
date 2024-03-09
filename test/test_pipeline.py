@@ -111,15 +111,20 @@ class TestSequentialMosaicMaker(TestStage):
             'pipeline': {
                 'score_output': True,
             },
-            'data_splitter': {
-                'use_test_dir': True,
-            },
             'io_manager': {
                 'input_description': {
+                    # Overwrite config default, which is nadir only
+                    'images': {
+                        'directory': 'images/220513-FH135',
+                    },
+                    # Using a test dir is turned off by default
                     'test_referenced_images': {
                         'directory': 'test_referenced_images/220513-FH135',
                     },
                 },
+            },
+            'data_splitter': {
+                'use_test_dir': True,
             },
             'altitude_filter': {
                 # So we don't filter anything out
@@ -141,14 +146,14 @@ class TestSequentialMosaicMaker(TestStage):
         assert (y_pred['return_code'] == 'success').sum() == 2
 
         # Test for existence
-        self.check_output(y_pred)
+        self.check_output(mosaicmaker)
 
         # Check basic structure of X_out
         io_manager = mosaicmaker.container.get_service('io_manager')
-        n_raw = len(io_manager.input_filepaths['raw_images'])
+        n_raw = len(io_manager.input_filepaths['images'])
         self.assertEqual(
             len(y_pred),
-            n_raw + len(io_manager.input_filepaths['test_images'])
+            n_raw + len(io_manager.input_filepaths['test_referenced_images'])
         )
 
         # Check the score
