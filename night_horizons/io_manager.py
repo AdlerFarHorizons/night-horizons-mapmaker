@@ -470,7 +470,7 @@ class SequentialMosaicIOManager(MosaicIOManager):
 
         super().__init__(
             output_description=output_description,
-            checkpoint_freq=checkpoint_selection,
+            checkpoint_selection=checkpoint_selection,
             *args, **kwargs
         )
 
