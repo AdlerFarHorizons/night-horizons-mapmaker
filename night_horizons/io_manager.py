@@ -343,16 +343,12 @@ class MosaicIOManager(IOManager):
             'mosaic': 'mosaic.tiff',
             'settings': 'settings.yaml',
             'log': 'log.csv',
-            'y_pred': 'y_pred.csv',
-            'progress_images_dir': 'progress_images',
-            'referenced_images': 'referenced_images/img_ind{:06d}.tiff',
         },
         root_dir: str = None,
         file_exists: str = 'error',
         tracked_file_key: str = 'mosaic',
         checkpoint_subdir: str = 'checkpoints',
-        checkpoint_selection: list[str] = [
-            'mosaic', 'settings', 'log', 'y_pred'],
+        checkpoint_selection: list[str] = ['mosaic', 'settings', 'log'],
         checkpoint_tag: str = '_i{:06d}',
         checkpoint_freq: int = 100,
     ):
@@ -445,6 +441,37 @@ class MosaicIOManager(IOManager):
             'y_pred': y_pred,
         }
         return loaded_data
+
+
+class SequentialMosaicIOManager(MosaicIOManager):
+
+    def __init__(
+        self,
+        output_description: dict = {
+            'mosaic': 'mosaic.tiff',
+            'settings': 'settings_train.yaml',
+            'log': 'log_train.yaml',
+            'y_pred': 'y_pred_train.csv',
+            'progress_images_dir_train': 'progress_images_train',
+        },
+        checkpoint_selection: list[str] = [
+            'mosaic', 'settings', 'log', 'y_pred'],
+        *args, **kwargs
+    ):
+        '''The inputs are those suited for a training mosaic.
+        See MosaicIOManager for all keyword arguments.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
+
+        super().__init__(
+            output_description=output_description,
+            checkpoint_freq=checkpoint_selection,
+            *args, **kwargs
+        )
 
 
 class TrainMosaicIOManager(MosaicIOManager):
