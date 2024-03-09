@@ -1,40 +1,36 @@
 ###############################################################################
-# Example Configuration File
+# Example Sequential Mosaicker Config
 ###############################################################################
 
-# Indicate what type of map we want to create
-mapmaker:
-  map_type: sequential
+# Indicate what stage of the pipeline to run
+pipeline:
+  stage: sequential_mosaicker
 
 # I/O settings
 # These settings assume that the user has mounted their data directory at /data
 io_manager:
-  # Directory containing input files. Filepaths in input_description
-  # are relative to this directory.
-  input_dir: /data/nitelite/220513-FH135
   # Specifies the input data
+  input_dir: /data/
   input_description:
-    # Metadata files. We provide the exact full path relative to input_dir.
-    img_log: metadata/image.log
-    imu_log: metadata/PresIMULog.csv
-    gps_log: metadata/GPSLog.csv
-    # Images with georeferencing. We perform a search for matching files.
-    referenced_images:
-      # This filepath is relative to input_dir, e.g. the full path could be
-      # /data/nitelite/220513-FH135/images/referenced
-      directory: images/referenced
-      # Only files with these extensions will be considered.
-      extension: ['tif', 'tiff']
-      # This is a RegEx pattern. The "1" selects nadir images only.
-      pattern: 'Geo\s\d+_1.tif'
-    # Images without georeferencing. We perform a search for matching files.
-    raw_images:
+    # Metadata files. This is the path relative to the input_dir.
+    img_log: metadata/220513-FH135/image.log
+    imu_log: metadata/220513-FH135/PresIMULog.csv
+    gps_log: metadata/220513-FH135/GPSLog.csv
+    # Images without georeferencing.
+    images:
       # Relative to input_dir
-      directory: images/raw/23085687
+      # 23085687 is the ID of the nadir camera. Delete it to process all images.
+      directory: images/220513-FH135/23085687
       # Only files with these extensions will be considered.
-      extension: ['raw', 'tif', 'tiff']
+      pattern: '\.(raw|tif|tiff)$'
+    # Images with georeferencing.
+    referenced_images:
+      # This filepath is relative to input_dir
+      directory: referenced_images/220513-FH135
+      # This is a RegEx pattern. The "1" selects nadir images only.
+      pattern: 'Geo\s\d+_1\.(tif|tiff)$'
   # Where the output files will be saved
-  output_dir: /data/nitelite/220513-FH135/mosaics/sequential
+  output_dir: /data/output/220513-FH135/sequential
   # If the output directory already exists then a new directory is created
   # with a new ID attached.
   file_exists: new
@@ -46,4 +42,4 @@ crs:
 
 # Random state for reproducibility
 random_state: 
-  seed: 159234
+  seed: 1592
