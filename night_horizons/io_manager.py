@@ -1,6 +1,5 @@
 from abc import abstractmethod
 import copy
-import glob
 import inspect
 import os
 import pickle
@@ -142,7 +141,6 @@ class IOManager:
     def find_files(
         self,
         directory: str,
-        extension: Union[str, list[str]] = None,
         pattern: str = None,
     ) -> pd.Series:
         '''
@@ -159,24 +157,12 @@ class IOManager:
                 Data filepaths.
         '''
 
-        # When all files
-        if extension is None:
-            glob_pattern = os.path.join(directory, '**', '*.*')
-            fps = glob.glob(glob_pattern, recursive=True)
-        # When a single extension
-        elif isinstance(extension, str):
-            glob_pattern = os.path.join(directory, '**', f'*{extension}')
-            fps = glob.glob(glob_pattern, recursive=True)
-        # When a list of extensions
-        else:
-            try:
-                fps = []
-                for ext in extension:
-                    glob_pattern = os.path.join(directory, '**', f'*{ext}')
-                    fps.extend(glob.glob(glob_pattern, recursive=True))
-            except TypeError:
-                raise TypeError(f'Unexpected type for extension: {extension}')
-
+        # Walk the tree to get files
+        # This may not work in AWS
+        fps = []
+        for root, dirs, files in os.walk(directory):
+            for name in files:
+                fps.append(os.path.join(root, name))
         fps = pd.Series(fps)
 
         # Filter to select particular files

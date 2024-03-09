@@ -22,7 +22,7 @@ io_manager:
       # 23085687 is the ID of the nadir camera. Delete it to process all images.
       directory: images/220513-FH135/23085687
       # Only files with these extensions will be considered.
-      extension: ['raw', 'tif', 'tiff']
+      pattern: '\.(raw|tif|tiff)$'
   # Where the output files will be saved
   output_dir: /data/
   output_description:
