@@ -21,7 +21,7 @@ class TestImage(unittest.TestCase):
 
     def test_open(self):
 
-        example_fp = '/data/referenced_images/220513-FH135/Geo 836109848_1.tif'
+        example_fp = '/data/input/referenced_images/220513-FH135/Geo 836109848_1.tif'
         image = raster.Image.open(example_fp)
 
         assert image.img is not None
@@ -161,7 +161,7 @@ class TestDataset(unittest.TestCase):
 
     def setUp(self):
 
-        data_dir = 'test/test_data/referenced_images'
+        data_dir = 'test/test_data/input/referenced_images'
         self.filepath = os.path.join(data_dir, 'Geo 225856_1473511261_0.tif')
         self.copy_filepath = os.path.join(data_dir, 'temp.tif')
         if os.path.isfile(self.copy_filepath):

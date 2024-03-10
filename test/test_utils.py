@@ -14,7 +14,7 @@ class TestLoadImage(unittest.TestCase):
 
     def test_tiff(self):
 
-        fp = '/data/referenced_images/220513-FH135/Geo 843083290_1.tif'
+        fp = '/data/input/referenced_images/220513-FH135/Geo 843083290_1.tif'
         img = utils.load_image(fp)
 
         assert len(img.shape) == 3
@@ -65,10 +65,10 @@ class TestDiscoverData(unittest.TestCase):
 
     def test_discover_data_pattern(self):
 
-        image_dir = '/data/referenced_images'
+        image_dir = '/data/input/referenced_images'
         expected_fps = [
-            '/data/referenced_images/220513-FH135/Geo 843083290_1.tif',
-            '/data/referenced_images/220513-FH135/Geo 836109848_1.tif',
+            '/data/input/referenced_images/220513-FH135/Geo 843083290_1.tif',
+            '/data/input/referenced_images/220513-FH135/Geo 836109848_1.tif',
         ]
 
         fps = utils.discover_data(

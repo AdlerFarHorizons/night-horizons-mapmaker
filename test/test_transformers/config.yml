@@ -3,7 +3,7 @@
 ###############################################################################
 
 io_manager:
-  input_dir: /data
+  input_dir: /data/input
   input_description:
     raw_images:
       directory: images
@@ -11,7 +11,7 @@ io_manager:
     referenced_images:
       directory: referenced_images/220513-FH135
       pattern: 'Geo\s\d+_\d.tif$'
-  output_dir: /data/temp
+  output_dir: /data/output/temp
   output_description:
     referenced_images: 'referenced_images/img_{:06d}.tiff'
 
