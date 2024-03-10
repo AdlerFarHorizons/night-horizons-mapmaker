@@ -10,7 +10,7 @@ pipeline:
 # These settings assume that the user has mounted their data directory at /data
 io_manager:
   # Specifies the input data
-  input_dir: /data/
+  input_dir: /data/input
   input_description:
     # Images with georeferencing. We perform a search for matching files.
     referenced_images:
@@ -19,8 +19,7 @@ io_manager:
       # This is a RegEx pattern. The "1" selects nadir images only.
       pattern: 'Geo\s\d+_1\.(tif|tiff)$'
   # Where the output files will be saved
-  output_dir: /data/output/220513-FH135/referenced_mosaic
-  output_description: {}
+  output_dir: /data/output/mosaics/220513-FH135
   # If the output directory already exists then a new directory is created
   # with a new ID attached.
   file_exists: new

@@ -10,7 +10,7 @@ pipeline:
 # These settings assume that the user has mounted their data directory at /data
 io_manager:
   # Specifies the input data
-  input_dir: /data/
+  input_dir: /data/input
   input_description:
     # Metadata files. This is the path relative to the input_dir.
     img_log: metadata/220513-FH135/image.log
@@ -30,7 +30,7 @@ io_manager:
       # This is a RegEx pattern. The "1" selects nadir images only.
       pattern: 'Geo\s\d+_1\.(tif|tiff)$'
   # Where the output files will be saved
-  output_dir: /data/output/220513-FH135/sequential
+  output_dir: /data/output/sequential-mosaics/220513-FH135
   # If the output directory already exists then a new directory is created
   # with a new ID attached.
   file_exists: new

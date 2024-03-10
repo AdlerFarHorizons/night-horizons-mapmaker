@@ -10,7 +10,7 @@ pipeline:
 # These settings assume that the user has mounted their data directory at /data
 io_manager:
   # Specifies the input data
-  input_dir: /data/
+  input_dir: /data/input
   input_description:
     # Metadata files. This is the path relative to the input_dir.
     img_log: metadata/220513-FH135/image.log
@@ -24,9 +24,9 @@ io_manager:
       # Only files with these extensions will be considered.
       pattern: '\.(raw|tif|tiff)$'
   # Where the output files will be saved
-  output_dir: /data/
+  output_dir: /data/output/metadata
   output_description:
-    metadata: metadata/220513-FH135/combined_metadata.csv
+    metadata: 220513-FH135-metadata.csv
   # If the output directory already exists then a new directory is created
   # with a new ID attached.
   file_exists: overwrite
