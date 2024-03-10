@@ -17,9 +17,9 @@ io_manager:
       pattern: 'Geo\s\d+_\d.tif'
     test_images:
       directory: test_referenced_images
-    img_log: metadata/image.log
-    imu_log: metadata/PresIMULog.csv
-    gps_log: metadata/GPSLog.csv
+    img_log: metadata/220513-FH135/image.log
+    imu_log: metadata/220513-FH135/PresIMULog.csv
+    gps_log: metadata/220513-FH135/GPSLog.csv
   output_dir: ./test/test_data/temp
   output_description: {}
   file_exists: overwrite

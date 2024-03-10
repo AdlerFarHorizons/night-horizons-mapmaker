@@ -3,18 +3,18 @@
 ###############################################################################
 
 io_manager:
-  input_dir: /data/night_horizons_test_data
+  input_dir: /data
   input_description:
     raw_images:
       directory: images
       extension: ['raw', 'tif', 'tiff']
     referenced_images:
-      directory: referenced_images
+      directory: referenced_images/220513-FH135
       extension: ['tif', 'tiff']
       pattern: 'Geo\s\d+_\d.tif'
   output_dir: /data/temp
   output_description:
-    referenced_images: 'referenced_images/220513-FH135/img_{:06d}.tiff'
+    referenced_images: 'referenced_images/img_{:06d}.tiff'
 
 # Coordinate reference-system employed
 crs:
