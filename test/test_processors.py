@@ -216,7 +216,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         original_image.img_int[:, -50:, :3] = 255
         # Example image
         example_image = Image.open(
-            '/data/feature_matching/tree_4.1.06.tiff',
+            '/data/input/feature_matching/tree_4.1.06.tiff',
             dtype=original_image.img_int.dtype,
         )
         original_image.img_int[

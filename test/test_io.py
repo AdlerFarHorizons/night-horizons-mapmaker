@@ -9,8 +9,8 @@ class TestInput(unittest.TestCase):
 
     def setUp(self):
 
-        self.input_dir = '/data/'
-        self.output_dir = '/data/mosaics/temp'
+        self.input_dir = '/data/input'
+        self.output_dir = '/data/output/mosaics/temp'
 
         self.expected_fps_raw = [
             ('/data/input/images/220513-FH135/23085686/'
@@ -37,7 +37,7 @@ class TestInput(unittest.TestCase):
         assert list(fps) == self.expected_fps_raw
 
         assert io_manager.input_filepaths['test'] == \
-            '/data/this/dir.txt'
+            '/data/input/this/dir.txt'
 
     def test_find_files_exts(self):
 

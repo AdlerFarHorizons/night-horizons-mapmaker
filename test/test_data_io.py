@@ -18,7 +18,7 @@ class TestGDALDatasetIO(unittest.TestCase):
     def setUp(self):
 
         self.viirs_fp = (
-            '/data/other/'
+            '/data/input/other/'
             'VNP46A2.A2022353.h09v04.001.2022361121713.h5'
         )
 

@@ -13,7 +13,7 @@ class TestImage(unittest.TestCase):
     def setUp(self):
 
         self.rng = np.random.default_rng(10326)
-        self.temp_fp = '/data/other/temp.tiff'
+        self.temp_fp = '/data/input/other/temp.tiff'
 
     def tearDown(self):
         if os.path.isfile(self.temp_fp):
@@ -92,7 +92,7 @@ class TestReferencedImage(unittest.TestCase):
             y_bounds=y_bounds,
         )
 
-        self.temp_fp = '/data/other/temp.tiff'
+        self.temp_fp = '/data/input/other/temp.tiff'
         os.makedirs(os.path.dirname(self.temp_fp), exist_ok=True)
         if os.path.isfile(self.temp_fp):
             os.remove(self.temp_fp)
