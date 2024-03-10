@@ -72,7 +72,7 @@ class Stage:
 
     def validate(self):
 
-        print('Validating pipeline setup...')
+        print('Validating IO setup...')
         io_manager = self.container.get_service('io_manager')
 
         print('Counting input filepaths...')
