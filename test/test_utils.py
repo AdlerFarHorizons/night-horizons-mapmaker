@@ -21,7 +21,7 @@ class TestLoadImage(unittest.TestCase):
 
     def test_raw(self):
 
-        fp = ('/data/images/23085686/'
+        fp = ('/data/images/220513-FH135/23085686/'
               '20220413_221313_1020286912_0_50_3.raw')
         img = utils.load_image(fp)
 
