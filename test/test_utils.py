@@ -21,7 +21,7 @@ class TestLoadImage(unittest.TestCase):
 
     def test_raw(self):
 
-        fp = ('/data/images/220513-FH135/23085686/'
+        fp = ('/data/input/images/220513-FH135/23085686/'
               '20220413_221313_1020286912_0_50_3.raw')
         img = utils.load_image(fp)
 
@@ -36,17 +36,17 @@ class TestDiscoverData(unittest.TestCase):
     def setUp(self):
 
         self.expected_fps_raw = [
-            ('/data/images/220513-FH135/23085686/'
+            ('/data/input/images/220513-FH135/23085686/'
              '20220413_221313_1020286912_0_50_3.raw'),
-            ('/data/images/220513-FH135/23085687/'
+            ('/data/input/images/220513-FH135/23085687/'
              '20220413_202740_745696_1_50_0.raw'),
-            ('/data/images/220513-FH135/23085687/'
+            ('/data/input/images/220513-FH135/23085687/'
              'Geo 836109848_1.tif'),
         ]
 
     def test_discover_data(self):
 
-        image_dir = '/data/images'
+        image_dir = '/data/input/images'
 
         fps = utils.discover_data(image_dir)
         assert list(fps) == self.expected_fps_raw

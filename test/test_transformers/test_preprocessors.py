@@ -40,7 +40,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         '''
 
         # Image filetree info
-        image_dir = '/data/images'
+        image_dir = '/data/input/images'
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
@@ -106,7 +106,7 @@ class TestGeoTIFFPreprocessor(unittest.TestCase):
         '''
 
         # Image filetree info
-        image_dir = '/data/images'
+        image_dir = '/data/input/images'
         raw_fps = utils.discover_data(image_dir, extension=['raw'])
         n_files_unreffed = len(raw_fps)
         referenced_image_dir = \

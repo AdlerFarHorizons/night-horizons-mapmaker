@@ -13,11 +13,11 @@ class TestInput(unittest.TestCase):
         self.output_dir = '/data/mosaics/temp'
 
         self.expected_fps_raw = [
-            ('/data/images/220513-FH135/23085686/'
+            ('/data/input/images/220513-FH135/23085686/'
              '20220413_221313_1020286912_0_50_3.raw'),
-            ('/data/images/220513-FH135/23085687/'
+            ('/data/input/images/220513-FH135/23085687/'
              '20220413_202740_745696_1_50_0.raw'),
-            ('/data/images/220513-FH135/23085687/'
+            ('/data/input/images/220513-FH135/23085687/'
              'Geo 836109848_1.tif'),
         ]
 
