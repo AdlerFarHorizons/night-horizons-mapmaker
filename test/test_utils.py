@@ -36,11 +36,11 @@ class TestDiscoverData(unittest.TestCase):
     def setUp(self):
 
         self.expected_fps_raw = [
-            ('/data/images/23085686/'
+            ('/data/images/220513-FH135/23085686/'
              '20220413_221313_1020286912_0_50_3.raw'),
-            ('/data/images/23085687/'
+            ('/data/images/220513-FH135/23085687/'
              '20220413_202740_745696_1_50_0.raw'),
-            ('/data/images/23085687/'
+            ('/data/images/220513-FH135/23085687/'
              'Geo 836109848_1.tif'),
         ]
 
@@ -57,7 +57,7 @@ class TestDiscoverData(unittest.TestCase):
 
         fps = utils.discover_data(image_dir, extension=['raw', 'tif', 'tiff'])
 
-        actual_fps_a = [_ for _ in list(fps) if 'test_data/images' in _]
+        actual_fps_a = [_ for _ in list(fps) if '/images/' in _]
         assert list(actual_fps_a) == self.expected_fps_raw
 
         actual_fps_b = [_ for _ in list(fps) if 'referenced_images' in _]
