@@ -90,8 +90,8 @@ class TestOutput(unittest.TestCase):
 
     def setUp(self):
 
-        self.input_dir = '/data/'
-        self.output_dir = '/data/mosaics/temp'
+        self.input_dir = '/data/input'
+        self.output_dir = '/data/output/mosaics/temp'
 
         # Start with a clean slate
         if os.path.exists(self.output_dir):
