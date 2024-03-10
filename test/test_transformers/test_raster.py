@@ -27,7 +27,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         # Load the example data we'll use
         self.dataset = GDALDatasetIO.load(
-            self.io_manager.input_filepaths['referenced_images'][0],
+            self.io_manager.input_filepaths['referenced_images'].iloc[0],
             crs=self.mapmaker.container.get_service('crs'),
         )
         (

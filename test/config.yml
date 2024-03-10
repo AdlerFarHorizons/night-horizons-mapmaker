@@ -13,7 +13,6 @@ io_manager:
       extension: ['raw', 'tif', 'tiff']
     referenced_images:
       directory: referenced_images
-      extension: ['tif', 'tiff']
       pattern: 'Geo\s\d+_\d.tif'
     test_images:
       directory: test_referenced_images
