@@ -91,7 +91,7 @@ class TestInput(unittest.TestCase):
         ]
 
         fps = io_manager.input_filepaths['referenced_images']
-        assert list(fps) == expected_fps
+        assert_lists_equal(list(fps), expected_fps)
 
 
 class TestOutput(unittest.TestCase):
