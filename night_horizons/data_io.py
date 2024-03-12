@@ -36,6 +36,9 @@ class ImageIO(DataIO):
     @staticmethod
     def save(filepath, data):
 
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
         data = data[:, :, ::-1]
         cv2.imwrite(filepath, data)
 

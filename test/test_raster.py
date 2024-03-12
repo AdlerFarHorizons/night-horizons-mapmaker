@@ -13,7 +13,7 @@ class TestImage(unittest.TestCase):
     def setUp(self):
 
         self.rng = np.random.default_rng(10326)
-        self.temp_fp = '/data/input/other/temp.tiff'
+        self.temp_fp = '/data/output/other/temp.tiff'
 
     def tearDown(self):
         if os.path.isfile(self.temp_fp):
