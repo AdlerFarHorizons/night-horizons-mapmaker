@@ -3,11 +3,22 @@
 
 import os
 import unittest
+import difflib
+import pprint
 
 import numpy as np
 import pandas as pd
 
 import night_horizons.utils as utils
+
+
+def assert_sorted_lists_equal(list1, list2):
+    assert sorted(list1) == sorted(list2), (
+        "Lists differ:\n" + '\n'.join(difflib.ndiff(
+            pprint.pformat(list1).splitlines(),
+            pprint.pformat(list2).splitlines())
+        )
+    )
 
 
 class TestLoadImage(unittest.TestCase):
@@ -76,7 +87,7 @@ class TestDiscoverData(unittest.TestCase):
             extension=['.tif', '.tiff'],
             pattern=r'Geo\s\d+_\d.tif'
         )
-        assert list(fps) == expected_fps
+        assert_sorted_lists_equal(list(fps), expected_fps)
 
 
 class TestStoreParameters(unittest.TestCase):

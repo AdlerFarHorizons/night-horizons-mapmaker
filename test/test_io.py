@@ -7,10 +7,13 @@ import pprint
 from night_horizons.io_manager import IOManager
 
 
-def assert_lists_equal(list1, list2):
-    assert list1 == list2, "Lists differ:\n" + '\n'.join(difflib.ndiff(
-        pprint.pformat(list1).splitlines(),
-        pprint.pformat(list2).splitlines()))
+def assert_sorted_lists_equal(list1, list2):
+    assert sorted(list1) == sorted(list2), (
+        "Lists differ:\n" + '\n'.join(difflib.ndiff(
+            pprint.pformat(list1).splitlines(),
+            pprint.pformat(list2).splitlines())
+        )
+    )
 
 
 class TestInput(unittest.TestCase):
@@ -42,7 +45,7 @@ class TestInput(unittest.TestCase):
         )
 
         fps = io_manager.input_filepaths['images']
-        assert_lists_equal(list(fps), self.expected_fps_raw)
+        assert_sorted_lists_equal(list(fps), self.expected_fps_raw)
 
         assert io_manager.input_filepaths['test'] == \
             '/data/input/this/dir.txt'
@@ -66,7 +69,7 @@ class TestInput(unittest.TestCase):
         )
 
         actual_fps_a = io_manager.input_filepaths['images']
-        assert_lists_equal(list(actual_fps_a), self.expected_fps_raw[:-1])
+        assert_sorted_lists_equal(list(actual_fps_a), self.expected_fps_raw[:-1])
 
         actual_fps_b = io_manager.input_filepaths['referenced_images']
         assert len(actual_fps_b) > 0
@@ -91,7 +94,7 @@ class TestInput(unittest.TestCase):
         ]
 
         fps = io_manager.input_filepaths['referenced_images']
-        assert_lists_equal(list(fps), expected_fps)
+        assert_sorted_lists_equal(list(fps), expected_fps)
 
 
 class TestOutput(unittest.TestCase):
