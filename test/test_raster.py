@@ -92,7 +92,7 @@ class TestReferencedImage(unittest.TestCase):
             y_bounds=y_bounds,
         )
 
-        self.temp_fp = '/data/input/other/temp.tiff'
+        self.temp_fp = '/data/output/other/temp.tiff'
         os.makedirs(os.path.dirname(self.temp_fp), exist_ok=True)
         if os.path.isfile(self.temp_fp):
             os.remove(self.temp_fp)
@@ -102,16 +102,15 @@ class TestReferencedImage(unittest.TestCase):
         if os.path.isfile(self.temp_fp):
             os.remove(self.temp_fp)
 
-    # TODO: This fails on AWS and is not currently needed for the core
-    # def test_save_and_open(self):
+    def test_save_and_open(self):
 
-    #     self.reffed.save(self.temp_fp)
-    #     new_reffed = raster.ReferencedImage.open(self.temp_fp)
+        self.reffed.save(self.temp_fp)
+        new_reffed = raster.ReferencedImage.open(self.temp_fp)
 
-    #     np.testing.assert_allclose(
-    #         self.reffed.img_int,
-    #         new_reffed.img_int,
-    #     )
+        np.testing.assert_allclose(
+            self.reffed.img_int,
+            new_reffed.img_int,
+        )
 
     def test_get_latlon_bounds(self):
 
