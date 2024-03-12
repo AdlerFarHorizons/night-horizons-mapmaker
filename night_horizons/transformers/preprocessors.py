@@ -145,7 +145,7 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
             elif 'passthrough' in self.unhandled_files:
                 if 'warn' in self.unhandled_files:
                     warnings.warn(w_message)
-                X_missing = X.loc[is_missing]
+                X_missing = X.loc[is_missing].copy()
                 X_missing['selected'] = False
                 X_out['selected'] = True
                 X_out = pd.concat([X_out, X_missing])

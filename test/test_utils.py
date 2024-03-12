@@ -124,7 +124,7 @@ class TestUpdateRow(unittest.TestCase):
         original_columns = df.columns
 
         # Test row
-        new_row = df.iloc[3]
+        new_row = df.iloc[3].copy()
         new_row[0] = -1.0
         new_row['new_class'] = 'c'
         new_row['score'] = 0.5
