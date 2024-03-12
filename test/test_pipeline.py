@@ -10,7 +10,6 @@ from night_horizons import pipeline
 from night_horizons.utils import StdoutLogger
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
 
@@ -132,6 +131,7 @@ class TestSequentialMosaicMaker(TestStage):
                         'directory': 'test_referenced_images/220513-FH135',
                     },
                 },
+                'output_dir': self.output_dir,
             },
             'data_splitter': {
                 'use_test_dir': True,
