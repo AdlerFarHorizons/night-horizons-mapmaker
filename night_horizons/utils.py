@@ -595,7 +595,7 @@ class StdoutLogger(object):
 
     def write(self, message):
         if message.strip() != "":
-            self.logger.info(message.strip())
+            self.logger.info('stdout: ' + message.strip())
         self.stdout.write(message)
 
     def flush(self):

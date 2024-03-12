@@ -11,6 +11,11 @@ from .. import utils
 from .processors import Processor
 
 
+# DEBUG
+import logging
+LOGGER = logging.getLogger(__name__)
+
+
 class BatchProcessor(
     utils.LoopLoggerMixin,
     TransformerMixin,
@@ -132,6 +137,9 @@ class BatchProcessor(
         y=None,
     ):
 
+        # DEBUG
+        LOGGER.info('Starting batch processing...')
+
         # TODO: We could avoid passing around the log filepath here, and
         #       keep it as an attribute instead...
         #       One nice thing about this as is is that we don't have to
@@ -144,6 +152,9 @@ class BatchProcessor(
             )
         else:
             self.start_logging()
+
+        # DEBUG
+        LOGGER.info('Starting batch processing:preprocessing...')
 
         # Resources contains global variables that will be available
         # throughout image processing.
@@ -161,6 +172,9 @@ class BatchProcessor(
             start = tracemalloc.take_snapshot()
             self.log['starting_snapshot'] = start
 
+        # DEBUG
+        LOGGER.info('Starting batch processing:main loop...')
+
         # Main loop
         Z_out = X_t.copy()
         for i, ind in enumerate(tqdm.tqdm(X.index, ncols=80)):
@@ -172,8 +186,14 @@ class BatchProcessor(
             # We make a copy of row so that we don't modify the original
             row = X_t.loc[ind].copy()
 
+            # DEBUG
+            LOGGER.info(f'Processing row {i} in batch processing:main loop...')
+
             # Process the row
             row = processor.process_row(i, row, resources)
+
+            # DEBUG
+            LOGGER.info(f'Postprocessing row {i} in batch processing:main loop...')
 
             # Combine
             Z_out = row.to_frame().T.combine_first(Z_out)
@@ -183,6 +203,9 @@ class BatchProcessor(
             if 'snapshot' in self.log_keys:
                 if i % self.memory_snapshot_freq == 0:
                     log['snapshot'] = tracemalloc.take_snapshot()
+
+            # DEBUG
+            LOGGER.info(f'Checkpointing row {i} in batch processing:main loop...')
 
             # Checkpoint
             resources['dataset'] = self.io_manager.save_to_checkpoint(
@@ -205,6 +228,9 @@ class BatchProcessor(
         # Stop memory tracing
         if 'snapshot' in self.log_keys:
             tracemalloc.stop()
+
+        # DEBUG
+        LOGGER.info(f'Starting batch processing:postprocessing...')
 
         Z_out = self.postprocess(Z_out, resources)
 
