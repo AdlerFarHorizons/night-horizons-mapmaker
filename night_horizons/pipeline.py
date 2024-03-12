@@ -110,21 +110,30 @@ class MetadataProcessor(Stage):
             print('Starting metadata processing.')
 
         # Get the filepaths
+        if self.verbose:
+            print('    Setting up filetree...')
         io_manager = self.container.get_service('io_manager')
         image_fps = io_manager.input_filepaths['images']
 
         # Run the processing
+        if self.verbose:
+            print('    Running processing...')
         metadata_preprocessor = self.container.get_service(
             'metadata_preprocessor')
         metadata: pd.DataFrame = metadata_preprocessor.fit_transform(image_fps)
 
         # Save the output
+        if self.verbose:
+            print('    Saving output...')
         output_fp = io_manager.output_filepaths['metadata']
         os.makedirs(
             os.path.abspath(os.path.dirname(output_fp)),
             exist_ok=True
         )
         metadata.to_csv(output_fp)
+
+        if self.verbose:
+            print('Done!')
 
         return metadata
 
