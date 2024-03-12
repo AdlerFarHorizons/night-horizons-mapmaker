@@ -164,7 +164,7 @@ class TestOutput(unittest.TestCase):
         filepath = os.path.join(self.output_dir, 'mosaic.tiff')
         os.makedirs(self.output_dir)
         open(filepath, 'w').close()
-        new_outdir = '/data/mosaics/temp_v000'
+        new_outdir = '/data/output/mosaics/temp_v000'
 
         io_manager = IOManager(
             input_dir=self.input_dir,
