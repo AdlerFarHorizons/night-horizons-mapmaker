@@ -23,6 +23,7 @@ class TestGDALDatasetIO(unittest.TestCase):
         )
 
         self.viirs_output_fp = self.viirs_fp.replace('.h5', '.tiff')
+        self.viirs_output_fp = self.viirs_fp.replace('input', 'output')
         if os.path.isfile(self.viirs_output_fp):
             os.remove(self.viirs_output_fp)
 
@@ -75,28 +76,28 @@ class TestGDALDatasetIO(unittest.TestCase):
 
     # TODO: This fails on AWS. However, it's not currently needed for the core
     #       functionality of the project. It's a nice-to-have feature.
-    # def test_from_viirs_hdf5(self):
+    def test_from_viirs_hdf5(self):
 
-    #     expected_crs = pyproj.CRS('EPSG:4326')
+        expected_crs = pyproj.CRS('EPSG:4326')
 
-    #     # Check basic loading
-    #     io = GDALDatasetIO()
-    #     dataset = io.load_from_viirs_hdf5(self.viirs_fp)
-    #     assert dataset is not None
-    #     assert pyproj.CRS(dataset.GetProjection()) == expected_crs
-    #     dataset.FlushCache()
-    #     dataset = None
+        # Check basic loading
+        io = GDALDatasetIO()
+        dataset = io.load_from_viirs_hdf5(self.viirs_fp)
+        assert dataset is not None
+        assert pyproj.CRS(dataset.GetProjection()) == expected_crs
+        dataset.FlushCache()
+        dataset = None
 
-    #     # Check the saved data loads
-    #     dataset2 = io.load(self.viirs_output_fp)
-    #     assert pyproj.CRS(dataset2.GetProjection()) == expected_crs
+        # Check the saved data loads
+        dataset2 = io.load(self.viirs_output_fp)
+        assert pyproj.CRS(dataset2.GetProjection()) == expected_crs
 
-    #     # Check compatibility with RegisteredImageIO
-    #     img, x_bounds, y_bounds = RegisteredImageIO.load(
-    #         self.viirs_output_fp,
-    #     )
-    #     x_bounds = np.array(x_bounds)
-    #     y_bounds = np.array(y_bounds)
+        # Check compatibility with RegisteredImageIO
+        img, x_bounds, y_bounds = RegisteredImageIO.load(
+            self.viirs_output_fp,
+        )
+        x_bounds = np.array(x_bounds)
+        y_bounds = np.array(y_bounds)
 
     #     assert img.shape == (2400, 2400)
     #     assert ((-95 < x_bounds) & (x_bounds < -75)).all(), \
