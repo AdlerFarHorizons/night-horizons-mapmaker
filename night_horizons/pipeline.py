@@ -133,7 +133,10 @@ class MetadataProcessor(Stage):
         metadata.to_csv(output_fp)
 
         if self.verbose:
-            print('Done!')
+            print(
+                'Done!\n'
+                f'Output saved at {io_manager.output_filepaths["metadata"]}'
+            )
 
         return metadata
 

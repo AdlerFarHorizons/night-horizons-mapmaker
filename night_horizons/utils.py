@@ -586,3 +586,17 @@ class LoopLoggerMixin(LoggerMixin):
 
         log_df = pd.DataFrame(self.logs)
         log_df.to_csv(log_filepath)
+
+
+class StdoutLogger(object):
+    def __init__(self, logger, stdout):
+        self.logger = logger
+        self.stdout = stdout
+
+    def write(self, message):
+        if message.strip() != "":
+            self.logger.info(message.strip())
+        self.stdout.write(message)
+
+    def flush(self):
+        self.stdout.flush()

@@ -1,49 +1,25 @@
+import logging
 import os
 import shutil
+import sys
 import unittest
 
 import pandas as pd
 
 from night_horizons import pipeline
-
-###############################################################################
-# DEBUG
-###############################################################################
-import logging
-import sys
+from night_horizons.utils import StdoutLogger
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    filename='./test/test_data/test_log.log',
-    filemode='w',
-    format='%(message)s'
-)
-logger = logging.getLogger()
-
-
-class StdoutLogger(object):
-    def __init__(self, logger, stdout):
-        self.logger = logger
-        self.stdout = stdout
-
-    def write(self, message):
-        if message.strip() != "":
-            self.logger.info(message.strip())
-        self.stdout.write(message)
-
-    def flush(self):
-        self.stdout.flush()
-
-
-# Redirect stdout
-sys.stdout = StdoutLogger(logger, sys.stdout)
-###############################################################################
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger(__name__)
 
 
 class TestStage(unittest.TestCase):
 
     def setUp(self):
+
+        # Start saving the log
+        sys.stdout = StdoutLogger(LOGGER, sys.stdout)
 
         self.output_dir = './test/test_data/temp'
         self.default_local_options = {
