@@ -75,7 +75,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         '''The output prior to any form of georeferencing.
         '''
 
-        self.transformer.unhandled_files = 'warn and passthrough'
+        self.transformer.unhandled_files = 'passthrough'
 
         # Image filetree info
         image_dir = '/data/input/referenced_images'
