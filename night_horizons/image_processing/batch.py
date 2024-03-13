@@ -2,7 +2,9 @@ import tracemalloc
 from typing import Tuple, Union
 
 import numpy as np
+import os
 import pandas as pd
+import psutil
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 import tqdm
@@ -10,11 +12,8 @@ import tqdm
 from .. import utils
 from .processors import Processor
 
-
-# DEBUG
-import logging
-import psutil
-LOGGER = logging.getLogger(__name__)
+# Set up the logger
+LOGGER = utils.get_logger(__name__)
 
 
 class BatchProcessor(
@@ -91,7 +90,7 @@ class BatchProcessor(
         y=None,
     ):
 
-        # DEBUG
+        # Memory information
         mem = psutil.virtual_memory()
         LOGGER.info(
             'At start of transform: '
@@ -147,7 +146,6 @@ class BatchProcessor(
         y=None,
     ):
 
-        # DEBUG
         LOGGER.info('Starting batch processing...')
 
         # TODO: We could avoid passing around the log filepath here, and
@@ -163,7 +161,6 @@ class BatchProcessor(
         else:
             self.start_logging()
 
-        # DEBUG
         LOGGER.info('Starting batch processing:preprocessing...')
 
         # Resources contains global variables that will be available
@@ -182,7 +179,6 @@ class BatchProcessor(
             start = tracemalloc.take_snapshot()
             self.log['starting_snapshot'] = start
 
-        # DEBUG
         LOGGER.info('Starting batch processing:main loop...')
 
         # Main loop
@@ -196,14 +192,12 @@ class BatchProcessor(
             # We make a copy of row so that we don't modify the original
             row = X_t.loc[ind].copy()
 
-            # DEBUG
-            LOGGER.info(f'Processing row {i} in batch processing:main loop...')
+            LOGGER.info(f'Processing row {i}...')
 
             # Process the row
             row = processor.process_row(i, row, resources)
 
-            # DEBUG
-            LOGGER.info(f'Postprocessing row {i} in batch processing:main loop...')
+            LOGGER.info(f'Postprocessing row {i}...')
 
             # Combine
             Z_out = row.to_frame().T.combine_first(Z_out)
@@ -214,7 +208,6 @@ class BatchProcessor(
                 if i % self.memory_snapshot_freq == 0:
                     log['snapshot'] = tracemalloc.take_snapshot()
 
-            # DEBUG
             LOGGER.info(f'Checkpointing row {i} in batch processing:main loop...')
 
             # Checkpoint
@@ -239,8 +232,7 @@ class BatchProcessor(
         if 'snapshot' in self.log_keys:
             tracemalloc.stop()
 
-        # DEBUG
-        LOGGER.info(f'Starting batch processing:postprocessing...')
+        LOGGER.info('Starting batch processing:postprocessing...')
 
         Z_out = self.postprocess(Z_out, resources)
 

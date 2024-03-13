@@ -15,9 +15,8 @@ from night_horizons.data_io import ImageIO, RegisteredImageIO
 from night_horizons.transformers.raster import RasterCoordinateTransformer
 
 
-# DEBUG
-import logging
-LOGGER = logging.getLogger(__name__)
+# Set up the logger
+LOGGER = utils.get_logger(__name__)
 
 
 class Processor(utils.LoggerMixin, ABC):
@@ -199,7 +198,6 @@ class DatasetProcessor(Processor):
 
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
 
-        # DEBUG
         LOGGER.info('Getting src...')
 
         src_img = ImageIO.load(
@@ -217,7 +215,6 @@ class DatasetProcessor(Processor):
 
     def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:
 
-        # DEBUG
         LOGGER.info('Getting dst...')
 
         dst_img = self.get_image_from_dataset(
@@ -289,7 +286,6 @@ class DatasetUpdater(DatasetProcessor):
         dst: dict,
     ) -> dict:
 
-        # DEBUG
         LOGGER.info('Performing image operation...')
 
         # Combine the images
@@ -314,7 +310,6 @@ class DatasetUpdater(DatasetProcessor):
         results: dict,
     ):
 
-        # DEBUG
         LOGGER.info('Updating dataset...')
 
         # Store the image
@@ -391,7 +386,6 @@ class DatasetRegistrar(DatasetUpdater):
         results: dict,
     ):
 
-        # DEBUG
         LOGGER.info('Starting DatasetRegistrar.store_results...')
 
         # Update the dataset
@@ -400,7 +394,6 @@ class DatasetRegistrar(DatasetUpdater):
         # Store the image
         if results['return_code'] == 'success':
 
-            # DEBUG
             LOGGER.info('Saving image...')
 
             transformer: RasterCoordinateTransformer = resources['transformer']

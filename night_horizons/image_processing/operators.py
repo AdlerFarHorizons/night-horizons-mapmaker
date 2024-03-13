@@ -8,6 +8,7 @@ from typing import Tuple, Union
 import cv2
 import numpy as np
 import pandas as pd
+import psutil
 import scipy
 
 # This is a draft---don't overengineer!
@@ -17,11 +18,8 @@ import scipy
 
 from .. import utils, exceptions
 
-
-# DEBUG
-import logging
-import psutil
-LOGGER = logging.getLogger(__name__)
+# Set up the logger
+LOGGER = utils.get_logger(__name__)
 
 
 class BaseImageOperator(utils.LoggerMixin, ABC):
@@ -144,13 +142,11 @@ class ImageAligner(BaseImageOperator):
         src_img_t, dst_img_t = self.image_transformer.fit_transform(
             [src_img, dst_img])
 
-        # DEBUG
         LOGGER.info('Finding homography...')
 
         # Try to get a valid homography
         results = self.find_valid_homography(src_img_t, dst_img_t)
 
-        # DEBUG
         LOGGER.info('Warping image...')
 
         # Warp image
@@ -188,17 +184,14 @@ class ImageAligner(BaseImageOperator):
 
         results = {}
 
-        # DEBUG
         LOGGER.info('Validating brightness...')
 
         # Check for a dark frame
         self.validate_brightness(src_img)
         self.validate_brightness(dst_img, error_type='dst')
 
-        # DEBUG
         LOGGER.info('Detecting and computing keypoints...')
 
-        # DEBUG
         mem = psutil.virtual_memory()
         LOGGER.info(
             'Memory status: '
@@ -223,7 +216,6 @@ class ImageAligner(BaseImageOperator):
         )
         results['M'] = M
 
-        # DEBUG
         LOGGER.info('Validating homography...')
 
         # Check transform
@@ -246,7 +238,6 @@ class ImageAligner(BaseImageOperator):
         dst_des,
     ):
 
-        # DEBUG
         LOGGER.info('Matching...')
 
         # Perform match
@@ -264,7 +255,6 @@ class ImageAligner(BaseImageOperator):
         dst_pts = np.array([dst_kp[m.trainIdx].pt for m in matches]).reshape(
             -1, 1, 2)
 
-        # DEBUG
         LOGGER.info('Finding transform...')
 
         # Get the transform
@@ -441,13 +431,11 @@ class ImageAlignerBlender(ImageAligner, ImageBlender):
 
     def operate(self, src_img, dst_img):
 
-        # DEBUG
         LOGGER.info('Aligning image...')
 
         # Align images
         align_results = super().operate(src_img, dst_img)
 
-        # DEBUG
         LOGGER.info('Blending images...')
 
         # Blend images

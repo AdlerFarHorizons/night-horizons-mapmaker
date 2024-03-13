@@ -9,6 +9,7 @@ import os
 from typing import Tuple, Union
 
 import cv2
+import logging
 import numpy as np
 import pandas as pd
 import scipy
@@ -600,3 +601,21 @@ class StdoutLogger(object):
 
     def flush(self):
         self.stdout.flush()
+
+
+def get_logger(name: str = None):
+
+    # Get logger
+    logger = logging.getLogger(name)
+
+    # Get logging level
+    # Options are DEBUG, INFO, WARNING, ERROR, CRITICAL
+    logging_level = os.getenv('LOGGING_LEVEL')
+    if logging_level is None:
+        logging_level = 'WARNING'
+
+    # Convert to numeric value and set logging level
+    logging_level = getattr(logging, logging_level)
+    logger.setLevel(logging_level)
+
+    return logger
