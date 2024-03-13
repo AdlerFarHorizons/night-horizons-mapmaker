@@ -15,6 +15,11 @@ from night_horizons.data_io import ImageIO, RegisteredImageIO
 from night_horizons.transformers.raster import RasterCoordinateTransformer
 
 
+# DEBUG
+import logging
+LOGGER = logging.getLogger(__name__)
+
+
 class Processor(utils.LoggerMixin, ABC):
     '''This could probably be framed as an sklearn estimator too, but let's
     not do that until necessary.
@@ -194,6 +199,9 @@ class DatasetProcessor(Processor):
 
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
 
+        # DEBUG
+        LOGGER.info('Getting src...')
+
         src_img = ImageIO.load(
             row['filepath'],
             dtype=self.dtype,
@@ -208,6 +216,9 @@ class DatasetProcessor(Processor):
         return {'image': src_img}
 
     def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:
+
+        # DEBUG
+        LOGGER.info('Getting dst...')
 
         dst_img = self.get_image_from_dataset(
             resources['dataset'],
@@ -278,6 +289,9 @@ class DatasetUpdater(DatasetProcessor):
         dst: dict,
     ) -> dict:
 
+        # DEBUG
+        LOGGER.info('Performing image operation...')
+
         # Combine the images
         # TODO: image_operator is more-general,
         #       but image_blender is more descriptive
@@ -299,6 +313,9 @@ class DatasetUpdater(DatasetProcessor):
         resources: dict,
         results: dict,
     ):
+
+        # DEBUG
+        LOGGER.info('Updating dataset...')
 
         # Store the image
         if results['return_code'] == 'success':
@@ -374,11 +391,17 @@ class DatasetRegistrar(DatasetUpdater):
         results: dict,
     ):
 
+        # DEBUG
+        LOGGER.info('Starting DatasetRegistrar.store_results...')
+
         # Update the dataset
         row = super().store_results(i, row, resources, results)
 
         # Store the image
         if results['return_code'] == 'success':
+
+            # DEBUG
+            LOGGER.info('Saving image...')
 
             transformer: RasterCoordinateTransformer = resources['transformer']
 
