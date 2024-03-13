@@ -18,6 +18,11 @@ import scipy
 from .. import utils, exceptions
 
 
+# DEBUG
+import logging
+LOGGER = logging.getLogger(__name__)
+
+
 class BaseImageOperator(utils.LoggerMixin, ABC):
 
     @abstractmethod
@@ -138,8 +143,14 @@ class ImageAligner(BaseImageOperator):
         src_img_t, dst_img_t = self.image_transformer.fit_transform(
             [src_img, dst_img])
 
+        # DEBUG
+        LOGGER.info('Finding homography...')
+
         # Try to get a valid homography
         results = self.find_valid_homography(src_img_t, dst_img_t)
+
+        # DEBUG
+        LOGGER.info('Warping image...')
 
         # Warp image
         warped_img = self.warp(src_img, dst_img, results['M'])
@@ -405,8 +416,14 @@ class ImageAlignerBlender(ImageAligner, ImageBlender):
 
     def operate(self, src_img, dst_img):
 
+        # DEBUG
+        LOGGER.info('Aligning image...')
+
         # Align images
         align_results = super().operate(src_img, dst_img)
+
+        # DEBUG
+        LOGGER.info('Blending images...')
 
         # Blend images
         blend_results = super(ImageAligner, self).operate(
