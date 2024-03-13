@@ -187,9 +187,15 @@ class ImageAligner(BaseImageOperator):
 
         results = {}
 
+        # DEBUG
+        LOGGER.info('Validating brightness...')
+
         # Check for a dark frame
         self.validate_brightness(src_img)
         self.validate_brightness(dst_img, error_type='dst')
+
+        # DEBUG
+        LOGGER.info('Detecting and computing keypoints...')
 
         # Get keypoints
         src_kp, src_des = self.detect_and_compute(src_img)
@@ -206,6 +212,9 @@ class ImageAligner(BaseImageOperator):
             dst_des,
         )
         results['M'] = M
+
+        # DEBUG
+        LOGGER.info('Validating homography...')
 
         # Check transform
         self.validate_homography(M)
@@ -227,6 +236,9 @@ class ImageAligner(BaseImageOperator):
         dst_des,
     ):
 
+        # DEBUG
+        LOGGER.info('Matching...')
+
         # Perform match
         matches = self.feature_matcher.match(src_des, dst_des)
 
@@ -241,6 +253,9 @@ class ImageAligner(BaseImageOperator):
             -1, 1, 2)
         dst_pts = np.array([dst_kp[m.trainIdx].pt for m in matches]).reshape(
             -1, 1, 2)
+
+        # DEBUG
+        LOGGER.info('Finding transform...')
 
         # Get the transform
         M, mask = cv2.findHomography(
