@@ -13,6 +13,7 @@ from .processors import Processor
 
 # DEBUG
 import logging
+import psutil
 LOGGER = logging.getLogger(__name__)
 
 
@@ -89,6 +90,15 @@ class BatchProcessor(
         X: pd.DataFrame,
         y=None,
     ):
+
+        # DEBUG
+        mem = psutil.virtual_memory()
+        LOGGER.info(
+            'At start of transform: '
+            f'{mem.available / 1024**3.:.2g} of '
+            f'{mem.total / 1024**3.:.2g} GB available '
+            f'({mem.percent}% used)'
+        )
 
         # This checks both the input and the state of the class
         # (e.g. is it fitted?)

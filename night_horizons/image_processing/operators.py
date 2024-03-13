@@ -20,6 +20,7 @@ from .. import utils, exceptions
 
 # DEBUG
 import logging
+import psutil
 LOGGER = logging.getLogger(__name__)
 
 
@@ -196,6 +197,15 @@ class ImageAligner(BaseImageOperator):
 
         # DEBUG
         LOGGER.info('Detecting and computing keypoints...')
+
+        # DEBUG
+        mem = psutil.virtual_memory()
+        LOGGER.info(
+            'Memory status: '
+            f'{mem.available / 1024**3.:.2g} of '
+            f'{mem.total / 1024**3.:.2g} GB available '
+            f'({mem.percent}% used)'
+        )
 
         # Get keypoints
         src_kp, src_des = self.detect_and_compute(src_img)
