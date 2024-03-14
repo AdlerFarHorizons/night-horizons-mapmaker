@@ -1,0 +1,39 @@
+###############################################################################
+# Example Metadata Processor Config
+###############################################################################
+
+# Indicate what stage of the pipeline to run
+pipeline:
+  stage: metadata_processor
+
+# I/O settings
+# These settings assume that the user has mounted their data directory at /data
+io_manager:
+  # Specifies the input data
+  input_dir: /data/input
+  input_description:
+    # Metadata files. This is the path relative to the input_dir.
+    img_log: metadata/220513-FH135/image.log
+    imu_log: metadata/220513-FH135/PresIMULog.csv
+    gps_log: metadata/220513-FH135/GPSLog.csv
+    # Images without georeferencing.
+    images:
+      # Relative to input_dir
+      # 23085687 is the ID of the nadir camera. Delete it to process all images.
+      directory: images/220513-FH135/23085687
+      # Only files with these extensions will be considered.
+      pattern: '\.(raw|tif|tiff)$'
+  # Where the output files will be saved
+  output_dir: /data/output/metadata
+  output_description:
+    metadata: 220513-FH135-metadata.csv
+  # If the output directory already exists then a new directory is created
+  # with a new ID attached.
+  file_exists: overwrite
+
+# Coordinate reference-system employed
+crs:
+  projparams: 'EPSG:3857'
+
+random_state: 
+  seed: 159234
