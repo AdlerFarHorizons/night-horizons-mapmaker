@@ -112,9 +112,6 @@ class TestMosaicMaker(TestStage):
 class TestSequentialMosaicMaker(TestStage):
 
     def test_sequential_mosaickmaker(self):
-        '''TODO: This fails some fraction of the time, with the Python process
-        being killed.
-        '''
 
         local_options = {
             'pipeline': {
@@ -173,4 +170,42 @@ class TestSequentialMosaicMaker(TestStage):
         ].mean()
         assert avg_score < 500.
 
-# TODO: TestScoreSequentialMosaicker
+
+class TestEvaluateRegistration(TestStage):
+
+    def test_evaluate_registration(self):
+
+        local_options = {
+            'pipeline': {
+                'score_output': True,
+            },
+            'io_manager': {
+                'input_description': {
+                    # Overwrite config default, which is nadir only
+                    'images': {
+                        'directory': 'images/220513-FH135',
+                    },
+                    # Using a test dir is turned off by default
+                    'test_referenced_images': {
+                        'directory': 'test_referenced_images/220513-FH135',
+                    },
+                },
+                'output_dir': self.output_dir,
+            },
+            'data_splitter': {
+                'use_test_dir': True,
+            },
+            'altitude_filter': {
+                # So we don't filter anything out
+                'float_altitude': 100.,
+            },
+            'processor': {
+                'save_return_codes': ['bad_det', 'out_of_bounds'],
+            },
+        }
+
+        mosaicmaker: pipeline.SequentialMosaicMaker = self.create_stage(
+            './configs/sequential-mosaic.yml',
+            local_options
+        )
+        y_pred = mosaicmaker.run()
