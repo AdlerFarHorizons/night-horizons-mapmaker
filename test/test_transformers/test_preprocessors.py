@@ -59,6 +59,18 @@ class TestNITELitePreprocessor(unittest.TestCase):
         )
         assert metadata['sensor_x'].isna().sum() == 0
 
+        # Test that we can reload it once saved
+        output_fp = os.path.join(self.io_manager.output_dir, 'metadata.csv')
+        os.makedirs(self.io_manager.output_dir, exist_ok=True)
+        metadata.to_csv(output_fp)
+        self.io_manager.input_filepaths['metadata'] = output_fp
+        del self.io_manager.input_filepaths['img_log']
+        del self.io_manager.input_filepaths['gps_log']
+        del self.io_manager.input_filepaths['imu_log']
+        metadata2 = self.transformer.fit_transform(fps)
+
+        assert metadata.equals(metadata2)
+
     def test_output_referenced_files(self):
 
         # Image filetree info

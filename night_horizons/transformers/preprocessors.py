@@ -46,12 +46,14 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
         self,
         io_manager: io_manager.IOManager,
         output_columns: list[str] = None,
+        use_cached_output: bool = True,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         unhandled_files: str = 'drop',
         passthrough: list[str] = [],
     ):
         self.io_manager = io_manager
         self.output_columns = output_columns
+        self.use_cached_output = use_cached_output
         self.crs = crs
         self.unhandled_files = unhandled_files
         self.passthrough = passthrough
@@ -91,45 +93,55 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
             X,
         )
 
-        # Get the raw metadata
-        log_df = self.get_logs(
-            img_log_fp=self.io_manager.input_filepaths['img_log'],
-            imu_log_fp=self.io_manager.input_filepaths['imu_log'],
-            gps_log_fp=self.io_manager.input_filepaths['gps_log'],
-        )
-
-        # Merge, assuming filenames remain the same.
-        X['original_index'] = X.index
-        X['filename'] = X['filepath'].apply(os.path.basename)
-        X_corr = pd.merge(
-            X,
-            log_df,
-            how='inner',
-            on='filename'
-        )
-        # Leftovers
-        X_remain = (X.loc[~X.index.isin(X_corr['original_index'])]).copy()
-
-        if len(X_remain) > 0:
-            # Secondary merge attempt, using a common pattern
-            pattern = r'(\d+)_\d.tif'
-            X_remain['timestamp_id'] = X_remain['filename'].str.findall(
-                pattern
-            ).str[-1].astype('Int64')
-            X_corr2 = pd.merge(
-                X_remain,
-                log_df,
-                how='inner',
-                on='timestamp_id'
+        # Try loading existing data.
+        try:
+            assert self.use_cached_output, 'Not using cached output.'
+            X_out = pd.read_csv(
+                self.io_manager.input_filepaths['metadata'],
+                index_col=0,
+            )
+        except (KeyError, FileNotFoundError, AssertionError) as e:
+            # Do the calculations
+            log_df = self.get_logs(
+                img_log_fp=self.io_manager.input_filepaths['img_log'],
+                imu_log_fp=self.io_manager.input_filepaths['imu_log'],
+                gps_log_fp=self.io_manager.input_filepaths['gps_log'],
             )
 
-            # Recombine
-            X_out = pd.concat([X_corr, X_corr2], axis='rows')
-        else:
-            X_out = X_corr
+            # Merge, assuming filenames remain the same.
+            X['original_index'] = X.index
+            X['filename'] = X['filepath'].apply(os.path.basename)
+            X_corr = pd.merge(
+                X,
+                log_df,
+                how='inner',
+                on='filename'
+            )
+            # Leftovers
+            X_remain = (X.loc[~X.index.isin(X_corr['original_index'])]).copy()
+
+            if len(X_remain) > 0:
+                # Secondary merge attempt, using a common pattern
+                pattern = r'(\d+)_\d.tif'
+                X_remain['timestamp_id'] = X_remain['filename'].str.findall(
+                    pattern
+                ).str[-1].astype('Int64')
+                X_corr2 = pd.merge(
+                    X_remain,
+                    log_df,
+                    how='inner',
+                    on='timestamp_id'
+                )
+
+                # Recombine
+                X_out = pd.concat([X_corr, X_corr2], axis='rows')
+            else:
+                X_out = X_corr
+
+            X_out.set_index('original_index', inplace=True)
 
         # At the end, what are we still missing?
-        is_missing = ~X.index.isin(X_out['original_index'])
+        is_missing = ~X.index.isin(X_out.index)
         n_uncorrelated = is_missing.sum()
         w_message = (
             'Did not successfully correlate all filepaths. '
@@ -153,7 +165,6 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
                 raise ValueError('Unrecognized method for unhandled files.')
 
         # Organize the index
-        X_out.set_index('original_index', inplace=True)
         # Don't try to sort by indices X_out does not have
         sort_inds = X.index[X.index.isin(X_out.index)]
         X_out = X_out.loc[sort_inds]
