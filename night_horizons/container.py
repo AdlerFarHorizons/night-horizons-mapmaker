@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import os
 import inspect
 
@@ -34,7 +35,7 @@ class DIContainer:
         '''
 
         # Internal services (constructors)
-        self._services = {}
+        self._services = OrderedDict()
         # Publicly accessible services (instantiated)
         self.services = {}
 
@@ -179,6 +180,25 @@ class DIContainer:
             return parsed
 
         return deep_interpret(config)
+
+    def save_config(self, filepath: str):
+
+        # Get the parameters for each service
+        config_dict = {}
+        for name, constructor_dict in self._services.items():
+            constructor = constructor_dict['constructor']
+
+            # Get the used arguments
+            if constructor_dict['args_key'] is None:
+                args_key = name
+            else:
+                args_key = constructor_dict['args_key']
+            kwargs = self.get_service_args(args_key, constructor)
+            config_dict[name] = kwargs
+
+        # Dump to yaml
+        with open(filepath, 'w', encoding='UTF-8') as file:
+            yaml.dump(config_dict, file)
 
     def register_dataio_services(self):
 

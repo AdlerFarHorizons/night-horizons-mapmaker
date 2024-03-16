@@ -89,8 +89,10 @@ class TestMetadataProcessor(TestStage):
         df = pd.read_csv(io_manager.output_filepaths['metadata'])
         self.assertFalse(df.empty)
 
-        # Check that the config was saved
-        assert os.path.isfile(io_manager.output_filepaths['used_config'])
+        # Check that the config was saved and can be used to create a duplicate
+        stage = self.create_stage(io_manager.output_filepaths['used_config'])
+        X_out2 = stage.run()
+        assert X_out.equals(X_out2)
 
 
 class TestMosaicMaker(TestStage):
