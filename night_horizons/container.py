@@ -217,16 +217,6 @@ class DIContainer:
             if kwargs != {}:
                 doc[name] = kwargs
 
-        # DEBUG
-        # # Set up a representer to save order but avoid weird formatting
-        # def dict_representer(dumper, data):
-        #     return dumper.represent_dict(data.items())
-        # yaml.add_representer(OrderedDict, dict_representer)
-
-        # # Dump to yaml
-        # with open(filepath, 'w', encoding='UTF-8') as file:
-        #     yaml.dump(config_dict, file)
-
         with open(filepath, 'w', encoding='UTF-8') as file:
             yaml.dump(doc, file)
 

@@ -1,49 +1,84 @@
-pipeline:
-  score_output: true
+pipeline:  # night_horizons.pipeline.stage_constructor
   stage: sequential_mosaicker
-io_manager:
+  score_output: true
+io_manager:  # night_horizons.io_manager.SequentialMosaicIOManager
+  input_dir: /data/input
   input_description: &id001
+    img_log: metadata/220513-FH135/image.log
+    imu_log: metadata/220513-FH135/PresIMULog.csv
     gps_log: metadata/220513-FH135/GPSLog.csv
     images:
       directory: images/220513-FH135
       pattern: \.(raw|tif|tiff)$
-    img_log: metadata/220513-FH135/image.log
-    imu_log: metadata/220513-FH135/PresIMULog.csv
     referenced_images:
       directory: referenced_images/220513-FH135
       pattern: Geo\s\d+_1\.(tif|tiff)$
     test_referenced_images:
       directory: test_referenced_images/220513-FH135
-  input_dir: /data/input
+  output_dir: ./test/test_data/temp
   output_description:
-    log: log.yaml
     mosaic: mosaic.tiff
+    settings: settings.yaml
+    log: log.yaml
+    y_pred: y_pred.csv
     progress_images_dir: progress_images
     referenced_images: referenced_images/img_ind{:06d}.tiff
-    settings: settings.yaml
     used_config: used-config.yml
-    y_pred: y_pred.csv
-  output_dir: ./test/test_data/temp
-crs:
+  checkpoint_selection:
+  - mosaic
+  - settings
+  - log
+  - y_pred
+crs:  # pyproj.crs.crs.CRS
   projparams: EPSG:3857
-random_state:
+random_state: # sklearn.utils.validation.check_random_state
   seed: 1592
-data_splitter:
+data_splitter:  # night_horizons.pipeline.<lambda>
   use_test_dir: true
-altitude_filter:
+metadata_image_registrar:  # night_horizons.pipeline.<lambda>
+  passthrough:
+  - filepath
+  - camera_num
+altitude_filter:  # night_horizons.transformers.filters.AltitudeFilter
   float_altitude: 100.0
-io_manager_train:
-  input_description: *id001
+  column: mAltitude
+steady_filter: # night_horizons.transformers.filters.SteadyFilter
+  column: imuGyroMag
+  max_gyro: 0.075
+order:  # night_horizons.transformers.order.SensorAndDistanceOrder
+  apply: true
+  sensor_order_col: camera_num
+  sensor_order_map:
+    0: 1
+    1: 0
+    2: 2
+  coords_cols:
+  - x_center
+  - y_center
+preprocessor: # night_horizons.pipeline.make_preprocessor_pipeline
+  steps:
+  - metadata_preprocessor
+  - altitude_filter
+  - steady_filter
+  - metadata_image_registrar
+  - order
+io_manager_train:  # night_horizons.io_manager.TrainMosaicIOManager
   input_dir: /data/input
-  output_description:
-    log: log_train.yaml
-    mosaic: mosaic.tiff
-    progress_images_dir_train: progress_images_train
-    settings: settings_train.yaml
-    used_config: used-config.yml
-    y_pred: y_pred_train.csv
+  input_description: *id001
   output_dir: ./test/test_data/temp
-processor:
+  output_description:
+    mosaic: mosaic.tiff
+    settings: settings_train.yaml
+    log: log_train.yaml
+    y_pred: y_pred_train.csv
+    progress_images_dir_train: progress_images_train
+    used_config: used-config.yml
+  file_exists: pass
+image_operator_train:  # night_horizons.image_processing.operators.ImageBlender
+  fill_value:
+  outline: 0.0
+  log_keys: []
+processor: # night_horizons.pipeline.<lambda>
   save_return_codes:
   - bad_det
   - out_of_bounds

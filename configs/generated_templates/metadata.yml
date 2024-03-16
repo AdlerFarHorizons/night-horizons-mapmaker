@@ -1,5 +1,8 @@
 pipeline:  # night_horizons.pipeline.stage_constructor
   stage: metadata_processor
+stage_executor: # night_horizons.pipeline.MetadataProcessor
+  score_output: false
+  verbose: true
 io_manager:  # night_horizons.io_manager.IOManager
   input_dir: /data/input
   input_description:

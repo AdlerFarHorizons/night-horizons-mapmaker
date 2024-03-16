@@ -1,18 +1,43 @@
-pipeline:
+pipeline:  # night_horizons.pipeline.stage_constructor
   stage: mosaicker
-io_manager:
+io_manager:  # night_horizons.io_manager.MosaicIOManager
+  input_dir: /data/input
   input_description:
     referenced_images:
       directory: referenced_images/220513-FH135
       pattern: Geo\s\d+_1\.(tif|tiff)$
-  input_dir: /data/input
+  output_dir: ./test/test_data/temp
   output_description:
-    log: log.csv
     mosaic: mosaic.tiff
     settings: settings.yaml
+    log: log.csv
     used_config: used-config.yml
-  output_dir: ./test/test_data/temp
-crs:
+  root_dir:
+  file_exists: error
+  tracked_file_key: mosaic
+  checkpoint_subdir: checkpoints
+  checkpoint_selection:
+  - mosaic
+  - settings
+  - log
+  checkpoint_tag: _i{:06d}
+  checkpoint_freq: 100
+crs:  # pyproj.crs.crs.CRS
   projparams: EPSG:3857
-random_state:
+random_state: # sklearn.utils.validation.check_random_state
   seed: 15923
+quality_order: # night_horizons.pipeline.<lambda>
+  quality_col: imuGyroMag
+preprocessor: # night_horizons.pipeline.make_preprocessor_pipeline
+  steps:
+  - geotiff_preprocessor
+image_operator:  # night_horizons.image_processing.operators.ImageBlender
+  fill_value:
+  outline: 0.0
+  log_keys: []
+image_scorer:  # night_horizons.image_processing.scorers.SimilarityScoreOperator
+  allow_resize: true
+  compare_nonzero: true
+  tm_metric: 5
+  log_keys: []
+  acceptance_threshold: 0.99

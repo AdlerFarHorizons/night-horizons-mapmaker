@@ -226,7 +226,8 @@ class MosaicMaker(Stage):
                 io_manager=self.container.get_service('io_manager'),
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=preprocessors.NITELitePreprocessor,
         )
 
         # Preprocessor to get geotiff metadata (which includes georeferencing)
@@ -235,7 +236,8 @@ class MosaicMaker(Stage):
             lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=preprocessors.GeoTIFFPreprocessor,
         )
 
         # Preprocessor to order images
@@ -245,7 +247,8 @@ class MosaicMaker(Stage):
                 order.OrderTransformer(
                     order_columns=quality_col,
                     *args, **kwargs
-                )
+                ),
+            wrapped_constructor=order.OrderTransformer,
         )
 
         # Put it all together
@@ -265,6 +268,7 @@ class MosaicMaker(Stage):
         self.container.register_service(
             'preprocessor',
             make_preprocessor_pipeline,
+            wrapped_constructor=Pipeline,
         )
 
     def register_default_processors(self):
@@ -285,7 +289,8 @@ class MosaicMaker(Stage):
                 io_manager=self.container.get_service('io_manager'),
                 image_operator=self.container.get_service('image_operator'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=processors.DatasetUpdater,
         )
 
         # This is the operator for scoring images
@@ -301,7 +306,8 @@ class MosaicMaker(Stage):
                 io_manager=self.container.get_service('io_manager'),
                 image_operator=self.container.get_service('image_scorer'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=scorers.DatasetScorer,
         )
 
         # Finally, the mosaicker itself, which is a batch processor
@@ -313,7 +319,8 @@ class MosaicMaker(Stage):
                 scorer=self.container.get_service('scorer'),
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=mosaicking.Mosaicker,
         )
 
 
@@ -429,7 +436,8 @@ class SequentialMosaicMaker(MosaicMaker):
                 io_manager=self.container.get_service('io_manager'),
                 random_state=self.container.get_service('random_state'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=ReferencedRawSplitter,
         )
 
         # Our scorer.
@@ -441,7 +449,8 @@ class SequentialMosaicMaker(MosaicMaker):
                 io_manager=self.container.get_service('io_manager'),
                 image_operator=None,
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=scorers.ReferencedImageScorer,
         )
 
     def register_default_preprocessors(self):
@@ -453,7 +462,8 @@ class SequentialMosaicMaker(MosaicMaker):
                 io_manager=self.container.get_service('io_manager'),
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=preprocessors.NITELitePreprocessor,
         )
 
         # Preprocessor to use metadata to georeference
@@ -465,7 +475,8 @@ class SequentialMosaicMaker(MosaicMaker):
                     passthrough=passthrough,
                     *args, **kwargs
                 )
-            )
+            ),
+            wrapped_constructor=registration.MetadataImageRegistrar,
         )
 
         # Preprocessor to get geotiff metadata (which includes georeferencing)
@@ -474,7 +485,8 @@ class SequentialMosaicMaker(MosaicMaker):
             lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=preprocessors.GeoTIFFPreprocessor,
         )
 
         # Preprocessor to filter on altitude
@@ -518,6 +530,7 @@ class SequentialMosaicMaker(MosaicMaker):
         self.container.register_service(
             'preprocessor',
             make_preprocessor_pipeline,
+            wrapped_constructor=Pipeline
         )
 
     def register_default_train_services(self):
@@ -528,7 +541,8 @@ class SequentialMosaicMaker(MosaicMaker):
             lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=preprocessors.GeoTIFFPreprocessor,
         )
 
         # The io manager for the training mosaic uses the same parameters
@@ -555,7 +569,8 @@ class SequentialMosaicMaker(MosaicMaker):
                 image_operator=self.container.get_service(
                     'image_operator_train'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=processors.DatasetUpdater,
         )
 
         # The actual training mosaicker
@@ -566,7 +581,8 @@ class SequentialMosaicMaker(MosaicMaker):
                 processor=self.container.get_service('processor_train'),
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=mosaicking.Mosaicker,
         )
 
     def register_default_processors(self):
@@ -599,7 +615,8 @@ class SequentialMosaicMaker(MosaicMaker):
                 feature_matcher=self.container.get_service(
                     'feature_matcher'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=operators.ImageAlignerBlender,
         )
 
         # The processor for the sequential mosaicker
@@ -609,7 +626,8 @@ class SequentialMosaicMaker(MosaicMaker):
                 io_manager=self.container.get_service('io_manager'),
                 image_operator=self.container.get_service('image_operator'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=processors.DatasetRegistrar,
         )
 
         # Finally, the mosaicker itself
@@ -622,8 +640,44 @@ class SequentialMosaicMaker(MosaicMaker):
                 scorer=self.container.get_service('scorer'),
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=mosaicking.SequentialMosaicker,
         )
+
+
+def stage_constructor(
+    container,
+    stage_name: str = 'base',
+    *args, **kwargs
+):
+    if stage_name == 'base':
+        container.register_service(
+            'stage_executor',
+            Stage
+        )
+    elif stage_name == 'metadata_processor':
+        container.register_service(
+            'stage_executor',
+            MetadataProcessor
+        )
+    elif stage_name == 'mosaicker':
+        container.register_service(
+            'stage_executor',
+            MosaicMaker
+        )
+    elif stage_name == 'sequential_mosaicker':
+        container.register_service(
+            'stage_executor',
+            SequentialMosaicMaker
+        )
+    else:
+        raise ValueError(f'Unknown stage: {stage_name}')
+
+    return container.get_service(
+        'stage_executor',
+        container=container,
+        *args, **kwargs
+    )
 
 
 def create_stage(config_filepath, local_options={}):
@@ -633,25 +687,9 @@ def create_stage(config_filepath, local_options={}):
         local_options=local_options,
     )
 
-    def stage_constructor(
-        container,
-        stage: str = 'base',
-        *args, **kwargs
-    ):
-        if stage == 'base':
-            return Stage(container, *args, **kwargs)
-        elif stage == 'metadata_processor':
-            return MetadataProcessor(container, *args, **kwargs)
-        elif stage == 'mosaicker':
-            return MosaicMaker(container, *args, **kwargs)
-        elif stage == 'sequential_mosaicker':
-            return SequentialMosaicMaker(container, *args, **kwargs)
-        else:
-            raise ValueError(f'Unknown stage: {stage}')
-
     container.register_service(
-        'pipeline',
-        stage_constructor
+        'stage',
+        stage_constructor,
     )
 
     return container.get_service('pipeline', container=container)
