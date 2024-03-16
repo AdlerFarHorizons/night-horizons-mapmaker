@@ -2,6 +2,22 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
+class QueryFilter(TransformerMixin, BaseEstimator):
+
+    def __init__(self, condition):
+        self.condition = condition
+
+    def fit(self, X, y=None):
+        self.is_fitted_ = True
+        return self
+
+    def transform(self, X):
+
+        X_out = X.query(self.condition)
+
+        return X_out
+
+
 class Filter(TransformerMixin, BaseEstimator):
     '''Simple estimator to implement easy filtering of rows.
     Does not actually remove rows, but instead adds a `selected` column.
