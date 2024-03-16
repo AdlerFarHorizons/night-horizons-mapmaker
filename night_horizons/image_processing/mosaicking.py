@@ -23,6 +23,7 @@ import yaml
 from ..data_io import GDALDatasetIO
 from ..exceptions import OutOfBoundsError
 from ..transformers import preprocessors
+from ..io_manager import IOManager
 from . import operators
 
 from .batch import BatchProcessor
@@ -47,8 +48,8 @@ class Mosaicker(BatchProcessor):
 
     def __init__(
         self,
-        io_manager,
-        processor,
+        io_manager: IOManager,
+        processor: processors.Processor,
         scorer: processors.Processor = None,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
@@ -60,6 +61,40 @@ class Mosaicker(BatchProcessor):
         log_keys: list[str] = ['ind', 'return_code'],
         passthrough: Union[list[str], bool] = True,
     ):
+        '''
+        Initialize the Mosaicking object.
+
+        Parameters
+        ----------
+        io_manager : object
+            The input/output manager object.
+        processor : object
+            The processor object.
+        scorer : object, optional
+            The scorer object. Default is None.
+        crs : str or pyproj.CRS, optional
+            The coordinate reference system. Default is 'EPSG:3857'.
+        pixel_width : float, optional
+            The pixel width.
+        pixel_height : float, optional
+            The pixel height.
+        dtype : str, optional
+            The data type.
+        fill_value : int or float, optional
+            The fill value.
+        n_bands : int, optional
+            The number of bands.
+        outline : int, optional
+            The outline value.
+        log_keys : list of str, optional
+            The list of log keys.
+        passthrough : list of str or bool, optional
+            The list of passthrough keys or a boolean value.
+
+        Returns
+        -------
+        None
+        '''
         # TODO: Following conventions, dont repeat each arg
 
         super().__init__(
@@ -89,7 +124,24 @@ class Mosaicker(BatchProcessor):
         i_start: Union[str, int] = 'checkpoint',
         dataset: gdal.Dataset = None,
     ):
+        '''Fit the Mosaicker to the input data.
 
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input data.
+        y : None, optional
+            The target data. Default is None.
+        i_start : Union[str, int], optional
+            The starting iteration. Default is 'checkpoint'.
+        dataset : gdal.Dataset, optional
+            The GDAL dataset. Default is None.
+
+        Returns
+        -------
+        self : Mosaicker
+            The fitted Mosaicker object.
+        '''
         # The fitting that's done for all image processing pipelines
         super().fit(X, y, i_start=i_start)
 
