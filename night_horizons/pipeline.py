@@ -190,7 +190,7 @@ class MosaicMaker(Stage):
         # Preprocessing
         if self.verbose:
             print('Preprocessing...')
-        preprocessor = self.container.get_service('preprocessor')
+        preprocessor = self.container.get_service('preprocessor_pipeline')
         X = preprocessor.fit_transform(referenced_fps)
 
         # Mosaicking
@@ -268,17 +268,24 @@ class MosaicMaker(Stage):
                 *args, **kwargs
             )
         self.container.register_service(
-            'preprocessor',
+            'preprocessor_pipeline',
             make_preprocessor_pipeline,
             wrapped_constructor=Pipeline,
         )
 
     def register_default_processors(self):
 
-        # Standard image operator for mosaickers is just a blender
+        # Finally, the mosaicker itself, which is a batch processor
         self.container.register_service(
-            'image_operator',
-            operators.ImageBlender,
+            'mosaicker',
+            lambda *args, **kwargs: mosaicking.Mosaicker(
+                io_manager=self.container.get_service('io_manager'),
+                processor=self.container.get_service('processor'),
+                scorer=self.container.get_service('scorer'),
+                crs=self.container.get_service('crs'),
+                *args, **kwargs
+            ),
+            wrapped_constructor=mosaicking.Mosaicker,
         )
 
         # The processor is deals with saving and loading, in addition to
@@ -295,12 +302,6 @@ class MosaicMaker(Stage):
             wrapped_constructor=processors.DatasetUpdater,
         )
 
-        # This is the operator for scoring images
-        self.container.register_service(
-            'image_scorer',
-            scorers.SimilarityScoreOperator,
-        )
-
         # This is the corresponding processor for scoring images
         self.container.register_service(
             'scorer',
@@ -312,17 +313,16 @@ class MosaicMaker(Stage):
             wrapped_constructor=scorers.DatasetScorer,
         )
 
-        # Finally, the mosaicker itself, which is a batch processor
+        # Standard image operator for mosaickers is just a blender
         self.container.register_service(
-            'mosaicker',
-            lambda *args, **kwargs: mosaicking.Mosaicker(
-                io_manager=self.container.get_service('io_manager'),
-                processor=self.container.get_service('processor'),
-                scorer=self.container.get_service('scorer'),
-                crs=self.container.get_service('crs'),
-                *args, **kwargs
-            ),
-            wrapped_constructor=mosaicking.Mosaicker,
+            'image_operator',
+            operators.ImageBlender,
+        )
+
+        # This is the operator for scoring images
+        self.container.register_service(
+            'image_scorer',
+            scorers.SimilarityScoreOperator,
         )
 
 
@@ -368,7 +368,7 @@ class SequentialMosaicMaker(MosaicMaker):
         # Preprocessing for raw images
         if self.verbose:
             print('    Preparing raw images...')
-        preprocessor = self.container.get_service('preprocessor')
+        preprocessor = self.container.get_service('preprocessor_pipeline')
         # The preprocessor is fit to the training sample
         preprocessor = preprocessor.fit(X=fps_train, y=y_train)
         X = preprocessor.transform(fps)
@@ -421,15 +421,13 @@ class SequentialMosaicMaker(MosaicMaker):
             singleton=True,
         )
 
-        self.register_validation_services()
-
         self.register_default_preprocessors()
-
-        self.register_default_train_services()
 
         self.register_default_processors()
 
-    def register_validation_services(self):
+        self.register_default_train_services()
+
+    def register_default_preprocessors(self):
 
         # For splitting the data
         self.container.register_service(
@@ -441,21 +439,6 @@ class SequentialMosaicMaker(MosaicMaker):
             ),
             wrapped_constructor=ReferencedRawSplitter,
         )
-
-        # Our scorer.
-        # We default to not using an image operator because that's expensive
-        self.container.register_service(
-            'scorer',
-            lambda *args, **kwargs: scorers.ReferencedImageScorer(
-                crs=self.container.get_service('crs'),
-                io_manager=self.container.get_service('io_manager'),
-                image_operator=None,
-                *args, **kwargs
-            ),
-            wrapped_constructor=scorers.ReferencedImageScorer,
-        )
-
-    def register_default_preprocessors(self):
 
         # Preprocessor to get metadata
         self.container.register_service(
@@ -530,9 +513,81 @@ class SequentialMosaicMaker(MosaicMaker):
                 *args, **kwargs
             )
         self.container.register_service(
-            'preprocessor',
+            'preprocessor_pipeline',
             make_preprocessor_pipeline,
             wrapped_constructor=Pipeline
+        )
+
+    def register_default_processors(self):
+        '''
+        TODO: This could be cleaned up more, at the cost of flexibility.
+        '''
+
+        # Finally, the mosaicker itself
+        self.container.register_service(
+            'mosaicker',
+            lambda *args, **kwargs: mosaicking.SequentialMosaicker(
+                io_manager=self.container.get_service('io_manager'),
+                processor=self.container.get_service('processor'),
+                mosaicker_train=self.container.get_service('mosaicker_train'),
+                scorer=self.container.get_service('scorer'),
+                crs=self.container.get_service('crs'),
+                *args, **kwargs
+            ),
+            wrapped_constructor=mosaicking.SequentialMosaicker,
+        )
+
+        # The processor for the sequential mosaicker
+        self.container.register_service(
+            'processor',
+            lambda *args, **kwargs: processors.DatasetRegistrar(
+                io_manager=self.container.get_service('io_manager'),
+                image_operator=self.container.get_service('image_operator'),
+                *args, **kwargs
+            ),
+            wrapped_constructor=processors.DatasetRegistrar,
+        )
+
+        # Our scorer.
+        # We default to not using an image operator because that's expensive
+        self.container.register_service(
+            'scorer',
+            lambda *args, **kwargs: scorers.ReferencedImageScorer(
+                crs=self.container.get_service('crs'),
+                io_manager=self.container.get_service('io_manager'),
+                image_operator=None,
+                *args, **kwargs
+            ),
+            wrapped_constructor=scorers.ReferencedImageScorer,
+        )
+
+        # Operator for the sequential mosaicker--align and blend
+        self.container.register_service(
+            'image_operator',
+            lambda *args, **kwargs: operators.ImageAlignerBlender(
+                image_transformer=self.container.get_service(
+                    'image_transformer'),
+                feature_detector=self.container.get_service(
+                    'feature_detector'),
+                feature_matcher=self.container.get_service(
+                    'feature_matcher'),
+                *args, **kwargs
+            ),
+            wrapped_constructor=operators.ImageAlignerBlender,
+        )
+
+        # Feature detection and matching
+        self.container.register_service(
+            'image_transformer',
+            raster.PassImageTransformer,
+        )
+        self.container.register_service(
+            'feature_detector',
+            cv2.AKAZE.create,
+        )
+        self.container.register_service(
+            'feature_matcher',
+            cv2.BFMatcher.create,
         )
 
     def register_default_train_services(self):
@@ -585,65 +640,6 @@ class SequentialMosaicMaker(MosaicMaker):
                 *args, **kwargs
             ),
             wrapped_constructor=mosaicking.Mosaicker,
-        )
-
-    def register_default_processors(self):
-        '''
-        TODO: This could be cleaned up more, at the cost of flexibility.
-        '''
-
-        # Feature detection and matching
-        self.container.register_service(
-            'image_transformer',
-            raster.PassImageTransformer,
-        )
-        self.container.register_service(
-            'feature_detector',
-            cv2.AKAZE.create,
-        )
-        self.container.register_service(
-            'feature_matcher',
-            cv2.BFMatcher.create,
-        )
-
-        # Operator for the sequential mosaicker--align and blend
-        self.container.register_service(
-            'image_operator',
-            lambda *args, **kwargs: operators.ImageAlignerBlender(
-                image_transformer=self.container.get_service(
-                    'image_transformer'),
-                feature_detector=self.container.get_service(
-                    'feature_detector'),
-                feature_matcher=self.container.get_service(
-                    'feature_matcher'),
-                *args, **kwargs
-            ),
-            wrapped_constructor=operators.ImageAlignerBlender,
-        )
-
-        # The processor for the sequential mosaicker
-        self.container.register_service(
-            'processor',
-            lambda *args, **kwargs: processors.DatasetRegistrar(
-                io_manager=self.container.get_service('io_manager'),
-                image_operator=self.container.get_service('image_operator'),
-                *args, **kwargs
-            ),
-            wrapped_constructor=processors.DatasetRegistrar,
-        )
-
-        # Finally, the mosaicker itself
-        self.container.register_service(
-            'mosaicker',
-            lambda *args, **kwargs: mosaicking.SequentialMosaicker(
-                io_manager=self.container.get_service('io_manager'),
-                processor=self.container.get_service('processor'),
-                mosaicker_train=self.container.get_service('mosaicker_train'),
-                scorer=self.container.get_service('scorer'),
-                crs=self.container.get_service('crs'),
-                *args, **kwargs
-            ),
-            wrapped_constructor=mosaicking.SequentialMosaicker,
         )
 
 

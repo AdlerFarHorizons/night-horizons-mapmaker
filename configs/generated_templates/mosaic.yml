@@ -41,29 +41,9 @@ geotiff_preprocessor:  # night_horizons.transformers.preprocessors.GeoTIFFPrepro
 quality_order: # night_horizons.transformers.order.OrderTransformer
   apply: true
   ascending: true
-preprocessor: # sklearn.pipeline.Pipeline
+preprocessor_pipeline: # sklearn.pipeline.Pipeline
   memory:
   verbose: false
-image_operator:  # night_horizons.image_processing.operators.ImageBlender
-  fill_value:
-  outline: 0.0
-  log_keys: []
-processor: # night_horizons.image_processing.processors.DatasetUpdater
-  log_keys: &id001 []
-  save_return_codes: &id002 []
-  use_safe_process: true
-  dtype: uint8
-image_scorer:  # night_horizons.image_processing.scorers.SimilarityScoreOperator
-  allow_resize: true
-  compare_nonzero: true
-  tm_metric: 5
-  log_keys: []
-  acceptance_threshold: 0.99
-scorer: # night_horizons.image_processing.scorers.DatasetScorer
-  log_keys: *id001
-  save_return_codes: *id002
-  use_safe_process: true
-  dtype: uint8
 mosaicker:  # night_horizons.image_processing.mosaicking.Mosaicker
   scorer:
   crs: EPSG:3857
@@ -77,3 +57,23 @@ mosaicker:  # night_horizons.image_processing.mosaicking.Mosaicker
   - ind
   - return_code
   passthrough: true
+processor: # night_horizons.image_processing.processors.DatasetUpdater
+  log_keys: &id001 []
+  save_return_codes: &id002 []
+  use_safe_process: true
+  dtype: uint8
+scorer: # night_horizons.image_processing.scorers.DatasetScorer
+  log_keys: *id001
+  save_return_codes: *id002
+  use_safe_process: true
+  dtype: uint8
+image_operator:  # night_horizons.image_processing.operators.ImageBlender
+  fill_value:
+  outline: 0.0
+  log_keys: []
+image_scorer:  # night_horizons.image_processing.scorers.SimilarityScoreOperator
+  allow_resize: true
+  compare_nonzero: true
+  tm_metric: 5
+  log_keys: []
+  acceptance_threshold: 0.99

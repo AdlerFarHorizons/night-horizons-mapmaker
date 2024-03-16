@@ -39,8 +39,6 @@ data_splitter:  # night_horizons.utils.ReferencedRawSplitter
   test_size: 0.2
   random_state:
   drop_raw_images: false
-scorer: # night_horizons.image_processing.scorers.ReferencedImageScorer
-  crs:
 metadata_preprocessor:  # night_horizons.transformers.preprocessors.NITELitePreprocessor
   output_columns:
   use_cached_output: true
@@ -77,9 +75,50 @@ order:  # night_horizons.transformers.order.SensorAndDistanceOrder
   coords_cols:
   - x_center
   - y_center
-preprocessor: # sklearn.pipeline.Pipeline
+preprocessor_pipeline: # sklearn.pipeline.Pipeline
   memory:
   verbose: false
+mosaicker:  # night_horizons.image_processing.mosaicking.SequentialMosaicker
+  scorer:
+  progress_images_subdir: progress_images
+  save_return_codes: []
+  memory_snapshot_freq: 10
+  crs: EPSG:3857
+  pixel_width:
+  pixel_height:
+  fill_value:
+  dtype: uint8
+  n_bands: 4
+  passthrough: true
+  outline: 0
+  log_keys:
+  - i
+  - ind
+  - return_code
+  - abs_det_M
+processor: # night_horizons.image_processing.processors.DatasetRegistrar
+  save_return_codes:
+  - bad_det
+  - out_of_bounds
+  log_keys: &id002 []
+  use_safe_process: true
+  dtype: uint8
+scorer: # night_horizons.image_processing.scorers.ReferencedImageScorer
+  crs:
+image_operator:  # night_horizons.image_processing.operators.ImageAlignerBlender
+  det_min: 0.6
+  det_max: 2.0
+  required_brightness: 0.03
+  required_bright_pixel_area: 50000
+  n_matches_used: 500
+  homography_method: 8
+  reproj_threshold: 5.0
+  find_homography_options: {}
+  fill_value:
+  outline: 0
+  log_keys:
+  - abs_det_M
+  - duration
 preprocessor_train: # night_horizons.transformers.preprocessors.GeoTIFFPreprocessor
   crs: EPSG:3857
   passthrough: true
@@ -102,7 +141,7 @@ image_operator_train:  # night_horizons.image_processing.operators.ImageBlender
   outline: 0.0
   log_keys: []
 processor_train: # night_horizons.image_processing.processors.DatasetUpdater
-  log_keys: &id002 []
+  log_keys: *id002
   save_return_codes: []
   use_safe_process: true
   dtype: uint8
@@ -119,42 +158,3 @@ mosaicker_train:  # night_horizons.image_processing.mosaicking.Mosaicker
   - ind
   - return_code
   passthrough: true
-image_operator:  # night_horizons.image_processing.operators.ImageAlignerBlender
-  det_min: 0.6
-  det_max: 2.0
-  required_brightness: 0.03
-  required_bright_pixel_area: 50000
-  n_matches_used: 500
-  homography_method: 8
-  reproj_threshold: 5.0
-  find_homography_options: {}
-  fill_value:
-  outline: 0
-  log_keys:
-  - abs_det_M
-  - duration
-processor: # night_horizons.image_processing.processors.DatasetRegistrar
-  save_return_codes:
-  - bad_det
-  - out_of_bounds
-  log_keys: *id002
-  use_safe_process: true
-  dtype: uint8
-mosaicker:  # night_horizons.image_processing.mosaicking.SequentialMosaicker
-  scorer:
-  progress_images_subdir: progress_images
-  save_return_codes: []
-  memory_snapshot_freq: 10
-  crs: EPSG:3857
-  pixel_width:
-  pixel_height:
-  fill_value:
-  dtype: uint8
-  n_bands: 4
-  passthrough: true
-  outline: 0
-  log_keys:
-  - i
-  - ind
-  - return_code
-  - abs_det_M
