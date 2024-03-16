@@ -45,7 +45,7 @@ class ImageIO(DataIO):
     @staticmethod
     def load(
         filepath: str,
-        dtype: type = np.uint8,
+        dtype: str = 'uint8',
         img_shape: Tuple = (1200, 1920),
     ):
         '''Load an image from disk.
@@ -89,6 +89,7 @@ class ImageIO(DataIO):
         #     return img
 
         # When no conversion needs to be done
+        dtype = getattr(np, dtype)
         if img.dtype == dtype:
             return img
 

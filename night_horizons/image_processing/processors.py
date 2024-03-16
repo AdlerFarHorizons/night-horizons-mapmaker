@@ -184,7 +184,7 @@ class DatasetProcessor(Processor):
         log_keys: list[str] = [],
         save_return_codes: list[str] = [],
         use_safe_process: bool = True,
-        dtype: type = np.uint8,
+        dtype: str = 'uint8',
     ):
 
         super().__init__(
@@ -194,7 +194,7 @@ class DatasetProcessor(Processor):
             save_return_codes=save_return_codes,
             use_safe_process=use_safe_process,
         )
-        self.dtype = dtype
+        self.dtype = getattr(np, dtype)
 
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
 
