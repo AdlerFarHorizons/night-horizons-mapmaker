@@ -53,11 +53,16 @@ class DIContainer:
         constructor,
         singleton: bool = False,
         args_key: str = None,
+        wrapped_constructor=None,
     ):
         self._services[name] = {
             'constructor': constructor,
             'singleton': singleton,
             'args_key': args_key,
+            'wrapped_constructor': (
+                wrapped_constructor if wrapped_constructor is not None
+                else constructor
+            ),
         }
 
     def get_service(self, name, *args, **kwargs):
@@ -124,6 +129,12 @@ class DIContainer:
                 default_value = signature.parameters[key].default
                 if isinstance(value, dict) and isinstance(default_value, dict):
                     kwargs[key] = {**default_value, **value}
+            for key, value in signature.parameters.items():
+                if (
+                    (key not in kwargs)
+                    and (value.default is not inspect.Parameter.empty)
+                ):
+                    kwargs[key] = value.default
 
         return kwargs
 
@@ -186,7 +197,7 @@ class DIContainer:
         # Get the parameters for each service
         config_dict = OrderedDict()
         for name, constructor_dict in self._services.items():
-            constructor = constructor_dict['constructor']
+            constructor = constructor_dict['wrapped_constructor']
 
             # Get the used arguments
             if constructor_dict['args_key'] is None:

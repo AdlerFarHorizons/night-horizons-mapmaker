@@ -154,7 +154,8 @@ class MetadataProcessor(Stage):
                 io_manager=self.container.get_service('io_manager'),
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
-            )
+            ),
+            wrapped_constructor=preprocessors.NITELitePreprocessor,
         )
 
 
