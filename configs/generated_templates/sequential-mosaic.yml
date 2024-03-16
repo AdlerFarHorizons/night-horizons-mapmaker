@@ -1,6 +1,7 @@
-pipeline:  # night_horizons.pipeline.stage_constructor
+pipeline:  # night_horizons.pipeline.SequentialMosaicMaker
   stage: sequential_mosaicker
   score_output: true
+  verbose: true
 io_manager:  # night_horizons.io_manager.SequentialMosaicIOManager
   input_dir: /data/input
   input_description: &id001
@@ -33,12 +34,33 @@ crs:  # pyproj.crs.crs.CRS
   projparams: EPSG:3857
 random_state: # sklearn.utils.validation.check_random_state
   seed: 1592
-data_splitter:  # night_horizons.pipeline.<lambda>
+data_splitter:  # night_horizons.utils.ReferencedRawSplitter
   use_test_dir: true
-metadata_image_registrar:  # night_horizons.pipeline.<lambda>
-  passthrough:
-  - filepath
-  - camera_num
+  test_size: 0.2
+  random_state:
+  drop_raw_images: false
+scorer: # night_horizons.image_processing.scorers.ReferencedImageScorer
+  crs:
+metadata_preprocessor:  # night_horizons.transformers.preprocessors.NITELitePreprocessor
+  output_columns:
+  use_cached_output: true
+  unhandled_files: drop
+  passthrough: []
+metadata_image_registrar:  # night_horizons.image_processing.registration.MetadataImageRegistrar
+  crs: EPSG:3857
+  passthrough: false
+  use_direct_estimate: true
+  camera_angles:
+    0: 30.0
+    1: 0.0
+    2: 30.0
+  angle_error: 5.0
+  padding_fraction: 1.5
+geotiff_preprocessor:  # night_horizons.transformers.preprocessors.GeoTIFFPreprocessor
+  crs: EPSG:3857
+  passthrough: true
+  spatial_error: 0.0
+  padding_fraction: 0.1
 altitude_filter:  # night_horizons.transformers.filters.AltitudeFilter
   float_altitude: 100.0
   column: mAltitude
@@ -55,13 +77,14 @@ order:  # night_horizons.transformers.order.SensorAndDistanceOrder
   coords_cols:
   - x_center
   - y_center
-preprocessor: # night_horizons.pipeline.make_preprocessor_pipeline
-  steps:
-  - metadata_preprocessor
-  - altitude_filter
-  - steady_filter
-  - metadata_image_registrar
-  - order
+preprocessor: # sklearn.pipeline.Pipeline
+  memory:
+  verbose: false
+preprocessor_train: # night_horizons.transformers.preprocessors.GeoTIFFPreprocessor
+  crs: EPSG:3857
+  passthrough: true
+  spatial_error: 0.0
+  padding_fraction: 0.1
 io_manager_train:  # night_horizons.io_manager.TrainMosaicIOManager
   input_dir: /data/input
   input_description: *id001
@@ -78,7 +101,60 @@ image_operator_train:  # night_horizons.image_processing.operators.ImageBlender
   fill_value:
   outline: 0.0
   log_keys: []
-processor: # night_horizons.pipeline.<lambda>
+processor_train: # night_horizons.image_processing.processors.DatasetUpdater
+  log_keys: &id002 []
+  save_return_codes: []
+  use_safe_process: true
+  dtype: uint8
+mosaicker_train:  # night_horizons.image_processing.mosaicking.Mosaicker
+  scorer:
+  crs: EPSG:3857
+  pixel_width:
+  pixel_height:
+  dtype: uint8
+  fill_value:
+  n_bands: 4
+  outline: 0
+  log_keys:
+  - ind
+  - return_code
+  passthrough: true
+image_operator:  # night_horizons.image_processing.operators.ImageAlignerBlender
+  det_min: 0.6
+  det_max: 2.0
+  required_brightness: 0.03
+  required_bright_pixel_area: 50000
+  n_matches_used: 500
+  homography_method: 8
+  reproj_threshold: 5.0
+  find_homography_options: {}
+  fill_value:
+  outline: 0
+  log_keys:
+  - abs_det_M
+  - duration
+processor: # night_horizons.image_processing.processors.DatasetRegistrar
   save_return_codes:
   - bad_det
   - out_of_bounds
+  log_keys: *id002
+  use_safe_process: true
+  dtype: uint8
+mosaicker:  # night_horizons.image_processing.mosaicking.SequentialMosaicker
+  scorer:
+  progress_images_subdir: progress_images
+  save_return_codes: []
+  memory_snapshot_freq: 10
+  crs: EPSG:3857
+  pixel_width:
+  pixel_height:
+  fill_value:
+  dtype: uint8
+  n_bands: 4
+  passthrough: true
+  outline: 0
+  log_keys:
+  - i
+  - ind
+  - return_code
+  - abs_det_M
