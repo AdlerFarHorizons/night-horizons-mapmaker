@@ -30,16 +30,34 @@ class BatchProcessor(
         scorer: Processor = None,
     ):
         '''
+        Initialize the BatchProcessor object.
+
+        Parameters
+        ----------
+        processor : Processor
+            The processor object used for batch processing.
+
+        log_keys : list[str], optional
+            The list of keys to include in the log.
+
+        passthrough : Union[list[str], bool], optional
+            Determines whether to pass the input data through the processor.
+            If True, the input data will be passed through the processor.
+            If False, the input data will not be passed through the processor.
+            If a list of strings is provided, only the specified keys will be
+            passed through the processor.
+
+        scorer : Processor, optional
+            The scorer object used for scoring the processed data.
+
         TODO: Passthrough is currently True by default. This is less likely to
         cause unexpected errors, but slightly more likely to cause uncaught
         unexpected behavior.
 
-        Parameters
-        ----------
         Returns
         -------
+        None
         '''
-
         self.processor = processor
         self.passthrough = passthrough
         self.log_keys = log_keys
@@ -48,29 +66,28 @@ class BatchProcessor(
     @utils.enable_passthrough
     def fit(
         self,
-        X: pd.DataFrame,
+        X: pd.DataFrame = None,
         y=None,
         i_start: Union[str, int] = 'checkpoint',
-    ):
-        '''The main thing the fitting does is create an empty dataset to hold
-        the mosaic.
+    ) -> 'BatchProcessor':
+        '''
+        Fit the BatchProcessor model.
 
         Parameters
         ----------
-        X
-            A dataframe containing the bounds of each added image.
-
-        y
-            Empty.
+        X : pd.DataFrame, optional
+            The input data. Default is None.
+        y : Any, optional
+            The target data. Default is None.
+        i_start : Union[str, int], optional
+            The starting index for fitting. Default is 'checkpoint'.
 
         Returns
         -------
-        self
-            Returns self
+        BatchProcessor
+            The fitted BatchProcessor model.
         '''
-
         # Save the settings used for fitting
-        # Must be done after preparing the filetree to have a save location
         self.io_manager.save_settings(self)
 
         # Start from checkpoint, if available
@@ -88,8 +105,22 @@ class BatchProcessor(
         self,
         X: pd.DataFrame,
         y=None,
-    ):
+    ) -> pd.DataFrame:
+        '''Transform the input data using the BatchProcessor.
 
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input data to be transformed.
+
+        y : Any, optional
+            The target data. Default is None.
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed data.
+        '''
         # Memory information
         mem = psutil.virtual_memory()
         LOGGER.info(
@@ -114,20 +145,40 @@ class BatchProcessor(
     def predict(
         self,
         X: pd.DataFrame,
-    ):
+    ) -> pd.DataFrame:
         '''Transform and predict perform the same process here.
-        Transform is appropriate for image processing as an intermediate step.
-        Predict is appropriate for image processing as the final step.
-        '''
 
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input data to be transformed and predicted.
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed and predicted data.
+        '''
         return self.transform(X)
 
     def score(
         self,
         X: pd.DataFrame,
         y=None,
-    ) -> pd.Series:
+    ) -> pd.DataFrame:
+        '''Calculate the scores for the given input data.
 
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input data to be scored.
+        y : Optional
+            The true-value output.
+
+        Returns
+        -------
+        pd.DataFrame
+            The scored data.
+        '''
         # Make a copy so we don't directly alter the data
         X = X.copy()
 
@@ -144,7 +195,23 @@ class BatchProcessor(
         processor: Processor,
         X: pd.DataFrame,
         y=None,
-    ):
+    ) -> pd.DataFrame:
+        '''Batch process the data using a given processor.
+
+        Parameters
+        ----------
+        processor : Processor
+            The processor object used to process each row of the data.
+        X : pd.DataFrame
+            The input data to be processed.
+        y : None, optional
+            The target data (default is None).
+
+        Returns
+        -------
+        pd.DataFrame
+            The processed output data.
+        '''
 
         LOGGER.info('Starting batch processing...')
 
@@ -238,13 +305,23 @@ class BatchProcessor(
 
         return Z_out
 
-    def validate_readiness(self, X: pd.DataFrame):
+    def validate_readiness(self, X: pd.DataFrame) -> pd.DataFrame:
         '''Pre-transform validation.
 
         Parameters
         ----------
+        X : pd.DataFrame
+            The input DataFrame to be validated.
+
         Returns
         -------
+        pd.DataFrame
+            The validated input DataFrame.
+
+        Raises
+        ------
+        NotFittedError
+            If the estimator has not been fitted yet.
         '''
 
         # This is where X is copied too
@@ -259,7 +336,40 @@ class BatchProcessor(
         return X
 
     def preprocess(self, X: pd.DataFrame) -> Tuple[pd.DataFrame, dict]:
+        '''
+        Preprocesses the input data. This method is intended to be overwritten
+        by subclasses.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input data to be preprocessed.
+
+        Returns
+        -------
+        Tuple[pd.DataFrame, dict]
+            A tuple containing the preprocessed data and an empty dictionary.
+        '''
+
         return X, {}
 
     def postprocess(self, X: pd.DataFrame, resources: dict) -> pd.DataFrame:
+        '''
+        Postprocesses the input DataFrame. This method is intended to be
+        overwritten by subclasses.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input DataFrame to be postprocessed.
+
+        resources : dict
+            A dictionary of additional resources.
+
+        Returns
+        -------
+        pd.DataFrame
+            The postprocessed DataFrame.
+        '''
+
         return X
