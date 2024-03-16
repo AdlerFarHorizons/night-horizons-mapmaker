@@ -13,6 +13,7 @@ io_manager:
   input_dir: /data/input
   input_description:
     # Metadata files. This is the path relative to the input_dir.
+    # TODO: Use the complete metadata file from the metadata processor, instead of recalculating
     img_log: metadata/220513-FH135/image.log
     imu_log: metadata/220513-FH135/PresIMULog.csv
     gps_log: metadata/220513-FH135/GPSLog.csv
