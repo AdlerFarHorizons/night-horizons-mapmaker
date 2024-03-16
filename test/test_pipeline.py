@@ -89,6 +89,9 @@ class TestMetadataProcessor(TestStage):
         df = pd.read_csv(io_manager.output_filepaths['metadata'])
         self.assertFalse(df.empty)
 
+        # Check that the config was saved
+        assert os.path.isfile(io_manager.output_filepaths['used_config'])
+
 
 class TestMosaicMaker(TestStage):
 

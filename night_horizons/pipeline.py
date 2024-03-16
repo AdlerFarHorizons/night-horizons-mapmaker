@@ -115,6 +115,11 @@ class MetadataProcessor(Stage):
         io_manager = self.container.get_service('io_manager')
         image_fps = io_manager.input_filepaths['images']
 
+        # Save config
+        if 'used_config' in io_manager.output_filepaths:
+            self.container.save_config(
+                io_manager.output_filepaths['used_config'])
+
         # Run the processing
         if self.verbose:
             print('    Running processing...')
@@ -318,6 +323,11 @@ class SequentialMosaicMaker(MosaicMaker):
         if self.verbose:
             print(f'Retrieving input from {io_manager.input_dir}')
             print(f'Saving output in {io_manager.output_dir}')
+
+        # Save config
+        if 'used_config' in io_manager.output_filepaths:
+            self.container.save_config(
+                io_manager.output_filepaths['used_config'])
 
         # Split up the data
         splitter: ReferencedRawSplitter = self.container.get_service(
