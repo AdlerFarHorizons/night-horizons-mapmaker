@@ -2,8 +2,8 @@
 # Example Configuration File
 ###############################################################################
 
-mapmaker:
-  map_type: base
+pipeline:
+  stage: base
 
 io_manager:
   input_dir: /data/input

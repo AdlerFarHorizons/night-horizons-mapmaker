@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 import inspect
 import os
 import pickle
-from typing import Tuple
+from typing import Tuple, Union
 
 import cv2
 import numpy as np
@@ -45,7 +45,7 @@ class ImageIO(DataIO):
     @staticmethod
     def load(
         filepath: str,
-        dtype: str = 'uint8',
+        dtype: Union[str, type] = 'uint8',
         img_shape: Tuple = (1200, 1920),
     ):
         '''Load an image from disk.
@@ -88,8 +88,10 @@ class ImageIO(DataIO):
         # if img is None:
         #     return img
 
-        # When no conversion needs to be done
-        dtype = getattr(np, dtype)
+        if isinstance(dtype, str):
+            dtype = getattr(np, dtype)
+
+        # Check if conversion needs to be done
         if img.dtype == dtype:
             return img
 

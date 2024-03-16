@@ -25,6 +25,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         self.transformer = preprocessors.NITELitePreprocessor(
             io_manager=self.io_manager,
             output_columns=self.expected_cols,
+            crs=self.mapmaker.container.get_service('crs'),
         )
 
         if os.path.isdir(self.io_manager.output_dir):

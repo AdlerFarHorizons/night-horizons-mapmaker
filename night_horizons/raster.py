@@ -42,7 +42,7 @@ class Image:
             self.img = (img / max_val).astype(np.float32)
 
     @classmethod
-    def open(cls, fp, dtype=np.uint8, img_shape=(1200, 1920)):
+    def open(cls, fp, dtype: str = 'uint8', img_shape=(1200, 1920)):
 
         img = cls.io.load(fp, dtype=dtype, img_shape=img_shape)
 
