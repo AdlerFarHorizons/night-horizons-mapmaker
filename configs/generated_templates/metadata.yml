@@ -1,6 +1,5 @@
-pipeline:  # night_horizons.pipeline.stage_constructor
+pipeline:  # night_horizons.pipeline.MetadataProcessor
   stage: metadata_processor
-stage_executor: # night_horizons.pipeline.MetadataProcessor
   score_output: false
   verbose: true
 io_manager:  # night_horizons.io_manager.IOManager

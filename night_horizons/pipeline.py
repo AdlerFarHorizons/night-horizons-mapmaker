@@ -27,11 +27,13 @@ class Stage:
     def __init__(
         self,
         container: DIContainer,
+        stage: str = 'base',
         score_output: bool = False,
         verbose: bool = True
     ):
 
         self.container = container
+        self.stage = stage
         self.score_output = score_output
         self.verbose = verbose
 
@@ -645,41 +647,6 @@ class SequentialMosaicMaker(MosaicMaker):
         )
 
 
-def stage_constructor(
-    container,
-    stage_name: str = 'base',
-    *args, **kwargs
-):
-    if stage_name == 'base':
-        container.register_service(
-            'stage_executor',
-            Stage
-        )
-    elif stage_name == 'metadata_processor':
-        container.register_service(
-            'stage_executor',
-            MetadataProcessor
-        )
-    elif stage_name == 'mosaicker':
-        container.register_service(
-            'stage_executor',
-            MosaicMaker
-        )
-    elif stage_name == 'sequential_mosaicker':
-        container.register_service(
-            'stage_executor',
-            SequentialMosaicMaker
-        )
-    else:
-        raise ValueError(f'Unknown stage: {stage_name}')
-
-    return container.get_service(
-        'stage_executor',
-        container=container,
-        *args, **kwargs
-    )
-
-
 def create_stage(config_filepath, local_options={}):
 
     container = DIContainer(
@@ -687,10 +654,29 @@ def create_stage(config_filepath, local_options={}):
         local_options=local_options,
     )
 
-    container.register_service(
-        'stage',
-        stage_constructor,
-    )
+    stage = container.config['pipeline']['stage']
+    if stage == 'base':
+        container.register_service(
+            'pipeline',
+            Stage
+        )
+    elif stage == 'metadata_processor':
+        container.register_service(
+            'pipeline',
+            MetadataProcessor
+        )
+    elif stage == 'mosaicker':
+        container.register_service(
+            'pipeline',
+            MosaicMaker
+        )
+    elif stage == 'sequential_mosaicker':
+        container.register_service(
+            'pipeline',
+            SequentialMosaicMaker
+        )
+    else:
+        raise ValueError(f'Unknown stage: {stage}')
 
     return container.get_service('pipeline', container=container)
 
