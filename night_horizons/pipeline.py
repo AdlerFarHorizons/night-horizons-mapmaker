@@ -169,6 +169,11 @@ class MosaicMaker(Stage):
         io_manager = self.container.get_service('io_manager')
         referenced_fps = io_manager.input_filepaths['referenced_images']
 
+        # Save config
+        if 'used_config' in io_manager.output_filepaths:
+            self.container.save_config(
+                io_manager.output_filepaths['used_config'])
+
         if self.verbose:
             print(f'Retrieving input from {io_manager.input_dir}')
             print(f'Saving output in {io_manager.output_dir}')

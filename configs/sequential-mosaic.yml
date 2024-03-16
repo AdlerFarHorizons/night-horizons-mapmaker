@@ -32,6 +32,8 @@ io_manager:
       pattern: 'Geo\s\d+_1\.(tif|tiff)$'
   # Where the output files will be saved
   output_dir: /data/output
+  output_description:
+    used_config: used-config.yml
 
 # Coordinate reference-system employed
 crs:

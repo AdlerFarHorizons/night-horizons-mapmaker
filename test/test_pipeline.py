@@ -94,6 +94,12 @@ class TestMetadataProcessor(TestStage):
         X_out2 = stage.run()
         assert X_out.equals(X_out2)
 
+        os.makedirs('./configs/generated_templates', exist_ok=True)
+        shutil.copy(
+            io_manager.output_filepaths['used_config'],
+            './configs/generated_templates/metadata.yml'
+        )
+
 
 class TestMosaicMaker(TestStage):
 
@@ -112,6 +118,13 @@ class TestMosaicMaker(TestStage):
 
         # Check rest of output
         self.check_output(mosaicmaker)
+
+        # Copy the config as a template
+        os.makedirs('./configs/generated_templates', exist_ok=True)
+        shutil.copy(
+            io_manager.output_filepaths['used_config'],
+            './configs/generated_templates/mosaic.yml'
+        )
 
 
 class TestSequentialMosaicMaker(TestStage):
@@ -174,3 +187,10 @@ class TestSequentialMosaicMaker(TestStage):
             'score'
         ].mean()
         assert avg_score < 500.
+
+        # Copy the config as a template
+        os.makedirs('./configs/generated_templates', exist_ok=True)
+        shutil.copy(
+            io_manager.output_filepaths['used_config'],
+            './configs/generated_templates/sequential-mosaic.yml'
+        )

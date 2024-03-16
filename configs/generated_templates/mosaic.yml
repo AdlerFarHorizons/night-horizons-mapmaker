@@ -1,0 +1,18 @@
+pipeline:
+  stage: mosaicker
+io_manager:
+  input_description:
+    referenced_images:
+      directory: referenced_images/220513-FH135
+      pattern: Geo\s\d+_1\.(tif|tiff)$
+  input_dir: /data/input
+  output_description:
+    log: log.csv
+    mosaic: mosaic.tiff
+    settings: settings.yaml
+    used_config: used-config.yml
+  output_dir: ./test/test_data/temp
+crs:
+  projparams: EPSG:3857
+random_state:
+  seed: 15923

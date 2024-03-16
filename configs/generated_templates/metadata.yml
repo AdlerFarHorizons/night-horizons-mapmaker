@@ -1,0 +1,20 @@
+pipeline:
+  stage: metadata_processor
+io_manager:
+  file_exists: overwrite
+  input_description:
+    gps_log: metadata/220513-FH135/GPSLog.csv
+    images:
+      directory: images/220513-FH135/23085687
+      pattern: \.(raw|tif|tiff)$
+    img_log: metadata/220513-FH135/image.log
+    imu_log: metadata/220513-FH135/PresIMULog.csv
+  input_dir: /data/input
+  output_description:
+    metadata: 220513-FH135-metadata.csv
+    used_config: used-config.yml
+  output_dir: ./test/test_data/temp
+crs:
+  projparams: EPSG:3857
+random_state:
+  seed: 159234

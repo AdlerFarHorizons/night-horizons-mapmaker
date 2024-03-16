@@ -1,0 +1,49 @@
+pipeline:
+  score_output: true
+  stage: sequential_mosaicker
+io_manager:
+  input_description: &id001
+    gps_log: metadata/220513-FH135/GPSLog.csv
+    images:
+      directory: images/220513-FH135
+      pattern: \.(raw|tif|tiff)$
+    img_log: metadata/220513-FH135/image.log
+    imu_log: metadata/220513-FH135/PresIMULog.csv
+    referenced_images:
+      directory: referenced_images/220513-FH135
+      pattern: Geo\s\d+_1\.(tif|tiff)$
+    test_referenced_images:
+      directory: test_referenced_images/220513-FH135
+  input_dir: /data/input
+  output_description:
+    log: log.yaml
+    mosaic: mosaic.tiff
+    progress_images_dir: progress_images
+    referenced_images: referenced_images/img_ind{:06d}.tiff
+    settings: settings.yaml
+    used_config: used-config.yml
+    y_pred: y_pred.csv
+  output_dir: ./test/test_data/temp
+crs:
+  projparams: EPSG:3857
+random_state:
+  seed: 1592
+data_splitter:
+  use_test_dir: true
+altitude_filter:
+  float_altitude: 100.0
+io_manager_train:
+  input_description: *id001
+  input_dir: /data/input
+  output_description:
+    log: log_train.yaml
+    mosaic: mosaic.tiff
+    progress_images_dir_train: progress_images_train
+    settings: settings_train.yaml
+    used_config: used-config.yml
+    y_pred: y_pred_train.csv
+  output_dir: ./test/test_data/temp
+processor:
+  save_return_codes:
+  - bad_det
+  - out_of_bounds
