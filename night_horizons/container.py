@@ -8,7 +8,7 @@ import pandas as pd
 import pyproj
 import scipy
 from sklearn.utils import check_random_state
-import yaml
+from ruamel.yaml import YAML
 
 from .transformers import preprocessors
 # This is a draft---don't overengineer!
@@ -40,8 +40,9 @@ class DIContainer:
         self.services = {}
 
         # Load the config
+        yaml = YAML()
         with open(config_filepath, 'r', encoding='UTF-8') as file:
-            self.config = yaml.load(file, Loader=yaml.FullLoader)
+            self.config = yaml.load(file)
 
         self.config = self.update_config(self.config, local_options)
 
@@ -195,9 +196,16 @@ class DIContainer:
     def save_config(self, filepath: str):
 
         # Get the parameters for each service
-        config_dict = OrderedDict()
+        yaml = YAML()
+        doc = yaml.map()
         for name, constructor_dict in self._services.items():
             constructor = constructor_dict['wrapped_constructor']
+
+            # Comment the name of the constructor
+            doc.yaml_add_eol_comment(
+                f'{constructor.__module__}.{constructor.__name__}',
+                key=name,
+            )
 
             # Get the used arguments
             if constructor_dict['args_key'] is None:
@@ -207,16 +215,20 @@ class DIContainer:
             kwargs = self.get_service_args(args_key, constructor)
 
             if kwargs != {}:
-                config_dict[name] = kwargs
+                doc[name] = kwargs
 
-        # Set up a representer to save order but avoid weird formatting
-        def dict_representer(dumper, data):
-            return dumper.represent_dict(data.items())
-        yaml.add_representer(OrderedDict, dict_representer)
+        # DEBUG
+        # # Set up a representer to save order but avoid weird formatting
+        # def dict_representer(dumper, data):
+        #     return dumper.represent_dict(data.items())
+        # yaml.add_representer(OrderedDict, dict_representer)
 
-        # Dump to yaml
+        # # Dump to yaml
+        # with open(filepath, 'w', encoding='UTF-8') as file:
+        #     yaml.dump(config_dict, file)
+
         with open(filepath, 'w', encoding='UTF-8') as file:
-            yaml.dump(config_dict, file)
+            yaml.dump(doc, file)
 
     def register_dataio_services(self):
 

@@ -1,32 +1,32 @@
-pipeline:
+pipeline:  # night_horizons.pipeline.stage_constructor
   stage: metadata_processor
-io_manager:
-  checkpoint_freq: 100
-  checkpoint_selection: null
-  checkpoint_subdir: checkpoints
-  checkpoint_tag: _i{:06d}
-  data_ios: {}
-  file_exists: overwrite
+io_manager:  # night_horizons.io_manager.IOManager
+  input_dir: /data/input
   input_description:
+    img_log: metadata/220513-FH135/image.log
+    imu_log: metadata/220513-FH135/PresIMULog.csv
     gps_log: metadata/220513-FH135/GPSLog.csv
     images:
       directory: images/220513-FH135/23085687
       pattern: \.(raw|tif|tiff)$
-    img_log: metadata/220513-FH135/image.log
-    imu_log: metadata/220513-FH135/PresIMULog.csv
-  input_dir: /data/input
+  output_dir: ./test/test_data/temp
   output_description:
     metadata: 220513-FH135-metadata.csv
     used_config: used-config.yml
-  output_dir: ./test/test_data/temp
-  root_dir: null
-  tracked_file_key: null
-crs:
+  file_exists: overwrite
+  root_dir:
+  tracked_file_key:
+  checkpoint_subdir: checkpoints
+  checkpoint_selection:
+  checkpoint_tag: _i{:06d}
+  checkpoint_freq: 100
+  data_ios: {}
+crs:  # pyproj.crs.crs.CRS
   projparams: EPSG:3857
-random_state:
+random_state: # sklearn.utils.validation.check_random_state
   seed: 159234
-metadata_preprocessor:
-  output_columns: null
-  passthrough: []
-  unhandled_files: drop
+metadata_preprocessor:  # night_horizons.transformers.preprocessors.NITELitePreprocessor
+  output_columns:
   use_cached_output: true
+  unhandled_files: drop
+  passthrough: []
