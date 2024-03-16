@@ -184,7 +184,7 @@ class DIContainer:
     def save_config(self, filepath: str):
 
         # Get the parameters for each service
-        config_dict = {}
+        config_dict = OrderedDict()
         for name, constructor_dict in self._services.items():
             constructor = constructor_dict['constructor']
 
@@ -194,7 +194,14 @@ class DIContainer:
             else:
                 args_key = constructor_dict['args_key']
             kwargs = self.get_service_args(args_key, constructor)
-            config_dict[name] = kwargs
+
+            if kwargs != {}:
+                config_dict[name] = kwargs
+
+        # Set up a representer to save order but avoid weird formatting
+        def dict_representer(dumper, data):
+            return dumper.represent_dict(data.items())
+        yaml.add_representer(OrderedDict, dict_representer)
 
         # Dump to yaml
         with open(filepath, 'w', encoding='UTF-8') as file:
