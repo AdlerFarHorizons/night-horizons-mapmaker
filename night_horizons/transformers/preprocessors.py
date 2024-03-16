@@ -45,16 +45,16 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
     def __init__(
         self,
         io_manager: io_manager.IOManager,
+        crs: Union[str, pyproj.CRS],
         output_columns: list[str] = None,
         use_cached_output: bool = True,
-        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         unhandled_files: str = 'drop',
         passthrough: list[str] = [],
     ):
         self.io_manager = io_manager
+        self.crs = crs
         self.output_columns = output_columns
         self.use_cached_output = use_cached_output
-        self.crs = crs
         self.unhandled_files = unhandled_files
         self.passthrough = passthrough
         self.required_columns = ['filepath']
