@@ -47,7 +47,7 @@ class ImageIO(DataIO):
         filepath: str,
         dtype: Union[str, type] = 'uint8',
         img_shape: Tuple = (1200, 1920),
-    ):
+    ) -> np.ndarray:
         '''Load an image from disk.
 
         Parameters
@@ -55,9 +55,13 @@ class ImageIO(DataIO):
             filepath
                 Location of the image.
             dtype
-                Datatype. Defaults to integer from 0 to 255
+                Datatype. Defaults to integer from 0 to 255.
+            img_shape
+                Image dimensions, used if loading a file of the '.raw' type.
         Returns
         -------
+            img
+                Image as a numpy array.
         '''
 
         if not os.path.isfile(filepath):
