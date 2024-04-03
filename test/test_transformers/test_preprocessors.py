@@ -17,7 +17,14 @@ class TestNITELitePreprocessor(unittest.TestCase):
 
     def setUp(self):
 
-        self.mapmaker = create_stage('./test/config.yml')
+        self.setUpFunction()
+
+    def setUpFunction(self, local_options={}):
+
+        self.mapmaker = create_stage(
+            './test/config.yml',
+            local_options=local_options,
+        )
         self.io_manager = self.mapmaker.container.get_service('io_manager')
 
         # Preprocessor construction
@@ -37,7 +44,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
             shutil.rmtree(self.io_manager.output_dir)
 
     def test_output(self):
-        '''The output prior to any form of georeferencing.
+        '''Test that the preprocessing works on unreferenced image data.
         '''
 
         # Image filetree info
@@ -73,6 +80,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         assert metadata.equals(metadata2)
 
     def test_output_referenced_files(self):
+        '''Tests that the transformation works on referenced GeoTIFFs.'''
 
         # Image filetree info
         image_dir = '/data/input/referenced_images'
@@ -85,7 +93,8 @@ class TestNITELitePreprocessor(unittest.TestCase):
         assert metadata['sensor_x'].isna().sum() == 0
 
     def test_output_no_file_found_but_keep_it_around(self):
-        '''The output prior to any form of georeferencing.
+        '''Test that when we expect to find an image but we don't we still
+        keep some information about it.
         '''
 
         self.transformer.unhandled_files = 'passthrough'
@@ -109,6 +118,23 @@ class TestNITELitePreprocessor(unittest.TestCase):
         # Check that the order is not garbled.
         assert (metadata['filepath'] != fps).sum() == 0
         np.testing.assert_allclose(metadata.index, fps.index)
+
+
+class TestNITELitePreprocessor145(TestNITELitePreprocessor):
+
+    def setUp(self):
+
+        local_options = {
+            'io_manager': {
+                'input_description': {
+                    'img_log': 'metadata/240203-FH145/image.log',
+                    'imu_log': 'metadata/240203-FH145/PresIMULog.csv',
+                    'gps_log': 'metadata/240203-FH145/GPSLog.csv',
+                },
+            },
+        }
+
+        self.setUpFunction(local_options=local_options)
 
 
 class TestGeoTIFFPreprocessor(unittest.TestCase):

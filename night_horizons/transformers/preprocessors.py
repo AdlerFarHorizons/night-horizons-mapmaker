@@ -2,6 +2,7 @@ import os
 from typing import Union
 import warnings
 
+
 import numpy as np
 from osgeo import gdal
 gdal.UseExceptions()
@@ -27,6 +28,8 @@ GEOTRANSFORM_COLS = [
 
 class NITELitePreprocessor(TransformerMixin, BaseEstimator):
     '''Transform filepaths into a metadata dataframe.
+
+    TODO: Rename NITELitePreprocessor to MetadataPreprocessor
 
     Parameters
     ----------
@@ -244,6 +247,9 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
 
         return log_df
 
+
+class NITELitePreprocessor135(NITELitePreprocessor):
+
     def load_img_log(self, img_log_fp: str = None) -> pd.DataFrame:
         '''Load the images log.
 
@@ -412,6 +418,56 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
         )
 
         return gps_log_df
+
+
+class NITELitePreprocessor145(NITELitePreprocessor):
+
+    def load_img_log(self, img_log_fp: str = None) -> pd.DataFrame:
+        '''Load the images log.
+
+        Parameters
+        ----------
+            img_log_fp: Location of the image log.
+                Defaults to the one provided at init.
+        '''
+    
+        return pd.DataFrame()
+
+    def load_imu_log(self, imu_log_fp: str = None) -> pd.DataFrame:
+        '''Load the IMU log.
+
+        Args:
+            imu_log_fp: Location of the IMU log.
+                Defaults to the one provided at init.
+        '''
+
+        imu_log_df = pd.read_csv(imu_log_fp, skipfooter=1)
+
+        # dropping the last row (101571) its all NAN and breaking when trying to convert to_datetime
+        imu_log_df = imu_log_df[:-1]
+        imu_log_df = imu_log_df.drop(imu_log_df.columns[-1], axis=1)
+        # cleaning up columns that were all NaN
+
+        def validateDate(objNum):
+            try:
+                date = pd.to_datetime(objNum)
+                return date
+            except:
+                return np.nan
+
+        time_series = imu_log_df['CurrTimestamp']
+        new_time_series = time_series.apply(validateDate)
+        epoch_time = pd.to_datetime(new_time_series).astype(int) / 10**9
+        imu_log_df['CurrTimestamp'] = epoch_time
+
+        return imu_log_df
+
+    def load_gps_log(
+        self,
+        gps_log_fp: str = None,
+        latlon_crs: str = 'EPSG:4326'
+    ) -> pd.DataFrame:
+        pass
 
 
 class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
