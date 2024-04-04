@@ -22,7 +22,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
     def setUpFunction(self, local_options={}):
 
         self.mapmaker = create_stage(
-            './test/config.yml',
+            './test/config.yaml',
             local_options=local_options,
         )
         self.io_manager = self.mapmaker.container.get_service('io_manager')

@@ -27,7 +27,7 @@ io_manager:
   output_dir: /data/output/metadata
   output_description:
     metadata: 220513-FH135-metadata.csv
-    used_config: used-config.yml
+    used_config: used-config.yaml
   # If the output directory already exists then a new directory is created
   # with a new ID attached.
   file_exists: overwrite

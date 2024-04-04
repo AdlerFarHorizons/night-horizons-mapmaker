@@ -24,7 +24,7 @@ io_manager:  # night_horizons.io_manager.SequentialMosaicIOManager
     y_pred: y_pred.csv
     progress_images_dir: progress_images
     referenced_images: referenced_images/img_ind{:06d}.tiff
-    used_config: used-config.yml
+    used_config: used-config.yaml
   checkpoint_selection:
   - mosaic
   - settings
@@ -134,7 +134,7 @@ io_manager_train:  # night_horizons.io_manager.TrainMosaicIOManager
     log: log_train.yaml
     y_pred: y_pred_train.csv
     progress_images_dir_train: progress_images_train
-    used_config: used-config.yml
+    used_config: used-config.yaml
   file_exists: pass
 image_operator_train:  # night_horizons.image_processing.operators.ImageBlender
   fill_value:

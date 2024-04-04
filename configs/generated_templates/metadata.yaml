@@ -14,7 +14,7 @@ io_manager:  # night_horizons.io_manager.IOManager
   output_dir: ./test/test_data/temp
   output_description:
     metadata: 220513-FH135-metadata.csv
-    used_config: used-config.yml
+    used_config: used-config.yaml
   file_exists: overwrite
   root_dir:
   tracked_file_key:

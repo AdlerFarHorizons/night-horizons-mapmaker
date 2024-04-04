@@ -22,7 +22,7 @@ class TestRasterCoordinateTransformer(unittest.TestCase):
 
         self.random_state = check_random_state(42)
 
-        self.mapmaker = create_stage('./test/test_transformers/config.yml')
+        self.mapmaker = create_stage('./test/test_transformers/config.yaml')
         self.io_manager = self.mapmaker.container.get_service('io_manager')
 
         # Load the example data we'll use

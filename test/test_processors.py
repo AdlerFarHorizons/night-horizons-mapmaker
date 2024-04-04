@@ -38,7 +38,7 @@ class TestDatasetRegistrar(unittest.TestCase):
 
         # Create container
         mapmaker = create_stage(
-            './test/config.yml',
+            './test/config.yaml',
             local_options=local_options,
         )
 

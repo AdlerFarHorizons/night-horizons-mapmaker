@@ -33,7 +33,7 @@ io_manager:
   # Where the output files will be saved
   output_dir: /data/output
   output_description:
-    used_config: used-config.yml
+    used_config: used-config.yaml
 
 # Coordinate reference-system employed
 crs:

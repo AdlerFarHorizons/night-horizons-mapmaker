@@ -75,7 +75,7 @@ class TestMetadataProcessor(TestStage):
     def test_metadata_processor(self):
 
         metadata_processor: pipeline.MetadataProcessor = \
-            self.create_stage('./configs/metadata.yml')
+            self.create_stage('./configs/metadata.yaml')
         X_out = metadata_processor.run()
 
         # Check we found some images
@@ -97,7 +97,7 @@ class TestMetadataProcessor(TestStage):
         os.makedirs('./configs/generated_templates', exist_ok=True)
         shutil.copy(
             io_manager.output_filepaths['used_config'],
-            './configs/generated_templates/metadata.yml'
+            './configs/generated_templates/metadata.yaml'
         )
 
 
@@ -106,7 +106,7 @@ class TestMosaicMaker(TestStage):
     def test_mosaicmaker(self):
 
         mosaicmaker: pipeline.MosaicMaker = \
-            self.create_stage('./configs/mosaic.yml')
+            self.create_stage('./configs/mosaic.yaml')
         X_out = mosaicmaker.run()
 
         # Check basic structure of X_out
@@ -123,7 +123,7 @@ class TestMosaicMaker(TestStage):
         os.makedirs('./configs/generated_templates', exist_ok=True)
         shutil.copy(
             io_manager.output_filepaths['used_config'],
-            './configs/generated_templates/mosaic.yml'
+            './configs/generated_templates/mosaic.yaml'
         )
 
 
@@ -161,7 +161,7 @@ class TestSequentialMosaicMaker(TestStage):
         }
 
         mosaicmaker: pipeline.SequentialMosaicMaker = self.create_stage(
-            './configs/sequential-mosaic.yml',
+            './configs/sequential-mosaic.yaml',
             local_options
         )
         y_pred = mosaicmaker.run()
@@ -192,5 +192,5 @@ class TestSequentialMosaicMaker(TestStage):
         os.makedirs('./configs/generated_templates', exist_ok=True)
         shutil.copy(
             io_manager.output_filepaths['used_config'],
-            './configs/generated_templates/sequential-mosaic.yml'
+            './configs/generated_templates/sequential-mosaic.yaml'
         )

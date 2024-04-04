@@ -13,7 +13,7 @@ io_manager:  # night_horizons.io_manager.MosaicIOManager
     mosaic: mosaic.tiff
     settings: settings.yaml
     log: log.csv
-    used_config: used-config.yml
+    used_config: used-config.yaml
   root_dir:
   file_exists: error
   tracked_file_key: mosaic
