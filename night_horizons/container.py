@@ -56,6 +56,8 @@ class DIContainer:
         args_key: str = None,
         wrapped_constructor=None,
     ):
+        # TODO: Allow users to specify the constructor. ChatGPT has suggestions
+        #      for this via importlib.
         self._services[name] = {
             'constructor': constructor,
             'singleton': singleton,
