@@ -56,8 +56,13 @@ class DIContainer:
         args_key: str = None,
         wrapped_constructor=None,
     ):
-        # TODO: Allow users to specify the constructor. ChatGPT has suggestions
-        #      for this via importlib.
+        # TODO: Allow users to specify the constructor? ChatGPT has suggestions
+        #      for this via importlib. What we really want is to allow users
+        #      to be able to specify e.g. FH135 vs FH145, and as simply as
+        #      possible. Specifying constructors is cool, but probably not
+        #      the right solution. The right solution might involve
+        #      separating the service creation logic and the choice of how
+        #      to analyze the data.
         self._services[name] = {
             'constructor': constructor,
             'singleton': singleton,
