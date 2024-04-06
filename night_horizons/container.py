@@ -87,8 +87,8 @@ class DIContainer:
         # but instead rely on the user to define all those in one spot
         # in the config.
         if 'name' in kwargs:
-            name = kwargs['service_name']
-            del kwargs[name]
+            name = kwargs['name']
+            del kwargs['name']
 
         # Get parameters for constructing the service
         constructor_dict = self._services.get(name)
@@ -215,7 +215,14 @@ class DIContainer:
         yaml = YAML()
         doc = yaml.map()
         for name, constructor_dict in self._services.items():
-            constructor = constructor_dict['wrapped_constructor']
+            constructor = constructor_dict['constructor']
+            if constructor is None:
+                doc[name] = self.config[name]
+                continue
+
+            wrapped_constructor = constructor_dict['wrapped_constructor']
+            if wrapped_constructor is not None:
+                constructor = constructor
 
             # Comment the name of the constructor
             doc.yaml_add_eol_comment(

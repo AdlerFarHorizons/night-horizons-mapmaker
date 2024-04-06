@@ -24,7 +24,11 @@ io_manager:
   # Where the output files will be saved
   output_dir: /data/output
   output_description:
-    used_config: used-config.yaml
+    used_config: used-
+
+# What metadata processor to use (based on metadata format)
+metadata_processor:
+  name: fh135_processor
 
 # Coordinate reference-system employed
 crs:

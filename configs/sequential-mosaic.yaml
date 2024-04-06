@@ -35,6 +35,10 @@ io_manager:
   output_description:
     used_config: used-config.yaml
 
+# What metadata processor to use (based on metadata format)
+metadata_processor:
+  name: fh135_processor
+
 # Coordinate reference-system employed
 crs:
   # A standard CRS for cartesian coordinates
