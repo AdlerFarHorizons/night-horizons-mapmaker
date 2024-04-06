@@ -20,8 +20,12 @@ io_manager:
     imu_log: metadata/220513-FH135/PresIMULog.csv
     gps_log: metadata/220513-FH135/GPSLog.csv
   output_dir: ./test/test_data/temp
-  output_description: {}
+  output_description:
+    metadata: 220513-FH135-metadata.csv
   file_exists: overwrite
+
+metadata_processor:
+  name: fh135_processor
 
 # Coordinate reference-system employed
 crs:

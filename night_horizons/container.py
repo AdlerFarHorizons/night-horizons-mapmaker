@@ -83,7 +83,10 @@ class DIContainer:
             kwargs = {**self.config[name], **kwargs}
 
         # For when the service name is different from the config key
-        if 'service_name' in kwargs:
+        # Note that we do not recursively retrieve kwargs from the config,
+        # but instead rely on the user to define all those in one spot
+        # in the config.
+        if 'name' in kwargs:
             name = kwargs['service_name']
             del kwargs[name]
 
@@ -102,7 +105,7 @@ class DIContainer:
             args_key = name
         else:
             args_key = constructor_dict['args_key']
-        kwargs = self.get_arg_defaults(args_key, constructor, **kwargs)
+        kwargs = self.get_arg_defaults(constructor, **kwargs)
 
         # Construct the service
         service = constructor(*args, **kwargs)
@@ -221,11 +224,7 @@ class DIContainer:
             )
 
             # Get the used arguments
-            if constructor_dict['args_key'] is None:
-                args_key = name
-            else:
-                args_key = constructor_dict['args_key']
-            kwargs = self.get_arg_defaults(args_key, constructor)
+            kwargs = self.get_arg_defaults(constructor)
 
             if kwargs != {}:
                 doc[name] = kwargs

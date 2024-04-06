@@ -42,7 +42,31 @@ class Stage:
         self.register_default_services()
 
     def register_default_services(self):
-        pass
+        '''We'll always want the metadata'''
+
+        # Processors for different formats of metadata
+        self.container.register_service(
+            'metadata_processor',
+            constructor=None
+        )
+        self.container.register_service(
+            'fh135_metadata_processor',
+            lambda *args, **kwargs: preprocessors.NITELitePreprocessor135(
+                io_manager=self.container.get_service('io_manager'),
+                crs=self.container.get_service('crs'),
+                *args, **kwargs
+            ),
+            wrapped_constructor=preprocessors.NITELitePreprocessor135,
+        )
+        self.container.register_service(
+            'fh145_metadata_processor',
+            lambda *args, **kwargs: preprocessors.NITELitePreprocessor145(
+                io_manager=self.container.get_service('io_manager'),
+                crs=self.container.get_service('crs'),
+                *args, **kwargs
+            ),
+            wrapped_constructor=preprocessors.NITELitePreprocessor145,
+        )
 
     def register_fundamental_services(self):
         '''Services that are used almost-ubiquitously by others.
@@ -125,9 +149,9 @@ class MetadataProcessor(Stage):
         # Run the processing
         if self.verbose:
             print('    Running processing...')
-        metadata_preprocessor = self.container.get_service(
-            'metadata_preprocessor')
-        metadata: pd.DataFrame = metadata_preprocessor.fit_transform(image_fps)
+        metadata_processor = self.container.get_service(
+            'metadata_processor')
+        metadata: pd.DataFrame = metadata_processor.fit_transform(image_fps)
 
         # Save the output
         if self.verbose:
@@ -146,19 +170,6 @@ class MetadataProcessor(Stage):
             )
 
         return metadata
-
-    def register_default_services(self):
-
-        # Preprocessor to get metadata
-        self.container.register_service(
-            'metadata_preprocessor',
-            lambda *args, **kwargs: preprocessors.NITELitePreprocessor(
-                io_manager=self.container.get_service('io_manager'),
-                crs=self.container.get_service('crs'),
-                *args, **kwargs
-            ),
-            wrapped_constructor=preprocessors.NITELitePreprocessor,
-        )
 
 
 class MosaicMaker(Stage):
@@ -209,6 +220,8 @@ class MosaicMaker(Stage):
 
     def register_default_services(self):
 
+        super().register_default_services()
+
         # Overwrite the io manager
         self.container.register_service(
             'io_manager',
@@ -220,17 +233,6 @@ class MosaicMaker(Stage):
         self.register_default_processors()
 
     def register_default_preprocessors(self):
-
-        # Preprocessor to get metadata
-        self.container.register_service(
-            'metadata_preprocessor',
-            lambda *args, **kwargs: preprocessors.NITELitePreprocessor(
-                io_manager=self.container.get_service('io_manager'),
-                crs=self.container.get_service('crs'),
-                *args, **kwargs
-            ),
-            wrapped_constructor=preprocessors.NITELitePreprocessor,
-        )
 
         # Preprocessor to get geotiff metadata (which includes georeferencing)
         self.container.register_service(
@@ -440,17 +442,6 @@ class SequentialMosaicMaker(MosaicMaker):
             wrapped_constructor=ReferencedRawSplitter,
         )
 
-        # Preprocessor to get metadata
-        self.container.register_service(
-            'metadata_preprocessor',
-            lambda *args, **kwargs: preprocessors.NITELitePreprocessor(
-                io_manager=self.container.get_service('io_manager'),
-                crs=self.container.get_service('crs'),
-                *args, **kwargs
-            ),
-            wrapped_constructor=preprocessors.NITELitePreprocessor,
-        )
-
         # Preprocessor to use metadata to georeference
         self.container.register_service(
             'metadata_image_registrar',
@@ -497,7 +488,7 @@ class SequentialMosaicMaker(MosaicMaker):
         # with geotiff_preprocessor, for testing.
         def make_preprocessor_pipeline(
             steps: list[str] = [
-                'metadata_preprocessor',
+                'metadata_processor',
                 'altitude_filter',
                 'steady_filter',
                 'metadata_image_registrar',
