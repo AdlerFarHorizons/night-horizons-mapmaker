@@ -66,7 +66,6 @@ class DIContainer:
         self._services[name] = {
             'constructor': constructor,
             'singleton': singleton,
-            'args_key': args_key,
             'wrapped_constructor': (
                 wrapped_constructor if wrapped_constructor is not None
                 else constructor
@@ -78,34 +77,29 @@ class DIContainer:
         TODO: Add parameter validation.
         '''
 
-        # Get config kwargs
-        if name in self.config:
-            kwargs = {**self.config[name], **kwargs}
-
-        # For when the service name is different from the config key
-        # Note that we do not recursively retrieve kwargs from the config,
-        # but instead rely on the user to define all those in one spot
-        # in the config.
-        if 'name' in kwargs:
-            name = kwargs['name']
-            del kwargs['name']
-
-        # Get parameters for constructing the service
+        # First, get ingredients for constructing the service
         constructor_dict = self._services.get(name)
         if not constructor_dict:
             raise ValueError(f'Service {name} not registered')
 
-        # Parse constructor parameters
+        # Parse constructor ingredients
         if constructor_dict['singleton'] and name in self.services:
             return self.services[name]
         constructor = constructor_dict['constructor']
 
-        # Get the used arguments
-        if constructor_dict['args_key'] is None:
-            args_key = name
-        else:
-            args_key = constructor_dict['args_key']
+        # Next, get the kwargs for the service
+        # Start with defaults
         kwargs = self.get_arg_defaults(constructor, **kwargs)
+
+        # Then pull in the config to override
+        if name in self.config:
+            kwargs = {**self.config[name], **kwargs}
+
+        # If the service name is in the kwargs, use that name.
+        # Otherwise the service name is assumed to be the config key.
+        if 'name' in kwargs:
+            name = kwargs['name']
+            del kwargs['name']
 
         # Construct the service
         service = constructor(*args, **kwargs)
@@ -125,20 +119,6 @@ class DIContainer:
             signature_found = False
 
         if signature_found:
-
-            # TODO: Delete
-            # # Access the global arguments
-            # if 'global' in self.config:
-            #     global_kwargs = {}
-            #     for key in signature.parameters.keys():
-            #         if key in self.config['global']:
-            #             global_kwargs[key] = self.config['global'][key]
-            #     kwargs = {**global_kwargs, **kwargs}
-
-            # Advanced: when the values are dictionaries, blend them
-            #           this is important for input and output descriptions
-            # TODO: This currently only works for defaults, but we should
-            #       also be able to blend dictionaries for config vs passed-in
             for key, value in kwargs.items():
                 if key not in signature.parameters.keys():
                     continue
