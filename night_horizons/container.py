@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import os
+import importlib
 import inspect
 
 import cv2
@@ -86,7 +87,12 @@ class DIContainer:
         # Parse constructor parameters
         if constructor_dict['singleton'] and name in self.services:
             return self.services[name]
-        constructor = constructor_dict['constructor']
+
+        # Check for constructor override or use the default
+        if 'constructor' in kwargs and isinstance(kwargs['constructor'], str):
+            constructor = self.get_service_constructor(kwargs['constructor'])
+        else:
+            constructor = constructor_dict['constructor']
 
         # Get the used arguments
         if constructor_dict['args_key'] is None:
@@ -101,6 +107,14 @@ class DIContainer:
             self.services[name] = service
 
         return service
+
+    def get_service_constructor(self, constructor_path: str):
+
+        module_path, _, constructor_name = constructor_path.rpartition('.')
+        module = importlib.import_module(module_path)
+        constructor = getattr(module, constructor_name)
+
+        return constructor
 
     def get_service_args(self, name, constructor, **kwargs):
 
