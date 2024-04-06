@@ -1,6 +1,5 @@
 from collections import OrderedDict
 import os
-import importlib
 import inspect
 
 import cv2
@@ -79,6 +78,15 @@ class DIContainer:
         TODO: Add parameter validation.
         '''
 
+        # Get config kwargs
+        if name in self.config:
+            kwargs = {**self.config[name], **kwargs}
+
+        # For when the service name is different from the config key
+        if 'service_name' in kwargs:
+            name = kwargs['service_name']
+            del kwargs[name]
+
         # Get parameters for constructing the service
         constructor_dict = self._services.get(name)
         if not constructor_dict:
@@ -87,19 +95,14 @@ class DIContainer:
         # Parse constructor parameters
         if constructor_dict['singleton'] and name in self.services:
             return self.services[name]
-
-        # Check for constructor override or use the default
-        if 'constructor' in kwargs and isinstance(kwargs['constructor'], str):
-            constructor = self.get_service_constructor(kwargs['constructor'])
-        else:
-            constructor = constructor_dict['constructor']
+        constructor = constructor_dict['constructor']
 
         # Get the used arguments
         if constructor_dict['args_key'] is None:
             args_key = name
         else:
             args_key = constructor_dict['args_key']
-        kwargs = self.get_service_args(args_key, constructor, **kwargs)
+        kwargs = self.get_arg_defaults(args_key, constructor, **kwargs)
 
         # Construct the service
         service = constructor(*args, **kwargs)
@@ -108,19 +111,7 @@ class DIContainer:
 
         return service
 
-    def get_service_constructor(self, constructor_path: str):
-
-        module_path, _, constructor_name = constructor_path.rpartition('.')
-        module = importlib.import_module(module_path)
-        constructor = getattr(module, constructor_name)
-
-        return constructor
-
-    def get_service_args(self, name, constructor, **kwargs):
-
-        # Get config values
-        if name in self.config:
-            kwargs = {**self.config[name], **kwargs}
+    def get_arg_defaults(self, constructor, **kwargs):
 
         try:
             signature = inspect.signature(constructor)
@@ -151,6 +142,7 @@ class DIContainer:
                 default_value = signature.parameters[key].default
                 if isinstance(value, dict) and isinstance(default_value, dict):
                     kwargs[key] = {**default_value, **value}
+            # Fall back to defaults
             for key, value in signature.parameters.items():
                 if (
                     (key not in kwargs)
@@ -233,7 +225,7 @@ class DIContainer:
                 args_key = name
             else:
                 args_key = constructor_dict['args_key']
-            kwargs = self.get_service_args(args_key, constructor)
+            kwargs = self.get_arg_defaults(args_key, constructor)
 
             if kwargs != {}:
                 doc[name] = kwargs
