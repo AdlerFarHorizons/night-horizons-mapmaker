@@ -16,9 +16,9 @@ class TestContainer(unittest.TestCase):
         class ParamReturner:
             def get(self, x):
                 return x
-        container.register_service('return_param', ParamReturner)
+        container.register_service('param_getter', ParamReturner)
 
-        self.assertEqual(container.get_service('return_param').get(5), 5)
+        self.assertEqual(container.get_service('param_getter').get(5), 5)
 
     def test_get_generic_service(self):
         '''Can we register a service where the actual service used is
@@ -28,24 +28,22 @@ class TestContainer(unittest.TestCase):
         container = DIContainer(
             config_filepath='./test/config.yaml',
             local_options={
-                'return_param': {
-                    'version': 'return_param_regular',
+                'param_getter': {
+                    'version': 'param_getter_double',
                 }
             }
         )
 
-        def return_param(x):
-            return x
-        self.container.register_service(
-            'return_param_regular',
-            return_param,
-        )
+        class ParamReturner:
+            def get(self, x):
+                return x
+        container.register_service('param_getter_regular', ParamReturner)
 
-        def return_param_doubled(x):
-            return 2 * x
-        self.container.register_service(
-            'return_param_doubled',
-            return_param_doubled,
-        )
+        class ParamReturner2:
+            def get(self, x):
+                return 2 * x
+        container.register_service('param_getter_double', ParamReturner2)
 
-        self.assertEqual(self.container.get_service('return_param')(5), 5)
+        container.register_service('param_getter', None)
+
+        self.assertEqual(container.get_service('param_getter').get(5), 10)

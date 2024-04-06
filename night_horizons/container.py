@@ -45,7 +45,7 @@ class DIContainer:
         with open(config_filepath, 'r', encoding='UTF-8') as file:
             self.config = yaml.load(file)
 
-        self.config = self.update_config(self.config, local_options)
+        self.config = deep_merge(self.config, local_options)
 
         self.config = self.parse_config(self.config)
 
@@ -72,17 +72,19 @@ class DIContainer:
             ),
         }
 
-    def get_service(self, name, *args, **kwargs):
+    def get_service(self, name, version=None, *args, **kwargs):
         '''
         TODO: Add parameter validation.
         '''
 
-        # Look for the special kwarg
-        # # If the service name is in the kwargs we override the passed-in name
-        # kwargs = copy.deepcopy(kwargs)
-        # if 'name' in kwargs:
-        #     name = kwargs['name']
-        #     del kwargs['name']
+        # If we have a particular version of the service we want to use
+        # we can specify it here.
+        if version is None:
+            # We need to check if the version is specified in the config
+            config_version = self.config.get(name, {}).get('version', None)
+            name = config_version if config_version is not None else name
+        else:
+            name = version
 
         # First, get ingredients for constructing the service
         constructor_dict = self._services.get(name)
@@ -103,7 +105,7 @@ class DIContainer:
         default_kwargs = self.get_arg_defaults(constructor)
         kwargs = deep_merge(default_kwargs, kwargs)
 
-        # Finally construct the service
+        # Finally, construct the service
         service = constructor(*args, **kwargs)
         if constructor_dict['singleton']:
             self.services[name] = service
@@ -127,12 +129,6 @@ class DIContainer:
                     kwargs[key] = value.default
 
         return kwargs
-
-    def update_config(self, old_config, new_config):
-
-        deep_merge(old_config, new_config)
-
-        return old_config
 
     def parse_config(self, config: dict) -> dict:
         '''This goes through the config and handles some parameters.
