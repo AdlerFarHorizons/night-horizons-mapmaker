@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import copy
 import os
 import inspect
 
@@ -17,7 +18,7 @@ from .transformers import preprocessors
 # TODO: Remove this when the draft is done.
 
 from . import data_io
-from .utils import get_method_parameters
+from .utils import get_method_parameters, deep_merge
 
 
 class DIContainer:
@@ -53,7 +54,6 @@ class DIContainer:
         name,
         constructor,
         singleton: bool = False,
-        args_key: str = None,
         wrapped_constructor=None,
     ):
         # TODO: Allow users to specify the constructor? ChatGPT has suggestions
@@ -77,6 +77,13 @@ class DIContainer:
         TODO: Add parameter validation.
         '''
 
+        # Look for the special kwarg
+        # # If the service name is in the kwargs we override the passed-in name
+        # kwargs = copy.deepcopy(kwargs)
+        # if 'name' in kwargs:
+        #     name = kwargs['name']
+        #     del kwargs['name']
+
         # First, get ingredients for constructing the service
         constructor_dict = self._services.get(name)
         if not constructor_dict:
@@ -88,28 +95,24 @@ class DIContainer:
         constructor = constructor_dict['constructor']
 
         # Next, get the kwargs for the service
-        # Start with defaults
-        kwargs = self.get_arg_defaults(constructor, **kwargs)
-
-        # Then pull in the config to override
+        # Start by combinining the passed-in kwargs and the config
         if name in self.config:
-            kwargs = {**self.config[name], **kwargs}
+            kwargs = deep_merge(self.config[name], kwargs)
 
-        # If the service name is in the kwargs, use that name.
-        # Otherwise the service name is assumed to be the config key.
-        if 'name' in kwargs:
-            name = kwargs['name']
-            del kwargs['name']
+        # Then fall back to the defaults
+        default_kwargs = self.get_arg_defaults(constructor)
+        kwargs = deep_merge(default_kwargs, kwargs)
 
-        # Construct the service
+        # Finally construct the service
         service = constructor(*args, **kwargs)
         if constructor_dict['singleton']:
             self.services[name] = service
 
         return service
 
-    def get_arg_defaults(self, constructor, **kwargs):
+    def get_arg_defaults(self, constructor):
 
+        kwargs = {}
         try:
             signature = inspect.signature(constructor)
             signature_found = True
@@ -119,36 +122,15 @@ class DIContainer:
             signature_found = False
 
         if signature_found:
-            for key, value in kwargs.items():
-                if key not in signature.parameters.keys():
-                    continue
-                default_value = signature.parameters[key].default
-                if isinstance(value, dict) and isinstance(default_value, dict):
-                    kwargs[key] = {**default_value, **value}
-            # Fall back to defaults
             for key, value in signature.parameters.items():
-                if (
-                    (key not in kwargs)
-                    and (value.default is not inspect.Parameter.empty)
-                ):
+                if value.default is not inspect.Parameter.empty:
                     kwargs[key] = value.default
 
         return kwargs
 
     def update_config(self, old_config, new_config):
 
-        def deep_update(orig_dict, new_dict):
-            for key, value in new_dict.items():
-                if (
-                    isinstance(value, dict)
-                    and (key in orig_dict)
-                    and isinstance(orig_dict[key], dict)
-                ):
-                    deep_update(orig_dict[key], value)
-                else:
-                    orig_dict[key] = value
-
-        deep_update(old_config, new_config)
+        deep_merge(old_config, new_config)
 
         return old_config
 

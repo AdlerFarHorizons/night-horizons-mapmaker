@@ -619,3 +619,18 @@ def get_logger(name: str = None):
     logger.setLevel(logging_level)
 
     return logger
+
+
+def deep_merge(orig_dict, new_dict):
+    result = orig_dict.copy()
+    for key, value in new_dict.items():
+        if (
+            isinstance(value, dict)
+            and (key in orig_dict)
+            and isinstance(orig_dict[key], dict)
+        ):
+            result[key] = deep_merge(orig_dict[key], value)
+        else:
+            result[key] = value
+
+    return result
