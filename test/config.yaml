@@ -25,7 +25,7 @@ io_manager:
   file_exists: overwrite
 
 metadata_processor:
-  name: fh135_processor
+  version: fh135_metadata_processor
 
 # Coordinate reference-system employed
 crs:
