@@ -8,7 +8,7 @@ pipeline:
 
 # I/O settings
 # These settings assume that the user has mounted their data directory at /data
-io_manager:
+io_manager: &default_settings
   # Specifies the input data
   input_dir: /data/input
   input_description:
@@ -35,9 +35,12 @@ io_manager:
   output_description:
     used_config: used-config.yaml
 
+mosaic_io_manager:
+  <<: *default_settings
+
 # What metadata processor to use (based on metadata format)
 metadata_processor:
-  name: fh135_processor
+  version: fh135_metadata_processor
 
 # Coordinate reference-system employed
 crs:
