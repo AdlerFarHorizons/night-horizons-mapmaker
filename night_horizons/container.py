@@ -189,6 +189,7 @@ class DIContainer:
             )
 
             # Get the used arguments
+            # TODO: Need to change this back from getting just defaults
             kwargs = self.get_arg_defaults(constructor)
 
             if kwargs != {}:
