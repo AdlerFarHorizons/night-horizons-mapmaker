@@ -35,7 +35,8 @@ io_manager: &default_settings
   output_description:
     used_config: used-config.yaml
 
-mosaic_io_manager:
+# The new io manager inherits the default settings
+io_manager_train:
   <<: *default_settings
 
 # What metadata processor to use (based on metadata format)

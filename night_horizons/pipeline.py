@@ -416,6 +416,8 @@ class SequentialMosaicMaker(MosaicMaker):
 
     def register_default_services(self):
 
+        super().register_default_services()
+
         # Overwrite the io manager
         self.container.register_service(
             'io_manager',
@@ -599,7 +601,6 @@ class SequentialMosaicMaker(MosaicMaker):
             'io_manager_train',
             TrainMosaicIOManager,
             singleton=True,
-            args_key='io_manager',
         )
         # TODO: List all the design patterns I used. Singleton, DI, etc.
 

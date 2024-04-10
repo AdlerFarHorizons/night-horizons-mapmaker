@@ -7,7 +7,7 @@ import unittest
 import pandas as pd
 
 from night_horizons import pipeline
-from night_horizons.utils import StdoutLogger
+from night_horizons.utils import StdoutLogger, deep_merge
 
 # Configure logging
 LOGGER = logging.getLogger(__name__)
@@ -177,6 +177,7 @@ class TestSequentialMosaicMaker(TestStage):
                 'save_return_codes': ['bad_det', 'out_of_bounds'],
             },
         }
+        local_options['io_manager_train'] = local_options['io_manager']
 
         mosaicmaker: pipeline.SequentialMosaicMaker = self.create_stage(
             './configs/sequential-mosaic.yaml',
