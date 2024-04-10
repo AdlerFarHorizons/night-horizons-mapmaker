@@ -3,6 +3,14 @@ pipeline:  # night_horizons.pipeline.MetadataProcessor
   score_output: false
   verbose: true
 io_manager:  # night_horizons.io_manager.IOManager
+  root_dir:
+  file_exists: overwrite
+  tracked_file_key:
+  checkpoint_subdir: checkpoints
+  checkpoint_selection:
+  checkpoint_tag: _i{:06d}
+  checkpoint_freq: 100
+  data_ios: {}
   input_dir: /data/input
   input_description:
     img_log: metadata/220513-FH135/image.log
@@ -15,20 +23,9 @@ io_manager:  # night_horizons.io_manager.IOManager
   output_description:
     metadata: 220513-FH135-metadata.csv
     used_config: used-config.yaml
-  file_exists: overwrite
-  root_dir:
-  tracked_file_key:
-  checkpoint_subdir: checkpoints
-  checkpoint_selection:
-  checkpoint_tag: _i{:06d}
-  checkpoint_freq: 100
-  data_ios: {}
 crs:  # pyproj.crs.crs.CRS
   projparams: EPSG:3857
 random_state: # sklearn.utils.validation.check_random_state
   seed: 159234
-metadata_preprocessor:  # night_horizons.transformers.preprocessors.NITELitePreprocessor
-  output_columns:
-  use_cached_output: true
-  unhandled_files: drop
-  passthrough: []
+metadata_processor:
+  version: fh135_metadata_processor

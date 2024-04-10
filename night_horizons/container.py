@@ -97,13 +97,7 @@ class DIContainer:
         constructor = constructor_dict['constructor']
 
         # Next, get the kwargs for the service
-        # Start by combinining the passed-in kwargs and the config
-        if name in self.config:
-            kwargs = deep_merge(self.config[name], kwargs)
-
-        # Then fall back to the defaults
-        default_kwargs = self.get_arg_defaults(constructor)
-        kwargs = deep_merge(default_kwargs, kwargs)
+        args, kwargs = self.get_used_args(name, constructor, *args, **kwargs)
 
         # Finally, construct the service
         service = constructor(*args, **kwargs)
@@ -112,7 +106,19 @@ class DIContainer:
 
         return service
 
-    def get_arg_defaults(self, constructor):
+    def get_used_args(self, name, constructor, *args, **kwargs):
+
+        # Start by combinining the passed-in kwargs and the config
+        if name in self.config:
+            kwargs = deep_merge(self.config[name], kwargs)
+
+        # Then fall back to the defaults
+        default_kwargs = self.get_default_args(constructor)
+        kwargs = deep_merge(default_kwargs, kwargs)
+
+        return args, kwargs
+
+    def get_default_args(self, constructor):
 
         kwargs = {}
         try:
@@ -190,7 +196,7 @@ class DIContainer:
 
             # Get the used arguments
             # TODO: Need to change this back from getting just defaults
-            kwargs = self.get_arg_defaults(constructor)
+            args, kwargs = self.get_used_args(name, constructor)
 
             if kwargs != {}:
                 doc[name] = kwargs
