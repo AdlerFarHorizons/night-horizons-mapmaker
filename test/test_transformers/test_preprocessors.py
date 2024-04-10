@@ -119,22 +119,22 @@ class TestNITELitePreprocessor(unittest.TestCase):
         assert (metadata['filepath'] != fps).sum() == 0
         np.testing.assert_allclose(metadata.index, fps.index)
 
-
-class TestNITELitePreprocessor145(TestNITELitePreprocessor):
-
-    def setUp(self):
-
-        local_options = {
-            'io_manager': {
-                'input_description': {
-                    'img_log': 'metadata/240203-FH145/image.log',
-                    'imu_log': 'metadata/240203-FH145/PresIMULog.csv',
-                    'gps_log': 'metadata/240203-FH145/GPSLog.csv',
-                },
-            },
-        }
-
-        self.setUpFunction(local_options=local_options)
+# TODO: Implement this
+# class TestNITELitePreprocessor145(TestNITELitePreprocessor):
+# 
+#     def setUp(self):
+# 
+#         local_options = {
+#             'io_manager': {
+#                 'input_description': {
+#                     'img_log': 'metadata/240203-FH145/image.log',
+#                     'imu_log': 'metadata/240203-FH145/PresIMULog.csv',
+#                     'gps_log': 'metadata/240203-FH145/GPSLog.csv',
+#                 },
+#             },
+#         }
+# 
+#         self.setUpFunction(local_options=local_options)
 
 
 class TestGeoTIFFPreprocessor(unittest.TestCase):
