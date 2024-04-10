@@ -30,10 +30,22 @@ class TestStage(unittest.TestCase):
         if os.path.isdir(self.output_dir):
             shutil.rmtree(self.output_dir)
 
+        # Check for other output dirs as well
+        for i in range(10):
+            other_output_dir = f'{self.output_dir}_v{i:03d}'
+            if os.path.isdir(other_output_dir):
+                shutil.rmtree(other_output_dir)
+
     def tearDown(self):
 
         if os.path.isdir(self.output_dir):
             shutil.rmtree(self.output_dir)
+
+        # Check for other output dirs as well
+        for i in range(10):
+            other_output_dir = f'{self.output_dir}_v{i:03d}'
+            if os.path.isdir(other_output_dir):
+                shutil.rmtree(other_output_dir)
 
     def create_stage(self, config_path, local_options={}):
         '''Wrapper for create_stage so we can direct the output to a
@@ -120,8 +132,9 @@ class TestMosaicMaker(TestStage):
         self.check_output(mosaicmaker)
 
         # Check that the config was saved and can be used to create a duplicate
-        stage = self.create_stage(io_manager.output_filepaths['used_config'])
-        X_out2 = stage.run()
+        mosaicmaker2: pipeline.MosaicMaker = \
+            self.create_stage(io_manager.output_filepaths['used_config'])
+        X_out2 = mosaicmaker2.run()
         assert X_out.equals(X_out2)
 
         # Copy the config as a template

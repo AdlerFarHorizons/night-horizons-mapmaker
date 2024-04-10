@@ -3,19 +3,13 @@ pipeline:  # night_horizons.pipeline.MosaicMaker
   score_output: false
   verbose: true
 io_manager:  # night_horizons.io_manager.MosaicIOManager
-  input_dir: /data/input
-  input_description:
-    referenced_images:
-      directory: referenced_images/220513-FH135
-      pattern: Geo\s\d+_1\.(tif|tiff)$
-  output_dir: ./test/test_data/temp
   output_description:
     mosaic: mosaic.tiff
     settings: settings.yaml
     log: log.csv
     used_config: used-config.yaml
   root_dir:
-  file_exists: error
+  file_exists: new
   tracked_file_key: mosaic
   checkpoint_subdir: checkpoints
   checkpoint_selection:
@@ -24,49 +18,23 @@ io_manager:  # night_horizons.io_manager.MosaicIOManager
   - log
   checkpoint_tag: _i{:06d}
   checkpoint_freq: 100
+  input_dir: /data/input
+  input_description:
+    referenced_images:
+      directory: referenced_images/220513-FH135
+      pattern: Geo\s\d+_1\.(tif|tiff)$
+  output_dir: ./test/test_data/temp
 crs:  # pyproj.crs.crs.CRS
   projparams: EPSG:3857
 random_state: # sklearn.utils.validation.check_random_state
   seed: 15923
-metadata_preprocessor:  # night_horizons.transformers.preprocessors.NITELitePreprocessor
-  output_columns:
-  use_cached_output: true
-  unhandled_files: drop
-  passthrough: []
-geotiff_preprocessor:  # night_horizons.transformers.preprocessors.GeoTIFFPreprocessor
-  crs: EPSG:3857
-  passthrough: true
-  spatial_error: 0.0
-  padding_fraction: 0.1
-quality_order: # night_horizons.transformers.order.OrderTransformer
-  apply: true
-  ascending: true
-preprocessor_pipeline: # sklearn.pipeline.Pipeline
-  memory:
-  verbose: false
-mosaicker:  # night_horizons.image_processing.mosaicking.Mosaicker
-  scorer:
-  crs: EPSG:3857
-  pixel_width:
-  pixel_height:
-  dtype: uint8
-  fill_value:
-  n_bands: 4
-  outline: 0
-  log_keys:
-  - ind
-  - return_code
-  passthrough: true
-processor: # night_horizons.image_processing.processors.DatasetUpdater
-  log_keys: &id001 []
-  save_return_codes: &id002 []
-  use_safe_process: true
-  dtype: uint8
-scorer: # night_horizons.image_processing.scorers.DatasetScorer
-  log_keys: *id001
-  save_return_codes: *id002
-  use_safe_process: true
-  dtype: uint8
+metadata_processor:
+  version: fh135_metadata_processor
+quality_order: # night_horizons.pipeline.<lambda>
+  quality_col: imuGyroMag
+preprocessor_pipeline: # night_horizons.pipeline.make_preprocessor_pipeline
+  steps:
+  - geotiff_preprocessor
 image_operator:  # night_horizons.image_processing.operators.ImageBlender
   fill_value:
   outline: 0.0

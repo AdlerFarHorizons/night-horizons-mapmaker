@@ -24,7 +24,8 @@ io_manager:
   # Where the output files will be saved
   output_dir: /data/output
   output_description:
-    used_config: used-
+    used_config: used-config.yaml
+  file_exists: new
 
 # What metadata processor to use (based on metadata format)
 metadata_processor:

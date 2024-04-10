@@ -216,7 +216,7 @@ class MosaicMaker(Stage):
                 f'Output saved at {io_manager.output_filepaths["mosaic"]}'
             )
 
-        return X_out, io_manager
+        return X_out
 
     def register_default_services(self):
 
