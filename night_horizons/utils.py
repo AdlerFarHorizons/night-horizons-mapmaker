@@ -424,6 +424,7 @@ class ReferencedRawSplitter:
         self,
         io_manager,
         test_size: Union[int, float] = 0.2,
+        max_train_size: int = None,
         random_state: Union[int, np.random.RandomState] = None,
         use_test_dir: bool = False,
         drop_raw_images: bool = False,
@@ -431,6 +432,7 @@ class ReferencedRawSplitter:
 
         self.io_manager = io_manager
         self.test_size = test_size
+        self.max_train_size = max_train_size
         self.random_state = random_state
         self.use_test_dir = use_test_dir
         self.drop_raw_images = drop_raw_images
@@ -452,6 +454,7 @@ class ReferencedRawSplitter:
 
         referenced_fps = self.io_manager.input_filepaths['referenced_images']
 
+        # Actual train test split
         if self.use_test_dir:
             fps_test = \
                 self.io_manager.input_filepaths['test_referenced_images']
@@ -463,6 +466,12 @@ class ReferencedRawSplitter:
                 random_state=self.random_state,
                 shuffle=True,
             )
+
+        # Downsample the training set as requested
+        if self.max_train_size is not None:
+            if fps_train.size > self.max_train_size:
+                fps_train = self.random_state.choice(
+                    fps_train, self.max_train_size)
 
         # Combine raw fps and test fps
         if not self.drop_raw_images:

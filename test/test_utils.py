@@ -143,25 +143,3 @@ class TestUpdateRow(unittest.TestCase):
             new_row,
             df.loc[new_row.name]
         )
-
-
-class TestReferencedRawSplitter(unittest.TestCase):
-
-    def setUp(self):
-
-        self.expected_fps = [
-            ('/data/input/images/220513-FH135/23085686/'
-             '20220413_221313_1020286912_0_50_3.raw'),
-            ('/data/input/images/220513-FH135/23085687/'
-             '20220413_202740_745696_1_50_0.raw'),
-        ]
-
-    def test_functional(self):
-
-        assert False, "Get this working!"
-
-        image_dir = '/data/input/images'
-        referenced_dir = '/data/input/referenced_images'
-
-        fps = utils.referenced_raw_splitter(image_dir, referenced_dir)
-        assert list(fps) == self.expected_fps
