@@ -119,6 +119,11 @@ class TestMosaicMaker(TestStage):
         # Check rest of output
         self.check_output(mosaicmaker)
 
+        # Check that the config was saved and can be used to create a duplicate
+        stage = self.create_stage(io_manager.output_filepaths['used_config'])
+        X_out2 = stage.run()
+        assert X_out.equals(X_out2)
+
         # Copy the config as a template
         os.makedirs('./configs/generated_templates', exist_ok=True)
         shutil.copy(
