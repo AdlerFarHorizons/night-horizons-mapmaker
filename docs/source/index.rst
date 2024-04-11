@@ -10,6 +10,8 @@ Welcome to night-horizons-mapmaker's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   data-flow
+
 
 
 Indices and tables

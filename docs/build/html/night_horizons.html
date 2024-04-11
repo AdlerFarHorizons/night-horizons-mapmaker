@@ -1,26 +1,24 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>night_horizons package &#8212; night-horizons-mapmaker 0.1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=2709fde1"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   
@@ -33,19 +31,47 @@
           <div class="body" role="main">
             
   <section id="night-horizons-package">
-<h1>night_horizons package<a class="headerlink" href="#night-horizons-package" title="Permalink to this heading">¶</a></h1>
+<h1>night_horizons package<a class="headerlink" href="#night-horizons-package" title="Link to this heading">¶</a></h1>
 <section id="subpackages">
-<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading">¶</a></h2>
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="night_horizons.image_processing.html">night_horizons.image_processing package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="night_horizons.image_processing.html#submodules">Submodules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.batch.html">night_horizons.image_processing.batch module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.mosaicking.html">night_horizons.image_processing.mosaicking module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.operators.html">night_horizons.image_processing.operators module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.processors.html">night_horizons.image_processing.processors module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.registration.html">night_horizons.image_processing.registration module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.scorers.html">night_horizons.image_processing.scorers module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.batch.html">night_horizons.image_processing.batch module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.batch.html#night_horizons.image_processing.batch.BatchProcessor"><code class="docutils literal notranslate"><span class="pre">BatchProcessor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.mosaicking.html">night_horizons.image_processing.mosaicking module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.mosaicking.html#night_horizons.image_processing.mosaicking.Mosaicker"><code class="docutils literal notranslate"><span class="pre">Mosaicker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.mosaicking.html#night_horizons.image_processing.mosaicking.SequentialMosaicker"><code class="docutils literal notranslate"><span class="pre">SequentialMosaicker</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.operators.html">night_horizons.image_processing.operators module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.BaseImageOperator"><code class="docutils literal notranslate"><span class="pre">BaseImageOperator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageAligner"><code class="docutils literal notranslate"><span class="pre">ImageAligner</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageAlignerBlender"><code class="docutils literal notranslate"><span class="pre">ImageAlignerBlender</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageBlender"><code class="docutils literal notranslate"><span class="pre">ImageBlender</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageProcessorQueue"><code class="docutils literal notranslate"><span class="pre">ImageProcessorQueue</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.processors.html">night_horizons.image_processing.processors module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.DatasetProcessor"><code class="docutils literal notranslate"><span class="pre">DatasetProcessor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.DatasetRegistrar"><code class="docutils literal notranslate"><span class="pre">DatasetRegistrar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.DatasetUpdater"><code class="docutils literal notranslate"><span class="pre">DatasetUpdater</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.Processor"><code class="docutils literal notranslate"><span class="pre">Processor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.registration.html">night_horizons.image_processing.registration module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.registration.html#night_horizons.image_processing.registration.MetadataImageRegistrar"><code class="docutils literal notranslate"><span class="pre">MetadataImageRegistrar</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.scorers.html">night_horizons.image_processing.scorers module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.scorers.html#night_horizons.image_processing.scorers.DatasetScorer"><code class="docutils literal notranslate"><span class="pre">DatasetScorer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.scorers.html#night_horizons.image_processing.scorers.ReferencedImageScorer"><code class="docutils literal notranslate"><span class="pre">ReferencedImageScorer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.image_processing.scorers.html#night_horizons.image_processing.scorers.SimilarityScoreOperator"><code class="docutils literal notranslate"><span class="pre">SimilarityScoreOperator</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="night_horizons.image_processing.html#module-night_horizons.image_processing">Module contents</a></li>
@@ -53,10 +79,33 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="night_horizons.transformers.html">night_horizons.transformers package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="night_horizons.transformers.html#submodules">Submodules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.transformers.filters.html">night_horizons.transformers.filters module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.transformers.order.html">night_horizons.transformers.order module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.transformers.preprocessors.html">night_horizons.transformers.preprocessors module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.transformers.raster.html">night_horizons.transformers.raster module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.transformers.filters.html">night_horizons.transformers.filters module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.filters.html#night_horizons.transformers.filters.AltitudeFilter"><code class="docutils literal notranslate"><span class="pre">AltitudeFilter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.filters.html#night_horizons.transformers.filters.Filter"><code class="docutils literal notranslate"><span class="pre">Filter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.filters.html#night_horizons.transformers.filters.QueryFilter"><code class="docutils literal notranslate"><span class="pre">QueryFilter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.filters.html#night_horizons.transformers.filters.SteadyFilter"><code class="docutils literal notranslate"><span class="pre">SteadyFilter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.transformers.order.html">night_horizons.transformers.order module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.order.html#night_horizons.transformers.order.OrderTransformer"><code class="docutils literal notranslate"><span class="pre">OrderTransformer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.order.html#night_horizons.transformers.order.SensorAndDistanceOrder"><code class="docutils literal notranslate"><span class="pre">SensorAndDistanceOrder</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.transformers.preprocessors.html">night_horizons.transformers.preprocessors module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.preprocessors.html#night_horizons.transformers.preprocessors.GeoTIFFPreprocessor"><code class="docutils literal notranslate"><span class="pre">GeoTIFFPreprocessor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.preprocessors.html#night_horizons.transformers.preprocessors.NITELitePreprocessor"><code class="docutils literal notranslate"><span class="pre">NITELitePreprocessor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.preprocessors.html#night_horizons.transformers.preprocessors.NITELitePreprocessor135"><code class="docutils literal notranslate"><span class="pre">NITELitePreprocessor135</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.preprocessors.html#night_horizons.transformers.preprocessors.NITELitePreprocessor145"><code class="docutils literal notranslate"><span class="pre">NITELitePreprocessor145</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.transformers.raster.html">night_horizons.transformers.raster module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.raster.html#night_horizons.transformers.raster.BaseImageTransformer"><code class="docutils literal notranslate"><span class="pre">BaseImageTransformer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.raster.html#night_horizons.transformers.raster.CleanImageTransformer"><code class="docutils literal notranslate"><span class="pre">CleanImageTransformer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.raster.html#night_horizons.transformers.raster.LogscaleImageTransformer"><code class="docutils literal notranslate"><span class="pre">LogscaleImageTransformer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.raster.html#night_horizons.transformers.raster.PassImageTransformer"><code class="docutils literal notranslate"><span class="pre">PassImageTransformer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="night_horizons.transformers.raster.html#night_horizons.transformers.raster.RasterCoordinateTransformer"><code class="docutils literal notranslate"><span class="pre">RasterCoordinateTransformer</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="night_horizons.transformers.html#module-night_horizons.transformers">Module contents</a></li>
@@ -66,22 +115,222 @@
 </div>
 </section>
 <section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="night_horizons.container.html">night_horizons.container module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="night_horizons.data_io.html">night_horizons.data_io module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="night_horizons.exceptions.html">night_horizons.exceptions module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="night_horizons.io_manager.html">night_horizons.io_manager module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="night_horizons.metrics.html">night_horizons.metrics module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="night_horizons.pipeline.html">night_horizons.pipeline module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="night_horizons.raster.html">night_horizons.raster module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="night_horizons.utils.html">night_horizons.utils module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="night_horizons.container.html">night_horizons.container module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.container.html#night_horizons.container.DIContainer"><code class="docutils literal notranslate"><span class="pre">DIContainer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.container.html#night_horizons.container.DIContainer.get_default_args"><code class="docutils literal notranslate"><span class="pre">DIContainer.get_default_args()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.container.html#night_horizons.container.DIContainer.get_service"><code class="docutils literal notranslate"><span class="pre">DIContainer.get_service()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.container.html#night_horizons.container.DIContainer.get_used_args"><code class="docutils literal notranslate"><span class="pre">DIContainer.get_used_args()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.container.html#night_horizons.container.DIContainer.parse_config"><code class="docutils literal notranslate"><span class="pre">DIContainer.parse_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.container.html#night_horizons.container.DIContainer.register_dataio_services"><code class="docutils literal notranslate"><span class="pre">DIContainer.register_dataio_services()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.container.html#night_horizons.container.DIContainer.register_service"><code class="docutils literal notranslate"><span class="pre">DIContainer.register_service()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.container.html#night_horizons.container.DIContainer.save_config"><code class="docutils literal notranslate"><span class="pre">DIContainer.save_config()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="night_horizons.data_io.html">night_horizons.data_io module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.DataIO"><code class="docutils literal notranslate"><span class="pre">DataIO</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.DataIO.load"><code class="docutils literal notranslate"><span class="pre">DataIO.load()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.DataIO.save"><code class="docutils literal notranslate"><span class="pre">DataIO.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.GDALDatasetIO"><code class="docutils literal notranslate"><span class="pre">GDALDatasetIO</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.GDALDatasetIO.convert"><code class="docutils literal notranslate"><span class="pre">GDALDatasetIO.convert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.GDALDatasetIO.create"><code class="docutils literal notranslate"><span class="pre">GDALDatasetIO.create()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.GDALDatasetIO.get_bounds_from_dataset"><code class="docutils literal notranslate"><span class="pre">GDALDatasetIO.get_bounds_from_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.GDALDatasetIO.load"><code class="docutils literal notranslate"><span class="pre">GDALDatasetIO.load()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.GDALDatasetIO.load_from_viirs_hdf5"><code class="docutils literal notranslate"><span class="pre">GDALDatasetIO.load_from_viirs_hdf5()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.GDALDatasetIO.name"><code class="docutils literal notranslate"><span class="pre">GDALDatasetIO.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.GDALDatasetIO.save"><code class="docutils literal notranslate"><span class="pre">GDALDatasetIO.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.ImageIO"><code class="docutils literal notranslate"><span class="pre">ImageIO</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.ImageIO.load"><code class="docutils literal notranslate"><span class="pre">ImageIO.load()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.ImageIO.name"><code class="docutils literal notranslate"><span class="pre">ImageIO.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.ImageIO.save"><code class="docutils literal notranslate"><span class="pre">ImageIO.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.RegisteredImageIO"><code class="docutils literal notranslate"><span class="pre">RegisteredImageIO</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.RegisteredImageIO.load"><code class="docutils literal notranslate"><span class="pre">RegisteredImageIO.load()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.RegisteredImageIO.name"><code class="docutils literal notranslate"><span class="pre">RegisteredImageIO.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.RegisteredImageIO.save"><code class="docutils literal notranslate"><span class="pre">RegisteredImageIO.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.TabularIO"><code class="docutils literal notranslate"><span class="pre">TabularIO</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.TabularIO.load"><code class="docutils literal notranslate"><span class="pre">TabularIO.load()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.TabularIO.name"><code class="docutils literal notranslate"><span class="pre">TabularIO.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.TabularIO.save"><code class="docutils literal notranslate"><span class="pre">TabularIO.save()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.YAMLIO"><code class="docutils literal notranslate"><span class="pre">YAMLIO</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.YAMLIO.load"><code class="docutils literal notranslate"><span class="pre">YAMLIO.load()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.YAMLIO.name"><code class="docutils literal notranslate"><span class="pre">YAMLIO.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.data_io.html#night_horizons.data_io.YAMLIO.save"><code class="docutils literal notranslate"><span class="pre">YAMLIO.save()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="night_horizons.exceptions.html">night_horizons.exceptions module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.exceptions.html#night_horizons.exceptions.DstDarkFrameError"><code class="docutils literal notranslate"><span class="pre">DstDarkFrameError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.exceptions.html#night_horizons.exceptions.HomographyTransformError"><code class="docutils literal notranslate"><span class="pre">HomographyTransformError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.exceptions.html#night_horizons.exceptions.OutOfBoundsError"><code class="docutils literal notranslate"><span class="pre">OutOfBoundsError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.exceptions.html#night_horizons.exceptions.SrcDarkFrameError"><code class="docutils literal notranslate"><span class="pre">SrcDarkFrameError</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="night_horizons.io_manager.html">night_horizons.io_manager module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager"><code class="docutils literal notranslate"><span class="pre">IOManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager.find_files"><code class="docutils literal notranslate"><span class="pre">IOManager.find_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager.find_input_files"><code class="docutils literal notranslate"><span class="pre">IOManager.find_input_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager.get_checkpoint_filepatterns"><code class="docutils literal notranslate"><span class="pre">IOManager.get_checkpoint_filepatterns()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager.get_connection"><code class="docutils literal notranslate"><span class="pre">IOManager.get_connection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">IOManager.get_output_filepaths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager.load_from_checkpoint"><code class="docutils literal notranslate"><span class="pre">IOManager.load_from_checkpoint()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager.save_settings"><code class="docutils literal notranslate"><span class="pre">IOManager.save_settings()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager.save_to_checkpoint"><code class="docutils literal notranslate"><span class="pre">IOManager.save_to_checkpoint()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager.search_and_load_checkpoint"><code class="docutils literal notranslate"><span class="pre">IOManager.search_and_load_checkpoint()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager.search_for_checkpoint"><code class="docutils literal notranslate"><span class="pre">IOManager.search_for_checkpoint()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.MosaicIOManager"><code class="docutils literal notranslate"><span class="pre">MosaicIOManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.MosaicIOManager.load_from_checkpoint"><code class="docutils literal notranslate"><span class="pre">MosaicIOManager.load_from_checkpoint()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.MosaicIOManager.open_dataset"><code class="docutils literal notranslate"><span class="pre">MosaicIOManager.open_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.MosaicIOManager.save_to_checkpoint"><code class="docutils literal notranslate"><span class="pre">MosaicIOManager.save_to_checkpoint()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.SequentialMosaicIOManager"><code class="docutils literal notranslate"><span class="pre">SequentialMosaicIOManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.TrainMosaicIOManager"><code class="docutils literal notranslate"><span class="pre">TrainMosaicIOManager</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="night_horizons.metrics.html">night_horizons.metrics module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.metrics.html#night_horizons.metrics.assert_approx_equal"><code class="docutils literal notranslate"><span class="pre">assert_approx_equal()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.metrics.html#night_horizons.metrics.image_to_image_ccoeff"><code class="docutils literal notranslate"><span class="pre">image_to_image_ccoeff()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="night_horizons.pipeline.html">night_horizons.pipeline module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.MetadataProcessor"><code class="docutils literal notranslate"><span class="pre">MetadataProcessor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.MetadataProcessor.run"><code class="docutils literal notranslate"><span class="pre">MetadataProcessor.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.MosaicMaker"><code class="docutils literal notranslate"><span class="pre">MosaicMaker</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.MosaicMaker.register_default_preprocessors"><code class="docutils literal notranslate"><span class="pre">MosaicMaker.register_default_preprocessors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.MosaicMaker.register_default_processors"><code class="docutils literal notranslate"><span class="pre">MosaicMaker.register_default_processors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.MosaicMaker.register_default_services"><code class="docutils literal notranslate"><span class="pre">MosaicMaker.register_default_services()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.MosaicMaker.run"><code class="docutils literal notranslate"><span class="pre">MosaicMaker.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.SequentialMosaicMaker"><code class="docutils literal notranslate"><span class="pre">SequentialMosaicMaker</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.SequentialMosaicMaker.register_default_preprocessors"><code class="docutils literal notranslate"><span class="pre">SequentialMosaicMaker.register_default_preprocessors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.SequentialMosaicMaker.register_default_processors"><code class="docutils literal notranslate"><span class="pre">SequentialMosaicMaker.register_default_processors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.SequentialMosaicMaker.register_default_services"><code class="docutils literal notranslate"><span class="pre">SequentialMosaicMaker.register_default_services()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.SequentialMosaicMaker.register_default_train_services"><code class="docutils literal notranslate"><span class="pre">SequentialMosaicMaker.register_default_train_services()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.SequentialMosaicMaker.run"><code class="docutils literal notranslate"><span class="pre">SequentialMosaicMaker.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.Stage"><code class="docutils literal notranslate"><span class="pre">Stage</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.Stage.register_default_services"><code class="docutils literal notranslate"><span class="pre">Stage.register_default_services()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.Stage.register_fundamental_services"><code class="docutils literal notranslate"><span class="pre">Stage.register_fundamental_services()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.Stage.validate"><code class="docutils literal notranslate"><span class="pre">Stage.validate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.pipeline.html#night_horizons.pipeline.create_stage"><code class="docutils literal notranslate"><span class="pre">create_stage()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="night_horizons.raster.html">night_horizons.raster module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.DatasetWrapper"><code class="docutils literal notranslate"><span class="pre">DatasetWrapper</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.DatasetWrapper.get_image"><code class="docutils literal notranslate"><span class="pre">DatasetWrapper.get_image()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.DatasetWrapper.io"><code class="docutils literal notranslate"><span class="pre">DatasetWrapper.io</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.DatasetWrapper.open"><code class="docutils literal notranslate"><span class="pre">DatasetWrapper.open()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.DatasetWrapper.save_image"><code class="docutils literal notranslate"><span class="pre">DatasetWrapper.save_image()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image"><code class="docutils literal notranslate"><span class="pre">Image</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.des"><code class="docutils literal notranslate"><span class="pre">Image.des</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.get_features"><code class="docutils literal notranslate"><span class="pre">Image.get_features()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.get_img_int_from_img"><code class="docutils literal notranslate"><span class="pre">Image.get_img_int_from_img()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.get_nonzero_mask"><code class="docutils literal notranslate"><span class="pre">Image.get_nonzero_mask()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.get_pixel_coordinates"><code class="docutils literal notranslate"><span class="pre">Image.get_pixel_coordinates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.get_semitransparent_img"><code class="docutils literal notranslate"><span class="pre">Image.get_semitransparent_img()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.get_semitransparent_img_int"><code class="docutils literal notranslate"><span class="pre">Image.get_semitransparent_img_int()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.img"><code class="docutils literal notranslate"><span class="pre">Image.img</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.img_int"><code class="docutils literal notranslate"><span class="pre">Image.img_int</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.img_shape"><code class="docutils literal notranslate"><span class="pre">Image.img_shape</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.io"><code class="docutils literal notranslate"><span class="pre">Image.io</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.kp"><code class="docutils literal notranslate"><span class="pre">Image.kp</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.open"><code class="docutils literal notranslate"><span class="pre">Image.open()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.plot_kp"><code class="docutils literal notranslate"><span class="pre">Image.plot_kp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.save"><code class="docutils literal notranslate"><span class="pre">Image.save()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.semitransparent_img"><code class="docutils literal notranslate"><span class="pre">Image.semitransparent_img</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.semitransparent_img_int"><code class="docutils literal notranslate"><span class="pre">Image.semitransparent_img_int</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.Image.show"><code class="docutils literal notranslate"><span class="pre">Image.show()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage"><code class="docutils literal notranslate"><span class="pre">ReferencedImage</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.add_to_folium_map"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.add_to_folium_map()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.cart_bounds"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.cart_bounds</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.convert_cart_to_pixel"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.convert_cart_to_pixel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.convert_pixel_to_cart"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.convert_pixel_to_cart()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.dataset_io"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.dataset_io</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.get_bounds"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.get_bounds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.get_cart_coordinates"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.get_cart_coordinates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.get_pixel_coordinates"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.get_pixel_coordinates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.get_pixel_widths"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.get_pixel_widths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.img_shape"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.img_shape</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.io"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.io</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.latlon_bounds"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.latlon_bounds</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.open"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.open()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.plot_bounds"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.plot_bounds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.plot_kp"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.plot_kp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.save"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.save()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.set_projections"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.set_projections()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.raster.html#night_horizons.raster.ReferencedImage.show"><code class="docutils literal notranslate"><span class="pre">ReferencedImage.show()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="night_horizons.utils.html">night_horizons.utils module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.LoggerMixin"><code class="docutils literal notranslate"><span class="pre">LoggerMixin</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.LoggerMixin.log"><code class="docutils literal notranslate"><span class="pre">LoggerMixin.log</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.LoggerMixin.start_logging"><code class="docutils literal notranslate"><span class="pre">LoggerMixin.start_logging()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.LoggerMixin.stop_logging"><code class="docutils literal notranslate"><span class="pre">LoggerMixin.stop_logging()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.LoggerMixin.update_log"><code class="docutils literal notranslate"><span class="pre">LoggerMixin.update_log()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.LoopLoggerMixin"><code class="docutils literal notranslate"><span class="pre">LoopLoggerMixin</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.LoopLoggerMixin.start_logging"><code class="docutils literal notranslate"><span class="pre">LoopLoggerMixin.start_logging()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.LoopLoggerMixin.write_log"><code class="docutils literal notranslate"><span class="pre">LoopLoggerMixin.write_log()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.ReferencedRawSplitter"><code class="docutils literal notranslate"><span class="pre">ReferencedRawSplitter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.ReferencedRawSplitter.train_test_production_split"><code class="docutils literal notranslate"><span class="pre">ReferencedRawSplitter.train_test_production_split()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.StdoutLogger"><code class="docutils literal notranslate"><span class="pre">StdoutLogger</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.StdoutLogger.flush"><code class="docutils literal notranslate"><span class="pre">StdoutLogger.flush()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.StdoutLogger.write"><code class="docutils literal notranslate"><span class="pre">StdoutLogger.write()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.check_columns"><code class="docutils literal notranslate"><span class="pre">check_columns()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.check_df_input"><code class="docutils literal notranslate"><span class="pre">check_df_input()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.check_filepaths_input"><code class="docutils literal notranslate"><span class="pre">check_filepaths_input()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.deep_merge"><code class="docutils literal notranslate"><span class="pre">deep_merge()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.discover_data"><code class="docutils literal notranslate"><span class="pre">discover_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.enable_passthrough"><code class="docutils literal notranslate"><span class="pre">enable_passthrough()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.get_distance"><code class="docutils literal notranslate"><span class="pre">get_distance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.get_logger"><code class="docutils literal notranslate"><span class="pre">get_logger()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.get_method_parameters"><code class="docutils literal notranslate"><span class="pre">get_method_parameters()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.load_image"><code class="docutils literal notranslate"><span class="pre">load_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.store_parameters"><code class="docutils literal notranslate"><span class="pre">store_parameters()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.utils.html#night_horizons.utils.update_row"><code class="docutils literal notranslate"><span class="pre">update_row()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </div>
 </section>
 <section id="module-night_horizons">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-night_horizons" title="Permalink to this heading">¶</a></h2>
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-night_horizons" title="Link to this heading">¶</a></h2>
 </section>
 </section>
 
@@ -102,6 +351,10 @@
 
 
 <h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="data-flow.html">Data flow</a></li>
+</ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
@@ -133,11 +386,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2024, Zachary Hafen-Saavedra.
+      &#169;2024, Zachary Hafen-Saavedra.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |
       <a href="_sources/night_horizons.rst.txt"
