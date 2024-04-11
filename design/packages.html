@@ -1,0 +1,81 @@
+<html>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+      <div class="mermaid">
+    
+        classDiagram
+          class night_horizons {
+          }
+          class container {
+          }
+          class data_io {
+          }
+          class exceptions {
+          }
+          class image_processing {
+          }
+          class batch {
+          }
+          class mosaicking {
+          }
+          class operators {
+          }
+          class processors {
+          }
+          class registration {
+          }
+          class scorers {
+          }
+          class io_manager {
+          }
+          class metrics {
+          }
+          class pipeline {
+          }
+          class raster {
+          }
+          class transformers {
+          }
+          class filters {
+          }
+          class order {
+          }
+          class preprocessors {
+          }
+          class raster {
+          }
+          class utils {
+          }
+          container --> transformers
+          container --> preprocessors
+          container --> utils
+          data_io --> utils
+          batch --> processors
+          mosaicking --> batch
+          processors --> night_horizons
+          processors --> data_io
+          processors --> exceptions
+          processors --> raster
+          processors --> utils
+          scorers --> operators
+          scorers --> processors
+          io_manager --> data_io
+          pipeline --> container
+          pipeline --> image_processing
+          pipeline --> mosaicking
+          pipeline --> operators
+          pipeline --> processors
+          pipeline --> registration
+          pipeline --> scorers
+          pipeline --> io_manager
+          pipeline --> transformers
+          pipeline --> filters
+          pipeline --> order
+          pipeline --> preprocessors
+          pipeline --> raster
+          pipeline --> utils
+          raster --> raster
+  
+       </div>
+  </body>
+</html>

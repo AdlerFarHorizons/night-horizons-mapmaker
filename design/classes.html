@@ -1,0 +1,169 @@
+<html>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+      <div class="mermaid">
+    
+        classDiagram
+          class AltitudeFilter {
+          }
+          class BaseImageOperator {
+          }
+          class BaseImageTransformer {
+          }
+          class BatchProcessor {
+          }
+          class CleanImageTransformer {
+          }
+          class DIContainer {
+          }
+          class DataIO {
+          }
+          class DatasetProcessor {
+          }
+          class DatasetRegistrar {
+          }
+          class DatasetScorer {
+          }
+          class DatasetUpdater {
+          }
+          class DatasetWrapper {
+          }
+          class DstDarkFrameError {
+          }
+          class Filter {
+          }
+          class GDALDatasetIO {
+          }
+          class GeoTIFFPreprocessor {
+          }
+          class HomographyTransformError {
+          }
+          class IOManager {
+          }
+          class Image {
+          }
+          class ImageAligner {
+          }
+          class ImageAlignerBlender {
+          }
+          class ImageBlender {
+          }
+          class ImageIO {
+          }
+          class ImageProcessorQueue {
+          }
+          class LoggerMixin {
+          }
+          class LogscaleImageTransformer {
+          }
+          class LoopLoggerMixin {
+          }
+          class MetadataImageRegistrar {
+          }
+          class MetadataProcessor {
+          }
+          class MosaicIOManager {
+          }
+          class MosaicMaker {
+          }
+          class Mosaicker {
+          }
+          class NITELitePreprocessor {
+          }
+          class NITELitePreprocessor135 {
+          }
+          class NITELitePreprocessor145 {
+          }
+          class OrderTransformer {
+          }
+          class OutOfBoundsError {
+          }
+          class PassImageTransformer {
+          }
+          class Processor {
+          }
+          class QueryFilter {
+          }
+          class RasterCoordinateTransformer {
+          }
+          class ReferencedImage {
+          }
+          class ReferencedImageScorer {
+          }
+          class ReferencedRawSplitter {
+          }
+          class RegisteredImageIO {
+          }
+          class SensorAndDistanceOrder {
+          }
+          class SequentialMosaicIOManager {
+          }
+          class SequentialMosaicMaker {
+          }
+          class SequentialMosaicker {
+          }
+          class SimilarityScoreOperator {
+          }
+          class SrcDarkFrameError {
+          }
+          class Stage {
+          }
+          class StdoutLogger {
+          }
+          class SteadyFilter {
+          }
+          class TabularIO {
+          }
+          class TrainMosaicIOManager {
+          }
+          class YAMLIO {
+          }
+          GDALDatasetIO --|> DataIO
+          ImageIO --|> DataIO
+          RegisteredImageIO --|> DataIO
+          TabularIO --|> DataIO
+          YAMLIO --|> DataIO
+          BatchProcessor --|> LoopLoggerMixin
+          Mosaicker --|> BatchProcessor
+          SequentialMosaicker --|> Mosaicker
+          BaseImageOperator --|> LoggerMixin
+          ImageAligner --|> BaseImageOperator
+          ImageAlignerBlender --|> ImageAligner
+          ImageAlignerBlender --|> ImageBlender
+          ImageBlender --|> BaseImageOperator
+          DatasetProcessor --|> Processor
+          DatasetRegistrar --|> DatasetUpdater
+          DatasetUpdater --|> DatasetProcessor
+          Processor --|> LoggerMixin
+          DatasetScorer --|> DatasetProcessor
+          ReferencedImageScorer --|> Processor
+          SimilarityScoreOperator --|> BaseImageOperator
+          MosaicIOManager --|> IOManager
+          SequentialMosaicIOManager --|> MosaicIOManager
+          TrainMosaicIOManager --|> MosaicIOManager
+          MetadataProcessor --|> Stage
+          MosaicMaker --|> Stage
+          SequentialMosaicMaker --|> MosaicMaker
+          ReferencedImage --|> Image
+          AltitudeFilter --|> Filter
+          SteadyFilter --|> Filter
+          SensorAndDistanceOrder --|> OrderTransformer
+          NITELitePreprocessor135 --|> NITELitePreprocessor
+          NITELitePreprocessor145 --|> NITELitePreprocessor
+          CleanImageTransformer --|> BaseImageTransformer
+          LogscaleImageTransformer --|> BaseImageTransformer
+          PassImageTransformer --|> BaseImageTransformer
+          LoopLoggerMixin --|> LoggerMixin
+          GDALDatasetIO --* DatasetWrapper : io
+          GDALDatasetIO --* ReferencedImage : dataset_io
+          ImageIO --* Image : io
+          RegisteredImageIO --* ReferencedImage : io
+          RasterCoordinateTransformer --* Mosaicker : transformer
+          RasterCoordinateTransformer --* DatasetWrapper : transformer
+          DIContainer --o Stage : container
+          Processor --o BatchProcessor : processor
+          IOManager --o Mosaicker : io_manager
+  
+       </div>
+  </body>
+</html>
