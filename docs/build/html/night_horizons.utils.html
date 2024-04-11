@@ -1,0 +1,387 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>night_horizons.utils module &#8212; night-horizons-mapmaker 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-night_horizons.utils">
+<span id="night-horizons-utils-module"></span><h1>night_horizons.utils module<a class="headerlink" href="#module-night_horizons.utils" title="Permalink to this heading">¶</a></h1>
+<p>TODO: Refactor into classes with &#64;staticmethod. Will be more clean.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="night_horizons.utils.LoggerMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">LoggerMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.LoggerMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Note that a decorator is not possible because we’re typically
+interested in local variables.</p>
+<p>TODO: Evaluate if this helps things or makes things worse.
+When debugging I wanted to be able to peek at any of the parameters,
+but in a statistical approach. The idea was that this would be helpful
+for identify blackbox parameters that correlated with successful
+(or poor) results.</p>
+<dl class="simple">
+<dt>NOTE: It is tempting to refactor this to use dependency injection,</dt><dd><p>but in practice that requires one more object to be passed around,
+and for something as pervasive as the logger, that’s a lot of
+boilerplate. I think it’s better to just use a mixin.</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="night_horizons.utils.LoggerMixin.log">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">log</span></span><a class="headerlink" href="#night_horizons.utils.LoggerMixin.log" title="Permalink to this definition">¶</a></dt>
+<dd><p>We create the log on the fly so that it’s not stored in memory.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="night_horizons.utils.LoggerMixin.start_logging">
+<span class="sig-name descname"><span class="pre">start_logging</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.LoggerMixin.start_logging" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="night_horizons.utils.LoggerMixin.stop_logging">
+<span class="sig-name descname"><span class="pre">stop_logging</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.LoggerMixin.stop_logging" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="night_horizons.utils.LoggerMixin.update_log">
+<span class="sig-name descname"><span class="pre">update_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.LoggerMixin.update_log" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="night_horizons.utils.LoopLoggerMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">LoopLoggerMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.LoopLoggerMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#night_horizons.utils.LoggerMixin" title="night_horizons.utils.LoggerMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">LoggerMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="night_horizons.utils.LoopLoggerMixin.start_logging">
+<span class="sig-name descname"><span class="pre">start_logging</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.LoopLoggerMixin.start_logging" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>log<span class="classifier">dict</span></dt><dd><p>Dictionary for variables the user may want to view. This should
+be treated as “read-only”.</p>
+</dd>
+<dt>logs<span class="classifier">list[dict]</span></dt><dd><p>List of dictionaries for variables the user may want to view.
+One dictionary per image.
+Each should be treated as “read-only”.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="night_horizons.utils.LoopLoggerMixin.write_log">
+<span class="sig-name descname"><span class="pre">write_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.LoopLoggerMixin.write_log" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="night_horizons.utils.ReferencedRawSplitter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">ReferencedRawSplitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">io_manager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">RandomState</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_test_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_raw_images</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.ReferencedRawSplitter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="night_horizons.utils.ReferencedRawSplitter.train_test_production_split">
+<span class="sig-name descname"><span class="pre">train_test_production_split</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Series</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Series</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Series</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#night_horizons.utils.ReferencedRawSplitter.train_test_production_split" title="Permalink to this definition">¶</a></dt>
+<dd><p>How indices are handled:
+- fps_train has indices running from 0 to len(fps_train)
+- fps has indices running from 0 to len(fps)
+- fps_test has indices that are a subset of fps</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="night_horizons.utils.StdoutLogger">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">StdoutLogger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stdout</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.StdoutLogger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="night_horizons.utils.StdoutLogger.flush">
+<span class="sig-name descname"><span class="pre">flush</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.StdoutLogger.flush" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="night_horizons.utils.StdoutLogger.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.StdoutLogger.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.check_columns">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">check_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">actual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">Series</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">Series</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.check_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check that the columns of a dataframe are as required.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>actual</dt><dd><p>Actual columns.</p>
+</dd>
+<dt>required</dt><dd><p>The columns required.</p>
+</dd>
+<dt>passthrough</dt><dd><p>If True, allow columns other than the required columns.</p>
+</dd>
+</dl>
+</div></blockquote>
+<blockquote>
+<div><dl class="simple">
+<dt>actual</dt><dd><p>The validated columns.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.check_df_input">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">check_df_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.check_df_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check that we have a dataframe with the right columns.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>X</dt><dd><p>Input data.</p>
+</dd>
+<dt>required_columns</dt><dd><p>The columns required if a dataframe is passed.</p>
+</dd>
+<dt>passthrough</dt><dd><p>If True, allow columns other than the required columns.</p>
+</dd>
+</dl>
+</div></blockquote>
+<blockquote>
+<div><dl class="simple">
+<dt>X</dt><dd><p>Validated input data.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.check_filepaths_input">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">check_filepaths_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">DataFrame</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['filepath']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.utils.check_filepaths_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>We need a list of the filepaths or a dataframe with one of the column
+being the filepaths.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>X</dt><dd><p>Input data.</p>
+</dd>
+<dt>required_columns</dt><dd><p>The columns required if a dataframe is passed.</p>
+</dd>
+<dt>passthrough</dt><dd><p>If True, allow columns other than the required columns.</p>
+</dd>
+</dl>
+</div></blockquote>
+<blockquote>
+<div><dl class="simple">
+<dt>X</dt><dd><p>Checked input data, possibly reshaped.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.deep_merge">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">deep_merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orig_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.deep_merge" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.discover_data">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">discover_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Series</span></span></span><a class="headerlink" href="#night_horizons.utils.discover_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Delete?</p>
+<blockquote>
+<div><dl class="simple">
+<dt>directory:</dt><dd><p>Directory containing the data.</p>
+</dd>
+<dt>extension:</dt><dd><p>What filetypes to include.</p>
+</dd>
+</dl>
+</div></blockquote>
+<blockquote>
+<div><dl class="simple">
+<dt>filepaths:</dt><dd><p>Data filepaths.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.enable_passthrough">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">enable_passthrough</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.enable_passthrough" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Maybe deprecate this….
+I forgot that the possibly better method is to make use of
+sklearn.compose.ColumnTransformer.
+There’s also stuff built into pipeline, I think…</p>
+<p>Columns that are neither in self.passthrough or self.required_columns
+are dropped.</p>
+<p>Consider a column <cite>A</cite> that is in self.passthrough,
+an input dataframe X, and an output dataframe X_out.</p>
+<p>Rules:
+1. If <cite>A</cite> is in X.columns and is not in X_out.columns,</p>
+<blockquote>
+<div><p>include the original <cite>A</cite> in X_out.</p>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><dl class="simple">
+<dt>If <cite>A</cite> is in X.columns and is also in X_out.columns,</dt><dd><p>keep <cite>A</cite> from X_out unaltered.</p>
+</dd>
+</dl>
+</li>
+<li><p>If <cite>A</cite> is not in X.columns, ignore it.</p></li>
+</ol>
+<p>self.passthrough : Union[list[str], bool]</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.get_distance">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">get_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.get_distance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.get_logger">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">get_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.get_logger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.get_method_parameters">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">get_method_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.get_method_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to get the signature of a method from a class and its parents
+This was useful when I was trying to figure out how to ensure we have the
+same crs used throughout. But really, that’s part of the dependency
+injection framework. It can be subsumed into that.</p>
+<p>TODO: Delete this.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.load_image">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">load_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype:</span> <span class="pre">type</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'numpy.uint8'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_shape:</span> <span class="pre">~typing.Tuple</span> <span class="pre">=</span> <span class="pre">(1200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">1920)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.load_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load an image from disk.
+TODO: Delete?</p>
+<blockquote>
+<div><dl class="simple">
+<dt>filepath</dt><dd><p>Location of the image.</p>
+</dd>
+<dt>dtype</dt><dd><p>Datatype. Defaults to integer from 0 to 255</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.store_parameters">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">store_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constructor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.store_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator for automatically storing arguments passed to a constructor.
+I.e. any args passed to constructor via
+my_object = MyClass(<a href="#id1"><span class="problematic" id="id2">*</span></a>args, <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs)
+will be stored in my_object as an attribute, i.e. my_object.arg</p>
+<p>TODO: Deprecate this, and consider storing the many parameters
+in a different, more-readable way.
+Probably as options dictionaries.
+This would include maintaining consistent rules for creating objects
+vs passing them in.
+Also consistent rules for using super().__init__ to store options
+vs storing them directly. I’m leaning towards requiring super().__init__
+because then the user can track what parameters exist in the superclass
+vs subclass.
+Think also about how fit parameters are handled.
+Also, consistent names for image_operator vs image_blender.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>constructor<span class="classifier">callable</span></dt><dd><p>Constructor to wrap.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="night_horizons.utils.update_row">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.utils.</span></span><span class="sig-name descname"><span class="pre">update_row</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.utils.update_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>Incorporate the row into the output DataFrame
+The pandas functionality is simple enough that this shouldn’t actually
+be used, but exists as a reminder of how this operation is done.</p>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">night-horizons-mapmaker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Zachary Hafen-Saavedra.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/night_horizons.utils.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
