@@ -466,7 +466,7 @@ class SequentialMosaicIOManager(MosaicIOManager):
         output_description: dict = {
             'mosaic': 'mosaic.tiff',
             'settings': 'settings.yaml',
-            'log': 'log.yaml',
+            'log': 'log.csv',
             'y_pred': 'y_pred.csv',
             'progress_images_dir': 'progress_images',
             'referenced_images': 'referenced_images/img_ind{:06d}.tiff',
