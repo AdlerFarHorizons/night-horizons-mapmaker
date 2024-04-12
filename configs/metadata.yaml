@@ -16,17 +16,16 @@ io_manager:
     img_log: metadata/220513-FH135/image.log
     imu_log: metadata/220513-FH135/PresIMULog.csv
     gps_log: metadata/220513-FH135/GPSLog.csv
-    # Images without georeferencing.
+    # Images without georeferencing. Needed for the metadata processor.
     images:
       # Relative to input_dir
-      # 23085687 is the ID of the nadir camera. Delete it to process all images.
-      directory: images/220513-FH135/23085687
+      directory: images/220513-FH135
       # Only files with these extensions will be considered.
       pattern: '\.(raw|tif|tiff)$'
   # Where the output files will be saved
   output_dir: /data/output/metadata
   output_description:
-    metadata: 220513-FH135-metadata.csv
+    metadata: combined_metadata.csv
     used_config: used-config.yaml
   # If the output directory already exists then a new directory is created
   # with a new ID attached.
