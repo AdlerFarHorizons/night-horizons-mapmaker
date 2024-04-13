@@ -20,7 +20,7 @@ from night_horizons.io_manager import (
 from night_horizons.image_processing import (
     mosaicking, operators, processors, registration, scorers
 )
-from night_horizons.utils import ReferencedRawSplitter
+from night_horizons.io_manager import ReferencedRawSplitter
 
 
 class Stage:

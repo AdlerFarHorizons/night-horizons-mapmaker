@@ -13,7 +13,6 @@ import logging
 import numpy as np
 import pandas as pd
 import scipy
-from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import check_array
 import pyproj
 # This is a draft---don't overengineer!
@@ -416,78 +415,6 @@ def store_parameters(constructor):
             setattr(self, param_key, param_value)
 
     return wrapped_constructor
-
-
-class ReferencedRawSplitter:
-
-    def __init__(
-        self,
-        io_manager,
-        test_size: Union[int, float] = 0.2,
-        max_train_size: int = None,
-        random_state: Union[int, np.random.RandomState] = None,
-        use_test_dir: bool = False,
-        drop_raw_images: bool = False,
-    ):
-
-        self.io_manager = io_manager
-        self.test_size = test_size
-        self.max_train_size = max_train_size
-        self.random_state = random_state
-        self.use_test_dir = use_test_dir
-        self.drop_raw_images = drop_raw_images
-
-    def train_test_production_split(
-        self
-    ) -> Tuple[pd.Series, pd.Series, pd.Series]:
-        '''
-        How indices are handled:
-        - fps_train has indices running from 0 to len(fps_train)
-        - fps has indices running from 0 to len(fps)
-        - fps_test has indices that are a subset of fps
-
-        Parameters
-        ----------
-        Returns
-        -------
-        '''
-
-        referenced_fps = self.io_manager.input_filepaths['referenced_images']
-
-        # Actual train test split
-        if self.use_test_dir:
-            fps_test = \
-                self.io_manager.input_filepaths['test_referenced_images']
-            fps_train = referenced_fps
-        else:
-            fps_train, fps_test = train_test_split(
-                referenced_fps,
-                test_size=self.test_size,
-                random_state=self.random_state,
-                shuffle=True,
-            )
-
-        # Downsample the training set as requested
-        if self.max_train_size is not None:
-            if fps_train.size > self.max_train_size:
-                fps_train = self.random_state.choice(
-                    fps_train, self.max_train_size)
-
-        # Combine raw fps and test fps
-        if not self.drop_raw_images:
-            raw_fps = self.io_manager.input_filepaths['images']
-            raw_fps.index += referenced_fps.size
-            fps = pd.concat([fps_test, raw_fps])
-        else:
-            fps = fps_test
-
-        fps = fps.sample(
-            n=fps.size,
-            replace=False,
-            random_state=self.random_state,
-        )
-
-        return fps_train, fps_test, fps
 
 
 class LoggerMixin:
