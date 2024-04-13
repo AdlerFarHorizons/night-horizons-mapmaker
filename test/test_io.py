@@ -4,7 +4,10 @@ import unittest
 import difflib
 import pprint
 
-from night_horizons.io_manager import IOManager
+import numpy as np
+import pandas as pd
+
+from night_horizons.io_manager import IOManager, ReferencedRawSplitter
 
 
 def assert_sorted_lists_equal(list1, list2):
@@ -195,3 +198,37 @@ class TestOutput(unittest.TestCase):
 
         i = io_manager.search_for_checkpoint('mosaic')
         assert i == 13 + 1
+
+
+class TestReferencedRawSplitter(unittest.TestCase):
+
+    def setUp(self):
+
+        input_dir = '/data/input'
+        output_dir = '/data/output/mosaics/temp'
+        self.io_manager = IOManager(
+            input_dir=input_dir,
+            input_description={
+                'referenced_images': {
+                    'directory': 'referenced_images',
+                    'pattern': r'Geo\s\d+_\d.tif$',
+                },
+                'images': {
+                    'directory': 'images',
+                    'extension': 'raw',
+                },
+            },
+            output_dir=output_dir,
+            output_description={},
+        )
+
+    def test_functional(self):
+
+        # Load the data
+        test_size = 1
+        data_splitter = ReferencedRawSplitter(
+            self.io_manager,
+            test_size=test_size,
+        )
+        fps_train, fps_test, fps = data_splitter.train_test_production_split()
+        self.assertEqual(len(fps_test), test_size)
