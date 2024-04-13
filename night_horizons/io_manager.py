@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import scipy
 from sklearn.model_selection import train_test_split
+from sklearn.utils import check_random_state
 from sqlalchemy import create_engine
 # This is a draft---don't overengineer!
 # NO renaming!
@@ -527,18 +528,16 @@ class ReferencedRawSplitter:
         self,
         io_manager,
         test_size: Union[int, float] = 0.2,
-        max_train_size: int = None,
+        max_raw_size: int = None,
         random_state: Union[int, np.random.RandomState] = None,
         use_test_dir: bool = False,
-        drop_raw_images: bool = False,
     ):
 
         self.io_manager = io_manager
         self.test_size = test_size
-        self.max_train_size = max_train_size
-        self.random_state = random_state
+        self.max_raw_size = max_raw_size
+        self.random_state = check_random_state(random_state)
         self.use_test_dir = use_test_dir
-        self.drop_raw_images = drop_raw_images
 
     def train_test_production_split(
         self
@@ -570,17 +569,18 @@ class ReferencedRawSplitter:
                 shuffle=True,
             )
 
-        # Downsample the training set as requested
-        if self.max_train_size is not None:
-            if fps_train.size > self.max_train_size:
-                fps_train = self.random_state.choice(
-                    fps_train, self.max_train_size)
-
         # Combine raw fps and test fps
-        if not self.drop_raw_images:
-            raw_fps = self.io_manager.input_filepaths['images']
-            raw_fps.index += referenced_fps.size
-            fps = pd.concat([fps_test, raw_fps])
+        if self.max_raw_size is not None:
+            if self.max_raw_size > 0:
+                raw_fps = self.io_manager.input_filepaths['images']
+
+                # Downsample the raw images as requested
+                if raw_fps.size > self.max_raw_size:
+                    raw_fps = pd.Series(self.random_state.choice(
+                        raw_fps, self.max_raw_size))
+
+                raw_fps.index += referenced_fps.size
+                fps = pd.concat([fps_test, raw_fps])
         else:
             fps = fps_test
 

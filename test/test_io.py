@@ -232,3 +232,13 @@ class TestReferencedRawSplitter(unittest.TestCase):
         )
         fps_train, fps_test, fps = data_splitter.train_test_production_split()
         self.assertEqual(len(fps_test), test_size)
+
+    def test_max_size(self):
+
+        data_splitter = ReferencedRawSplitter(
+            self.io_manager,
+            test_size=1,
+            max_raw_size=1,
+        )
+        fps_train, fps_test, fps = data_splitter.train_test_production_split()
+        self.assertEqual(len(fps), 1 + 1)
