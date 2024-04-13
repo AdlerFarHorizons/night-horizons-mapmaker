@@ -6,7 +6,7 @@ io_manager:  # night_horizons.io_manager.SequentialMosaicIOManager
   output_description:
     mosaic: mosaic.tiff
     settings: settings.yaml
-    log: log.yaml
+    log: log.csv
     y_pred: y_pred.csv
     progress_images_dir: progress_images
     referenced_images: referenced_images/img_ind{:06d}.tiff
