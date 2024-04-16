@@ -27,13 +27,27 @@ class Stage:
     def __init__(
         self,
         container: DIContainer,
-        stage: str = 'base',
+        # TODO: Delete
+        # stage: str = 'base',
         score_output: bool = False,
         verbose: bool = True
     ):
+        '''Class responsible for running one part, or stage, of the pipeline.
+
+        Parameters
+        ----------
+            container :
+                Dependency injection container, i.e. a class responsible for
+                creating the objects used in the pipeline.
+            score_output :
+                If True, score data if scoring is implemented
+            verbose :
+                If True, print extra details in the output.
+        '''
 
         self.container = container
-        self.stage = stage
+        # TODO: Delete
+        # self.stage = stage
         self.score_output = score_output
         self.verbose = verbose
 
