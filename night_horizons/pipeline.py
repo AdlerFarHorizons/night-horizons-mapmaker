@@ -23,7 +23,7 @@ from night_horizons.image_processing import (
 from night_horizons.io_manager import ReferencedRawSplitter
 
 
-class Stage:
+class Stage(ABC):
     def __init__(
         self,
         container: DIContainer,
@@ -33,6 +33,11 @@ class Stage:
         verbose: bool = True
     ):
         '''Class responsible for running one part, or stage, of the pipeline.
+        This class
+        a) prepares the ingredients for the pipeline (e.g.
+            self.register_default_services)
+        b) takes the ingredients and uses them (e.g. self.run)
+
 
         Parameters
         ----------
@@ -55,8 +60,28 @@ class Stage:
 
         self.register_default_services()
 
-    def register_default_services(self):
-        '''We'll always want the metadata'''
+    def register_fundamental_services(self):
+        '''Prepare classes that are used ubiquitously.
+
+        We sometimes set singleton=True. This ensures that once an instance
+        is made we use it throughout, without needing to explicitly specify.
+        '''
+
+        self.container.register_service(
+            'io_manager',
+            IOManager,
+            singleton=True,
+        )
+        self.container.register_service(
+            'crs',
+            CRS,
+            singleton=True,
+        )
+        self.container.register_service(
+            'random_state',
+            check_random_state,
+            singleton=True,
+        )
 
         # Processors for different formats of metadata
         self.container.register_service(
@@ -82,35 +107,15 @@ class Stage:
             wrapped_constructor=preprocessors.NITELitePreprocessor145,
         )
 
-    def register_fundamental_services(self):
-        '''Services that are used almost-ubiquitously by others.
-
-        By passing singleton=True we ensure that once an instance is made
-        we use it throughout, without needing to explicitly pass it
-
-        Parameters
-        ----------
-        Returns
-        -------
+    def register_default_services(self):
+        '''Main function for registering services
+        (preparing classes for construction)
         '''
 
-        self.container.register_service(
-            'io_manager',
-            IOManager,
-            singleton=True,
-        )
-        self.container.register_service(
-            'crs',
-            CRS,
-            singleton=True,
-        )
-        self.container.register_service(
-            'random_state',
-            check_random_state,
-            singleton=True,
-        )
-
     def validate(self):
+        '''Check that crucial and fundamental services work,
+        and that we have found some input filepaths.
+        '''
 
         print('Validating IO setup...')
         io_manager = self.container.get_service('io_manager')
@@ -128,18 +133,10 @@ class Stage:
         if total_fp_count == 0:
             print('WARNING: No input filepaths found.')
 
-    # TODO: Delete
-    # def register_default_io(self):
-
-    #     dataio_services = self.container.register_dataio_services()
-    #
-    #     def register_io_manager(*args, **kwargs):
-    #         data_ios = {
-    #             name: self.container.get_service(name)
-    #             for name in dataio_services
-    #         }
-    #         return IOManager(data_ios=data_ios, *args, **kwargs)
-    #     self.container.register_service('io_manager', register_io_manager)
+    @abstractmethod
+    def run(self):
+        '''Execute the pipeline stage.
+        '''
 
 
 class MetadataProcessor(Stage):
