@@ -24,6 +24,13 @@ from night_horizons.io_manager import ReferencedRawSplitter
 
 
 class Stage(ABC):
+    '''Class responsible for running one part, or stage, of the pipeline.
+    This class
+    a) prepares the ingredients for the pipeline (e.g.
+        self.register_default_services)
+    b) takes the ingredients and uses them (e.g. self.run)
+    '''
+
     def __init__(
         self,
         container: DIContainer,
@@ -32,13 +39,7 @@ class Stage(ABC):
         score_output: bool = False,
         verbose: bool = True
     ):
-        '''Class responsible for running one part, or stage, of the pipeline.
-        This class
-        a) prepares the ingredients for the pipeline (e.g.
-            self.register_default_services)
-        b) takes the ingredients and uses them (e.g. self.run)
-
-
+        '''
         Parameters
         ----------
             container :
@@ -140,8 +141,12 @@ class Stage(ABC):
 
 
 class MetadataProcessor(Stage):
+    '''Class for processing metadata (IMU log, GPS log, image log).
+    '''
 
     def run(self):
+        '''Process the metadata.
+        '''
 
         if self.verbose:
             print('Starting metadata processing.')
@@ -184,8 +189,12 @@ class MetadataProcessor(Stage):
 
 
 class MosaicMaker(Stage):
+    '''Create a mosaic from referenced images.
+    '''
 
     def run(self):
+        '''Execute the mosaic creation.
+        '''
 
         if self.verbose:
             print('Starting mosaic creation.')
@@ -213,13 +222,13 @@ class MosaicMaker(Stage):
         if self.verbose:
             print('Preprocessing...')
         preprocessor = self.container.get_service('preprocessor_pipeline')
-        X = preprocessor.fit_transform(referenced_fps)
+        x = preprocessor.fit_transform(referenced_fps)
 
         # Mosaicking
         if self.verbose:
             print('Making mosaic...')
         mosaicker = self.container.get_service('mosaicker')
-        X_out = mosaicker.fit_transform(X)
+        x_out = mosaicker.fit_transform(x)
 
         if self.verbose:
             print(
@@ -227,11 +236,15 @@ class MosaicMaker(Stage):
                 f'Output saved at {io_manager.output_filepaths["mosaic"]}'
             )
 
-        return X_out
+        return x_out
 
     def register_default_services(self):
+        '''Prepare the services needed for creating a mosaic.
+        This includes a modified IO manager, preprocessors, and processors.
+        '''
 
-        super().register_default_services()
+        # TODO: Delete
+        # super().register_default_services()
 
         # Overwrite the io manager
         self.container.register_service(
