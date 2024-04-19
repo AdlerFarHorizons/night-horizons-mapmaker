@@ -81,6 +81,9 @@ class TestStage(unittest.TestCase):
                         f'Missing file, {key}: {filepath}'
                     )
 
+        # Check we only have one checkpoint file per item type
+        os.path.listdir()
+
 
 class TestMetadataProcessor(TestStage):
 
@@ -165,6 +168,7 @@ class TestSequentialMosaicMaker(TestStage):
                     },
                 },
                 'output_dir': self.output_dir,
+                'checkpoint_freq': 1,
             },
             'data_splitter': {
                 'use_test_dir': True,

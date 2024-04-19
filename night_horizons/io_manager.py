@@ -130,7 +130,7 @@ class IOManager:
         # Find files
         input_filepaths = {
             key: (
-                self.find_files(**item)
+                self.find_selected_files(**item)
                 if isinstance(item, dict)
                 else item
             )
@@ -139,7 +139,7 @@ class IOManager:
 
         return input_filepaths, modified_input_description
 
-    def find_files(
+    def find_selected_files(
         self,
         directory: str,
         extension: str = None,
@@ -159,15 +159,31 @@ class IOManager:
                 Data filepaths.
         '''
 
+        fps = self.find_files(directory)
+
+        fps = self.select_files(fps, extension, pattern)
+
+        return fps
+
+    def find_files(self, directory: str):
+
         assert os.path.isdir(directory), f'{directory} is not a directory.'
 
         # Walk the tree to get files
-        # This may not work in AWS
         fps = []
         for root, dirs, files in os.walk(directory):
             for name in files:
                 fps.append(os.path.join(root, name))
         fps = pd.Series(fps)
+
+        return fps
+
+    def select_files(
+        self,
+        fps: pd.Series,
+        extension: Union[str, list] = None,
+        pattern: str = None
+    ):
 
         # Handle extensions.
         if extension is not None:
