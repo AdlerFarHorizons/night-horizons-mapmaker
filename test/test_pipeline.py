@@ -8,6 +8,7 @@ import pandas as pd
 
 from night_horizons import pipeline
 from night_horizons.utils import StdoutLogger, deep_merge
+from night_horizons.io_manager import IOManager
 
 # Configure logging
 LOGGER = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ class TestStage(unittest.TestCase):
 
     def check_output(self, stage, skip_keys=[]):
 
-        io_manager = stage.container.get_service('io_manager')
+        io_manager: IOManager = stage.container.get_service('io_manager')
 
         # Check files exist
         for key, filepath in io_manager.output_filepaths.items():
@@ -82,7 +83,12 @@ class TestStage(unittest.TestCase):
                     )
 
         # Check we only have one checkpoint file per item type
-        os.path.listdir()
+        checkpoint_dir = os.path.join(
+            io_manager.output_dir, io_manager.checkpoint_subdir)
+        fps = io_manager.find_files(checkpoint_dir)
+        bases = fps.str.split('_i0').str[0]
+        unique_bases = bases.unique()
+        assert bases.size == unique_bases.size
 
 
 class TestMetadataProcessor(TestStage):
