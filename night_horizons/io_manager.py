@@ -42,11 +42,6 @@ class IOManager:
 
     NOTE: This *could* be broken into an InputFileManager, an
     OutputFileManager, and a DataIOManager, but that seems like overkill.
-
-    Parameters
-    ----------
-    Returns
-    -------
     '''
 
     def __init__(
@@ -57,14 +52,45 @@ class IOManager:
         output_description: dict[str],
         root_dir: str = None,
         file_exists: str = 'error',
-        tracked_file_key: str = None,
+        checkpoint_file_key: str = None,
         checkpoint_subdir: str = 'checkpoints',
         checkpoint_selection: list[str] = None,
         checkpoint_tag: str = '_i{:06d}',
         checkpoint_freq: int = 100,
         data_ios: dict[str] = {},
     ) -> None:
+        """
+        Initialize the IOManager object.
 
+        Parameters
+        ----------
+        input_dir : str
+            The directory containing the input files.
+        input_description : dict[dict]
+            The description of the input files.
+        output_dir : str
+            The directory where the output files will be saved.
+        output_description : dict[str]
+            The description of the output files.
+        root_dir : str, optional
+            The root directory. If provided, the input_dir and output_dir will
+            be relative to this directory.
+        file_exists : str, optional
+            The action to take if a file already exists. Defaults to 'error'.
+            Other options are 'pass', 'load', 'overwrite', and 'new'.
+        checkpoint_file_key : str, optional
+            The key for the file that determines what checkpoint files to use.
+        checkpoint_subdir : str, optional
+            The subdirectory where checkpoints will be saved.
+        checkpoint_selection : list[str], optional
+            The list of output files to use for checkpointing.
+        checkpoint_tag : str, optional
+            The tag to append to checkpoint filenames. Defaults to '_i{:06d}'.
+        checkpoint_freq : int, optional
+            The frequency at which to save checkpoints. Defaults to 100.
+        data_ios : dict[str], optional
+            The dictionary of additional data IOs. Defaults to {}.
+        """
         if root_dir is not None:
             input_dir = os.path.join(root_dir, input_dir)
             output_dir = os.path.join(root_dir, output_dir)
@@ -76,7 +102,7 @@ class IOManager:
         self.output_description = output_description
         self.root_dir = root_dir
         self.file_exists = file_exists
-        self.tracked_file_key = tracked_file_key
+        self.checkpoint_file_key = checkpoint_file_key
         self.checkpoint_subdir = checkpoint_subdir
         self.checkpoint_selection = checkpoint_selection
         self.checkpoint_tag = checkpoint_tag
@@ -94,7 +120,7 @@ class IOManager:
                 output_dir=output_dir,
                 output_description=output_description,
                 file_exists=file_exists,
-                tracked_file_key=tracked_file_key,
+                tracked_file_key=checkpoint_file_key,
             )
 
         # And finally, the checkpoint info
@@ -148,14 +174,14 @@ class IOManager:
         '''
         Parameters
         ----------
-            directory:
+            directory :
                 Directory containing the data.
-            extension:
+            extension :
                 What filetypes to include.
 
         Returns
         -------
-            filepaths:
+            fps :
                 Data filepaths.
         '''
 
@@ -165,8 +191,24 @@ class IOManager:
 
         return fps
 
-    def find_files(self, directory: str):
+    def find_files(self, directory: str) -> pd.Series:
+        """Find all files in the specified directory and its subdirectories.
 
+        Parameters
+        ----------
+        directory : str
+            The directory to search for files.
+
+        Returns
+        -------
+        pd.Series
+            A pandas Series containing the file paths of all the found files.
+
+        Raises
+        ------
+        AssertionError
+            If the specified directory is not a valid directory.
+        """
         assert os.path.isdir(directory), f'{directory} is not a directory.'
 
         # Walk the tree to get files
@@ -179,11 +221,28 @@ class IOManager:
         return fps
 
     def select_files(
-        self,
-        fps: pd.Series,
-        extension: Union[str, list] = None,
-        pattern: str = None
-    ):
+            self,
+            fps: pd.Series,
+            extension: Union[str, list] = None,
+            pattern: str = None
+        ):
+        """
+        Selects files from a pandas Series based on the given extension and pattern.
+
+        Parameters
+        ----------
+        fps : pd.Series
+            The pandas Series containing file paths.
+        extension : Union[str, list], optional
+            The file extension(s) to filter by. Defaults to None.
+        pattern : str, optional
+            The pattern to match against the file paths. Defaults to None.
+
+        Returns
+        -------
+        pd.Series
+            The filtered pandas Series containing selected file paths.
+        """
 
         # Handle extensions.
         if extension is not None:
@@ -195,8 +254,8 @@ class IOManager:
             if isinstance(extension, str):
                 pattern += f'{extension}$'
             # When a list of extensions
-            else:
-                pattern += '(' + '|'.join(extension) + ')$'
+        else:
+            pattern += '(' + '|'.join(extension) + ')$'
 
         # Filter to select particular files
         if pattern is not None:
@@ -228,7 +287,7 @@ class IOManager:
         tracked_filepath = os.path.join(output_dir, tracked_filename)
         if os.path.isfile(tracked_filepath):
 
-            # Standard, simple options
+        # Standard, simple options
             if file_exists == 'error':
                 raise FileExistsError('File already exists at destination.')
             elif file_exists in ['pass', 'load']:
@@ -310,7 +369,7 @@ class IOManager:
     def search_for_checkpoint(self, key: str = None):
 
         if key is None:
-            key = self.tracked_file_key
+            key = self.checkpoint_file_key
 
         checkpoint_filepattern = self.checkpoint_filepatterns[key]
 
@@ -403,7 +462,7 @@ class MosaicIOManager(IOManager):
             output_description=output_description,
             root_dir=root_dir,
             file_exists=file_exists,
-            tracked_file_key=tracked_file_key,
+            checkpoint_file_key=tracked_file_key,
             checkpoint_subdir=checkpoint_subdir,
             checkpoint_selection=checkpoint_selection,
             checkpoint_tag=checkpoint_tag,
