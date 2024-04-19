@@ -82,19 +82,6 @@ class TestStage(unittest.TestCase):
                         f'Missing file, {key}: {filepath}'
                     )
 
-        # Check we only have one checkpoint file per item type
-        checkpoint_dir = os.path.join(
-            io_manager.output_dir, io_manager.checkpoint_subdir)
-        fps = io_manager.find_files(checkpoint_dir)
-        bases = fps.str.split('_i0').str[0]
-        n_io = len(io_manager.checkpoint_selection)
-        n_io_train = len(
-            stage.container.get_service(
-                'io_manager_train'
-            ).checkpoint_selection
-        )
-        assert bases.size == n_io + n_io_train
-
 
 class TestMetadataProcessor(TestStage):
 
@@ -207,8 +194,22 @@ class TestSequentialMosaicMaker(TestStage):
         # Test for existence
         self.check_output(mosaicmaker)
 
-        # Check basic structure of X_out
+        # Check we only have one checkpoint file per item type
         io_manager = mosaicmaker.container.get_service('io_manager')
+        checkpoint_dir = os.path.join(
+            io_manager.output_dir, io_manager.checkpoint_subdir)
+        fps = io_manager.find_files(checkpoint_dir)
+        n_expected = len(io_manager.checkpoint_selection)
+        n_expected += len(
+            mosaicmaker.container.get_service(
+                'io_manager_train'
+            ).checkpoint_selection
+        )
+        # Subtract one because the training mosaic doesn't have a checkpoint
+        n_expected -= 1
+        assert fps.size == n_expected
+
+        # Check basic structure of X_out
         n_raw = len(io_manager.input_filepaths['images'])
         self.assertEqual(
             len(y_pred),

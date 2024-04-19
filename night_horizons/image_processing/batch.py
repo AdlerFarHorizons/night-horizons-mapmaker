@@ -286,6 +286,8 @@ class BatchProcessor(
                 resources['dataset'],
                 y_pred=Z_out,
             )
+            # Clean old checkpoint
+            self.io_manager.prune_checkpoints()
 
             # Update and save the log
             # TODO: We probably don't have to write every loop...

@@ -196,8 +196,8 @@ class TestOutput(unittest.TestCase):
         open(filepath, 'w').close()
         open(other_filepath, 'w').close()
 
-        i = io_manager.search_for_checkpoint('mosaic')
-        assert i == 13 + 1
+        i, _ = io_manager.search_for_checkpoint('mosaic')
+        assert i == 13
 
 
 class TestReferencedRawSplitter(unittest.TestCase):

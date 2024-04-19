@@ -365,7 +365,10 @@ class IOManager:
 
         return checkpoint_filepatterns, checkpoint_dir
 
-    def search_for_checkpoint(self, key: str = None):
+    def search_for_checkpoint(
+        self,
+        key: str = None,
+    ) -> Tuple[int, list[str]]:
 
         if key is None:
             key = self.checkpoint_file_key
@@ -373,7 +376,7 @@ class IOManager:
         checkpoint_filepattern = self.checkpoint_filepatterns[key]
 
         # Look for checkpoint files
-        i_resume = -1
+        i_latest = -1
         filename = None
         search_pattern = checkpoint_filepattern.replace(
             r'{:06d}',
@@ -381,22 +384,18 @@ class IOManager:
         )
         pattern = re.compile(search_pattern)
         possible_files = os.listdir(self.checkpoint_dir)
-        filename_start = None
+        filenames = []
         for j, filename in enumerate(possible_files):
             match = pattern.search(filename)
             if not match:
                 continue
 
             number = int(match.group(1))
-            if number > i_resume:
-                i_resume = number
-                filename_start = possible_files[j]
+            filenames.append((number, filename))
+            if number > i_latest:
+                i_latest = number
 
-        # We don't want to start on the same loop that was saved, but the
-        # one after
-        i_resume += 1
-
-        return i_resume
+        return i_latest, filenames
 
     @abstractmethod
     def save_to_checkpoint(self, i):
@@ -408,10 +407,33 @@ class IOManager:
 
     def search_and_load_checkpoint(self, key: str = None):
 
-        i_resume = self.search_for_checkpoint(key=key)
+        i_latest, _ = self.search_for_checkpoint(key=key)
+
+        # We don't want to start on the same loop that was saved, but the
+        # one after
+        i_resume = i_latest + 1
         loaded_data = self.load_from_checkpoint(i_resume)
 
         return i_resume, loaded_data
+
+    def prune_checkpoints(self):
+        """
+        Prunes the checkpoint files in the checkpoint directory,
+        keeping only the latest ones.
+
+        This method finds the latest checkpoint files based on the patterns
+        specified in `checkpoint_filepatterns`.
+        It then deletes all the files in the checkpoint directory
+        that are not the latest ones.
+        """
+        for key, pattern in self.checkpoint_filepatterns.items():
+            # Find the latest files
+            i_latest, filenames = self.search_for_checkpoint(key=key)
+
+            # Delete all but the latest files
+            for (i_file, filename) in filenames:
+                if i_file != i_latest:
+                    os.remove(os.path.join(self.checkpoint_dir, filename))
 
     def get_connection(self, url=None):
 

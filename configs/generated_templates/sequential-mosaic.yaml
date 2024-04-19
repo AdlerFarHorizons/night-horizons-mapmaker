@@ -30,6 +30,7 @@ io_manager:  # night_horizons.io_manager.SequentialMosaicIOManager
     test_referenced_images:
       directory: test_referenced_images/220513-FH135
   output_dir: ./test/test_data/temp
+  checkpoint_freq: 1
 crs:  # pyproj.crs.crs.CRS
   projparams: EPSG:3857
 random_state: # sklearn.utils.validation.check_random_state
@@ -92,6 +93,7 @@ io_manager_train:  # night_horizons.io_manager.TrainMosaicIOManager
     test_referenced_images:
       directory: test_referenced_images/220513-FH135
   output_dir: ./test/test_data/temp
+  checkpoint_freq: 1
 image_operator_train:  # night_horizons.image_processing.operators.ImageBlender
   fill_value:
   outline: 0.0
