@@ -279,11 +279,12 @@ class MosaicMaker(Stage):
 
         # Put it all together
         def make_preprocessor_pipeline(
-            steps: list[str] = [
-                'geotiff_preprocessor',
-            ],
-            *args, **kwargs
+            *args,
+            steps: list[str] = None,
+            **kwargs
         ):
+            if steps is None:
+                steps = ['geotiff_preprocessor']
             return Pipeline(
                 [
                     (step, self.container.get_service(step))
