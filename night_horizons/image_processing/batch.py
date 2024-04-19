@@ -11,6 +11,7 @@ import tqdm
 
 from .. import utils
 from .processors import Processor
+from ..io_manager import IOManager
 
 # Set up the logger
 LOGGER = utils.get_logger(__name__)
@@ -24,6 +25,7 @@ class BatchProcessor(
 
     def __init__(
         self,
+        io_manager: IOManager,
         processor: Processor,
         log_keys: list[str] = ['ind', 'return_code'],
         passthrough: Union[list[str], bool] = True,
@@ -58,6 +60,7 @@ class BatchProcessor(
         -------
         None
         '''
+        self.io_manager = io_manager
         self.processor = processor
         self.passthrough = passthrough
         self.log_keys = log_keys

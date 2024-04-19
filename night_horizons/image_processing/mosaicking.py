@@ -98,6 +98,7 @@ class Mosaicker(BatchProcessor):
         # TODO: Following conventions, dont repeat each arg
 
         super().__init__(
+            io_manager=io_manager,
             processor=processor,
             passthrough=passthrough,
             log_keys=log_keys,
@@ -105,7 +106,6 @@ class Mosaicker(BatchProcessor):
         )
 
         # Store settings for latter use
-        self.io_manager = io_manager
         self.crs = crs
         self.pixel_width = pixel_width
         self.pixel_height = pixel_height

@@ -180,7 +180,7 @@ class TestOutput(unittest.TestCase):
         assert os.path.exists(self.output_dir)
         assert os.path.exists(new_outdir)
 
-    def test_test_search_for_checkpoint(self):
+    def test_search_for_checkpoint(self):
 
         io_manager = IOManager(
             input_dir=self.input_dir,
