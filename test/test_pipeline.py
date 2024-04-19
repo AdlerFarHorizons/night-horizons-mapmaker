@@ -87,8 +87,13 @@ class TestStage(unittest.TestCase):
             io_manager.output_dir, io_manager.checkpoint_subdir)
         fps = io_manager.find_files(checkpoint_dir)
         bases = fps.str.split('_i0').str[0]
-        unique_bases = bases.unique()
-        assert bases.size == unique_bases.size
+        n_io = len(io_manager.checkpoint_selection)
+        n_io_train = len(
+            stage.container.get_service(
+                'io_manager_train'
+            ).checkpoint_selection
+        )
+        assert bases.size == n_io + n_io_train
 
 
 class TestMetadataProcessor(TestStage):
