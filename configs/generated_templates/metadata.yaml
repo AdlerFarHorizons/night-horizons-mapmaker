@@ -5,7 +5,7 @@ pipeline:  # night_horizons.pipeline.MetadataProcessor
 io_manager:  # night_horizons.io_manager.IOManager
   root_dir:
   file_exists: overwrite
-  tracked_file_key:
+  checkpoint_file_key:
   checkpoint_subdir: checkpoints
   checkpoint_selection:
   checkpoint_tag: _i{:06d}

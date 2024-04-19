@@ -52,7 +52,7 @@ class Stage(ABC):
 
         self.container = container
         # TODO: Delete
-        # self.stage = stage
+        self.stage = stage
         self.score_output = score_output
         self.verbose = verbose
 
@@ -133,7 +133,6 @@ class Stage(ABC):
         if total_fp_count == 0:
             print('WARNING: No input filepaths found.')
 
-    @abstractmethod
     def run(self):
         '''Execute the pipeline stage.
         '''
