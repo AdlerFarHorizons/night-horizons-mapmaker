@@ -254,8 +254,8 @@ class IOManager:
             if isinstance(extension, str):
                 pattern += f'{extension}$'
             # When a list of extensions
-        else:
-            pattern += '(' + '|'.join(extension) + ')$'
+            else:
+                pattern += '(' + '|'.join(extension) + ')$'
 
         # Filter to select particular files
         if pattern is not None:
@@ -286,8 +286,7 @@ class IOManager:
         # Main filepath parameters
         tracked_filepath = os.path.join(output_dir, tracked_filename)
         if os.path.isfile(tracked_filepath):
-
-        # Standard, simple options
+            # Standard, simple options
             if file_exists == 'error':
                 raise FileExistsError('File already exists at destination.')
             elif file_exists in ['pass', 'load']:

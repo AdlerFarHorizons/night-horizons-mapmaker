@@ -34,8 +34,7 @@ class Stage(ABC):
     def __init__(
         self,
         container: DIContainer,
-        # TODO: Delete
-        # stage: str = 'base',
+        stage: str = 'base',
         score_output: bool = False,
         verbose: bool = True
     ):
