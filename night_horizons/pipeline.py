@@ -718,6 +718,17 @@ class QueryProcessor(Stage):
 
         return x
 
+    def register_default_services(self):
+        '''Prepare the services needed for creating a mosaic.
+        This includes a modified IO manager, preprocessors, and processors.
+        '''
+
+        # Register the query filter
+        self.container.register_service(
+            'query_processor',
+            filters.QueryFilter,
+        )
+
 
 def create_stage(config_filepath, local_options={}):
 

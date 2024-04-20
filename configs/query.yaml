@@ -1,0 +1,46 @@
+###############################################################################
+# Example Metadata Processor Config
+###############################################################################
+
+# Indicate what stage of the pipeline to run
+pipeline:
+  stage: query_processor
+
+# I/O settings
+# These settings assume that the user has mounted their data directory at /data
+io_manager:
+  # Specifies the input data
+  input_dir: /data/input
+  input_description:
+    # Metadata files. This is the path relative to the input_dir.
+    metadata: metadata/220513-FH135/combined.csv
+    # Images without georeferencing. Needed for the metadata processor.
+    images:
+      # Relative to input_dir
+      directory: existing_output/sequential-mosaic/REPLACE_THIS/referenced_images
+      # Only files with these extensions will be considered.
+      pattern: '\.(raw|tif|tiff)$'
+  # Where the output files will be saved
+  output_dir: /data/output/queries
+  output_description:
+    metadata_for_query: metadata_for_query.csv
+    used_config: used-config.yaml
+  # If the output directory already exists then a new directory is created
+  # with a new ID attached.
+  file_exists: new
+
+query_processor:
+  condition: |
+    (mAltitude > 13000.) &
+    (imuGyroMag < 0.075)
+
+# What metadata processor to use (based on metadata format)
+metadata_processor:
+  version: fh135_metadata_processor
+
+# Coordinate reference-system employed
+crs:
+  projparams: 'EPSG:3857'
+
+random_state: 
+  seed: 159234
