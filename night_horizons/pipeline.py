@@ -673,7 +673,7 @@ class QueryProcessor(Stage):
         if self.verbose:
             print('    Setting up filetree...')
         io_manager: IOManager = self.container.get_service('io_manager')
-        image_fps = io_manager.input_filepaths['images']
+        # image_fps = io_manager.input_filepaths['images']
 
         # Save config
         if 'used_config' in io_manager.output_filepaths:
@@ -683,15 +683,27 @@ class QueryProcessor(Stage):
         # Get the metadata
         if self.verbose:
             print('    Accessing metadata...')
-        metadata_processor = self.container.get_service(
-            'metadata_processor')
-        x: pd.DataFrame = metadata_processor.fit_transform(image_fps)
+        # metadata_processor = self.container.get_service(
+        #     'metadata_processor')
+        # x: pd.DataFrame = metadata_processor.fit_transform(image_fps)
+        x = pd.read_csv(io_manager.input_filepaths['y_pred'], index_col=0)
 
         # Query
         if self.verbose:
             print('    Querying...')
         query_processor = self.container.get_service('query_processor')
         x_out: pd.DataFrame = query_processor.fit_transform(x)
+
+        # Create the lookup dataframe by joining on basename
+        # Joining is an easy way to only use the files we have
+        x_final = pd.DataFrame({
+            'input_filepath': io_manager.input_filepaths['referenced_images'],
+        })
+        x_final['basename'] = \
+            x_final['input_filepath'].apply(os.path.basename)
+        x_out['basename'] = \
+            x_out['output_filepath'].apply(os.path.basename)
+        x_final = x_final.join(x_out, on='basename')
 
         # Save the output
         if self.verbose:
@@ -703,21 +715,20 @@ class QueryProcessor(Stage):
             exist_ok=True
         )
         # Copy selected images
-        for ind in x_out.index:
-            row = x_out.loc[ind]
-            output_fp = os.path.join(
-                query_results_dir, os.path.basename(row['filepath']))
-            shutil.copy(row['filepath'], output_fp)
+        for ind in x_final.index:
+            row = x_final.loc[ind]
+            final_fp = os.path.join(query_results_dir, row['basename'])
+            shutil.copy(row['input_filepath'], final_fp)
         # Save the metadata
-        x.to_csv(io_manager.output_filepaths['metadata_for_query'])
+        x_final.to_csv(io_manager.output_filepaths['y_pred_selected'])
 
         if self.verbose:
             print(
                 'Done!\n'
-                f'Output saved in {query_results_dir}'
+                f'Output saved in {io_manager.output_dir}'
             )
 
-        return x
+        return x_final
 
     def register_default_services(self):
         '''Prepare the services needed for creating a mosaic.
