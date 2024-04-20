@@ -229,3 +229,36 @@ class TestSequentialMosaicMaker(TestStage):
             io_manager.output_filepaths['used_config'],
             './configs/generated_templates/sequential-mosaic.yaml'
         )
+
+
+class TestQuery(TestStage):
+
+    def test_query(self):
+
+        query_processor: pipeline.QueryProcessor = self.create_stage(
+            './configs/query.yaml',
+        )
+        X_out = query_processor.run()
+
+        # Test for existence
+        self.check_output(query_processor)
+
+        # Check that we have a set of selected images
+        io_manager: IOManager = query_processor.container.get_service(
+            'io_manager')
+        fps = io_manager.find_selected_files(
+            os.path.join(io_manager.output_dir, 'selected'),
+            extension='tiff',
+        )
+        assert fps.size > 2
+
+        # Check that the config was saved and can be used to create a duplicate
+        stage = self.create_stage(io_manager.output_filepaths['used_config'])
+        X_out2 = stage.run()
+        assert X_out.equals(X_out2)
+
+        os.makedirs('./configs/generated_templates', exist_ok=True)
+        shutil.copy(
+            io_manager.output_filepaths['used_config'],
+            './configs/generated_templates/metadata.yaml'
+        )
