@@ -40,9 +40,7 @@ metadata_processor:
 data_splitter:  # night_horizons.pipeline.<lambda>
   use_test_dir: true
 metadata_image_registrar:  # night_horizons.pipeline.<lambda>
-  passthrough:
-  - filepath
-  - camera_num
+  passthrough: true
 altitude_filter:  # night_horizons.transformers.filters.AltitudeFilter
   column: mAltitude
   float_altitude: 100.0

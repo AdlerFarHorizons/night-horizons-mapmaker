@@ -470,7 +470,7 @@ class SequentialMosaicMaker(MosaicMaker):
         # Preprocessor to use metadata to georeference
         self.container.register_service(
             'metadata_image_registrar',
-            lambda passthrough=['filepath', 'camera_num'], *args, **kwargs: (
+            lambda passthrough=True, *args, **kwargs: (
                 registration.MetadataImageRegistrar(
                     crs=self.container.get_service('crs'),
                     passthrough=passthrough,

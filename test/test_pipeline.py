@@ -191,6 +191,9 @@ class TestSequentialMosaicMaker(TestStage):
         # Only 2 -> the test image and also a copy of it we put in the raw dir
         assert (y_pred['return_code'] == 'success').sum() == 2
 
+        # Check that we didn't drop columns
+        assert 'imuGyroMag' in y_pred.columns
+
         # Test for existence
         self.check_output(mosaicmaker)
 
@@ -251,6 +254,7 @@ class TestQuery(TestStage):
             extension=['tif', 'tiff'],
         )
         assert fps.size > 0
+        assert 'ind' in fps.iloc[0]
 
         # Check that the config was saved and can be used to create a duplicate
         stage = self.create_stage(io_manager.output_filepaths['used_config'])
