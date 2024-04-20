@@ -1,0 +1,33 @@
+pipeline:  # night_horizons.pipeline.QueryProcessor
+  stage: query_processor
+  score_output: false
+  verbose: true
+io_manager:  # night_horizons.io_manager.IOManager
+  root_dir:
+  file_exists: overwrite
+  checkpoint_file_key:
+  checkpoint_subdir: checkpoints
+  checkpoint_selection:
+  checkpoint_tag: _i{:06d}
+  checkpoint_freq: 100
+  data_ios: {}
+  input_dir: /data/input
+  input_description:
+    y_pred: existing_output/sequential-mosaic/220513-FH135_2024-04-19_21-29-39/y_pred.csv
+    referenced_images:
+      directory: 
+        existing_output/sequential-mosaic/220513-FH135_2024-04-19_21-29-39/referenced_images
+  output_dir: ./test/test_data/temp
+  output_description:
+    y_pred_selected: y_pred_selected.csv
+    used_config: used-config.yaml
+crs:  # pyproj.crs.crs.CRS
+  projparams: EPSG:3857
+random_state: # sklearn.utils.validation.check_random_state
+  seed: 159234
+metadata_processor:
+  version: fh135_metadata_processor
+query_processor: # night_horizons.transformers.filters.QueryFilter
+  condition: >-
+    (mAltitude > 13000.) &
+    (imuGyroMag < 0.075)

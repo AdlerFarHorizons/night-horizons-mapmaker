@@ -703,7 +703,7 @@ class QueryProcessor(Stage):
             x_final['input_filepath'].apply(os.path.basename)
         x_out['basename'] = \
             x_out['output_filepath'].apply(os.path.basename)
-        x_final = x_final.join(x_out, on='basename')
+        x_final = x_final.merge(x_out, on='basename')
 
         # Save the output
         if self.verbose:

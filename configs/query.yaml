@@ -12,26 +12,23 @@ io_manager:
   # Specifies the input data
   input_dir: /data/input
   input_description:
-    # Metadata files. This is the path relative to the input_dir.
-    metadata: metadata/220513-FH135/combined.csv
-    # Images without georeferencing. Needed for the metadata processor.
-    images:
+    # Output metadata file from sequential-mosaic
+    y_pred: existing_output/sequential-mosaic/220513-FH135_2024-04-19_21-29-39/y_pred.csv
+    referenced_images:
       # Relative to input_dir
-      directory: existing_output/sequential-mosaic/REPLACE_THIS/referenced_images
-      # Only files with these extensions will be considered.
-      pattern: '\.(raw|tif|tiff)$'
+      directory: existing_output/sequential-mosaic/220513-FH135_2024-04-19_21-29-39/referenced_images
+
   # Where the output files will be saved
   output_dir: /data/output/queries
   output_description:
-    metadata_for_query: metadata_for_query.csv
+    y_pred_selected: y_pred_selected.csv
     used_config: used-config.yaml
-  # If the output directory already exists then a new directory is created
-  # with a new ID attached.
-  file_exists: new
+  file_exists: overwrite
 
 query_processor:
   # The actual condition for the queried data to obey.
   # Change this to select different data
+  # 39.7963°N, 86.1535°W # Test coords
   condition: >- # The ">-" allows you to use linebreaks for clarity
     (mAltitude > 13000.) &
     (imuGyroMag < 0.075)
