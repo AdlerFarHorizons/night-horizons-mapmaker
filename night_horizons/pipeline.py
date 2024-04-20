@@ -152,7 +152,7 @@ class MetadataProcessor(Stage):
         # Get the filepaths
         if self.verbose:
             print('    Setting up filetree...')
-        io_manager = self.container.get_service('io_manager')
+        io_manager: IOManager = self.container.get_service('io_manager')
         image_fps = io_manager.input_filepaths['images']
 
         # Save config
@@ -551,7 +551,7 @@ class SequentialMosaicMaker(MosaicMaker):
                 *args, **kwargs
             ),
             wrapped_constructor=mosaicking.SequentialMosaicker,
-        )
+    )
 
         # The processor for the sequential mosaicker
         self.container.register_service(
@@ -658,6 +658,67 @@ class SequentialMosaicMaker(MosaicMaker):
         )
 
 
+class QueryProcessor(Stage):
+    '''Class for querying pipeline output (primarily referenced images)
+    '''
+
+    def run(self):
+        '''Query the metadata, copy the files.
+        '''
+
+        if self.verbose:
+            print('Starting querying.')
+
+        # Get the filepaths
+        if self.verbose:
+            print('    Setting up filetree...')
+        io_manager: IOManager = self.container.get_service('io_manager')
+        image_fps = io_manager.input_filepaths['images']
+
+        # Save config
+        if 'used_config' in io_manager.output_filepaths:
+            self.container.save_config(
+                io_manager.output_filepaths['used_config'])
+
+        # Get the metadata
+        if self.verbose:
+            print('    Accessing metadata...')
+        metadata_processor = self.container.get_service(
+            'metadata_processor')
+        x: pd.DataFrame = metadata_processor.fit_transform(image_fps)
+
+        # Query
+        if self.verbose:
+            print('    Querying...')
+        query_processor = self.container.get_service('query_processor')
+        x_out: pd.DataFrame = query_processor.fit_transform(x)
+
+        # Save the output
+        if self.verbose:
+            print('    Saving...')
+        query_results_dir = os.path.join(
+            io_manager.output_dir, 'query_results')
+        os.makedirs(
+            exist_ok=True
+        )
+        # Copy selected images
+        for ind in x_out.index:
+            row = x_out.loc[ind]
+            output_fp = os.path.join(
+                query_results_dir, os.path.basename(row['filepath']))
+            shutil.copy(row['filepath'], output_fp)
+        # Save the metadata
+        x.to_csv(io_manager.output_filepaths['metadata_for_query'])
+
+        if self.verbose:
+            print(
+                'Done!\n'
+                f'Output saved in {query_results_dir}'
+            )
+
+        return x
+
+
 def create_stage(config_filepath, local_options={}):
 
     container = DIContainer(
@@ -685,6 +746,11 @@ def create_stage(config_filepath, local_options={}):
         container.register_service(
             'pipeline',
             SequentialMosaicMaker
+        )
+    elif stage == 'query_processor':
+        container.register_service(
+            'pipeline',
+            QueryProcessor
         )
     else:
         raise ValueError(f'Unknown stage: {stage}')
