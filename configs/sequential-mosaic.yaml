@@ -8,7 +8,7 @@ pipeline:
 
 # I/O settings
 # These settings assume that the user has mounted their data directory at /data
-io_manager: &default_settings
+io_manager: &default_io_settings
   # Specifies the input data
   input_dir: /data/input
   input_description:
@@ -34,10 +34,16 @@ io_manager: &default_settings
   output_dir: /data/output
   output_description:
     used_config: used-config.yaml
+  # DEBUG
+  # checkpoint_freq: 1
 
 # The new io manager inherits the default settings
 io_manager_train:
-  <<: *default_settings
+  <<: *default_io_settings
+
+# DEBUG
+# data_splitter:
+#   max_raw_size: 10
 
 # What metadata processor to use (based on metadata format)
 metadata_processor:

@@ -37,7 +37,7 @@ metadata_processor:
 
 # Coordinate reference-system employed
 crs:
-  projparams: 'EPSG:3857'
+  projparams: 'EPSG:3857' # The coordinate system used for google maps, this is a pretty good cartesian standard.
 
 random_state: 
   seed: 159234
