@@ -18,7 +18,7 @@ io_manager:
     # Images with georeferencing. We perform a search for matching files.
     referenced_images:
       # This filepath is relative to input_dir
-      directory: referenced_images/220513-FH135
+      directory: referenced_images/240203-FH145
       # This is a RegEx pattern. The "1" selects nadir images only.
       pattern: 'Geo\s\d+_1\.(tif|tiff)$'
   # Where the output files will be saved
@@ -29,7 +29,7 @@ io_manager:
 
 # What metadata processor to use (based on metadata format)
 metadata_processor:
-  version: fh135_metadata_processor
+  version: fh145_metadata_processor
 
 # Coordinate reference-system employed
 crs:
