@@ -30,7 +30,9 @@ io_manager:
   file_exists: new
 
 query_processor:
-  condition: |
+  # The ">-" allows you to use linebreaks for clarity
+  # without messing up the syntax
+  condition: >- 
     (mAltitude > 13000.) &
     (imuGyroMag < 0.075)
 

@@ -699,6 +699,7 @@ class QueryProcessor(Stage):
         query_results_dir = os.path.join(
             io_manager.output_dir, 'query_results')
         os.makedirs(
+            query_results_dir,
             exist_ok=True
         )
         # Copy selected images

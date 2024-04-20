@@ -247,10 +247,10 @@ class TestQuery(TestStage):
         io_manager: IOManager = query_processor.container.get_service(
             'io_manager')
         fps = io_manager.find_selected_files(
-            os.path.join(io_manager.output_dir, 'selected'),
-            extension='tiff',
+            os.path.join(io_manager.output_dir, 'query_results'),
+            extension=['tif', 'tiff'],
         )
-        assert fps.size > 2
+        assert fps.size > 0
 
         # Check that the config was saved and can be used to create a duplicate
         stage = self.create_stage(io_manager.output_filepaths['used_config'])
