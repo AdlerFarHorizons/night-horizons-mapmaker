@@ -260,5 +260,5 @@ class TestQuery(TestStage):
         os.makedirs('./configs/generated_templates', exist_ok=True)
         shutil.copy(
             io_manager.output_filepaths['used_config'],
-            './configs/generated_templates/metadata.yaml'
+            './configs/generated_templates/query.yaml'
         )

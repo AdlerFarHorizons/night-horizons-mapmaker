@@ -34,7 +34,6 @@ quality_order: # night_horizons.pipeline.<lambda>
   quality_col: imuGyroMag
 preprocessor_pipeline: # night_horizons.pipeline.make_preprocessor_pipeline
   steps:
-  - geotiff_preprocessor
 image_operator:  # night_horizons.image_processing.operators.ImageBlender
   fill_value:
   outline: 0.0

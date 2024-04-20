@@ -551,7 +551,7 @@ class SequentialMosaicMaker(MosaicMaker):
                 *args, **kwargs
             ),
             wrapped_constructor=mosaicking.SequentialMosaicker,
-    )
+        )
 
         # The processor for the sequential mosaicker
         self.container.register_service(
