@@ -13,10 +13,9 @@ io_manager:  # night_horizons.io_manager.IOManager
   data_ios: {}
   input_dir: /data/input
   input_description:
-    y_pred: existing_output/sequential-mosaic/220513-FH135_2024-04-19_21-29-39/y_pred.csv
+    y_pred: existing_output/y_pred.csv
     referenced_images:
-      directory: 
-        existing_output/sequential-mosaic/220513-FH135_2024-04-19_21-29-39/referenced_images
+      directory: existing_output/referenced_images
   output_dir: ./test/test_data/temp
   output_description:
     y_pred_selected: y_pred_selected.csv
