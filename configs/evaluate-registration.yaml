@@ -1,41 +1,62 @@
 ###############################################################################
-# Example Configuration File
+# Example Sequential Mosaicker Config
 ###############################################################################
 
-# Indicate what type of map we want to create
-mapmaker:
+# Indicate what stage of the pipeline to run
+pipeline:
   stage: sequential_mosaicker
 
 # I/O settings
 # These settings assume that the user has mounted their data directory at /data
-io_manager:
-  # Directory containing input files. Filepaths in input_description
-  # are relative to this directory.
-  input_dir: /data/input
+io_manager: &default_io_settings
   # Specifies the input data
+  input_dir: /data/input
   input_description:
-    # Metadata files. We provide the exact full path relative to input_dir.
-    img_log: metadata/image.log
-    imu_log: metadata/PresIMULog.csv
-    gps_log: metadata/GPSLog.csv
-    # Images with georeferencing. We perform a search for matching files.
+    # Metadata files. This is the path relative to the input_dir.
+    # metadata: metadata/220513-FH135/combined_metadata.csv
+    img_log: metadata/220513-FH135/image.log
+    imu_log: metadata/220513-FH135/PresIMULog.csv
+    gps_log: metadata/220513-FH135/GPSLog.csv
+    # Images without georeferencing.
+    images:
+      # Relative to input_dir
+      # 23085687 is the ID of the nadir camera. Delete it to process all images.
+      directory: images/220513-FH135/23085687
+      # Only files with these extensions will be considered.
+      pattern: '\.(raw|tif|tiff)$'
+    # Images with georeferencing.
     referenced_images:
-      # This filepath is relative to input_dir, e.g. the full path could be
-      # /data/nitelite/220513-FH135/images/referenced
+      # This filepath is relative to input_dir
       directory: referenced_images/220513-FH135
       # This is a RegEx pattern. The "1" selects nadir images only.
-      pattern: 'Geo\s\d+_1\.(tif|tiff)'
+      pattern: 'Geo\s\d+_1\.(tif|tiff)$'
   # Where the output files will be saved
   output_dir: /data/output
+  output_description:
+    used_config: used-config.yaml
 
 # Settings for testing and training data
 # The "drop raw images" arg is what makes this an evaluation
 data_splitter:
   drop_raw_images: True
 
+# The new io manager inherits the default settings
+io_manager_train:
+  <<: *default_io_settings
+
+# DEBUG
+# data_splitter:
+#   max_raw_size: 10
+
+# What metadata processor to use (based on metadata format)
+metadata_processor:
+  version: fh135_metadata_processor
+
 # Coordinate reference-system employed
 crs:
+  # A standard CRS for cartesian coordinates
   projparams: 'EPSG:3857'
 
+# Random state for reproducibility
 random_state: 
   seed: 159234
