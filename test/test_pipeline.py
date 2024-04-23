@@ -211,6 +211,8 @@ class TestSequentialMosaicMaker(TestStage):
         # Subtract one because the training mosaic doesn't have a checkpoint
         n_expected -= 1
         assert fps.size == n_expected
+        # Check for one particular file
+        assert sum(['mosaic' in _ for _ in fps]) == 1
 
         # Check basic structure of X_out
         n_raw = len(io_manager.input_filepaths['images'])
