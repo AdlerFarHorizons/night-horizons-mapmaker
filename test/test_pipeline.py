@@ -236,9 +236,9 @@ class TestSequentialMosaicMaker(TestStage):
         )
 
 
-class TestQuery(TestStage):
+class TestQueryProcessor(TestStage):
 
-    def test_query(self):
+    def test_query_processor(self):
 
         query_processor: pipeline.QueryProcessor = self.create_stage(
             './configs/query.yaml',
