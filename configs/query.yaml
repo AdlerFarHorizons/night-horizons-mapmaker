@@ -13,10 +13,10 @@ io_manager:
   input_dir: /data/input
   input_description:
     # Output metadata file from sequential-mosaic
-    y_pred: existing_output/y_pred.csv
+    y_pred: existing_output/sequential-mosaic/REPLACE_THIS/y_pred.csv
     referenced_images:
       # Relative to input_dir
-      directory: existing_output/referenced_images
+      directory: existing_output/sequential-mosaic/REPLACE_THIS/referenced_images
 
   # Where the output files will be saved
   output_dir: /data/output/queries
