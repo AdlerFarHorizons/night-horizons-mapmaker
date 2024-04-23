@@ -546,6 +546,8 @@ def get_logger(name: str = None):
 
     # Get logging level
     # Options are DEBUG, INFO, WARNING, ERROR, CRITICAL
+    # TODO: Setting LOGGING_LEVEL elsewhere does not seem to consistently work.
+    #      We're getting "None" more often than not.
     logging_level = os.getenv('LOGGING_LEVEL')
     if logging_level is None:
         logging_level = 'WARNING'

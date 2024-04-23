@@ -76,8 +76,8 @@ class Processor(utils.LoggerMixin, ABC):
         the existing data (including if the existing data was just updated
         with src in a previous row).
 
-        # TODO: A better name than "process_row" may be available, since 
-        # TODO  we don't clarify what a row is.
+        TODO: A better name than "process_row" may be available, since 
+                we don't clarify what a row is.
 
         Parameters
         ----------
