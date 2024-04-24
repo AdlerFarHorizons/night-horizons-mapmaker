@@ -2,9 +2,6 @@
 # Example Mosaicker Config
 ###############################################################################
 
-# TODO: Make an ultra simple config that includes *just* the flight ID
-#       Don't try to ask users to access the ENV vars in the "override build settings"
-
 # Indicate what stage of the pipeline to run
 pipeline:
   stage: mosaicker
