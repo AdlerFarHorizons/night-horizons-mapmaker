@@ -22,18 +22,36 @@ from .utils import get_method_parameters, deep_merge
 
 
 class DIContainer:
+    '''
+    Dependency Injection Container. This class is responsible for constructing
+    the objects we use. This has the benefit of a) enabling easy integration
+    with a config, b) decoupling the object creation from the rest of the
+    code (which e.g. allows us to update only one place when updating how
+    objects are created), and c) decouples classes from each other.
 
-    def __init__(self, config_filepath: str, local_options: dict = {}):
+    Jargon
+    ------
+        Container: This class.
+        Service: An object that is created by the container.
+        Dependency: An object that a service depends on.
+        Inject: The process of providing a service with its dependencies.
+
+    '''
+
+    def __init__(self, config_filepath: str, local_options: dict = None):
         '''
-
-        TODO: Rename "service" (and maybe container) to something more
-        recognizable to scientists?
+        Initialize the DIContainer.
 
         Parameters
         ----------
-        Returns
-        -------
+        config_filepath : str
+            The filepath to the configuration file.
+        local_options : dict, optional
+            Local options to override the configuration, by default {}.
         '''
+
+        if local_options is None:
+            local_options = {}
 
         # Internal services (constructors)
         self._services = OrderedDict()
@@ -51,18 +69,30 @@ class DIContainer:
 
     def register_service(
         self,
-        name,
-        constructor,
+        name: str,
+        constructor: callable,
         singleton: bool = False,
-        wrapped_constructor=None,
+        wrapped_constructor = None,
     ):
-        # TODO: Allow users to specify the constructor? ChatGPT has suggestions
-        #      for this via importlib. What we really want is to allow users
-        #      to be able to specify e.g. FH135 vs FH145, and as simply as
-        #      possible. Specifying constructors is cool, but probably not
-        #      the right solution. The right solution might involve
-        #      separating the service creation logic and the choice of how
-        #      to analyze the data.
+        '''
+        Register a service (object) with the container. Doing so allows us to 
+        get an instance of it on-demand.
+
+        Parameters
+        ----------
+        name : str
+            The name of the service.
+        constructor : callable
+            The constructor function for the service.
+        singleton : bool, optional
+            Flag indicating if the service should be a singleton,
+            by default False.
+        wrapped_constructor : callable, optional
+            The wrapped constructor function for the service,
+            by default None.
+
+        '''
+
         self._services[name] = {
             'constructor': constructor,
             'singleton': singleton,
@@ -72,9 +102,31 @@ class DIContainer:
             ),
         }
 
-    def get_service(self, name, version=None, *args, **kwargs):
+    def get_service(self, name: str, *args, version: str = None, **kwargs):
         '''
-        TODO: Add parameter validation.
+        Get an instance of a registered service.
+
+        Parameters
+        ----------
+        name : str
+            The name of the service.
+        version : str, optional
+            The version of the service, by default None.
+        *args
+            Positional arguments to be passed to the service constructor.
+        **kwargs
+            Keyword arguments to be passed to the service constructor.
+
+        Returns
+        -------
+        object
+            An instance of the requested service.
+
+        Raises
+        ------
+        ValueError
+            If the service is not registered.
+
         '''
 
         # If we have a particular version of the service we want to use
@@ -106,9 +158,36 @@ class DIContainer:
 
         return service
 
-    def get_used_args(self, name, constructor, *args, **kwargs):
+    def get_used_args(
+        self,
+        name: str,
+        constructor: callable,
+        *args, **kwargs
+    ) -> tuple[tuple, dict]:
+        '''
+        Get the used arguments for a service, based on the config,
+        the arguments passed in, and the function defaults.
 
-        # Start by combinining the passed-in kwargs and the config
+        Parameters
+        ----------
+        name : str
+            The name of the service.
+        constructor : callable
+            The constructor function for the service.
+        *args
+            Positional arguments to be passed to the service constructor.
+        **kwargs
+            Keyword arguments to be passed to the service constructor.
+
+        Returns
+        -------
+        tuple
+            A tuple containing the positional arguments and keyword arguments
+            to be used for constructing the service.
+
+        '''
+
+        # Start by combining the passed-in kwargs and the config
         if name in self.config:
             kwargs = deep_merge(self.config[name], kwargs)
 
@@ -118,7 +197,21 @@ class DIContainer:
 
         return args, kwargs
 
-    def get_default_args(self, constructor):
+    def get_default_args(self, constructor: callable) -> dict:
+        '''
+        Get the default arguments for a service constructor.
+
+        Parameters
+        ----------
+        constructor : callable
+            The constructor function for the service.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the default arguments for the constructor.
+
+        '''
 
         kwargs = {}
         try:
@@ -137,26 +230,38 @@ class DIContainer:
         return kwargs
 
     def parse_config(self, config: dict) -> dict:
-        '''This goes through the config and handles some parameters.
+        '''
+        Parse the configuration and perform custom adjustments for
+        some parameters.
 
         Parameters
         ----------
+        config : dict
+            The configuration dictionary.
+
         Returns
         -------
+        dict
+            The parsed configuration dictionary.
 
         '''
 
-        # TODO: Delete this once we're sure we don't need it
-        # for key, value in config['filetree'].items():
-        #     config['filetree'][key] = os.path.join(config['root_dir'], value)
-        # config.setdefault('io_manager', {})['out_dir'] = \
-        #     config['filetree']['out_dir']
+        def deep_interpret(unparsed: dict) -> dict:
+            '''
+            Interpret the configuration recursively.
 
-        def deep_interpret(unparsed):
+            Parameters
+            ----------
+                unparsed : dict
+                The unparsed configuration dictionary.
 
+            Returns
+            -------
+                dict
+                The parsed configuration dictionary.
+            '''
             parsed = {}
             for key, value in unparsed.items():
-
                 if isinstance(value, dict):
                     parsed[key] = deep_interpret(value)
                 elif key == 'random_state':
@@ -168,12 +273,20 @@ class DIContainer:
                         parsed[key] = value
                 else:
                     parsed[key] = value
-
             return parsed
 
         return deep_interpret(config)
 
     def save_config(self, filepath: str):
+        '''
+        Save the configuration to a file.
+
+        Parameters
+        ----------
+        filepath : str
+            The filepath to save the configuration.
+
+        '''
 
         # Get the parameters for each service
         yaml = YAML()
@@ -205,6 +318,16 @@ class DIContainer:
             yaml.dump(doc, file)
 
     def register_dataio_services(self):
+        '''
+        Register data IO services.
+        TODO: Delete this.
+
+        Returns
+        -------
+        list
+            A list of registered data IO services.
+
+        '''
 
         # Register data io services
         self.dataio_services = []
