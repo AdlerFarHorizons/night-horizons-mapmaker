@@ -242,6 +242,14 @@ class TestQueryProcessor(TestStage):
 
         query_processor: pipeline.QueryProcessor = self.create_stage(
             './configs/query.yaml',
+            local_options={
+                'query_processor': {
+                    'condition': (
+                        '(mAltitude > 13000.) &'
+                        '(imuGyroMag < 0.075)'
+                    ),
+                },
+            },
         )
         X_out = query_processor.run()
 

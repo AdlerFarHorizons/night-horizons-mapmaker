@@ -28,5 +28,4 @@ metadata_processor:
   version: fh135_metadata_processor
 query_processor: # night_horizons.transformers.filters.QueryFilter
   condition: >-
-    (mAltitude > 13000.) &
-    (imuGyroMag < 0.075)
+    (mAltitude > 13000.) &(imuGyroMag < 0.075)

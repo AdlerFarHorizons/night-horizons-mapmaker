@@ -30,8 +30,10 @@ query_processor:
   # Change this to select different data
   # 39.7963°N, 86.1535°W # Test coords
   condition: >- # The ">-" allows you to use linebreaks for clarity
-    (mAltitude > 13000.) &
-    (imuGyroMag < 0.075)
+    (x_center < -9593500 + 1000) &
+    (x_center > -9593500 - 1000) &
+    (y_center < 4857700 + 1000) &
+    (y_center > 4857700 - 1000)
 
 # What metadata processor to use (based on metadata format)
 metadata_processor:
