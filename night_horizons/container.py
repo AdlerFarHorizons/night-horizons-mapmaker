@@ -1,24 +1,16 @@
+'''This module contains the Dependency Injection Container class, which is
+responsible for constructing the objects we use.
+'''
+
 from collections import OrderedDict
-import copy
-import os
 import inspect
 
-import cv2
-import numpy as np
-import pandas as pd
 import pyproj
-import scipy
-from sklearn.utils import check_random_state
 from ruamel.yaml import YAML
-
-from .transformers import preprocessors
-# This is a draft---don't overengineer!
-# NO renaming!
-# NO refactoring!
-# TODO: Remove this when the draft is done.
+from sklearn.utils import check_random_state
 
 from . import data_io
-from .utils import get_method_parameters, deep_merge
+from .utils import deep_merge
 
 
 class DIContainer:
