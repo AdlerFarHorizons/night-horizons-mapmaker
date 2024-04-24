@@ -13,7 +13,7 @@ io_manager:
   input_dir: /data/input
   input_description:
     # Output metadata file from sequential-mosaic
-    y_pred: existing_output/sequential-mosaic/REPLACE_THIS/y_pred.csv
+    metadata: existing_output/sequential-mosaic/REPLACE_THIS/y_pred.csv
     referenced_images:
       # Relative to input_dir
       directory: existing_output/sequential-mosaic/REPLACE_THIS/referenced_images
@@ -21,7 +21,7 @@ io_manager:
   # Where the output files will be saved
   output_dir: /data/output/queries
   output_description:
-    y_pred_selected: y_pred_selected.csv
+    metadata_selected: y_pred_selected.csv
     used_config: used-config.yaml
   file_exists: overwrite
 

@@ -686,7 +686,7 @@ class QueryProcessor(Stage):
         # metadata_processor = self.container.get_service(
         #     'metadata_processor')
         # x: pd.DataFrame = metadata_processor.fit_transform(image_fps)
-        x = pd.read_csv(io_manager.input_filepaths['y_pred'], index_col=0)
+        x = pd.read_csv(io_manager.input_filepaths['metadata'], index_col=0)
 
         # Query
         if self.verbose:
@@ -720,7 +720,7 @@ class QueryProcessor(Stage):
             final_fp = os.path.join(query_results_dir, row['basename'])
             shutil.copy(row['input_filepath'], final_fp)
         # Save the metadata
-        x_final.to_csv(io_manager.output_filepaths['y_pred_selected'])
+        x_final.to_csv(io_manager.output_filepaths['metadata_selected'])
 
         if self.verbose:
             print(
