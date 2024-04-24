@@ -625,7 +625,7 @@ class ReferencedRawSplitter:
         io_manager,
         test_size: Union[int, float] = 0.2,
         max_raw_size: int = None,
-        drop_raw: bool = False,
+        drop_raw_images: bool = False,
         random_state: Union[int, np.random.RandomState] = None,
         use_test_dir: bool = False,
     ):
@@ -633,7 +633,7 @@ class ReferencedRawSplitter:
         self.io_manager = io_manager
         self.test_size = test_size
         self.max_raw_size = max_raw_size
-        self.drop_raw = drop_raw
+        self.drop_raw_images = drop_raw_images
         self.random_state = check_random_state(random_state)
         self.use_test_dir = use_test_dir
 
@@ -668,7 +668,7 @@ class ReferencedRawSplitter:
             )
 
         # Combine raw fps and test fps
-        if not self.drop_raw:
+        if not self.drop_raw_images:
             raw_fps = self.io_manager.input_filepaths['images']
 
             # Downsample the raw images as requested
