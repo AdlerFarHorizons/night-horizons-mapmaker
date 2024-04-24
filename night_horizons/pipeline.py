@@ -690,12 +690,16 @@ class QueryProcessor(Stage):
 
         # Query
         if self.verbose:
-            print('    Querying...')
+            print('Querying...')
         query_processor = self.container.get_service('query_processor')
-        x_out: pd.DataFrame = query_processor.fit_transform(x)
+        x_out: pd.DataFrame = query_processor.fit_transform(x).copy()
+        if self.verbose:
+            print(f'    Found {len(x_out)} possible images')
 
         # Create the lookup dataframe by joining on basename
         # Joining is an easy way to only use the files we have
+        if self.verbose:
+            print('    Checking which images are available...')
         x_final = pd.DataFrame({
             'input_filepath': io_manager.input_filepaths['referenced_images'],
         })
@@ -704,10 +708,15 @@ class QueryProcessor(Stage):
         x_out['basename'] = \
             x_out['output_filepath'].apply(os.path.basename)
         x_final = x_final.merge(x_out, on='basename')
+        if self.verbose:
+            print(
+                f'    Of the {len(x_out)} possible images, '
+                f'{len(x_final)} are available'
+            )
 
         # Save the output
         if self.verbose:
-            print('    Saving...')
+            print('Saving...')
         query_results_dir = os.path.join(
             io_manager.output_dir, 'query_results')
         os.makedirs(
