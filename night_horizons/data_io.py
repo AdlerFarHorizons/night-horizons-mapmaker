@@ -15,8 +15,6 @@ import pyproj
 from pyproj.enums import WktVersion
 import yaml
 
-from .utils import get_distance
-
 
 class DataIO(ABC):
     @abstractmethod

@@ -115,21 +115,6 @@ def load_image(
     return img
 
 
-def get_distance(crs, x1, y1, x2, y2):
-
-    if crs.is_geographic:
-
-        geod = crs.get_geod()
-        _, _, distance = geod.inv(
-            lons1=x1, lats1=y1,
-            lons2=x2, lats2=y2,
-        )
-    else:
-        distance = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-
-    return distance
-
-
 def check_filepaths_input(
     X: Union[np.ndarray[str], list[str], pd.DataFrame],
     required_columns: list[str] = ['filepath'],
