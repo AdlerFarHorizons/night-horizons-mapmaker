@@ -84,10 +84,6 @@ class ImageIO(DataIO):
         else:
             raise IOError('Cannot read filetype {}'.format(ext))
 
-        # TODO: Delete this
-        # if img is None:
-        #     return img
-
         if isinstance(dtype, str):
             dtype = getattr(np, dtype)
 

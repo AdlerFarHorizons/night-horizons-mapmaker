@@ -174,40 +174,6 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
 
         return X_t
 
-    # TODO: Delete this.
-    # def input_fit(
-    #     self,
-    #     x_min,
-    #     x_max,
-    #     y_min,
-    #     y_max,
-    #     pixel_width,
-    #     pixel_height,
-    #     crs,
-    #     x_size,
-    #     y_size,
-    # ):
-    #     '''Calling this function is superior to simply setting each attribute,
-    #     because it ensures all the important parameters are set.
-
-    #     Parameters
-    #     ----------
-    #     Returns
-    #     -------
-    #     '''
-
-    #     self.x_min_ = x_min
-    #     self.x_max_ = x_max
-    #     self.y_min_ = y_min
-    #     self.y_max_ = y_max
-    #     self.pixel_width_ = pixel_width
-    #     self.pixel_height_ = pixel_height
-    #     self.crs_ = crs
-    #     self.x_size_ = x_size
-    #     self.y_size_ = y_size
-
-    #     return self
-
     def physical_to_pixel(
         self,
         x_min,
@@ -360,53 +326,3 @@ class RasterCoordinateTransformer(TransformerMixin, BaseEstimator):
         )
 
         return X
-
-    # TODO: Delete this, when we're sure we don't need it.
-    # def get_image_with_bounds(self, dataset, x_min, x_max, y_min, y_max):
-
-    #     # Out of bounds
-    #     if (
-    #         (x_min > self.x_max_)
-    #         or (x_max < self.x_min_)
-    #         or (y_min > self.y_max_)
-    #         or (y_max < self.y_min_)
-    #     ):
-    #         raise ValueError(
-    #             'Tried to retrieve data fully out-of-bounds.'
-    #         )
-
-    #     # Only partially out-of-bounds
-    #     if x_min < self.x_min_:
-    #         x_min = self.x_min_
-    #     if x_max > self.x_max_:
-    #         x_max = self.x_max_
-    #     if y_min < self.y_min_:
-    #         y_min = self.y_min_
-    #     if y_max > self.y_max_:
-    #         y_max = self.y_max_
-
-    #     x_off, y_off, x_size, y_size = self.physical_to_pixel(
-    #         x_min, x_max, y_min, y_max
-    #     )
-
-    #     return self.get_image(dataset, x_off, y_off, x_size, y_size)
-
-    # def save_image_with_bounds(self, dataset, img, x_min, x_max, y_min, y_max):
-
-    #     x_off, y_off, _, _ = self.physical_to_pixel(
-    #         x_min, x_max, y_min, y_max
-    #     )
-
-    #     self.save_image(dataset, img, x_off, y_off)
-
-    # @staticmethod
-    # def check_bounds(coords, x_off, y_off, x_size, y_size):
-
-    #     in_bounds = (
-    #         (x_off <= coords[:, 0])
-    #         & (coords[:, 0] <= x_off + x_size)
-    #         & (y_off <= coords[:, 1])
-    #         & (coords[:, 1] <= y_off + y_size)
-    #     )
-
-    #     return in_bounds
