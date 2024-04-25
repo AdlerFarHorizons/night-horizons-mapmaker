@@ -37,9 +37,6 @@ class SensorAndDistanceOrder(OrderTransformer):
 
     The center defaults to that of the first training sample.
 
-    TODO: Breaking this up into multiple individual transforms makes sense,
-        if this is something the user is expected to experiment with.
-
     Parameters
     ----------
     Returns

@@ -7,20 +7,14 @@ import re
 import shutil
 from typing import Tuple, Union
 
+import numpy as np
 from osgeo import gdal
 gdal.UseExceptions()
-import yaml
-
-import numpy as np
 import pandas as pd
-import scipy
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state
 from sqlalchemy import create_engine
-# This is a draft---don't overengineer!
-# NO renaming!
-# NO refactoring!
-# TODO: Remove this when the draft is done.
+import yaml
 
 from night_horizons.data_io import GDALDatasetIO
 
@@ -36,12 +30,6 @@ class IOManager:
     - Save files
     - Checkpoint files - DONE
     - Save auxiliary files (settings, logs, etc.) - DONE (kinda)
-
-    TODO: There should be a way to specify what files a given class needs
-        and how that's hooked up to IOManager.
-
-    NOTE: This *could* be broken into an InputFileManager, an
-    OutputFileManager, and a DataIOManager, but that seems like overkill.
     '''
 
     def __init__(
@@ -114,7 +102,6 @@ class IOManager:
             self.find_input_files(input_description)
 
         # Process output filetree
-        # TODO: Ideally this would be called at the time of the fit.
         self.output_filepaths, self.output_dir = \
             self.get_output_filepaths(
                 output_dir=output_dir,
@@ -322,7 +309,7 @@ class IOManager:
         return output_filepaths, output_dir
 
     def save_settings(self, obj):
-        '''TODO: Another thing to move into a DataIO
+        '''TODO: Delete
 
         Parameters
         ----------
@@ -467,9 +454,6 @@ class MosaicIOManager(IOManager):
     ):
         '''The inputs are more-appropriate defaults for mosaics.
 
-        TODO: Consider renaming referenced_images to georeferenced_images
-        everywhere.
-
         Parameters
         ----------
         Returns
@@ -492,7 +476,7 @@ class MosaicIOManager(IOManager):
 
     def open_dataset(self):
         '''
-        TODO: Kind of awkard that this is one of the only convenience functions
+        It's kind of awkard that this is one of the only convenience functions
         for opening/loading data.
         '''
 

@@ -536,7 +536,7 @@ class SequentialMosaicMaker(MosaicMaker):
 
     def register_default_processors(self):
         '''
-        TODO: This could be cleaned up more, at the cost of flexibility.
+        This could be cleaned up more, at the cost of flexibility.
         '''
 
         # Finally, the mosaicker itself
@@ -625,7 +625,6 @@ class SequentialMosaicMaker(MosaicMaker):
             TrainMosaicIOManager,
             singleton=True,
         )
-        # TODO: List all the design patterns I used. Singleton, DI, etc.
 
         # For the training mosaic
         self.container.register_service(

@@ -1,16 +1,10 @@
 import os
 import shutil
 import unittest
-from unittest.mock import MagicMock
 
 import cv2
 import numpy as np
 import pandas as pd
-import scipy
-# This is a draft---don't overengineer!
-# NO renaming!
-# NO refactoring!
-# TODO: Remove this when the draft is done.
 
 from night_horizons.image_processing import processors, scorers, operators
 from night_horizons.pipeline import create_stage
@@ -105,8 +99,6 @@ class TestDatasetRegistrar(unittest.TestCase):
         pixel_diff_threshold=1,
     ):
         """Compare two referenced images.
-        TODO: I pulled this out of the functions and made more general, but
-        it's not used elsewhere...
 
         Args:
             expected_fp (str): File path of the expected image.

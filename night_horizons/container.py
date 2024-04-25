@@ -300,8 +300,7 @@ class DIContainer:
             )
 
             # Get the used arguments
-            # TODO: Need to change this back from getting just defaults
-            args, kwargs = self.get_used_args(name, constructor)
+            _, kwargs = self.get_used_args(name, constructor)
 
             if kwargs != {}:
                 doc[name] = kwargs

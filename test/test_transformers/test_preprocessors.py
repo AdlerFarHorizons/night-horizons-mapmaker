@@ -140,9 +140,6 @@ class TestNITELitePreprocessor(unittest.TestCase):
 class TestGeoTIFFPreprocessor(unittest.TestCase):
 
     def test_output(self):
-        '''TODO: This fails when run alongside the other tests in
-        test_preprocessors, but not by itself.
-        '''
 
         # Image filetree info
         image_dir = '/data/input/images'

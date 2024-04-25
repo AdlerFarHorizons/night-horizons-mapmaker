@@ -1,19 +1,10 @@
 '''Convenient handling of raster data (images, GDAL datasets).
 '''
-import numpy as np
-import pandas as pd
-import scipy
-# This is a draft---don't overengineer!
-# NO renaming!
-# NO refactoring!
-# TODO: Remove this when the draft is done.
-
-import copy
-import glob
-import os
+from typing import Union
 
 import cv2
-from osgeo import gdal, gdal_array
+import numpy as np
+from osgeo import gdal
 gdal.UseExceptions()
 import pyproj
 
@@ -21,8 +12,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import seaborn as sns
-
-from typing import Tuple, Union
 
 from . import data_io
 from .transformers.raster import RasterCoordinateTransformer
@@ -104,13 +93,6 @@ class Image:
         return self._des
 
     def get_img_int_from_img(self) -> np.ndarray[int]:
-        '''
-
-        TODO: State (and assess) general principle--
-            will use default options for image retrieval.
-            For more fine-grained control call get_img
-            first, instead of passing in additional arguments.
-        '''
 
         img_int = (self.img * 255).astype(np.uint8)
 
@@ -461,7 +443,6 @@ class ReferencedImage(Image):
 
     def show(self, ax=None, img='img', crs='pixel', *args, **kwargs):
         '''
-        TODO: Make this more consistent with naming of other functions?
         '''
 
         # Use existing functionality
@@ -696,7 +677,6 @@ class DatasetWrapper:
 # TODO: Delete this, when we're sure we don't need it.
 # class OtherDatasetWrapper:
 #     '''This functionality is copied from Mosaicker.
-#     TODO: Clean up this and others so we don't have duplicates.
 #     The best idea is probably to keep this code and others in a separate place
 #     as convenience wrappers, but move the internal functionality to a DatasetIO
 #     class and something like a DatasetOperations class.

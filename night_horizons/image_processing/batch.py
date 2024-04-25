@@ -52,7 +52,7 @@ class BatchProcessor(
         scorer : Processor, optional
             The scorer object used for scoring the processed data.
 
-        TODO: Passthrough is currently True by default. This is less likely to
+        Passthrough is currently True by default. This is less likely to
         cause unexpected errors, but slightly more likely to cause uncaught
         unexpected behavior.
 
@@ -218,10 +218,6 @@ class BatchProcessor(
 
         LOGGER.info('Starting batch processing...')
 
-        # TODO: We could avoid passing around the log filepath here, and
-        #       keep it as an attribute instead...
-        #       One nice thing about this as is is that we don't have to
-        #       go digging for where the log is saved.
         if 'log' in self.io_manager.output_filepaths:
             self.log_filepath_ = self.io_manager.output_filepaths['log']
             self.start_logging(
@@ -235,12 +231,6 @@ class BatchProcessor(
 
         # Resources contains global variables that will be available
         # throughout image processing.
-        # TODO: I may be able to get away without resources. Resources
-        #       originally existed because I thought saving dataset as
-        #       an attribute (for mosaicking) was creating a memory leak.
-        #       However, when I debugged that much of the issue actually came
-        #       from saving massive objects (all the features) to the log
-        #       and duplicating them.
         X_t, resources = self.preprocess(X)
 
         # Start memory tracing
@@ -290,7 +280,6 @@ class BatchProcessor(
             self.io_manager.prune_checkpoints()
 
             # Update and save the log
-            # TODO: We probably don't have to write every loop...
             log = self.update_log(locals(), log)
             self.logs.append(log)
             if hasattr(self, 'log_filepath_'):

@@ -1,20 +1,10 @@
 from abc import ABC, abstractmethod
 import copy
-import glob
-import os
-import time
-from typing import Tuple, Union
+from typing import Union
 
 import cv2
 import numpy as np
-import pandas as pd
 import psutil
-import scipy
-
-# This is a draft---don't overengineer!
-# NO renaming!
-# NO refactoring!
-# TODO: Remove this when the draft is done.
 
 from .. import utils, exceptions
 
@@ -203,7 +193,6 @@ class ImageAligner(BaseImageOperator):
         # Get keypoints
         LOGGER.info('Detecting and computing keypoints:source...')
         src_kp, src_des = self.detect_and_compute(src_img)
-        # TODO: This is a point at which the process can be killed
         LOGGER.info('Detecting and computing keypoints:destination...')
         dst_kp, dst_des = self.detect_and_compute(dst_img)
         results['src_kp'] = src_kp

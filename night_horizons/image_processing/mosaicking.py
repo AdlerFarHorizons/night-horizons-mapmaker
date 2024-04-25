@@ -37,7 +37,7 @@ from . import processors
 class Mosaicker(BatchProcessor):
     '''Assemble a mosaic from georeferenced images.
 
-    TODO: filepath is a data-dependent parameter, so it really should be
+    filepath is a data-dependent parameter, so it really should be
     called at the time of the fit.
 
     Parameters
@@ -95,7 +95,6 @@ class Mosaicker(BatchProcessor):
         -------
         None
         '''
-        # TODO: Following conventions, dont repeat each arg
 
         super().__init__(
             io_manager=io_manager,
@@ -145,7 +144,7 @@ class Mosaicker(BatchProcessor):
         # The fitting that's done for all image processing pipelines
         super().fit(X, y, i_start=i_start)
 
-        # TODO: Make this compatible with dependency injection
+        # TODO: Delete / make this compatible with dependency injection
         if not isinstance(self.crs, pyproj.CRS):
             self.crs = pyproj.CRS(self.crs)
 
@@ -182,8 +181,6 @@ class Mosaicker(BatchProcessor):
                 pixel_width=self.pixel_width,
                 pixel_height=self.pixel_height,
             )
-            # TODO: It's kinda weird to fit the transformer and then create
-            # the dataset.
             GDALDatasetIO.create(
                 filepath=self.io_manager.output_filepaths['mosaic'],
                 x_min=self.transformer.x_min_,

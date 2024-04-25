@@ -155,7 +155,7 @@ class TestReferencedImage(unittest.TestCase):
         np.testing.assert_allclose(pys, actual_pys)
 
 
-#TODO: Remove this
+#TODO: Delete
 '''
 class TestDataset(unittest.TestCase):
 

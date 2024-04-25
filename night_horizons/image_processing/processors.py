@@ -23,8 +23,6 @@ class Processor(utils.LoggerMixin, ABC):
     '''This could probably be framed as an sklearn estimator too, but let's
     not do that until necessary.
 
-    TODO: dtype is another thing to refactor into DataIO.
-
     Parameters
     ----------
     Returns
@@ -49,7 +47,7 @@ class Processor(utils.LoggerMixin, ABC):
     def fit(self, batch_processor):
         '''Copy over fit values from the batch processor.
 
-        # TODO: We may be able to get rid of this function.
+        We may be able to get rid of this function.
 
         Parameters
         ----------
@@ -76,8 +74,8 @@ class Processor(utils.LoggerMixin, ABC):
         the existing data (including if the existing data was just updated
         with src in a previous row).
 
-        TODO: A better name than "process_row" may be available, since 
-                we don't clarify what a row is.
+        A better name than "process_row" may be available. process_row is not
+        100% desirable since we don't clarify what a row is..
 
         Parameters
         ----------
@@ -231,7 +229,7 @@ class DatasetProcessor(Processor):
     # Auxillary functions below
 
     def get_image_from_dataset(self, dataset, x_off, y_off, x_size, y_size):
-        '''TODO: Refactor all IO into DataIO.
+        '''Really we should refactor all IO into DataIO.
         '''
 
         assert x_off >= 0, 'x_off cannot be less than 0'
@@ -269,7 +267,6 @@ class DatasetProcessor(Processor):
 
 class DatasetUpdater(DatasetProcessor):
     '''
-    # TODO: Extend this to employ image operators (plural) to enable more calcs
 
     Parameters
     ----------
@@ -289,8 +286,6 @@ class DatasetUpdater(DatasetProcessor):
         LOGGER.info('Performing image operation...')
 
         # Combine the images
-        # TODO: image_operator is more-general,
-        #       but image_blender is more descriptive
         results = self.image_operator.operate(
             src['image'],
             dst['image'],
@@ -325,7 +320,6 @@ class DatasetUpdater(DatasetProcessor):
         row['return_code'] = results['return_code']
 
         # Save some images for later debugging
-        # TODO: Currently the format of the saved images is a little weird.
         if 'progress_images_dir' in self.io_manager.output_filepaths:
             progress_images_dir = (
                 self.io_manager.output_filepaths['progress_images_dir']

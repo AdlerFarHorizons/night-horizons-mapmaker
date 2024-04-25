@@ -24,7 +24,7 @@ class MetadataImageRegistrar(BaseEstimator):
     def __init__(
         self,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-        passthrough: Union[bool, list[str]] = False,  # TODO: Deprecated.
+        passthrough: Union[bool, list[str]] = False,
         use_direct_estimate: bool = True,
         camera_angles: dict[float] = {0: 30., 1: 0., 2: 30.},
         angle_error: float = 5.,
@@ -47,11 +47,11 @@ class MetadataImageRegistrar(BaseEstimator):
     def fit(self, X, y):
         '''A reference implementation of a fitting function.
 
-        TODO: This currently parameterizes the estimates using the
-            geotransforms, which are anchored by x_min and y_max.
-            However, the sensor x and y are more-closely related to
-            x_center and y_center. Parameterizing by those would make
-            more sense, but would require tracking the differences.
+        This currently parameterizes the estimates using the
+        geotransforms, which are anchored by x_min and y_max.
+        However, the sensor x and y are more-closely related to
+        x_center and y_center. Parameterizing by those would make
+        more sense, but would require tracking the differences.
 
         Parameters
         ----------

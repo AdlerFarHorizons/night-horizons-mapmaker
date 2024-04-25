@@ -1,7 +1,3 @@
-'''
-TODO: Refactor into classes with @staticmethod. Will be more clean.
-'''
-
 from functools import wraps
 import glob
 import inspect
@@ -12,13 +8,7 @@ import cv2
 import logging
 import numpy as np
 import pandas as pd
-import scipy
 from sklearn.utils.validation import check_array
-import pyproj
-# This is a draft---don't overengineer!
-# NO renaming!
-# NO refactoring!
-# TODO: Remove this when the draft is done.
 
 
 def discover_data(
@@ -297,10 +287,10 @@ def check_columns(
 
 def enable_passthrough(func):
     '''
-    TODO: Maybe deprecate this....
+    Maybe deprecate this in the future...
     I forgot that the possibly better method is to make use of
     sklearn.compose.ColumnTransformer.
-    There's also stuff built into pipeline, I think...
+    There's also relevant functionality built into sklearn.pipeline.
 
     Columns that are neither in self.passthrough or self.required_columns
     are dropped.
@@ -379,7 +369,7 @@ def store_parameters(constructor):
     my_object = MyClass(*args, **kwargs)
     will be stored in my_object as an attribute, i.e. my_object.arg
 
-    TODO: Deprecate this, and consider storing the many parameters
+    TODO: Delete this, and consider storing the many parameters
     in a different, more-readable way.
     Probably as options dictionaries.
     This would include maintaining consistent rules for creating objects
@@ -421,12 +411,6 @@ class LoggerMixin:
     '''
     Note that a decorator is not possible because we're typically
     interested in local variables.
-
-    TODO: Evaluate if this helps things or makes things worse.
-    When debugging I wanted to be able to peek at any of the parameters,
-    but in a statistical approach. The idea was that this would be helpful
-    for identify blackbox parameters that correlated with successful
-    (or poor) results.
 
     NOTE: It is tempting to refactor this to use dependency injection,
         but in practice that requires one more object to be passed around,
@@ -546,8 +530,6 @@ def get_logger(name: str = None):
 
     # Get logging level
     # Options are DEBUG, INFO, WARNING, ERROR, CRITICAL
-    # TODO: Setting LOGGING_LEVEL elsewhere does not seem to consistently work.
-    #      We're getting "None" more often than not.
     logging_level = os.getenv('LOGGING_LEVEL')
     if logging_level is None:
         logging_level = 'WARNING'

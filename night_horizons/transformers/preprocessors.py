@@ -524,8 +524,15 @@ class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
         X: Union[np.ndarray[str], list[str], pd.DataFrame],
         y=None,
     ):
-        # TODO: Much of the code in the loop is duplicated, and we can
-        # just refer to data_io
+        '''
+        Note that much of the code in the loop is duplicated, so this function
+        could be cleaned up even more, including by using data_io.
+
+        Parameters
+        ----------
+        Returns
+        -------
+        '''
 
         # Check the input is good.
         X = utils.check_filepaths_input(X)

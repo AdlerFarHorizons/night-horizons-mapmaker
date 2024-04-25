@@ -69,8 +69,6 @@ class DatasetScorer(DatasetProcessor):
     ) -> dict:
 
         # Combine the images
-        # TODO: image_operator is more-general,
-        #       but image_blender is more descriptive
         results = self.image_operator.operate(
             src['image'],
             dst['image'],
