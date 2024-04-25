@@ -130,23 +130,6 @@ def get_distance(crs, x1, y1, x2, y2):
     return distance
 
 
-def update_row(df, row):
-    '''
-    Incorporate the row into the output DataFrame
-    The pandas functionality is simple enough that this shouldn't actually
-    be used, but exists as a reminder of how this operation is done.
-
-    Parameters
-    ----------
-    Returns
-    -------
-    '''
-
-    df = row.to_frame().T.combine_first(df)
-
-    return df
-
-
 def check_filepaths_input(
     X: Union[np.ndarray[str], list[str], pd.DataFrame],
     required_columns: list[str] = ['filepath'],
