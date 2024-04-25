@@ -363,50 +363,6 @@ def enable_passthrough(func):
     return wrapper
 
 
-def store_parameters(constructor):
-    '''Decorator for automatically storing arguments passed to a constructor.
-    I.e. any args passed to constructor via
-    my_object = MyClass(*args, **kwargs)
-    will be stored in my_object as an attribute, i.e. my_object.arg
-
-    TODO: Delete this, and consider storing the many parameters
-    in a different, more-readable way.
-    Probably as options dictionaries.
-    This would include maintaining consistent rules for creating objects
-    vs passing them in.
-    Also consistent rules for using super().__init__ to store options
-    vs storing them directly. I'm leaning towards requiring super().__init__
-    because then the user can track what parameters exist in the superclass
-    vs subclass.
-    Think also about how fit parameters are handled.
-    Also, consistent names for image_operator vs image_blender.
-
-    Parameters
-    ----------
-        constructor : callable
-            Constructor to wrap.
-    '''
-
-    @wraps(constructor)
-    def wrapped_constructor(self, *args, **kwargs):
-
-        constructor(self, *args, **kwargs)
-
-        parameters_to_store = inspect.getcallargs(
-            constructor,
-            self,
-            *args,
-            **kwargs
-        )
-
-        for param_key, param_value in parameters_to_store.items():
-            if param_key == 'self':
-                continue
-            setattr(self, param_key, param_value)
-
-    return wrapped_constructor
-
-
 class LoggerMixin:
     '''
     Note that a decorator is not possible because we're typically
