@@ -19,7 +19,7 @@ io_manager:
       directory: existing_output/sequential-mosaic/REPLACE_THIS/referenced_images
 
   # Where the output files will be saved
-  output_dir: /data/output/queries
+  output_dir: /data/output
   output_description:
     metadata_selected: y_pred_selected.csv
     used_config: used-config.yaml
@@ -27,8 +27,7 @@ io_manager:
 
 query_processor:
   # The actual condition for the queried data to obey.
-  # Change this to select different data
-  # 39.7963°N, 86.1535°W # Test coords
+  # In this example we do a 1km box around two coordinates
   condition: >- # The ">-" allows you to use linebreaks for clarity
     (x_center < -9593500 + 1000) &
     (x_center > -9593500 - 1000) &
