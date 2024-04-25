@@ -21,27 +21,6 @@ def assert_sorted_lists_equal(list1, list2):
     )
 
 
-class TestLoadImage(unittest.TestCase):
-
-    def test_tiff(self):
-
-        fp = '/data/input/referenced_images/220513-FH135/Geo 843083290_1.tif'
-        img = utils.load_image(fp)
-
-        assert len(img.shape) == 3
-
-    def test_raw(self):
-
-        fp = ('/data/input/images/220513-FH135/23085686/'
-              '20220413_221313_1020286912_0_50_3.raw')
-        img = utils.load_image(fp)
-
-        assert len(img.shape) == 3
-
-        # Max should be close to 255
-        assert img.max() > 250
-
-
 class TestDiscoverData(unittest.TestCase):
 
     def setUp(self):

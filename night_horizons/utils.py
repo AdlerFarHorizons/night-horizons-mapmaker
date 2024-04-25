@@ -62,59 +62,6 @@ def discover_data(
     return fps
 
 
-def load_image(
-    filepath: str,
-    dtype: type = np.uint8,
-    img_shape: Tuple = (1200, 1920),
-):
-    '''Load an image from disk.
-    TODO: Delete?
-
-    Parameters
-    ----------
-        filepath
-            Location of the image.
-        dtype
-            Datatype. Defaults to integer from 0 to 255
-    Returns
-    -------
-    '''
-
-    ext = os.path.splitext(filepath)[1]
-
-    # Load and reshape raw image data.
-    if ext == '.raw':
-
-        raw_img = np.fromfile(filepath, dtype=np.uint16)
-        raw_img = raw_img.reshape(img_shape)
-
-        img = cv2.cvtColor(raw_img, cv2.COLOR_BAYER_BG2RGB)
-        img_max = 2**12 - 1
-
-    elif ext in ['.tiff', '.tif']:
-        img = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
-
-        # CV2 defaults to BGR, but RGB is more standard for our purposes
-        img = img[:, :, ::-1]
-        img_max = np.iinfo(img.dtype).max
-
-    else:
-        raise IOError('Cannot read filetype {}'.format(ext))
-
-    if img is None:
-        return img
-
-    # When no conversion needs to be done
-    if img.dtype == dtype:
-        return img
-
-    # Rescale
-    img = img / img_max
-    img = (img * np.iinfo(dtype).max).astype(dtype)
-
-    return img
-
-
 def check_filepaths_input(
     X: Union[np.ndarray[str], list[str], pd.DataFrame],
     required_columns: list[str] = ['filepath'],
