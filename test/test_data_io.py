@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 import pyproj
 
-from night_horizons.data_io import GDALDatasetIO
+from night_horizons.data_io import GDALDatasetIO, RegisteredImageIO
 
 
 class TestGDALDatasetIO(unittest.TestCase):
@@ -68,33 +68,35 @@ class TestGDALDatasetIO(unittest.TestCase):
             new_crs
         )
 
-#    TODO: This fails currently. However, it's not currently needed for the
-#          core functionality of the project. It's a nice-to-have feature.
-#    def test_from_viirs_hdf5(self):
-#
-#        expected_crs = pyproj.CRS('EPSG:4326')
-#
-#        # Check basic loading
-#        io = GDALDatasetIO()
-#        dataset = io.load_from_viirs_hdf5(self.viirs_fp)
-#        assert dataset is not None
-#        assert pyproj.CRS(dataset.GetProjection()) == expected_crs
-#        dataset.FlushCache()
-#        dataset = None
-#
-#        # Check the saved data loads
-#        dataset2 = io.load(self.viirs_output_fp)
-#        assert pyproj.CRS(dataset2.GetProjection()) == expected_crs
-#
-#        # Check compatibility with RegisteredImageIO
-#        img, x_bounds, y_bounds = RegisteredImageIO.load(
-#            self.viirs_output_fp,
-#        )
-#        x_bounds = np.array(x_bounds)
-#        y_bounds = np.array(y_bounds)
-#
-#    #     assert img.shape == (2400, 2400)
-#    #     assert ((-95 < x_bounds) & (x_bounds < -75)).all(), \
-#    #         'x_bounds doesnt look like Chicago'
-#    #     assert ((35 < y_bounds) & (y_bounds < 55)).all(), \
-#    #         'x_bounds doesnt look like Chicago'
+    def dont_test_from_viirs_hdf5(self):
+        '''
+        This fails currently. However, it's not currently needed for the
+        core functionality of the project. It's a nice-to-have feature.
+        '''
+
+        expected_crs = pyproj.CRS('EPSG:4326')
+
+        # Check basic loading
+        io = GDALDatasetIO()
+        dataset = io.load_from_viirs_hdf5(self.viirs_fp)
+        assert dataset is not None
+        assert pyproj.CRS(dataset.GetProjection()) == expected_crs
+        dataset.FlushCache()
+        dataset = None
+
+        # Check the saved data loads
+        dataset2 = io.load(self.viirs_output_fp)
+        assert pyproj.CRS(dataset2.GetProjection()) == expected_crs
+
+        # Check compatibility with RegisteredImageIO
+        img, x_bounds, y_bounds = RegisteredImageIO.load(
+            self.viirs_output_fp,
+        )
+        x_bounds = np.array(x_bounds)
+        y_bounds = np.array(y_bounds)
+
+    #     assert img.shape == (2400, 2400)
+    #     assert ((-95 < x_bounds) & (x_bounds < -75)).all(), \
+    #         'x_bounds doesnt look like Chicago'
+    #     assert ((35 < y_bounds) & (y_bounds < 55)).all(), \
+    #         'x_bounds doesnt look like Chicago'
