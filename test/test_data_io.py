@@ -2,15 +2,9 @@ import os
 import unittest
 
 import numpy as np
-import pandas as pd
-import scipy
 import pyproj
-# This is a draft---don't overengineer!
-# NO renaming!
-# NO refactoring!
-# TODO: Remove this when the draft is done.
 
-from night_horizons.data_io import GDALDatasetIO, RegisteredImageIO
+from night_horizons.data_io import GDALDatasetIO
 
 
 class TestGDALDatasetIO(unittest.TestCase):
