@@ -307,24 +307,3 @@ class DIContainer:
 
         with open(filepath, 'w', encoding='UTF-8') as file:
             yaml.dump(doc, file)
-
-    def register_dataio_services(self):
-        '''
-        Register data IO services.
-        TODO: Delete this.
-
-        Returns
-        -------
-        list
-            A list of registered data IO services.
-
-        '''
-
-        # Register data io services
-        self.dataio_services = []
-        for subclass in data_io.DataIO.__subclasses__():
-            key = subclass.name + '_io'
-            self.register_service(key, subclass)
-            self.dataio_services.append(key)
-
-        return self.dataio_services
