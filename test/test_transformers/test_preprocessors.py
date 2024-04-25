@@ -13,7 +13,7 @@ import night_horizons.utils as utils
 from night_horizons.pipeline import create_stage
 
 
-class TestNITELitePreprocessor(unittest.TestCase):
+class TestMetadataPreprocessor(unittest.TestCase):
 
     def setUp(self):
 
@@ -29,7 +29,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
 
         # Preprocessor construction
         self.expected_cols = ['filepath', 'sensor_x', 'sensor_y']
-        self.transformer = preprocessors.NITELitePreprocessor135(
+        self.transformer = preprocessors.MetadataPreprocessor135(
             io_manager=self.io_manager,
             output_columns=self.expected_cols,
             crs=self.mapmaker.container.get_service('crs'),
@@ -120,7 +120,7 @@ class TestNITELitePreprocessor(unittest.TestCase):
         np.testing.assert_allclose(metadata.index, fps.index)
 
 # TODO: Implement this
-# class TestNITELitePreprocessor145(TestNITELitePreprocessor):
+# class TestMetadataPreprocessor145(TestMetadataPreprocessor):
 # 
 #     def setUp(self):
 # 

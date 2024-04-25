@@ -26,10 +26,10 @@ GEOTRANSFORM_COLS = [
 ]
 
 
-class NITELitePreprocessor(TransformerMixin, BaseEstimator):
+class MetadataPreprocessor(TransformerMixin, BaseEstimator):
     '''Transform filepaths into a metadata dataframe.
 
-    TODO: Rename NITELitePreprocessor to MetadataPreprocessor
+    TODO: Rename MetadataPreprocessor to MetadataPreprocessor
 
     Parameters
     ----------
@@ -248,7 +248,7 @@ class NITELitePreprocessor(TransformerMixin, BaseEstimator):
         return log_df
 
 
-class NITELitePreprocessor135(NITELitePreprocessor):
+class MetadataPreprocessor135(MetadataPreprocessor):
 
     def load_img_log(self, img_log_fp: str = None) -> pd.DataFrame:
         '''Load the images log.
@@ -420,7 +420,7 @@ class NITELitePreprocessor135(NITELitePreprocessor):
         return gps_log_df
 
 
-class NITELitePreprocessor145(NITELitePreprocessor):
+class MetadataPreprocessor145(MetadataPreprocessor):
 
     def load_img_log(self, img_log_fp: str = None) -> pd.DataFrame:
         '''Load the images log.

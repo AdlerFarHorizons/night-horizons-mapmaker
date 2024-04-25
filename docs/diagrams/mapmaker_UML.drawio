@@ -191,7 +191,7 @@
             <mxPoint y="30" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="ACWDgODL4ZNQU07x5-xE-198" value="NITELitePreprocessor" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" collapsed="1" vertex="1" parent="2o0DuZSaROUY531fXOJE-0">
+        <mxCell id="ACWDgODL4ZNQU07x5-xE-198" value="MetadataPreprocessor" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" collapsed="1" vertex="1" parent="2o0DuZSaROUY531fXOJE-0">
           <mxGeometry x="35.47826086956522" y="60" width="133.04347826086956" height="30" as="geometry">
             <mxRectangle x="-480" y="920" width="160" height="150" as="alternateBounds" />
           </mxGeometry>

@@ -89,21 +89,21 @@ class Stage(ABC):
         )
         self.container.register_service(
             'fh135_metadata_processor',
-            lambda *args, **kwargs: preprocessors.NITELitePreprocessor135(
+            lambda *args, **kwargs: preprocessors.MetadataPreprocessor135(
                 io_manager=self.container.get_service('io_manager'),
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
             ),
-            wrapped_constructor=preprocessors.NITELitePreprocessor135,
+            wrapped_constructor=preprocessors.MetadataPreprocessor135,
         )
         self.container.register_service(
             'fh145_metadata_processor',
-            lambda *args, **kwargs: preprocessors.NITELitePreprocessor145(
+            lambda *args, **kwargs: preprocessors.MetadataPreprocessor145(
                 io_manager=self.container.get_service('io_manager'),
                 crs=self.container.get_service('crs'),
                 *args, **kwargs
             ),
-            wrapped_constructor=preprocessors.NITELitePreprocessor145,
+            wrapped_constructor=preprocessors.MetadataPreprocessor145,
         )
 
     def register_default_services(self):
