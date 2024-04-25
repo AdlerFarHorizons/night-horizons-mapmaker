@@ -203,12 +203,6 @@ class DatasetProcessor(Processor):
             dtype=self.dtype,
         )
 
-        # TODO: Delete
-        # src_img = utils.load_image(
-        #     row['filepath'],
-        #     dtype=self.dtype,
-        # )
-
         return {'image': src_img}
 
     def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:

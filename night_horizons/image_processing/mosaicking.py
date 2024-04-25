@@ -24,7 +24,6 @@ from ..data_io import GDALDatasetIO
 from ..exceptions import OutOfBoundsError
 from ..transformers import preprocessors
 from ..io_manager import IOManager
-from . import operators
 
 from .batch import BatchProcessor
 
@@ -49,9 +48,9 @@ class Mosaicker(BatchProcessor):
     def __init__(
         self,
         io_manager: IOManager,
+        crs: pyproj.CRS,
         processor: processors.Processor,
         scorer: processors.Processor = None,
-        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
         dtype: str = 'uint8',
@@ -144,10 +143,6 @@ class Mosaicker(BatchProcessor):
         # The fitting that's done for all image processing pipelines
         super().fit(X, y, i_start=i_start)
 
-        # TODO: Delete / make this compatible with dependency injection
-        if not isinstance(self.crs, pyproj.CRS):
-            self.crs = pyproj.CRS(self.crs)
-
         # If the dataset was not passed in, load it if possible
         if (
             (
@@ -237,89 +232,19 @@ class Mosaicker(BatchProcessor):
 
         return X_t
 
-    # def get_fit_from_dataset(self, dataset):
-
-    #     # Get the dataset bounds
-    #     (
-    #         (self.x_min_, self.x_max_),
-    #         (self.y_min_, self.y_max_),
-    #         self.pixel_width_, self.pixel_height_,
-    #     ) = raster.get_bounds_from_dataset(
-    #         dataset,
-    #         self.crs,
-    #     )
-    #     self.x_size_ = dataset.RasterXSize
-    #     self.y_size_ = dataset.RasterYSize
-
-# class Mosaicker(BaseMosaicker):
-# 
-#     def __init__(
-#         self,
-#         config: dict,
-#         io_manager: io_management.IOManager = None,
-#         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-#         pixel_width: float = None,
-#         pixel_height: float = None,
-#         dtype: type = np.uint8,
-#         n_bands: int = 4,
-#         log_keys: list[str] = ['ind', 'return_code'],
-#         image_operator: processors.ImageBlender = None,
-#     ):
-# 
-#         # Default settings for file manipulation
-#         if io_manager is None:
-#             io_manager_options = dict(
-#                 filename='mosaic.tiff',
-#                 file_exists='error',
-#                 aux_files={
-#                     'settings': 'settings.yaml',
-#                     'log': 'log.csv',
-#                     'y_pred': 'y_pred.csv',
-#                 },
-#                 checkpoint_freq=100,
-#                 checkpoint_subdir='checkpoints',
-#             )
-#             if 'io_manager' in config:
-#                 io_manager_options.update(config['io_manager'])
-#             io_manager = io_management.IOManager(**io_manager_options)
-#         self.io_manager = io_manager
-# 
-#         self.image_operator = image_operator
-# 
-#         processor = MosaickerRowTransformer(
-#             dtype=dtype,
-#             image_operator=image_operator,
-#         )
-# 
-#         super().__init__(
-#             processor=processor,
-#             out_dir=out_dir,
-#             filename=filename,
-#             file_exists=file_exists,
-#             aux_files=aux_files,
-#             checkpoint_freq=checkpoint_freq,
-#             checkpoint_subdir=checkpoint_subdir,
-#             crs=crs,
-#             pixel_width=pixel_width,
-#             pixel_height=pixel_height,
-#             dtype=dtype,
-#             n_bands=n_bands,
-#             log_keys=log_keys,
-#         )
-
 
 class SequentialMosaicker(Mosaicker):
 
     def __init__(
         self,
-        io_manager,
-        processor,
-        mosaicker_train,
+        io_manager: IOManager,
+        crs: pyproj.CRS,
+        processor: processors.Processor,
+        mosaicker_train: Mosaicker,
         scorer: processors.Processor = None,
         progress_images_subdir: str = 'progress_images',
         save_return_codes: list[str] = [],
         memory_snapshot_freq: int = 10,
-        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         pixel_width: float = None,
         pixel_height: float = None,
         fill_value: Union[int, float] = None,
