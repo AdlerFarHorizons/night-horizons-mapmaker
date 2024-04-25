@@ -253,6 +253,53 @@ def enable_passthrough(func):
     return wrapper
 
 
+def deep_merge(orig_dict, new_dict):
+    result = orig_dict.copy()
+    for key, value in new_dict.items():
+        if (
+            isinstance(value, dict)
+            and (key in orig_dict)
+            and isinstance(orig_dict[key], dict)
+        ):
+            result[key] = deep_merge(orig_dict[key], value)
+        else:
+            result[key] = value
+
+    return result
+
+
+def get_logger(name: str = None):
+
+    # Get logger
+    logger = logging.getLogger(name)
+
+    # Get logging level
+    # Options are DEBUG, INFO, WARNING, ERROR, CRITICAL
+    logging_level = os.getenv('LOGGING_LEVEL')
+    if logging_level is None:
+        logging_level = 'WARNING'
+
+    # Convert to numeric value and set logging level
+    logging_level = getattr(logging, logging_level)
+    logger.setLevel(logging_level)
+
+    return logger
+
+
+class StdoutLogger(object):
+    def __init__(self, logger, stdout):
+        self.logger = logger
+        self.stdout = stdout
+
+    def write(self, message):
+        if message.strip() != "":
+            self.logger.info('stdout: ' + message.strip())
+        self.stdout.write(message)
+
+    def flush(self):
+        self.stdout.flush()
+
+
 class LoggerMixin:
     '''
     Note that a decorator is not possible because we're typically
@@ -353,50 +400,3 @@ class LoopLoggerMixin(LoggerMixin):
 
         log_df = pd.DataFrame(self.logs)
         log_df.to_csv(log_filepath)
-
-
-class StdoutLogger(object):
-    def __init__(self, logger, stdout):
-        self.logger = logger
-        self.stdout = stdout
-
-    def write(self, message):
-        if message.strip() != "":
-            self.logger.info('stdout: ' + message.strip())
-        self.stdout.write(message)
-
-    def flush(self):
-        self.stdout.flush()
-
-
-def get_logger(name: str = None):
-
-    # Get logger
-    logger = logging.getLogger(name)
-
-    # Get logging level
-    # Options are DEBUG, INFO, WARNING, ERROR, CRITICAL
-    logging_level = os.getenv('LOGGING_LEVEL')
-    if logging_level is None:
-        logging_level = 'WARNING'
-
-    # Convert to numeric value and set logging level
-    logging_level = getattr(logging, logging_level)
-    logger.setLevel(logging_level)
-
-    return logger
-
-
-def deep_merge(orig_dict, new_dict):
-    result = orig_dict.copy()
-    for key, value in new_dict.items():
-        if (
-            isinstance(value, dict)
-            and (key in orig_dict)
-            and isinstance(orig_dict[key], dict)
-        ):
-            result[key] = deep_merge(orig_dict[key], value)
-        else:
-            result[key] = value
-
-    return result
