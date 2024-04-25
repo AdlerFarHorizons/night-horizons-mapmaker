@@ -243,7 +243,7 @@ class Image:
 
 class ReferencedImage(Image):
 
-    io = data_io.RegisteredImageIO()
+    io = data_io.ReferencedImageIO()
     dataset_io = data_io.GDALDatasetIO()
 
     def __init__(

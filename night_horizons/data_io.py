@@ -310,8 +310,8 @@ class GDALDatasetIO(DataIO):
         )
 
 
-class RegisteredImageIO(DataIO):
-    name = 'registered_image'
+class ReferencedImageIO(DataIO):
+    name = 'referenced_image'
 
     @staticmethod
     def save(

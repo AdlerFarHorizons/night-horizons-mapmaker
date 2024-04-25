@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 import pyproj
 
-from night_horizons.data_io import GDALDatasetIO, RegisteredImageIO
+from night_horizons.data_io import GDALDatasetIO, ReferencedImageIO
 
 
 class TestGDALDatasetIO(unittest.TestCase):
@@ -88,8 +88,8 @@ class TestGDALDatasetIO(unittest.TestCase):
         dataset2 = io.load(self.viirs_output_fp)
         assert pyproj.CRS(dataset2.GetProjection()) == expected_crs
 
-        # Check compatibility with RegisteredImageIO
-        img, x_bounds, y_bounds = RegisteredImageIO.load(
+        # Check compatibility with ReferencedImageIO
+        img, x_bounds, y_bounds = ReferencedImageIO.load(
             self.viirs_output_fp,
         )
         x_bounds = np.array(x_bounds)

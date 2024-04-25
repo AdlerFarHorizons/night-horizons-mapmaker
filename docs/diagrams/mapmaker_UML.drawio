@@ -1058,7 +1058,7 @@
         <mxCell id="ACWDgODL4ZNQU07x5-xE-34" value="+ save(filepath, data, driver)&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;+ load(filepath)&lt;br&gt;+get_bounds_from_dataset(dataset, crs)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="ACWDgODL4ZNQU07x5-xE-30">
           <mxGeometry y="66" width="240" height="54" as="geometry" />
         </mxCell>
-        <mxCell id="ACWDgODL4ZNQU07x5-xE-35" value="RegisteredImageIO" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" collapsed="1" vertex="1" parent="ACWDgODL4ZNQU07x5-xE-63">
+        <mxCell id="ACWDgODL4ZNQU07x5-xE-35" value="ReferencedImageIO" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" collapsed="1" vertex="1" parent="ACWDgODL4ZNQU07x5-xE-63">
           <mxGeometry x="390" y="145" width="150" height="30" as="geometry">
             <mxRectangle x="1230" y="831" width="300" height="110" as="alternateBounds" />
           </mxGeometry>

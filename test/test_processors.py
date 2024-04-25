@@ -184,9 +184,9 @@ class TestDatasetRegistrar(unittest.TestCase):
         )
 
     def test_end_to_end(self):
-        '''This test loads a registered image, pads it, and then checks that
+        '''This test loads a referenced image, pads it, and then checks that
         we can find it again using dataset registrar. But first it overwrites
-        the registered image with a simpler one
+        the referenced image with a simpler one
         '''
 
         original_fp = (
@@ -225,7 +225,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         self.end_to_end_test(expected_fp)
 
     def test_realistic_end_to_end(self):
-        '''This test loads a registered image, pads it, and then checks that
+        '''This test loads a referenced image, pads it, and then checks that
         we can find it again using dataset registrar.
         It does this twice.
         '''
@@ -247,8 +247,8 @@ class TestDatasetRegistrar(unittest.TestCase):
             self.end_to_end_test(expected_fp)
 
     def test_sequential_end_to_end(self):
-        '''This test loads a registered image, pads it, and then matches
-        an overlapping registered image to it and checks the results.
+        '''This test loads a referenced image, pads it, and then matches
+        an overlapping referenced image to it and checks the results.
         This is the main logic of the sequential mosaic maker.
         '''
 

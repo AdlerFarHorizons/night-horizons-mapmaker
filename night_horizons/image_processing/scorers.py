@@ -96,7 +96,6 @@ class DatasetScorer(DatasetProcessor):
 
 
 class ReferencedImageScorer(Processor):
-    # TODO: Consistent naming: registered images or referenced images
 
     def __init__(self, crs: pyproj.CRS = None, *args, **kwargs):
 

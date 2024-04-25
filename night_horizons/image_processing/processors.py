@@ -11,7 +11,7 @@ import time
 from abc import ABC, abstractmethod
 
 from night_horizons import exceptions, utils
-from night_horizons.data_io import ImageIO, RegisteredImageIO
+from night_horizons.data_io import ImageIO, ReferencedImageIO
 from night_horizons.transformers.raster import RasterCoordinateTransformer
 
 
@@ -407,8 +407,8 @@ class DatasetRegistrar(DatasetUpdater):
                 x_off_dstframe:x_off_dstframe + x_size,
             ]
 
-            # Save the registered image
-            RegisteredImageIO.save(
+            # Save the referenced image
+            ReferencedImageIO.save(
                 filepath=fp,
                 img=warped_image,
                 x_bounds=[x_min, x_max],

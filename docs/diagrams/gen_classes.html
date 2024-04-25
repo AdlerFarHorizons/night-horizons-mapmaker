@@ -92,7 +92,7 @@
           }
           class ReferencedRawSplitter {
           }
-          class RegisteredImageIO {
+          class ReferencedImageIO {
           }
           class SensorAndDistanceOrder {
           }
@@ -120,7 +120,7 @@
           }
           GDALDatasetIO --|> DataIO
           ImageIO --|> DataIO
-          RegisteredImageIO --|> DataIO
+          ReferencedImageIO --|> DataIO
           TabularIO --|> DataIO
           YAMLIO --|> DataIO
           BatchProcessor --|> LoopLoggerMixin
@@ -157,7 +157,7 @@
           GDALDatasetIO --* DatasetWrapper : io
           GDALDatasetIO --* ReferencedImage : dataset_io
           ImageIO --* Image : io
-          RegisteredImageIO --* ReferencedImage : io
+          ReferencedImageIO --* ReferencedImage : io
           RasterCoordinateTransformer --* Mosaicker : transformer
           RasterCoordinateTransformer --* DatasetWrapper : transformer
           DIContainer --o Stage : container
