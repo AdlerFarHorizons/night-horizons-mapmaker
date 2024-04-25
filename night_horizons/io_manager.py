@@ -309,7 +309,9 @@ class IOManager:
         return output_filepaths, output_dir
 
     def save_settings(self, obj):
-        '''TODO: Delete
+        '''
+        This may be degenerate with saving the config, but better safe than
+        sorry, and it's computationally inexpensive.
 
         Parameters
         ----------

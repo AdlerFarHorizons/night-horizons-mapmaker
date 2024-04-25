@@ -51,7 +51,6 @@ class Stage(ABC):
         '''
 
         self.container = container
-        # TODO: Delete
         self.stage = stage
         self.score_output = score_output
         self.verbose = verbose
@@ -240,9 +239,6 @@ class MosaicMaker(Stage):
         '''Prepare the services needed for creating a mosaic.
         This includes a modified IO manager, preprocessors, and processors.
         '''
-
-        # TODO: Delete
-        # super().register_default_services()
 
         # Overwrite the io manager
         self.container.register_service(

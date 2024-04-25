@@ -17,7 +17,8 @@ def discover_data(
     pattern: str = None,
 ) -> pd.Series:
     '''
-    TODO: Delete?
+    This is really convenient, but we probably should merge it with IOManager's
+    find_files.
 
     Parameters
     ----------
