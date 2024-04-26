@@ -678,9 +678,6 @@ class QueryProcessor(Stage):
         # Get the metadata
         if self.verbose:
             print('    Accessing metadata...')
-        # metadata_processor = self.container.get_service(
-        #     'metadata_processor')
-        # x: pd.DataFrame = metadata_processor.fit_transform(image_fps)
         x = pd.read_csv(io_manager.input_filepaths['metadata'], index_col=0)
 
         # Query
