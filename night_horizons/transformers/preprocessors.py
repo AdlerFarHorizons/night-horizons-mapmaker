@@ -2,7 +2,6 @@ import os
 from typing import Union
 import warnings
 
-
 import numpy as np
 from osgeo import gdal
 gdal.UseExceptions()
@@ -28,8 +27,6 @@ GEOTRANSFORM_COLS = [
 
 class MetadataPreprocessor(TransformerMixin, BaseEstimator):
     '''Transform filepaths into a metadata dataframe.
-
-    TODO: Rename MetadataPreprocessor to MetadataPreprocessor
 
     Parameters
     ----------
@@ -105,11 +102,7 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
             )
         except (KeyError, FileNotFoundError, AssertionError) as e:
             # Do the calculations
-            log_df = self.get_logs(
-                img_log_fp=self.io_manager.input_filepaths['img_log'],
-                imu_log_fp=self.io_manager.input_filepaths['imu_log'],
-                gps_log_fp=self.io_manager.input_filepaths['gps_log'],
-            )
+            log_df = self.get_logs()
 
             # Merge, assuming filenames remain the same.
             X['original_index'] = X.index
@@ -178,23 +171,11 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
 
         return X_out
 
-    def get_logs(
-        self,
-        img_log_fp: str,
-        imu_log_fp: str,
-        gps_log_fp: str,
-        tz_offset_in_hr: float = 5.,
-    ) -> pd.DataFrame:
+    def get_logs(self, tz_offset_in_hr: float = 5.) -> pd.DataFrame:
         '''Combine the different logs
 
         Parameters
         ----------
-            img_log_df:
-                DataFrame containing image metadata.
-            imu_log_df:
-                DataFrame containing IMU metadata.
-            gps_log_df:
-                DataFrame containing GPS metadata.
 
         Returns
         -------
@@ -203,9 +184,9 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
                 for each image.
         '''
 
-        img_log_df = self.load_img_log(img_log_fp)
-        imu_log_df = self.load_imu_log(imu_log_fp)
-        gps_log_df = self.load_gps_log(gps_log_fp)
+        img_log_df = self.load_img_log()
+        imu_log_df = self.load_imu_log()
+        gps_log_df = self.load_gps_log()
 
         dfs_interped = [img_log_df, ]
         source_log_names = ['imu', 'gps']
@@ -259,21 +240,32 @@ class MetadataPreprocessor135(MetadataPreprocessor):
                 Defaults to the one provided at init.
         '''
 
-        # Load data
-        # Column names are known and input ad below.
-        img_log_df = pd.read_csv(
-            img_log_fp,
-            names=[
-                'odroid_timestamp',
-                'obc_timestamp',
-                'camera_num',
-                'serial_num',
-                'exposure_time',
-                'sequence_ind',
-                'internal_temp',
-                'filename',
-            ] + ['Unnamed: {}'.format(i + 1) for i in range(12)]
-        )
+        try:
+            if img_log_fp is None:
+                img_log_fp = self.io_manager.input_filepaths['img_log']
+
+            # Load data
+            # Column names are known and input ad below.
+            img_log_df = pd.read_csv(
+                img_log_fp,
+                names=[
+                    'odroid_timestamp',
+                    'obc_timestamp',
+                    'camera_num',
+                    'serial_num',
+                    'exposure_time',
+                    'sequence_ind',
+                    'internal_temp',
+                    'filename',
+                ] + ['Unnamed: {}'.format(i + 1) for i in range(12)]
+            )
+        except (KeyError, IOError) as e:
+            # If there's no explicit image log we fall back to the filenames
+            img_log_df = utils.check_filepaths_input(
+                self.io_manager.input_filepaths['images']
+            )
+
+            pass
 
         # Parse the timestamp
         # We use a combination of the odroid timestamp and the obc
@@ -318,7 +310,7 @@ class MetadataPreprocessor135(MetadataPreprocessor):
         '''
 
         if imu_log_fp is None:
-            imu_log_fp = self.imu_log_fp
+            imu_log_fp = self.io_manager.input_filepaths['imu_log']
 
         imu_log_df = pd.read_csv(imu_log_fp, low_memory=False)
 
@@ -373,7 +365,7 @@ class MetadataPreprocessor135(MetadataPreprocessor):
         '''
 
         if gps_log_fp is None:
-            gps_log_fp = self.gps_log_fp
+            gps_log_fp = self.io_manager.input_filepaths['gps_log']
 
         gps_log_df = pd.read_csv(gps_log_fp)
 
