@@ -13,12 +13,11 @@ from .utils import deep_merge
 
 
 class DIContainer:
-    '''
-    Dependency Injection Container. This class is responsible for constructing
-    the objects we use. This has the benefit of a) enabling easy integration
-    with a config, b) decoupling the object creation from the rest of the
-    code (which e.g. allows us to update only one place when updating how
-    objects are created), and c) decouples classes from each other.
+    '''Dependency Injection Container. This class is responsible for
+    constructing the objects we use. This has the benefit of a) enabling easy
+    integration with a config, b) decoupling the object creation from the rest
+    of the code (which e.g. allows us to update only one place when updating
+    how objects are created), and c) decouples classes from each other.
 
     Jargon
     ------
