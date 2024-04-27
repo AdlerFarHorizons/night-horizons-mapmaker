@@ -9,27 +9,26 @@ from typing import Tuple, Union
 
 import numpy as np
 from osgeo import gdal
-gdal.UseExceptions()
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine as SQLEngine
 import yaml
 
 from night_horizons.data_io import GDALDatasetIO
 
+gdal.UseExceptions()
+
 
 class IOManager:
-    '''
-    Things IOManager should do:
+    '''Class for managing input and output files.
+    Some responsibilities:
 
     - Get full paths given relative paths
     - Identify all valid files in a directory and subdirectories
-    - Check if a file exists, and act accordingly (overwrite, etc.) - DONE
-    - Read files
-    - Save files
-    - Checkpoint files - DONE
-    - Save auxiliary files (settings, logs, etc.) - DONE (kinda)
+    - Check if a file exists, and act accordingly (overwrite, etc.)
+    - Checkpoint files
     '''
 
     def __init__(
@@ -45,10 +44,8 @@ class IOManager:
         checkpoint_selection: list[str] = None,
         checkpoint_tag: str = '_i{:06d}',
         checkpoint_freq: int = 100,
-        data_ios: dict[str] = {},
-    ) -> None:
-        """
-        Initialize the IOManager object.
+    ):
+        """Initialize the IOManager object.
 
         Parameters
         ----------
@@ -95,7 +92,6 @@ class IOManager:
         self.checkpoint_selection = checkpoint_selection
         self.checkpoint_tag = checkpoint_tag
         self.checkpoint_freq = checkpoint_freq
-        self.data_ios = data_ios
 
         # Process input filetree
         self.input_filepaths, self.input_description = \
@@ -124,6 +120,27 @@ class IOManager:
         self,
         input_description: dict[dict],
     ) -> Tuple[dict[pd.Series], dict[dict]]:
+        '''Find input files based on the provided input description.
+
+        Parameters
+        ----------
+        input_description : dict[dict]
+            A dictionary containing the input description. Each key represents
+            a specific input file, and the corresponding value is a dictionary
+            describing the file. If the value is a string, it is treated as a
+            file path relative to the input directory. If the value is a
+            dictionary, it must contain arguments to select files based on
+            find_selected_files.
+
+        Returns
+        -------
+        Tuple[dict[pd.Series], dict[dict]]
+            A tuple containing two dictionaries. The first dictionary maps each
+            input file key to a pandas Series object representing the selected
+            files. The second dictionary is a modified version of the input
+            description, where file paths have been resolved relative to the
+            input directory.
+        '''
 
         # Validate and store input description
         modified_input_description = copy.deepcopy(input_description)
@@ -161,15 +178,15 @@ class IOManager:
         '''
         Parameters
         ----------
-            directory :
-                Directory containing the data.
-            extension :
-                What filetypes to include.
+        directory :
+            Directory containing the data.
+        extension :
+            What filetypes to include.
 
         Returns
         -------
-            fps :
-                Data filepaths.
+        fps :
+            Data filepaths.
         '''
 
         fps = self.find_files(directory)
@@ -208,13 +225,13 @@ class IOManager:
         return fps
 
     def select_files(
-            self,
-            fps: pd.Series,
-            extension: Union[str, list] = None,
-            pattern: str = None
-        ):
-        """
-        Selects files from a pandas Series based on the given extension and pattern.
+        self,
+        fps: pd.Series,
+        extension: Union[str, list] = None,
+        pattern: str = None
+    ):
+        """Selects files from a pandas Series based on the given
+        extension and pattern.
 
         Parameters
         ----------
@@ -260,6 +277,26 @@ class IOManager:
         file_exists: str,
         tracked_file_key: str,
     ) -> Tuple[dict[str], str]:
+        '''
+        Parameters
+        ----------
+        output_dir : str
+            The directory where the output files will be saved.
+        output_description : dict[str]
+            The description of the output files.
+        file_exists : str
+            The action to take if a file already exists. Options include
+            'error', 'pass', 'load', 'overwrite', and 'new'.
+        tracked_file_key : str
+            The key for the file that determines what checkpoint files to use.
+
+        Returns
+        -------
+        Tuple[dict[str], str]
+            A tuple containing two elements. The first element is a dictionary
+            mapping each output file key to the corresponding file path. The
+            second element is the output directory.
+        '''
 
         # Exit early if there's nothing to do
         if len(output_description) == 0:
@@ -309,14 +346,15 @@ class IOManager:
         return output_filepaths, output_dir
 
     def save_settings(self, obj):
-        '''
+        '''Save the settings of an object to a file.
+        
         This may be degenerate with saving the config, but better safe than
         sorry, and it's computationally inexpensive.
 
         Parameters
         ----------
-        Returns
-        -------
+        obj : object
+            The object to save the settings of.
         '''
 
         fullargspec = inspect.getfullargspec(type(obj))
@@ -341,6 +379,29 @@ class IOManager:
         checkpoint_selection: list[str],
         checkpoint_tag: str,
     ) -> Tuple[dict[str], str]:
+        '''Get the checkpoint file patterns for saving checkpoints.
+
+        Parameters
+        ----------
+        output_dir : str
+            The output directory where the checkpoints will be saved.
+        output_filepaths : dict[str]
+            A dictionary mapping output keys to their corresponding filepaths.
+        checkpoint_subdir : str
+            The subdirectory within the output directory where
+            the checkpoints will be saved.
+        checkpoint_selection : list[str]
+            A list of keys from the output_filepaths dictionary to select
+            for creating checkpoint file patterns.
+        checkpoint_tag : str
+            The tag to be added to the base filename of each checkpoint file.
+
+        Returns
+        -------
+        Tuple[dict[str], str]
+            A tuple containing the checkpoint file patterns and
+            the checkpoint directory.
+        '''
 
         checkpoint_dir = os.path.join(output_dir, checkpoint_subdir)
         os.makedirs(checkpoint_dir, exist_ok=True)
@@ -358,6 +419,20 @@ class IOManager:
         self,
         key: str = None,
     ) -> Tuple[int, list[str]]:
+        '''Search for checkpoint files in the specified directory.
+
+        Parameters
+        ----------
+        key : str, optional
+            The key to identify the checkpoint file pattern. If not provided,
+            the default key will be used.
+
+        Returns
+        -------
+        Tuple[int, list[str]]
+            A tuple containing the latest checkpoint index and a list of
+            filenames matching the checkpoint file pattern.
+        '''
 
         if key is None:
             key = self.checkpoint_file_key
@@ -387,14 +462,45 @@ class IOManager:
         return i_latest, filenames
 
     @abstractmethod
-    def save_to_checkpoint(self, i):
-        pass
+    def save_to_checkpoint(self, i: int):
+        '''Save the current state of the object to a checkpoint file.
+
+        Parameters
+        ----------
+        i : int
+            The index of the checkpoint.
+        '''
 
     @abstractmethod
-    def load_from_checkpoint(self, i, filename):
-        pass
+    def load_from_checkpoint(self, i: int):
+        '''Load the state of the object from a checkpoint file.
 
-    def search_and_load_checkpoint(self, key: str = None):
+        Parameters
+        ----------
+        i : int
+            The index of the checkpoint.
+        '''
+
+    def search_and_load_checkpoint(
+        self,
+        key: str = None
+    ) -> Tuple[int, object]:
+        '''
+        Searches for the latest checkpoint with the given key and loads
+        the data from the next checkpoint.
+
+        Parameters
+        ----------
+        key : str, optional
+            The key to search for in the checkpoints. If not provided,
+            searches for the latest checkpoint.
+
+        Returns
+        -------
+        tuple
+            A tuple containing the index of the next checkpoint and the
+            loaded data from that checkpoint.
+        '''
 
         i_latest, _ = self.search_for_checkpoint(key=key)
 
@@ -406,8 +512,7 @@ class IOManager:
         return i_resume, loaded_data
 
     def prune_checkpoints(self):
-        """
-        Prunes the checkpoint files in the checkpoint directory,
+        """Prunes the checkpoint files in the checkpoint directory,
         keeping only the latest ones.
 
         This method finds the latest checkpoint files based on the patterns
@@ -415,7 +520,7 @@ class IOManager:
         It then deletes all the files in the checkpoint directory
         that are not the latest ones.
         """
-        for key, pattern in self.checkpoint_filepatterns.items():
+        for key in self.checkpoint_filepatterns.keys():
             # Find the latest files
             i_latest, filenames = self.search_for_checkpoint(key=key)
 
@@ -424,7 +529,21 @@ class IOManager:
                 if i_file != i_latest:
                     os.remove(os.path.join(self.checkpoint_dir, filename))
 
-    def get_connection(self, url=None):
+    def get_connection(self, url: str = None) -> SQLEngine:
+        '''Returns a database connection.
+
+        Parameters
+        ----------
+        url : str, optional
+            The URL of the database connection. If not provided, it will use
+            the value of the 'DATABASE_URL' environment variable.
+
+        Returns
+        -------
+        engine : sqlalchemy.engine.Engine
+            The database connection engine.
+
+        '''
 
         if url is None:
             url = os.getenv('DATABASE_URL')
@@ -435,6 +554,8 @@ class IOManager:
 
 
 class MosaicIOManager(IOManager):
+    '''Class for managing input and output files for mosaics.
+    '''
 
     def __init__(
         self,
@@ -454,12 +575,58 @@ class MosaicIOManager(IOManager):
         checkpoint_tag: str = '_i{:06d}',
         checkpoint_freq: int = 100,
     ):
-        '''The inputs are more-appropriate defaults for mosaics.
+        '''Initialize the IOManager object.
+
+        This method initializes the IOManager object with the provided parameters.
 
         Parameters
         ----------
-        Returns
-        -------
+        input_dir : str
+            The directory path where the input files are located.
+
+        input_description : dict[dict]
+            A dictionary containing the description of the input files.
+
+        output_dir : str
+            The directory path where the output files will be saved.
+
+        output_description : dict[str], optional
+            A dictionary containing the description of the output files.
+            The default value is:
+            {
+                'mosaic': 'mosaic.tiff',
+                'settings': 'settings.yaml',
+                'log': 'log.csv',
+            }
+
+        root_dir : str, optional
+            The root directory path. If provided, it will be used as the base directory for all file paths.
+            The default value is None.
+
+        file_exists : str, optional
+            The action to take if a file already exists.
+            Possible values are 'error', 'overwrite', 'skip'.
+            The default value is 'error'.
+
+        tracked_file_key : str, optional
+            The key of the file to be tracked for checkpoints.
+            The default value is 'mosaic'.
+
+        checkpoint_subdir : str, optional
+            The name of the subdirectory where checkpoints will be saved.
+            The default value is 'checkpoints'.
+
+        checkpoint_selection : list[str], optional
+            A list of file keys to be included in the checkpoints.
+            The default value is ['mosaic', 'settings', 'log'].
+
+        checkpoint_tag : str, optional
+            The tag format to be used for checkpoint file names.
+            The default value is '_i{:06d}'.
+
+        checkpoint_freq : int, optional
+            The frequency at which checkpoints will be saved.
+            The default value is 100.
         '''
 
         super().__init__(
@@ -477,7 +644,8 @@ class MosaicIOManager(IOManager):
         )
 
     def open_dataset(self):
-        '''
+        '''Load the mosaic dataset.
+
         It's kind of awkard that this is one of the only convenience functions
         for opening/loading data.
         '''
@@ -487,7 +655,24 @@ class MosaicIOManager(IOManager):
             mode=gdal.GA_Update,
         )
 
-    def save_to_checkpoint(self, i, dataset, y_pred=None):
+    def save_to_checkpoint(
+        self,
+        i: int,
+        dataset: gdal.Dataset,
+        y_pred: pd.DataFrame = None
+    ):
+        '''Saves the dataset to a checkpoint file and performs additional
+        operations if necessary.
+
+        Parameters
+        ----------
+        i : int
+            The current iteration number.
+        dataset : gdal.Dataset
+            The GDAL dataset object to be saved.
+        y_pred : pd.DataFrame, optional
+            The predicted values to be saved as a CSV file. Default is None.
+        '''
 
         # Conditions for normal return
         if self.checkpoint_freq is None:
@@ -517,7 +702,21 @@ class MosaicIOManager(IOManager):
 
         return dataset
 
-    def load_from_checkpoint(self, i_checkpoint):
+    def load_from_checkpoint(self, i_checkpoint: int) -> dict:
+        '''Load data from a checkpoint file.
+
+        Parameters
+        ----------
+        i_checkpoint : int
+            The index of the checkpoint file to load.
+
+        Returns
+        -------
+        loaded_data : dict
+            A dictionary containing the loaded data.
+            The dictionary has the following key:
+            - 'y_pred': A pandas DataFrame containing the predictions.
+        '''
 
         if i_checkpoint == 0:
             return None
@@ -543,6 +742,8 @@ class MosaicIOManager(IOManager):
 
 
 class SequentialMosaicIOManager(MosaicIOManager):
+    '''Class for managing input and output files for sequential mosaics.
+    '''
 
     def __init__(
         self,
@@ -558,15 +759,29 @@ class SequentialMosaicIOManager(MosaicIOManager):
             'mosaic', 'settings', 'log', 'y_pred'],
         *args, **kwargs
     ):
-        '''The inputs are those suited for a training mosaic.
-        See MosaicIOManager for all keyword arguments.
+        '''Initialize the IOManager object.
 
         Parameters
         ----------
-        Returns
-        -------
+        output_description : dict, optional
+            A dictionary specifying the output file names and their
+            default values. The keys represent the file types, and the values
+            represent the default file names.
+            Default is:
+            {
+                'mosaic': 'mosaic.tiff',
+                'settings': 'settings.yaml',
+                'log': 'log.csv',
+                'y_pred': 'y_pred.csv',
+                'progress_images_dir': 'progress_images',
+                'referenced_images': 'referenced_images/img_ind{:06d}.tiff',
+            }
+        checkpoint_selection : list[str], optional
+            A list of file types to be included in the checkpoint.
+            Default is ['mosaic', 'settings', 'log', 'y_pred'].
+        *args, **kwargs
+            Additional arguments and keyword arguments.
         '''
-
         super().__init__(
             output_description=output_description,
             checkpoint_selection=checkpoint_selection,
@@ -575,6 +790,8 @@ class SequentialMosaicIOManager(MosaicIOManager):
 
 
 class TrainMosaicIOManager(MosaicIOManager):
+    '''Class for managing input and output files for training mosaics,
+    i.e. mosaics used as the basis for a sequential mosaic.'''
 
     def __init__(
         self,
@@ -588,15 +805,26 @@ class TrainMosaicIOManager(MosaicIOManager):
         file_exists: str = 'pass',
         *args, **kwargs
     ):
-        '''The inputs are those suited for a training mosaic.
-        See MosaicIOManager for all keyword arguments.
+        '''Initialize the IOManager object.
 
         Parameters
         ----------
-        Returns
-        -------
+        output_description : dict, optional
+            A dictionary specifying the output file names for different
+            outputs. The default is
+            {
+                'mosaic': 'mosaic.tiff',
+                'settings': 'settings_train.yaml',
+                'log': 'log_train.yaml',
+                'y_pred': 'y_pred_train.csv',
+                'progress_images_dir_train': 'progress_images_train',
+            }.
+        file_exists : str, optional
+            A string indicating the file existence status.
+            The default is 'pass'.
+        *args, **kwargs
+            Additional arguments and keyword arguments.
         '''
-
         super().__init__(
             output_description=output_description,
             file_exists=file_exists,
@@ -605,6 +833,8 @@ class TrainMosaicIOManager(MosaicIOManager):
 
 
 class ReferencedRawSplitter:
+    '''Class used for splitting referenced (test + training) and
+    raw (production) data.'''
 
     def __init__(
         self,
@@ -615,6 +845,34 @@ class ReferencedRawSplitter:
         random_state: Union[int, np.random.RandomState] = None,
         use_test_dir: bool = False,
     ):
+        '''Initialize the ReferencedRawSplitter object.
+
+        Parameters
+        ----------
+        io_manager : object
+            The IOManager object used for managing input and output files.
+
+        test_size : int or float, optional
+            The proportion of the dataset to include in the test split.
+            Default is 0.2.
+
+        max_raw_size : int, optional
+            The maximum number of raw images to include in the dataset.
+            Default is None.
+
+        drop_raw_images : bool, optional
+            Whether to drop raw images from the dataset.
+            Default is False.
+
+        random_state : int or np.random.RandomState, optional
+            The random state used for shuffling the dataset.
+            Default is None.
+
+        use_test_dir : bool, optional
+            If True, the test data will be determined by a test directory,
+            rather than a random split.
+            Default is False.
+        '''
 
         self.io_manager = io_manager
         self.test_size = test_size
@@ -626,16 +884,12 @@ class ReferencedRawSplitter:
     def train_test_production_split(
         self
     ) -> Tuple[pd.Series, pd.Series, pd.Series]:
-        '''
+        '''Split the dataset into training, test, and production data.
+
         How indices are handled:
         - fps_train has indices running from 0 to len(fps_train)
         - fps has indices running from 0 to len(fps)
         - fps_test has indices that are a subset of fps
-
-        Parameters
-        ----------
-        Returns
-        -------
         '''
 
         referenced_fps = self.io_manager.input_filepaths['referenced_images']
