@@ -9,28 +9,66 @@ import numpy as np
 import osgeo
 from osgeo import gdal, gdal_array
 from osgeo.osr import SpatialReference
-gdal.UseExceptions()
 import pandas as pd
 import pyproj
 from pyproj.enums import WktVersion
 import yaml
 
+gdal.UseExceptions()
+
 
 class DataIO(ABC):
-    @abstractmethod
-    def save(filepath, data):
-        pass
+    '''Abstract base class for all data input/output
+    '''
 
     @abstractmethod
-    def load(filepath):
-        pass
+    @staticmethod
+    def save(filepath: str, data: object):
+        '''Save data to disk.
+
+        Parameters
+        ----------
+            filepath : str
+                Location to save the data.
+
+            data :
+                The data to save.
+        '''
+
+    @abstractmethod
+    @staticmethod
+    def load(filepath: str) -> object:
+        """Load data from a file.
+
+        Parameters
+        ----------
+        filepath : str
+            The path to the file to be loaded.
+
+        Returns
+        -------
+        data : object
+            The loaded data.
+        """
 
 
 class ImageIO(DataIO):
+    '''Class for loading and saving images.
+    '''
     name = 'image'
 
     @staticmethod
-    def save(filepath, data):
+    def save(filepath: str, data: np.ndarray):
+        '''Save an image to disk.
+
+        Parameters
+        ----------
+            filepath : str
+                Location to save the data.
+
+            data : np.ndarray
+                The image to save.
+        '''
 
         # Ensure the directory exists
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -42,21 +80,22 @@ class ImageIO(DataIO):
     def load(
         filepath: str,
         dtype: Union[str, type] = 'uint8',
-        img_shape: Tuple = (1200, 1920),
+        img_shape: Tuple[int] = (1200, 1920),
     ) -> np.ndarray:
         '''Load an image from disk.
 
         Parameters
         ----------
-            filepath
+            filepath : str
                 Location of the image.
-            dtype
+            dtype : Union[str, type], optional
                 Datatype. Defaults to integer from 0 to 255.
-            img_shape
+            img_shape : Tuple[int], optional
                 Image dimensions, used if loading a file of the '.raw' type.
+
         Returns
         -------
-            img
+            img : np.ndarray
                 Image as a numpy array.
         '''
 
@@ -99,17 +138,30 @@ class ImageIO(DataIO):
 
 
 class GDALDatasetIO(DataIO):
+    """Class for reading and writing raster datasets using GDAL.
+
+    Attributes
+    ----------
+    name : str
+        Used for distinguishing between different data input/output classes.
+    """
+
     name = 'gdal_dataset'
 
     @staticmethod
-    def save(filepath, data, driver: str = 'GTiff'):
-        '''The alternative is to flush the cache and then re-open from disk.
+    def save(filepath: str, data: gdal.Dataset, driver: str = 'GTiff'):
+        """Save a raster dataset to a file.
 
         Parameters
         ----------
-        Returns
-        -------
-        '''
+        filepath : str
+            Path to the output file.
+        data : gdal.Dataset
+            The raster dataset to be saved.
+        driver : str, optional
+            The GDAL driver to be used for saving the dataset.
+            Defaults to 'GTiff'.
+        """
 
         # Create a copy with a driver that saves to disk
         driver = gdal.GetDriverByName('GTiff')
@@ -123,6 +175,23 @@ class GDALDatasetIO(DataIO):
         mode: int = gdal.GA_ReadOnly,
         crs: pyproj.CRS = None
     ) -> gdal.Dataset:
+        """Load a raster dataset from a file.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the input file.
+        mode : int, optional
+            GDAL access mode. Defaults to gdal.GA_ReadOnly.
+        crs : pyproj.CRS, optional
+            Desired coordinate system. Defaults to None.
+
+        Returns
+        -------
+        gdal.Dataset
+            The loaded raster dataset.
+        """
+
         data = gdal.Open(filepath, mode)
 
         # Convert to desired crs.
@@ -136,21 +205,21 @@ class GDALDatasetIO(DataIO):
         filepath: str,
         output_filepath: str = None,
     ) -> gdal.Dataset:
-        '''Load a VIIRS HDF5 file.
+        """Load a VIIRS HDF5 file and convert it to a raster dataset.
 
         Parameters
         ----------
-        filepath
+        filepath : str
             Path to the VIIRS HDF5 file.
-        crs
-            Desired coordinate system. Defaults to None, which means the
-            coordinate system of the VIIRS file will be used.
+        output_filepath : str, optional
+            Path to the output raster file. If not provided, a default
+            output file path will be used.
 
         Returns
         -------
-        data
-            Image data.
-        '''
+        gdal.Dataset
+            The loaded and converted raster dataset.
+        """
 
         if output_filepath is None:
             output_filepath = filepath.replace('.h5', '.tiff')
@@ -169,31 +238,31 @@ class GDALDatasetIO(DataIO):
         rlayer = gdal.Open(subhdflayer, gdal.GA_ReadOnly)
 
         # collect bounding box coordinates
-        HorizontalTileNumber = int(
+        horizontal_tile_number = int(
             rlayer.GetMetadata_Dict()["HorizontalTileNumber"]
         )
-        VerticalTileNumber = int(
+        vertical_tile_number = int(
             rlayer.GetMetadata_Dict()["VerticalTileNumber"]
         )
             
-        WestBoundCoord = (10 * HorizontalTileNumber) - 180
-        NorthBoundCoord = 90 - (10 * VerticalTileNumber)
-        EastBoundCoord = WestBoundCoord + 10
-        SouthBoundCoord = NorthBoundCoord - 10
+        west_bound_coord = (10 * horizontal_tile_number) - 180
+        north_bound_coord = 90 - (10 * vertical_tile_number)
+        east_bound_coord = west_bound_coord + 10
+        south_bound_coord = north_bound_coord - 10
 
         # WGS84
-        EPSG = "-a_srs EPSG:4326"
+        epsg = "-a_srs EPSG:4326"
 
-        translateOptionText = (
-            EPSG
+        translate_option_text = (
+            epsg
             + " -a_ullr "
-            + str(WestBoundCoord)
-            + " " + str(NorthBoundCoord)
-            + " " + str(EastBoundCoord)
-            + " " + str(SouthBoundCoord)
+            + str(west_bound_coord)
+            + " " + str(north_bound_coord)
+            + " " + str(east_bound_coord)
+            + " " + str(south_bound_coord)
         )
         translateoptions = gdal.TranslateOptions(
-            gdal.ParseCommandLine(translateOptionText)
+            gdal.ParseCommandLine(translate_option_text)
         )
 
         translated = gdal.Translate(
@@ -206,20 +275,64 @@ class GDALDatasetIO(DataIO):
 
     @staticmethod
     def create(
-        filepath,
-        x_min,
-        y_max,
-        pixel_width,
-        pixel_height,
-        crs,
-        x_size,
-        y_size,
+        filepath: str,
+        x_min: float,
+        y_max: float,
+        pixel_width: float,
+        pixel_height: float,
+        crs: pyproj.CRS,
+        x_size: int,
+        y_size: int,
         n_bands: int = 4,
         driver: str = 'MEM',
         return_dataset: bool = True,
-        options: list[str] = ['TILED=YES'],
+        options: list[str] = None,
         *args, **kwargs
     ):
+        """
+        Create an empty raster dataset.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the output file.
+        x_min : float
+            Minimum x-coordinate of the dataset.
+        y_max : float
+            Maximum y-coordinate of the dataset.
+        pixel_width : float
+            Width of each pixel in the dataset.
+        pixel_height : float
+            Height of each pixel in the dataset.
+        crs : pyproj.CRS
+            Coordinate reference system (CRS) of the dataset.
+        x_size : int
+            Number of pixels in the x-direction.
+        y_size : int
+            Number of pixels in the y-direction.
+        n_bands : int, optional
+            Number of bands in the dataset. Defaults to 4.
+        driver : str, optional
+            The GDAL driver to be used for creating the dataset.
+            Defaults to 'MEM'.
+        return_dataset : bool, optional
+            Whether to return the created dataset. Defaults to True.
+        options : list[str], optional
+            Additional options for creating the dataset.
+            Defaults to ['TILED=YES'].
+        *args, **kwargs
+            Additional arguments and keyword arguments to be passed to
+            the GDAL driver.
+
+        Returns
+        -------
+        gdal.Dataset or None
+            The created raster dataset if `return_dataset` is True,
+            otherwise None.
+        """
+
+        if options is None:
+            options = ['TILED=YES']
 
         # Initialize an empty GeoTiff
         driver = gdal.GetDriverByName(driver)
@@ -253,7 +366,21 @@ class GDALDatasetIO(DataIO):
         dataset = None
 
     @staticmethod
-    def convert(dataset: gdal.Dataset, target_crs: pyproj.CRS):
+    def convert(dataset: gdal.Dataset, target_crs: pyproj.CRS) -> gdal.Dataset:
+        """Convert the coordinate reference system (CRS) of a raster dataset.
+
+        Parameters
+        ----------
+        dataset : gdal.Dataset
+            The raster dataset to be converted.
+        target_crs : pyproj.CRS
+            The target coordinate reference system (CRS) for the conversion.
+
+        Returns
+        -------
+        gdal.Dataset
+            The converted raster dataset.
+        """
 
         # Check current CRS
         current_crs = pyproj.CRS(dataset.GetProjection())
@@ -280,17 +407,19 @@ class GDALDatasetIO(DataIO):
     def get_bounds_from_dataset(
         dataset: gdal.Dataset,
     ) -> Tuple[np.ndarray, np.ndarray, float, float, pyproj.CRS]:
-        '''Get image bounds in a given coordinate system.
+        """Get the image bounds in a given coordinate system.
 
-        Args:
-            crs: Desired coordinate system.
+        Parameters
+        ----------
+        dataset : gdal.Dataset
+            The raster dataset.
 
-        Returns:
-            x_bounds: x_min, x_max of the image in the target coordinate system
-            y_bounds: y_min, y_max of the image in the target coordinate system
-            pixel_width
-            pixel_height
-        '''
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray, float, float, pyproj.CRS]
+            The x and y bounds of the image in the target coordinate system,
+            pixel width, pixel height, and the coord reference system (CRS).
+        """
 
         # Get the coordinates
         x_min, pixel_width, x_rot, y_max, y_rot, pixel_height = \
@@ -315,14 +444,38 @@ class ReferencedImageIO(DataIO):
 
     @staticmethod
     def save(
-        filepath,
-        img,
-        x_bounds,
-        y_bounds,
-        crs,
-        driver='GTiff',
+        filepath: str,
+        img: np.ndarray,
+        x_bounds: np.ndarray,
+        y_bounds: np.ndarray,
+        crs: pyproj.CRS,
+        driver: str = 'GTiff',
         *args, **kwargs
     ):
+        '''
+        Save an image to a file.
+
+        Parameters
+        ----------
+        filepath : str
+            The path to the output file.
+        img : np.ndarray
+            The image data to be saved.
+        x_bounds : np.ndarray
+            The x-coordinates bounds of the image.
+        y_bounds : np.ndarray
+            The y-coordinates bounds of the image.
+        crs : pyproj.CRS
+            The coordinate reference system of the image.
+        driver : str, optional
+            The GDAL driver to use for saving the image. Defaults to 'GTiff'.
+        *args, **kwargs
+            Additional arguments to be passed to GDALDatasetIO.create
+
+        Example
+        -------
+        save('output.tif', image_data, x_bounds, y_bounds, crs)
+        '''
 
         if filepath != '':
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -360,7 +513,24 @@ class ReferencedImageIO(DataIO):
         dataset = None
 
     @staticmethod
-    def load(filepath, crs: pyproj.CRS = None):
+    def load(
+        filepath: str,
+        crs: pyproj.CRS = None
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        '''Load a referenced image from a file.
+
+        Parameters
+        ----------
+        filepath : str
+            The path to the image file.
+        crs : pyproj.CRS, optional
+            The coordinate reference system of the image. Defaults to None.
+
+        Returns
+        -------
+        tuple
+            A tuple containing the loaded image, x bounds, and y bounds.
+        '''
 
         # Get image
         dataset = GDALDatasetIO.load(filepath, crs=crs)
@@ -384,36 +554,33 @@ class TabularIO(DataIO):
     name = 'tabular'
 
     @staticmethod
-    def save(filepath, data):
-        df = pd.DataFrame(data)
-        df.to_csv(filepath, index=False)
+    def save(filepath: str, data: pd.DataFrame):
+        '''
+        Save data to a CSV file.
+
+        Parameters
+        ----------
+        filepath : str
+            The path to the CSV file where the data will be saved.
+        data : pd.DataFrame
+            The data to be saved. It can be a list of dictionaries
+            or a dictionary of lists.
+        '''
+        data.to_csv(filepath, index=False)
 
     @staticmethod
-    def load(filepath):
+    def load(filepath: str) -> pd.DataFrame:
+        '''Load data from a CSV file.
+
+        Parameters
+        ----------
+        filepath : str
+            The path to the CSV file.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The loaded data as a pandas DataFrame.
+        '''
         df = pd.read_csv(filepath)
         return df
-
-
-class YAMLIO(DataIO):
-    name = 'yaml'
-
-    @staticmethod
-    def save(filepath, data):
-
-        fullargspec = inspect.getfullargspec(type(data))
-        settings = {}
-        for setting in fullargspec.args:
-            if setting == 'self':
-                continue
-            value = getattr(data, setting)
-            try:
-                pickle.dumps(value)
-            except TypeError:
-                value = 'no string repr'
-            settings[setting] = value
-        with open(filepath, 'w') as file:
-            yaml.dump(settings, file)
-
-    @staticmethod
-    def load(filepath):
-        pass
