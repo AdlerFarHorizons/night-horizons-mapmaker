@@ -50,6 +50,7 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
         use_cached_output: bool = True,
         unhandled_files: str = 'drop',
         passthrough: list[str] = [],
+        tz_offset_in_hr: float = 5.,
     ):
         self.io_manager = io_manager
         self.crs = crs
@@ -58,6 +59,7 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
         self.unhandled_files = unhandled_files
         self.passthrough = passthrough
         self.required_columns = ['filepath']
+        self.tz_offset_in_hr = tz_offset_in_hr
 
     def fit(
         self,
@@ -113,6 +115,12 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
                 how='inner',
                 on='filename'
             )
+
+            # Rename filepath_x
+            if 'filepath_x' in X_corr.columns:
+                X_corr['filepath'] = X_corr['filepath_x']
+                del X_corr['filepath_x']
+
             # Leftovers
             X_remain = (X.loc[~X.index.isin(X_corr['original_index'])]).copy()
 
@@ -121,7 +129,7 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
                 pattern = r'(\d+)_\d.tif'
                 X_remain['timestamp_id'] = X_remain['filename'].str.findall(
                     pattern
-                ).str[-1].astype('Int64')
+                ).str[-1]
                 X_corr2 = pd.merge(
                     X_remain,
                     log_df,
@@ -171,7 +179,7 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
 
         return X_out
 
-    def get_logs(self, tz_offset_in_hr: float = 5.) -> pd.DataFrame:
+    def get_logs(self) -> pd.DataFrame:
         '''Combine the different logs
 
         Parameters
@@ -202,7 +210,7 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
             # Get the timestamps in the right time zone
             df_to_include['CurrTimestamp_in_img_tz'] = (
                 df_to_include['CurrTimestamp']
-                - pd.Timedelta(tz_offset_in_hr, 'hr')
+                - pd.Timedelta(self.tz_offset_in_hr, 'hr')
             )
             df_to_include = df_to_include.dropna(
                 subset=['CurrTimestamp_in_img_tz']
@@ -240,6 +248,11 @@ class MetadataPreprocessor135(MetadataPreprocessor):
                 Defaults to the one provided at init.
         '''
 
+        assert (
+            ('img_log' in self.io_manager.input_filepaths)
+            | ('images' in self.io_manager.input_filepaths)
+        ), "Must provide an input description for either img_log or images."
+
         try:
             if img_log_fp is None:
                 img_log_fp = self.io_manager.input_filepaths['img_log']
@@ -265,7 +278,32 @@ class MetadataPreprocessor135(MetadataPreprocessor):
                 self.io_manager.input_filepaths['images']
             )
 
-            pass
+            # Parse the filepath to make the data frame
+            img_log_df['filename'] = img_log_df['filepath'].apply(
+                os.path.basename)
+            str_to_parse = img_log_df['filename'].str.split('_img').str[0]
+            df_data = list(str_to_parse.str.split('_'))
+            img_log_df_addendum = pd.DataFrame(
+                df_data,
+                columns=[
+                    'image_cycle',
+                    'timestamp_id',
+                    'serial_num',
+                    'camera_num',
+                ],
+            )
+            img_log_df = pd.concat(
+                [img_log_df, img_log_df_addendum],
+                axis='columns',
+            )
+
+            # Get the timestamp
+            img_log_df['timestamp'] = pd.to_datetime(
+                img_log_df['timestamp_id'].astype(float),
+                unit='s',
+            )
+
+            return img_log_df
 
         # Parse the timestamp
         # We use a combination of the odroid timestamp and the obc
@@ -286,6 +324,7 @@ class MetadataPreprocessor135(MetadataPreprocessor):
         ).astype(int)
         # Correct for overflow
         img_log_df.loc[img_log_df['timestamp_id'] < 0, 'timestamp_id'] += 2**32
+        img_log_df['timestamp_id'] = img_log_df['timestamp_id'].astype(str)
 
         # Drop unnamed columns
         img_log_df = img_log_df.drop(

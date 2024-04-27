@@ -8,7 +8,7 @@ pipeline:
 io_manager:
   input_dir: /data/input
   input_description:
-    raw_images:
+    images:
       directory: images
       extension: ['raw', 'tif', 'tiff']
     referenced_images:

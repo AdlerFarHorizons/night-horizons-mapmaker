@@ -4,6 +4,7 @@
 import os
 import shutil
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -72,7 +73,8 @@ class TestMetadataPreprocessor(unittest.TestCase):
         os.makedirs(self.io_manager.output_dir, exist_ok=True)
         metadata.to_csv(output_fp)
         self.io_manager.input_filepaths['metadata'] = output_fp
-        del self.io_manager.input_filepaths['img_log']
+        if 'img_log' in self.io_manager.input_filepaths:
+            del self.io_manager.input_filepaths['img_log']
         del self.io_manager.input_filepaths['gps_log']
         del self.io_manager.input_filepaths['imu_log']
         metadata2 = self.transformer.fit_transform(fps)
@@ -138,6 +140,26 @@ class TestMetadataPreprocessor145(TestMetadataPreprocessor):
         # FH145 had no image log, so the metadata processor needs to
         # function without.
         del self.io_manager.input_filepaths['img_log']
+
+        # Replace the image filepaths with fake ones with the right format
+        images_dir = '/data/input/images/240203-FH145/23085687'
+        self.io_manager.input_filepaths['images'] = [
+            os.path.join(images_dir, fn) for fn in
+            [
+                '10_1707005484.653204_23085687_1_img_0.raw',
+                '1037_1707018103.7545705_23085687_1_img_0.raw',
+                '1012_1707017794.0622451_23085687_1_img.tiff',
+            ]
+        ]
+
+        # Turn off the timezone offset
+        self.transformer.tz_offset_in_hr = 0.
+
+    @patch('night_horizons.utils.discover_data')
+    def test_output(self, mock_discover_data):
+        mock_discover_data.return_value = \
+            self.io_manager.input_filepaths['images']
+        super().test_output()
 
 
 class TestGeoTIFFPreprocessor(unittest.TestCase):
