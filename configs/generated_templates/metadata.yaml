@@ -10,7 +10,6 @@ io_manager:  # night_horizons.io_manager.IOManager
   checkpoint_selection:
   checkpoint_tag: _i{:06d}
   checkpoint_freq: 100
-  data_ios: {}
   input_dir: /data/input
   input_description:
     img_log: metadata/220513-FH135/image.log

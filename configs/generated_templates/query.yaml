@@ -10,7 +10,6 @@ io_manager:  # night_horizons.io_manager.IOManager
   checkpoint_selection:
   checkpoint_tag: _i{:06d}
   checkpoint_freq: 100
-  data_ios: {}
   input_dir: /data/input
   input_description:
     metadata: existing_output/sequential-mosaic/REPLACE_THIS/y_pred.csv

@@ -21,7 +21,6 @@ class DataIO(ABC):
     '''Abstract base class for all data input/output
     '''
 
-    @abstractmethod
     @staticmethod
     def save(filepath: str, data: object):
         '''Save data to disk.
@@ -35,7 +34,6 @@ class DataIO(ABC):
                 The data to save.
         '''
 
-    @abstractmethod
     @staticmethod
     def load(filepath: str) -> object:
         """Load data from a file.
