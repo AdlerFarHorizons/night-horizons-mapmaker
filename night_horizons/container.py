@@ -9,7 +9,6 @@ import pyproj
 from ruamel.yaml import YAML
 from sklearn.utils import check_random_state
 
-from . import data_io
 from .utils import deep_merge
 
 
@@ -23,10 +22,10 @@ class DIContainer:
 
     Jargon
     ------
-        Container: This class.
-        Service: An object that is created by the container.
-        Dependency: An object that a service depends on.
-        Inject: The process of providing a service with its dependencies.
+    Container: This class.
+    Service: An object that is created by the container.
+    Dependency: An object that a service depends on.
+    Inject: The process of providing a service with its dependencies.
 
     '''
 
