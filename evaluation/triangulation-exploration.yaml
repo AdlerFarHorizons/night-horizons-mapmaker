@@ -1,0 +1,23 @@
+###############################################################################
+# Example Configuration File
+###############################################################################
+
+# I/O settings
+io_manager:
+  root_dir: /data
+  input_dir: input/other
+  input_description:
+    triangulation_metadata: triangulation_metadata.csv
+    aerial_night_image: KX10_GIU_20230320_W88.35_N41.09_202300123136_L4A/KX10_GIU_20230320_W88.35_N41.09_202300123136_L4A_B_LH.tif
+    viirs_night_image: VIIRS/DNB_BRDF-Corrected_NTLGeoTI_BBOX.tif
+    viirs_raw_data: VIIRS/VNP46A2.A2023138.h09v04.001.2023146134357.h5
+  output_dir: data/output/other/triangulation_exploration'
+  output_description: {}
+  file_exists: overwrite
+
+# Coordinate reference-system employed
+crs:
+  projparams: 'EPSG:3857'
+
+random_state: 
+  seed: 159234
