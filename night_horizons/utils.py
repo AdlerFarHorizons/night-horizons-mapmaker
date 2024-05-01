@@ -1,3 +1,5 @@
+'''Miscellaneous useful utilities.
+'''
 from functools import wraps
 import glob
 import inspect
@@ -18,19 +20,19 @@ def discover_data(
 ) -> pd.Series:
     '''
     This is really convenient, but we probably should merge it with IOManager's
-    find_files.
+    find_files. Currently it's only used for testing.
 
     Parameters
     ----------
-        directory:
-            Directory containing the data.
-        extension:
-            What filetypes to include.
+    directory:
+        Directory containing the data.
+    extension:
+        What filetypes to include.
 
     Returns
     -------
-        filepaths:
-            Data filepaths.
+    filepaths:
+        Data filepaths.
     '''
 
     # When all files
@@ -73,17 +75,17 @@ def check_filepaths_input(
 
     Parameters
     ----------
-        X
-            Input data.
-        required_columns
-            The columns required if a dataframe is passed.
-        passthrough
-            If True, allow columns other than the required columns.
+    X
+        Input data.
+    required_columns
+        The columns required if a dataframe is passed.
+    passthrough
+        If True, allow columns other than the required columns.
 
     Returns
     -------
-        X
-            Checked input data, possibly reshaped.
+    X
+        Checked input data, possibly reshaped.
     '''
 
     if isinstance(X, pd.DataFrame):
@@ -113,17 +115,17 @@ def check_df_input(
 
     Parameters
     ----------
-        X
-            Input data.
-        required_columns
-            The columns required if a dataframe is passed.
-        passthrough
-            If True, allow columns other than the required columns.
+    X
+        Input data.
+    required_columns
+        The columns required if a dataframe is passed.
+    passthrough
+        If True, allow columns other than the required columns.
 
     Returns
     -------
-        X
-            Validated input data.
+    X
+        Validated input data.
     '''
 
     assert isinstance(X, pd.DataFrame), 'Expected a pd.DataFrame.'
@@ -142,17 +144,17 @@ def check_columns(
 
     Parameters
     ----------
-        actual
-            Actual columns.
-        required
-            The columns required.
-        passthrough
-            If True, allow columns other than the required columns.
+    actual
+        Actual columns.
+    required
+        The columns required.
+    passthrough
+        If True, allow columns other than the required columns.
 
     Returns
     -------
-        actual
-            The validated columns.
+    actual
+        The validated columns.
     '''
 
     expected = pd.Series(expected)
@@ -176,7 +178,7 @@ def check_columns(
     return actual
 
 
-def enable_passthrough(func):
+def enable_passthrough(func: callable) -> callable:
     '''
     Maybe deprecate this in the future...
     I forgot that the possibly better method is to make use of
@@ -198,12 +200,8 @@ def enable_passthrough(func):
 
     Parameters
     ----------
-    Returns
-    -------
-    Requires
-    --------
-    self.passthrough : Union[list[str], bool]
-
+    func: callable
+        The function to wrap.
     '''
 
     def wrapper(
@@ -254,7 +252,23 @@ def enable_passthrough(func):
     return wrapper
 
 
-def deep_merge(orig_dict, new_dict):
+def deep_merge(orig_dict: dict, new_dict: dict) -> dict:
+    '''
+    Deep merges two dictionaries recursively.
+
+    Parameters
+    ----------
+    orig_dict : dict
+        The original dictionary to merge.
+    new_dict : dict
+        The dictionary to merge into the original dictionary.
+
+    Returns
+    -------
+    dict
+        The merged dictionary.
+
+    '''
     result = orig_dict.copy()
     for key, value in new_dict.items():
         if (
@@ -270,12 +284,36 @@ def deep_merge(orig_dict, new_dict):
 
 
 def get_logger(name: str = None):
+    '''
+    Get a logger instance with the specified name.
+
+    Parameters
+    ----------
+    name : str, optional
+        The name of the logger. If not provided, a root logger will be used.
+
+    Returns
+    -------
+    logger : logging.Logger
+        The logger instance.
+
+    Notes
+    -----
+    The logging level is determined by the `LOGGING_LEVEL` environment variable.
+    If the variable is not set, the default logging level is `WARNING`.
+
+    The available logging levels are:
+    - DEBUG
+    - INFO
+    - WARNING
+    - ERROR
+    - CRITICAL
+    '''
 
     # Get logger
     logger = logging.getLogger(name)
 
     # Get logging level
-    # Options are DEBUG, INFO, WARNING, ERROR, CRITICAL
     logging_level = os.getenv('LOGGING_LEVEL')
     if logging_level is None:
         logging_level = 'WARNING'
@@ -288,21 +326,51 @@ def get_logger(name: str = None):
 
 
 class StdoutLogger(object):
-    def __init__(self, logger, stdout):
+    '''
+    A class that redirects stdout to a logger.
+
+    Parameters
+    ----------
+    logger : Logger
+        The logger object to which the stdout will be redirected.
+    stdout : Stream
+        The stdout stream that will be redirected to the logger.
+    '''
+    def __init__(self, logger: object, stdout: object):
+        '''
+        Initializes an instance of the class.
+
+        Parameters
+        ----------
+        logger : object
+            The logger object used for logging.
+        stdout : object
+            The stdout object used for standard output.
+        '''
         self.logger = logger
         self.stdout = stdout
 
-    def write(self, message):
+    def write(self, message: str):
+        '''
+        Writes the given message to the output stream.
+
+        Parameters
+        ----------
+        message : str
+            The message to be written.
+        '''
         if message.strip() != "":
             self.logger.info('stdout: ' + message.strip())
         self.stdout.write(message)
 
     def flush(self):
+        '''Flush the output stream.'''
         self.stdout.flush()
 
 
 class LoggerMixin:
-    '''
+    '''Custom logger mixin class for tracking variables in a tabular format.
+
     Note that a decorator is not possible because we're typically
     interested in local variables.
 
@@ -310,20 +378,24 @@ class LoggerMixin:
         but in practice that requires one more object to be passed around,
         and for something as pervasive as the logger, that's a lot of
         boilerplate. I think it's better to just use a mixin.
-
-    Parameters
-    ----------
-    Returns
-    -------
     '''
 
     def __init__(
         self,
         log_keys: list[str] = [],
     ):
+        '''
+        Initializes an instance of the class.
+
+        Parameters
+        ----------
+        log_keys : list[str], optional
+            A list of variables to log the values of, by default an empty list.
+        '''
         self.log_keys = log_keys
 
     def start_logging(self):
+        '''Start logging the values of the specified variables.'''
         self.log = {}
 
     @property
@@ -338,7 +410,25 @@ class LoggerMixin:
     def log(self, value):
         self._log = value
 
-    def update_log(self, new_dict: dict, target: dict = None):
+    def update_log(self, new_dict: dict, target: dict = None) -> dict:
+        '''Update the log with new values
+
+        This method updates the log dictionary with new key-value pairs from the `new_dict` parameter.
+        Only the key-value pairs that are present in the `log_keys` attribute of the class will be added to the log.
+
+        Parameters
+        ----------
+        new_dict : dict
+            A dictionary containing the new key-value pairs to be added to the log.
+        target : dict, optional
+            The target dictionary to update. If not provided, the method will update the `log` attribute of the class.
+
+        Returns
+        -------
+        dict
+            The updated target dictionary.
+
+        '''
 
         if len(self.log_keys) == 0:
             return target
@@ -357,17 +447,25 @@ class LoggerMixin:
         return target
 
     def stop_logging(self):
+        '''Stop tracking all variables by setting log_keys to empty.'''
         self.log_keys = []
 
 
 class LoopLoggerMixin(LoggerMixin):
+    '''LoggerMixin, but for logging variables in a loop, conducive to
+    a tabular format.
+    '''
 
     def start_logging(self, i_start: int = 0, log_filepath: str = None):
         '''
+        Starts logging and initializes log and logs attributes.
+
         Parameters
         ----------
-        Returns
-        -------
+        i_start : int, optional
+            The index to start logging from. Default is 0.
+        log_filepath : str, optional
+            The filepath of the log file to load. Default is None.
 
         Attributes Modified
         -------------------
@@ -398,6 +496,14 @@ class LoopLoggerMixin(LoggerMixin):
                 self.logs.append(log)
 
     def write_log(self, log_filepath: str):
+        '''
+        Write the logs to a CSV file.
+
+        Parameters
+        ----------
+        log_filepath : str
+            The filepath where the log file will be saved.
+        '''
 
         log_df = pd.DataFrame(self.logs)
         log_df.to_csv(log_filepath)
