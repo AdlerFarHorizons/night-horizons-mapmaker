@@ -22,14 +22,14 @@ gdal.UseExceptions()
 
 
 class IOManager:
-    '''Class for managing input and output files.
+    """Class for managing input and output files.
     Some responsibilities:
 
     - Get full paths given relative paths
     - Identify all valid files in a directory and subdirectories
     - Check if a file exists, and act accordingly (overwrite, etc.)
     - Checkpoint files
-    '''
+    """
 
     def __init__(
         self,
@@ -38,11 +38,11 @@ class IOManager:
         output_dir: str,
         output_description: dict[str],
         root_dir: str = None,
-        file_exists: str = 'error',
+        file_exists: str = "error",
         checkpoint_file_key: str = None,
-        checkpoint_subdir: str = 'checkpoints',
+        checkpoint_subdir: str = "checkpoints",
         checkpoint_selection: list[str] = None,
-        checkpoint_tag: str = '_i{:06d}',
+        checkpoint_tag: str = "_i{:06d}",
         checkpoint_freq: int = 100,
     ):
         """Initialize the IOManager object.
@@ -94,20 +94,20 @@ class IOManager:
         self.checkpoint_freq = checkpoint_freq
 
         # Process input filetree
-        self.input_filepaths, self.input_description = \
-            self.find_input_files(input_description)
+        self.input_filepaths, self.input_description = self.find_input_files(
+            input_description
+        )
 
         # Process output filetree
-        self.output_filepaths, self.output_dir = \
-            self.get_output_filepaths(
-                output_dir=output_dir,
-                output_description=output_description,
-                file_exists=file_exists,
-                tracked_file_key=checkpoint_file_key,
-            )
+        self.output_filepaths, self.output_dir = self.get_output_filepaths(
+            output_dir=output_dir,
+            output_description=output_description,
+            file_exists=file_exists,
+            tracked_file_key=checkpoint_file_key,
+        )
 
         # And finally, the checkpoint info
-        self.checkpoint_filepatterns, self.checkpoint_dir = \
+        self.checkpoint_filepatterns, self.checkpoint_dir = (
             self.get_checkpoint_filepatterns(
                 output_dir=self.output_dir,
                 output_filepaths=self.output_filepaths,
@@ -115,12 +115,13 @@ class IOManager:
                 checkpoint_selection=self.checkpoint_selection,
                 checkpoint_tag=self.checkpoint_tag,
             )
+        )
 
     def find_input_files(
         self,
         input_description: dict[dict],
     ) -> Tuple[dict[pd.Series], dict[dict]]:
-        '''Find input files based on the provided input description.
+        """Find input files based on the provided input description.
 
         Parameters
         ----------
@@ -140,30 +141,26 @@ class IOManager:
             files. The second dictionary is a modified version of the input
             description, where file paths have been resolved relative to the
             input directory.
-        '''
+        """
 
         # Validate and store input description
         modified_input_description = copy.deepcopy(input_description)
         for key, descr in modified_input_description.items():
             if isinstance(descr, str):
-                modified_input_description[key] = \
-                    os.path.join(self.input_dir, descr)
+                modified_input_description[key] = os.path.join(self.input_dir, descr)
             else:
-                if 'directory' not in descr:
+                if "directory" not in descr:
                     raise ValueError(
                         f'input_description[{key}] must have a "directory" '
-                        'key if it is a dictionary'
+                        "key if it is a dictionary"
                     )
-                modified_input_description[key]['directory'] = \
-                    os.path.join(self.input_dir, descr['directory'])
+                modified_input_description[key]["directory"] = os.path.join(
+                    self.input_dir, descr["directory"]
+                )
 
         # Find files
         input_filepaths = {
-            key: (
-                self.find_selected_files(**item)
-                if isinstance(item, dict)
-                else item
-            )
+            key: (self.find_selected_files(**item) if isinstance(item, dict) else item)
             for key, item in modified_input_description.items()
         }
 
@@ -175,7 +172,7 @@ class IOManager:
         extension: str = None,
         pattern: str = None,
     ) -> pd.Series:
-        '''
+        """
         Parameters
         ----------
         directory :
@@ -187,7 +184,7 @@ class IOManager:
         -------
         fps :
             Data filepaths.
-        '''
+        """
 
         fps = self.find_files(directory)
 
@@ -213,7 +210,7 @@ class IOManager:
         AssertionError
             If the specified directory is not a valid directory.
         """
-        assert os.path.isdir(directory), f'{directory} is not a directory.'
+        assert os.path.isdir(directory), f"{directory} is not a directory."
 
         # Walk the tree to get files
         fps = []
@@ -225,10 +222,7 @@ class IOManager:
         return fps
 
     def select_files(
-        self,
-        fps: pd.Series,
-        extension: Union[str, list] = None,
-        pattern: str = None
+        self, fps: pd.Series, extension: Union[str, list] = None, pattern: str = None
     ):
         """Selects files from a pandas Series based on the given
         extension and pattern.
@@ -251,15 +245,15 @@ class IOManager:
         # Handle extensions.
         if extension is not None:
             if pattern is None:
-                pattern = '.*'
+                pattern = ".*"
             else:
-                pattern += '.*'
+                pattern += ".*"
             # When a single extension
             if isinstance(extension, str):
-                pattern += f'{extension}$'
+                pattern += f"{extension}$"
             # When a list of extensions
             else:
-                pattern += '(' + '|'.join(extension) + ')$'
+                pattern += "(" + "|".join(extension) + ")$"
 
         # Filter to select particular files
         if pattern is not None:
@@ -277,7 +271,7 @@ class IOManager:
         file_exists: str,
         tracked_file_key: str,
     ) -> Tuple[dict[str], str]:
-        '''
+        """
         Parameters
         ----------
         output_dir : str
@@ -296,7 +290,7 @@ class IOManager:
             A tuple containing two elements. The first element is a dictionary
             mapping each output file key to the corresponding file path. The
             second element is the output directory.
-        '''
+        """
 
         # Exit early if there's nothing to do
         if len(output_description) == 0:
@@ -311,25 +305,23 @@ class IOManager:
         tracked_filepath = os.path.join(output_dir, tracked_filename)
         if os.path.isfile(tracked_filepath):
             # Standard, simple options
-            if file_exists == 'error':
-                raise FileExistsError('File already exists at destination.')
-            elif file_exists in ['pass', 'load']:
+            if file_exists == "error":
+                raise FileExistsError("File already exists at destination.")
+            elif file_exists in ["pass", "load"]:
                 pass
-            elif file_exists == 'overwrite':
+            elif file_exists == "overwrite":
                 shutil.rmtree(output_dir)
             # Create a new file with a new number appended
-            elif file_exists == 'new':
-                out_dir_pattern = output_dir + '_v{:03d}'
+            elif file_exists == "new":
+                out_dir_pattern = output_dir + "_v{:03d}"
                 i = 0
                 while os.path.isfile(tracked_filepath):
                     output_dir = out_dir_pattern.format(i)
-                    tracked_filepath = os.path.join(
-                        output_dir, tracked_filename)
+                    tracked_filepath = os.path.join(output_dir, tracked_filename)
                     i += 1
             else:
                 raise ValueError(
-                    'Unrecognized value for filepath, '
-                    f'filepath={tracked_filepath}'
+                    "Unrecognized value for filepath, " f"filepath={tracked_filepath}"
                 )
 
         # Auxiliary files
@@ -346,8 +338,8 @@ class IOManager:
         return output_filepaths, output_dir
 
     def save_settings(self, obj):
-        '''Save the settings of an object to a file.
-        
+        """Save the settings of an object to a file.
+
         This may be degenerate with saving the config, but better safe than
         sorry, and it's computationally inexpensive.
 
@@ -355,20 +347,20 @@ class IOManager:
         ----------
         obj : object
             The object to save the settings of.
-        '''
+        """
 
         fullargspec = inspect.getfullargspec(type(obj))
         settings = {}
         for setting in fullargspec.args:
-            if setting == 'self':
+            if setting == "self":
                 continue
             value = getattr(obj, setting)
             try:
                 pickle.dumps(value)
             except TypeError:
-                value = 'no string repr'
+                value = "no string repr"
             settings[setting] = value
-        with open(self.output_filepaths['settings'], 'w') as file:
+        with open(self.output_filepaths["settings"], "w") as file:
             yaml.dump(settings, file)
 
     def get_checkpoint_filepatterns(
@@ -379,7 +371,7 @@ class IOManager:
         checkpoint_selection: list[str],
         checkpoint_tag: str,
     ) -> Tuple[dict[str], str]:
-        '''Get the checkpoint file patterns for saving checkpoints.
+        """Get the checkpoint file patterns for saving checkpoints.
 
         Parameters
         ----------
@@ -401,7 +393,7 @@ class IOManager:
         Tuple[dict[str], str]
             A tuple containing the checkpoint file patterns and
             the checkpoint directory.
-        '''
+        """
 
         checkpoint_dir = os.path.join(output_dir, checkpoint_subdir)
         os.makedirs(checkpoint_dir, exist_ok=True)
@@ -419,7 +411,7 @@ class IOManager:
         self,
         key: str = None,
     ) -> Tuple[int, list[str]]:
-        '''Search for checkpoint files in the specified directory.
+        """Search for checkpoint files in the specified directory.
 
         Parameters
         ----------
@@ -432,7 +424,7 @@ class IOManager:
         Tuple[int, list[str]]
             A tuple containing the latest checkpoint index and a list of
             filenames matching the checkpoint file pattern.
-        '''
+        """
 
         if key is None:
             key = self.checkpoint_file_key
@@ -443,8 +435,8 @@ class IOManager:
         i_latest = -1
         filename = None
         search_pattern = checkpoint_filepattern.replace(
-            r'{:06d}',
-            '(\\d{6})\\',
+            r"{:06d}",
+            "(\\d{6})\\",
         )
         pattern = re.compile(search_pattern)
         possible_files = os.listdir(self.checkpoint_dir)
@@ -463,29 +455,26 @@ class IOManager:
 
     @abstractmethod
     def save_to_checkpoint(self, i: int):
-        '''Save the current state of the object to a checkpoint file.
+        """Save the current state of the object to a checkpoint file.
 
         Parameters
         ----------
         i : int
             The index of the checkpoint.
-        '''
+        """
 
     @abstractmethod
     def load_from_checkpoint(self, i: int):
-        '''Load the state of the object from a checkpoint file.
+        """Load the state of the object from a checkpoint file.
 
         Parameters
         ----------
         i : int
             The index of the checkpoint.
-        '''
+        """
 
-    def search_and_load_checkpoint(
-        self,
-        key: str = None
-    ) -> Tuple[int, object]:
-        '''
+    def search_and_load_checkpoint(self, key: str = None) -> Tuple[int, object]:
+        """
         Searches for the latest checkpoint with the given key and loads
         the data from the next checkpoint.
 
@@ -500,7 +489,7 @@ class IOManager:
         tuple
             A tuple containing the index of the next checkpoint and the
             loaded data from that checkpoint.
-        '''
+        """
 
         i_latest, _ = self.search_for_checkpoint(key=key)
 
@@ -525,12 +514,12 @@ class IOManager:
             i_latest, filenames = self.search_for_checkpoint(key=key)
 
             # Delete all but the latest files
-            for (i_file, filename) in filenames:
+            for i_file, filename in filenames:
                 if i_file != i_latest:
                     os.remove(os.path.join(self.checkpoint_dir, filename))
 
     def get_connection(self, url: str = None) -> SQLEngine:
-        '''Returns a database connection.
+        """Returns a database connection.
 
         Parameters
         ----------
@@ -543,19 +532,18 @@ class IOManager:
         engine : sqlalchemy.engine.Engine
             The database connection engine.
 
-        '''
+        """
 
         if url is None:
-            url = os.getenv('DATABASE_URL')
-            url = url.replace('postgres://', 'postgresql+pyscopg2://')
+            url = os.getenv("DATABASE_URL")
+            url = url.replace("postgres://", "postgresql+pyscopg2://")
         engine = create_engine(url)
 
         return engine
 
 
 class MosaicIOManager(IOManager):
-    '''Class for managing input and output files for mosaics.
-    '''
+    """Class for managing input and output files for mosaics."""
 
     def __init__(
         self,
@@ -563,19 +551,19 @@ class MosaicIOManager(IOManager):
         input_description: dict[dict],
         output_dir: str,
         output_description: dict[str] = {
-            'mosaic': 'mosaic.tiff',
-            'settings': 'settings.yaml',
-            'log': 'log.csv',
+            "mosaic": "mosaic.tiff",
+            "settings": "settings.yaml",
+            "log": "log.csv",
         },
         root_dir: str = None,
-        file_exists: str = 'error',
-        tracked_file_key: str = 'mosaic',
-        checkpoint_subdir: str = 'checkpoints',
-        checkpoint_selection: list[str] = ['mosaic', 'settings', 'log'],
-        checkpoint_tag: str = '_i{:06d}',
+        file_exists: str = "error",
+        tracked_file_key: str = "mosaic",
+        checkpoint_subdir: str = "checkpoints",
+        checkpoint_selection: list[str] = ["mosaic", "settings", "log"],
+        checkpoint_tag: str = "_i{:06d}",
         checkpoint_freq: int = 100,
     ):
-        '''Initialize the IOManager object.
+        """Initialize the IOManager object.
 
         This method initializes the IOManager object with the provided parameters.
 
@@ -600,8 +588,8 @@ class MosaicIOManager(IOManager):
             }
 
         root_dir : str, optional
-            The root directory path. If provided, it will be used as the base directory for all file paths.
-            The default value is None.
+            The root directory path. If provided, it will be used as the base
+            directory for all file paths. The default value is None.
 
         file_exists : str, optional
             The action to take if a file already exists.
@@ -627,7 +615,7 @@ class MosaicIOManager(IOManager):
         checkpoint_freq : int, optional
             The frequency at which checkpoints will be saved.
             The default value is 100.
-        '''
+        """
 
         super().__init__(
             input_dir=input_dir,
@@ -644,24 +632,21 @@ class MosaicIOManager(IOManager):
         )
 
     def open_dataset(self):
-        '''Load the mosaic dataset.
+        """Load the mosaic dataset.
 
         It's kind of awkard that this is one of the only convenience functions
         for opening/loading data.
-        '''
+        """
 
         return GDALDatasetIO.load(
-            self.output_filepaths['mosaic'],
+            self.output_filepaths["mosaic"],
             mode=gdal.GA_Update,
         )
 
     def save_to_checkpoint(
-        self,
-        i: int,
-        dataset: gdal.Dataset,
-        y_pred: pd.DataFrame = None
+        self, i: int, dataset: gdal.Dataset, y_pred: pd.DataFrame = None
     ):
-        '''Saves the dataset to a checkpoint file and performs additional
+        """Saves the dataset to a checkpoint file and performs additional
         operations if necessary.
 
         Parameters
@@ -672,7 +657,7 @@ class MosaicIOManager(IOManager):
             The GDAL dataset object to be saved.
         y_pred : pd.DataFrame, optional
             The predicted values to be saved as a CSV file. Default is None.
-        '''
+        """
 
         # Conditions for normal return
         if self.checkpoint_freq is None:
@@ -686,15 +671,12 @@ class MosaicIOManager(IOManager):
 
         # Store auxiliary files
         if y_pred is not None:
-            y_pred.to_csv(self.output_filepaths['y_pred'])
+            y_pred.to_csv(self.output_filepaths["y_pred"])
 
         # Make checkpoint files by copying the data
         for key, pattern in self.checkpoint_filepatterns.items():
             if os.path.isfile(self.output_filepaths[key]):
-                checkpoint_fp = os.path.join(
-                    self.checkpoint_dir,
-                    pattern.format(i)
-                )
+                checkpoint_fp = os.path.join(self.checkpoint_dir, pattern.format(i))
                 shutil.copy(self.output_filepaths[key], checkpoint_fp)
 
         # Re-open dataset
@@ -703,7 +685,7 @@ class MosaicIOManager(IOManager):
         return dataset
 
     def load_from_checkpoint(self, i_checkpoint: int) -> dict:
-        '''Load data from a checkpoint file.
+        """Load data from a checkpoint file.
 
         Parameters
         ----------
@@ -716,50 +698,48 @@ class MosaicIOManager(IOManager):
             A dictionary containing the loaded data.
             The dictionary has the following key:
             - 'y_pred': A pandas DataFrame containing the predictions.
-        '''
+        """
 
         if i_checkpoint == 0:
             return None
 
-        print(f'Loading checkpoint file for i={i_checkpoint}')
+        print(f"Loading checkpoint file for i={i_checkpoint}")
 
         # Copy checkpoint files
         for key, pattern in self.checkpoint_filepatterns.items():
             checkpoint_fp = os.path.join(
-                self.checkpoint_dir,
-                pattern.format(i_checkpoint - 1)
+                self.checkpoint_dir, pattern.format(i_checkpoint - 1)
             )
             if os.path.isfile(checkpoint_fp):
                 shutil.copy(checkpoint_fp, self.output_filepaths[key])
 
         # And load the predictions
-        y_pred = pd.read_csv(self.output_filepaths['y_pred'], index_col=0)
+        y_pred = pd.read_csv(self.output_filepaths["y_pred"], index_col=0)
 
         loaded_data = {
-            'y_pred': y_pred,
+            "y_pred": y_pred,
         }
         return loaded_data
 
 
 class SequentialMosaicIOManager(MosaicIOManager):
-    '''Class for managing input and output files for sequential mosaics.
-    '''
+    """Class for managing input and output files for sequential mosaics."""
 
     def __init__(
         self,
         output_description: dict = {
-            'mosaic': 'mosaic.tiff',
-            'settings': 'settings.yaml',
-            'log': 'log.csv',
-            'y_pred': 'y_pred.csv',
-            'progress_images_dir': 'progress_images',
-            'referenced_images': 'referenced_images/img_ind{:06d}.tiff',
+            "mosaic": "mosaic.tiff",
+            "settings": "settings.yaml",
+            "log": "log.csv",
+            "y_pred": "y_pred.csv",
+            "progress_images_dir": "progress_images",
+            "referenced_images": "referenced_images/img_ind{:06d}.tiff",
         },
-        checkpoint_selection: list[str] = [
-            'mosaic', 'settings', 'log', 'y_pred'],
-        *args, **kwargs
+        checkpoint_selection: list[str] = ["mosaic", "settings", "log", "y_pred"],
+        *args,
+        **kwargs,
     ):
-        '''Initialize the IOManager object.
+        """Initialize the IOManager object.
 
         Parameters
         ----------
@@ -781,31 +761,33 @@ class SequentialMosaicIOManager(MosaicIOManager):
             Default is ['mosaic', 'settings', 'log', 'y_pred'].
         *args, **kwargs
             Additional arguments and keyword arguments.
-        '''
+        """
         super().__init__(
             output_description=output_description,
             checkpoint_selection=checkpoint_selection,
-            *args, **kwargs
+            *args,
+            **kwargs,
         )
 
 
 class TrainMosaicIOManager(MosaicIOManager):
-    '''Class for managing input and output files for training mosaics,
-    i.e. mosaics used as the basis for a sequential mosaic.'''
+    """Class for managing input and output files for training mosaics,
+    i.e. mosaics used as the basis for a sequential mosaic."""
 
     def __init__(
         self,
         output_description: dict = {
-            'mosaic': 'mosaic.tiff',
-            'settings': 'settings_train.yaml',
-            'log': 'log_train.yaml',
-            'y_pred': 'y_pred_train.csv',
-            'progress_images_dir_train': 'progress_images_train',
+            "mosaic": "mosaic.tiff",
+            "settings": "settings_train.yaml",
+            "log": "log_train.yaml",
+            "y_pred": "y_pred_train.csv",
+            "progress_images_dir_train": "progress_images_train",
         },
-        file_exists: str = 'pass',
-        *args, **kwargs
+        file_exists: str = "pass",
+        *args,
+        **kwargs,
     ):
-        '''Initialize the IOManager object.
+        """Initialize the IOManager object.
 
         Parameters
         ----------
@@ -824,17 +806,18 @@ class TrainMosaicIOManager(MosaicIOManager):
             The default is 'pass'.
         *args, **kwargs
             Additional arguments and keyword arguments.
-        '''
+        """
         super().__init__(
             output_description=output_description,
             file_exists=file_exists,
-            *args, **kwargs
+            *args,
+            **kwargs,
         )
 
 
 class ReferencedRawSplitter:
-    '''Class used for splitting referenced (test + training) and
-    raw (production) data.'''
+    """Class used for splitting referenced (test + training) and
+    raw (production) data."""
 
     def __init__(
         self,
@@ -845,7 +828,7 @@ class ReferencedRawSplitter:
         random_state: Union[int, np.random.RandomState] = None,
         use_test_dir: bool = False,
     ):
-        '''Initialize the ReferencedRawSplitter object.
+        """Initialize the ReferencedRawSplitter object.
 
         Parameters
         ----------
@@ -872,7 +855,7 @@ class ReferencedRawSplitter:
             If True, the test data will be determined by a test directory,
             rather than a random split.
             Default is False.
-        '''
+        """
 
         self.io_manager = io_manager
         self.test_size = test_size
@@ -881,23 +864,20 @@ class ReferencedRawSplitter:
         self.random_state = check_random_state(random_state)
         self.use_test_dir = use_test_dir
 
-    def train_test_production_split(
-        self
-    ) -> Tuple[pd.Series, pd.Series, pd.Series]:
-        '''Split the dataset into training, test, and production data.
+    def train_test_production_split(self) -> Tuple[pd.Series, pd.Series, pd.Series]:
+        """Split the dataset into training, test, and production data.
 
         How indices are handled:
         - fps_train has indices running from 0 to len(fps_train)
         - fps has indices running from 0 to len(fps)
         - fps_test has indices that are a subset of fps
-        '''
+        """
 
-        referenced_fps = self.io_manager.input_filepaths['referenced_images']
+        referenced_fps = self.io_manager.input_filepaths["referenced_images"]
 
         # Actual train test split
         if self.use_test_dir:
-            fps_test = \
-                self.io_manager.input_filepaths['test_referenced_images']
+            fps_test = self.io_manager.input_filepaths["test_referenced_images"]
             fps_train = referenced_fps
         else:
             fps_train, fps_test = train_test_split(
@@ -909,13 +889,14 @@ class ReferencedRawSplitter:
 
         # Combine raw fps and test fps
         if not self.drop_raw_images:
-            raw_fps = self.io_manager.input_filepaths['images']
+            raw_fps = self.io_manager.input_filepaths["images"]
 
             # Downsample the raw images as requested
             if self.max_raw_size is not None:
                 if raw_fps.size > self.max_raw_size:
-                    raw_fps = pd.Series(self.random_state.choice(
-                        raw_fps, self.max_raw_size))
+                    raw_fps = pd.Series(
+                        self.random_state.choice(raw_fps, self.max_raw_size)
+                    )
 
             raw_fps.index += referenced_fps.size
             fps = pd.concat([fps_test, raw_fps])
