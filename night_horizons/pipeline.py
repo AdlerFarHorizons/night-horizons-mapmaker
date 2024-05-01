@@ -1,13 +1,13 @@
-from abc import ABC, abstractmethod
+'''Main code that runs the pipeline. This module puts everything together.
+'''
+from abc import ABC
 import os
 import shutil
-from typing import Tuple
 
 import argparse
 import cv2
 from sklearn.pipeline import Pipeline
 from sklearn.utils import check_random_state
-import sys
 import pandas as pd
 from pyproj import CRS
 
@@ -186,7 +186,7 @@ class MetadataProcessor(Stage):
 
 
 class MosaicMaker(Stage):
-    '''Create a mosaic from referenced images.
+    '''Class for constructing a mosaic from referenced images.
     '''
 
     def run(self):
@@ -251,6 +251,8 @@ class MosaicMaker(Stage):
         self.register_default_processors()
 
     def register_default_preprocessors(self):
+        '''Prepare the preprocessors used in the pipeline.
+        '''
 
         # Preprocessor to get geotiff metadata (which includes georeferencing)
         self.container.register_service(
@@ -295,6 +297,7 @@ class MosaicMaker(Stage):
         )
 
     def register_default_processors(self):
+        '''Prepare the processors used in the pipeline.'''
 
         # Finally, the mosaicker itself, which is a batch processor
         self.container.register_service(
@@ -348,8 +351,12 @@ class MosaicMaker(Stage):
 
 
 class SequentialMosaicMaker(MosaicMaker):
+    '''Class for creating a sequential mosaic from referenced and unreferenced images.
+    The referenced images act as a basis for the unreferenced images.
+    '''
 
     def run(self):
+        '''Make the sequential mosaic and reference images along the way.'''
 
         if self.verbose:
             print('Starting sequential mosaic creation.')
@@ -434,6 +441,7 @@ class SequentialMosaicMaker(MosaicMaker):
         return y_pred
 
     def register_default_services(self):
+        '''Default settings for the sequential mosaicker.'''
 
         super().register_default_services()
 
@@ -451,6 +459,7 @@ class SequentialMosaicMaker(MosaicMaker):
         self.register_default_train_services()
 
     def register_default_preprocessors(self):
+        '''Default preprocessors for the sequential mosaicker.'''
 
         # For splitting the data
         self.container.register_service(
@@ -531,7 +540,8 @@ class SequentialMosaicMaker(MosaicMaker):
         )
 
     def register_default_processors(self):
-        '''
+        '''Default processors for the sequential mosaicker.
+
         This could be cleaned up more, at the cost of flexibility.
         '''
 
@@ -603,6 +613,7 @@ class SequentialMosaicMaker(MosaicMaker):
         )
 
     def register_default_train_services(self):
+        '''Default settings for the training mosaicker.'''
 
         # Preprocessor for the referenced mosaic is just a GeoTIFFPreprocessor
         self.container.register_service(
@@ -654,7 +665,7 @@ class SequentialMosaicMaker(MosaicMaker):
 
 
 class QueryProcessor(Stage):
-    '''Class for querying pipeline output (primarily referenced images)
+    '''Class for querying pipeline output (primarily referenced images).
     '''
 
     def run(self):
@@ -732,7 +743,7 @@ class QueryProcessor(Stage):
         return x_final
 
     def register_default_services(self):
-        '''Prepare the services needed for creating a mosaic.
+        '''Prepare the services needed for executing a query.
         This includes a modified IO manager, preprocessors, and processors.
         '''
 
@@ -743,7 +754,24 @@ class QueryProcessor(Stage):
         )
 
 
-def create_stage(config_filepath, local_options={}):
+def create_stage(config_filepath: str, local_options: dict = {}) -> Stage:
+    '''Create a stage of the pipeline. Pipeline stages are classes responsible
+    for running a part of the pipeline.
+
+    Parameters
+    ----------
+    config_filepath : str
+        The filepath to the configuration file.
+
+    local_options : dict, optional
+        Additional local options for the stage. Default is an empty dictionary.
+        These options override options in the config.
+
+    Returns
+    -------
+    pipeline_stage : Stage
+        An instance of the pipeline stage class.
+    '''
 
     container = DIContainer(
         config_filepath=config_filepath,
