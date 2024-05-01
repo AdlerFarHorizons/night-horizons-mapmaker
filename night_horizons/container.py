@@ -1,6 +1,6 @@
-'''This module contains the Dependency Injection Container class, which is
+"""This module contains the Dependency Injection Container class, which is
 responsible for constructing the objects we use.
-'''
+"""
 
 from collections import OrderedDict
 import inspect
@@ -13,7 +13,7 @@ from .utils import deep_merge
 
 
 class DIContainer:
-    '''Dependency Injection Container. This class is responsible for
+    """Dependency Injection Container. This class is responsible for
     constructing the objects we use. This has the benefit of a) enabling easy
     integration with a config, b) decoupling the object creation from the rest
     of the code (which e.g. allows us to update only one place when updating
@@ -26,10 +26,10 @@ class DIContainer:
     Dependency: An object that a service depends on.
     Inject: The process of providing a service with its dependencies.
 
-    '''
+    """
 
     def __init__(self, config_filepath: str, local_options: dict = None):
-        '''
+        """
         Initialize the DIContainer.
 
         Parameters
@@ -38,7 +38,7 @@ class DIContainer:
             The filepath to the configuration file.
         local_options : dict, optional
             Local options to override the configuration, by default {}.
-        '''
+        """
 
         if local_options is None:
             local_options = {}
@@ -50,7 +50,7 @@ class DIContainer:
 
         # Load the config
         yaml = YAML()
-        with open(config_filepath, 'r', encoding='UTF-8') as file:
+        with open(config_filepath, "r", encoding="UTF-8") as file:
             self.config = yaml.load(file)
 
         self.config = deep_merge(self.config, local_options)
@@ -62,10 +62,10 @@ class DIContainer:
         name: str,
         constructor: callable,
         singleton: bool = False,
-        wrapped_constructor = None,
+        wrapped_constructor=None,
     ):
-        '''
-        Register a service (object) with the container. Doing so allows us to 
+        """
+        Register a service (object) with the container. Doing so allows us to
         get an instance of it on-demand.
 
         Parameters
@@ -81,19 +81,18 @@ class DIContainer:
             The wrapped constructor function for the service,
             by default None.
 
-        '''
+        """
 
         self._services[name] = {
-            'constructor': constructor,
-            'singleton': singleton,
-            'wrapped_constructor': (
-                wrapped_constructor if wrapped_constructor is not None
-                else constructor
+            "constructor": constructor,
+            "singleton": singleton,
+            "wrapped_constructor": (
+                wrapped_constructor if wrapped_constructor is not None else constructor
             ),
         }
 
     def get_service(self, name: str, *args, version: str = None, **kwargs):
-        '''
+        """
         Get an instance of a registered service.
 
         Parameters
@@ -117,13 +116,13 @@ class DIContainer:
         ValueError
             If the service is not registered.
 
-        '''
+        """
 
         # If we have a particular version of the service we want to use
         # we can specify it here.
         if version is None:
             # We need to check if the version is specified in the config
-            config_version = self.config.get(name, {}).get('version', None)
+            config_version = self.config.get(name, {}).get("version", None)
             name = config_version if config_version is not None else name
         else:
             name = version
@@ -131,30 +130,27 @@ class DIContainer:
         # First, get ingredients for constructing the service
         constructor_dict = self._services.get(name)
         if not constructor_dict:
-            raise ValueError(f'Service {name} not registered')
+            raise ValueError(f"Service {name} not registered")
 
         # Parse constructor ingredients
-        if constructor_dict['singleton'] and name in self.services:
+        if constructor_dict["singleton"] and name in self.services:
             return self.services[name]
-        constructor = constructor_dict['constructor']
+        constructor = constructor_dict["constructor"]
 
         # Next, get the kwargs for the service
         args, kwargs = self.get_used_args(name, constructor, *args, **kwargs)
 
         # Finally, construct the service
         service = constructor(*args, **kwargs)
-        if constructor_dict['singleton']:
+        if constructor_dict["singleton"]:
             self.services[name] = service
 
         return service
 
     def get_used_args(
-        self,
-        name: str,
-        constructor: callable,
-        *args, **kwargs
+        self, name: str, constructor: callable, *args, **kwargs
     ) -> tuple[tuple, dict]:
-        '''
+        """
         Get the used arguments for a service, based on the config,
         the arguments passed in, and the function defaults.
 
@@ -175,7 +171,7 @@ class DIContainer:
             A tuple containing the positional arguments and keyword arguments
             to be used for constructing the service.
 
-        '''
+        """
 
         # Start by combining the passed-in kwargs and the config
         if name in self.config:
@@ -188,7 +184,7 @@ class DIContainer:
         return args, kwargs
 
     def get_default_args(self, constructor: callable) -> dict:
-        '''
+        """
         Get the default arguments for a service constructor.
 
         Parameters
@@ -201,7 +197,7 @@ class DIContainer:
         dict
             A dictionary containing the default arguments for the constructor.
 
-        '''
+        """
 
         kwargs = {}
         try:
@@ -220,7 +216,7 @@ class DIContainer:
         return kwargs
 
     def parse_config(self, config: dict) -> dict:
-        '''
+        """
         Parse the configuration and perform custom adjustments for
         some parameters.
 
@@ -234,10 +230,10 @@ class DIContainer:
         dict
             The parsed configuration dictionary.
 
-        '''
+        """
 
         def deep_interpret(unparsed: dict) -> dict:
-            '''
+            """
             Interpret the configuration recursively.
 
             Parameters
@@ -249,14 +245,14 @@ class DIContainer:
             -------
                 dict
                 The parsed configuration dictionary.
-            '''
+            """
             parsed = {}
             for key, value in unparsed.items():
                 if isinstance(value, dict):
                     parsed[key] = deep_interpret(value)
-                elif key == 'random_state':
+                elif key == "random_state":
                     parsed[key] = check_random_state(value)
-                elif key == 'crs':
+                elif key == "crs":
                     if not isinstance(value, pyproj.CRS):
                         parsed[key] = pyproj.CRS(value)
                     else:
@@ -268,7 +264,7 @@ class DIContainer:
         return deep_interpret(config)
 
     def save_config(self, filepath: str):
-        '''
+        """
         Save the configuration to a file.
 
         Parameters
@@ -276,24 +272,24 @@ class DIContainer:
         filepath : str
             The filepath to save the configuration.
 
-        '''
+        """
 
         # Get the parameters for each service
         yaml = YAML()
         doc = yaml.map()
         for name, constructor_dict in self._services.items():
-            constructor = constructor_dict['constructor']
+            constructor = constructor_dict["constructor"]
             if constructor is None:
                 doc[name] = self.config[name]
                 continue
 
-            wrapped_constructor = constructor_dict['wrapped_constructor']
+            wrapped_constructor = constructor_dict["wrapped_constructor"]
             if wrapped_constructor is not None:
                 constructor = constructor
 
             # Comment the name of the constructor
             doc.yaml_add_eol_comment(
-                f'{constructor.__module__}.{constructor.__name__}',
+                f"{constructor.__module__}.{constructor.__name__}",
                 key=name,
             )
 
@@ -303,5 +299,5 @@ class DIContainer:
             if kwargs != {}:
                 doc[name] = kwargs
 
-        with open(filepath, 'w', encoding='UTF-8') as file:
+        with open(filepath, "w", encoding="UTF-8") as file:
             yaml.dump(doc, file)
