@@ -1,3 +1,6 @@
+"""Module for handling batch processing of images.
+"""
+
 import tracemalloc
 from typing import Tuple, Union
 
@@ -22,16 +25,17 @@ class BatchProcessor(
     TransformerMixin,
     BaseEstimator,
 ):
+    """Base class for processing images in batches."""
 
     def __init__(
         self,
         io_manager: IOManager,
         processor: Processor,
-        log_keys: list[str] = ['ind', 'return_code'],
+        log_keys: list[str] = ["ind", "return_code"],
         passthrough: Union[list[str], bool] = True,
         scorer: Processor = None,
     ):
-        '''
+        """
         Initialize the BatchProcessor object.
 
         Parameters
@@ -55,11 +59,7 @@ class BatchProcessor(
         Passthrough is currently True by default. This is less likely to
         cause unexpected errors, but slightly more likely to cause uncaught
         unexpected behavior.
-
-        Returns
-        -------
-        None
-        '''
+        """
         self.io_manager = io_manager
         self.processor = processor
         self.passthrough = passthrough
@@ -71,9 +71,9 @@ class BatchProcessor(
         self,
         X: pd.DataFrame = None,
         y=None,
-        i_start: Union[str, int] = 'checkpoint',
-    ) -> 'BatchProcessor':
-        '''
+        i_start: Union[str, int] = "checkpoint",
+    ) -> "BatchProcessor":
+        """
         Fit the BatchProcessor model.
 
         Parameters
@@ -89,14 +89,15 @@ class BatchProcessor(
         -------
         BatchProcessor
             The fitted BatchProcessor model.
-        '''
+        """
         # Save the settings used for fitting
         self.io_manager.save_settings(self)
 
         # Start from checkpoint, if available
-        if i_start == 'checkpoint':
-            self.i_start_, self.checkpoint_state_ = \
+        if i_start == "checkpoint":
+            self.i_start_, self.checkpoint_state_ = (
                 self.io_manager.search_and_load_checkpoint()
+            )
         else:
             self.i_start_ = i_start
             self.checkpoint_state_ = None
@@ -109,7 +110,7 @@ class BatchProcessor(
         X: pd.DataFrame,
         y=None,
     ) -> pd.DataFrame:
-        '''Transform the input data using the BatchProcessor.
+        """Transform the input data using the BatchProcessor.
 
         Parameters
         ----------
@@ -123,14 +124,14 @@ class BatchProcessor(
         -------
         pd.DataFrame
             The transformed data.
-        '''
+        """
         # Memory information
         mem = psutil.virtual_memory()
         LOGGER.info(
-            'At start of transform: '
-            f'{mem.available / 1024**3.:.2g} of '
-            f'{mem.total / 1024**3.:.2g} GB available '
-            f'({mem.percent}% used)'
+            "At start of transform: "
+            f"{mem.available / 1024**3.:.2g} of "
+            f"{mem.total / 1024**3.:.2g} GB available "
+            f"({mem.percent}% used)"
         )
 
         # This checks both the input and the state of the class
@@ -149,7 +150,7 @@ class BatchProcessor(
         self,
         X: pd.DataFrame,
     ) -> pd.DataFrame:
-        '''Transform and predict perform the same process here.
+        """Transform and predict are the same functions.
 
         Parameters
         ----------
@@ -160,7 +161,7 @@ class BatchProcessor(
         -------
         pd.DataFrame
             The transformed and predicted data.
-        '''
+        """
         return self.transform(X)
 
     def score(
@@ -168,7 +169,7 @@ class BatchProcessor(
         X: pd.DataFrame,
         y=None,
     ) -> pd.DataFrame:
-        '''Calculate the scores for the given input data.
+        """Calculate the scores for the given input data.
 
         Parameters
         ----------
@@ -181,7 +182,7 @@ class BatchProcessor(
         -------
         pd.DataFrame
             The scored data.
-        '''
+        """
         # Make a copy so we don't directly alter the data
         X = X.copy()
 
@@ -199,7 +200,7 @@ class BatchProcessor(
         X: pd.DataFrame,
         y=None,
     ) -> pd.DataFrame:
-        '''Batch process the data using a given processor.
+        """Batch process the data using a given processor.
 
         Parameters
         ----------
@@ -214,12 +215,12 @@ class BatchProcessor(
         -------
         pd.DataFrame
             The processed output data.
-        '''
+        """
 
-        LOGGER.info('Starting batch processing...')
+        LOGGER.info("Starting batch processing...")
 
-        if 'log' in self.io_manager.output_filepaths:
-            self.log_filepath_ = self.io_manager.output_filepaths['log']
+        if "log" in self.io_manager.output_filepaths:
+            self.log_filepath_ = self.io_manager.output_filepaths["log"]
             self.start_logging(
                 i_start=self.i_start_,
                 log_filepath=self.log_filepath_,
@@ -227,19 +228,19 @@ class BatchProcessor(
         else:
             self.start_logging()
 
-        LOGGER.info('Starting batch processing:preprocessing...')
+        LOGGER.info("Starting batch processing:preprocessing...")
 
         # Resources contains global variables that will be available
         # throughout image processing.
         X_t, resources = self.preprocess(X)
 
         # Start memory tracing
-        if 'snapshot' in self.log_keys:
+        if "snapshot" in self.log_keys:
             tracemalloc.start()
             start = tracemalloc.take_snapshot()
-            self.log['starting_snapshot'] = start
+            self.log["starting_snapshot"] = start
 
-        LOGGER.info('Starting batch processing:main loop...')
+        LOGGER.info("Starting batch processing:main loop...")
 
         # Main loop
         Z_out = X_t.copy()
@@ -252,28 +253,28 @@ class BatchProcessor(
             # We make a copy of row so that we don't modify the original
             row = X_t.loc[ind].copy()
 
-            LOGGER.info(f'Processing row {i}...')
+            LOGGER.info(f"Processing row {i}...")
 
             # Process the row
             row = processor.process_row(i, row, resources)
 
-            LOGGER.info(f'Postprocessing row {i}...')
+            LOGGER.info(f"Postprocessing row {i}...")
 
             # Combine
             Z_out = row.to_frame().T.combine_first(Z_out)
 
             # Snapshot the memory usage
             log = processor.log
-            if 'snapshot' in self.log_keys:
+            if "snapshot" in self.log_keys:
                 if i % self.memory_snapshot_freq == 0:
-                    log['snapshot'] = tracemalloc.take_snapshot()
+                    log["snapshot"] = tracemalloc.take_snapshot()
 
-            LOGGER.info(f'Checkpointing row {i} in batch processing:main loop...')
+            LOGGER.info(f"Checkpointing row {i} in batch processing:main loop...")
 
             # Checkpoint
-            resources['dataset'] = self.io_manager.save_to_checkpoint(
+            resources["dataset"] = self.io_manager.save_to_checkpoint(
                 i,
-                resources['dataset'],
+                resources["dataset"],
                 y_pred=Z_out,
             )
             # Clean old checkpoint
@@ -282,7 +283,7 @@ class BatchProcessor(
             # Update and save the log
             log = self.update_log(locals(), log)
             self.logs.append(log)
-            if hasattr(self, 'log_filepath_'):
+            if hasattr(self, "log_filepath_"):
                 self.write_log(self.log_filepath_)
 
         # It's possible for the data to get scrambled during processing,
@@ -290,17 +291,17 @@ class BatchProcessor(
         Z_out = Z_out.loc[X.index]
 
         # Stop memory tracing
-        if 'snapshot' in self.log_keys:
+        if "snapshot" in self.log_keys:
             tracemalloc.stop()
 
-        LOGGER.info('Starting batch processing:postprocessing...')
+        LOGGER.info("Starting batch processing:postprocessing...")
 
         Z_out = self.postprocess(Z_out, resources)
 
         return Z_out
 
     def validate_readiness(self, X: pd.DataFrame) -> pd.DataFrame:
-        '''Pre-transform validation.
+        """Pre-transform validation.
 
         Parameters
         ----------
@@ -316,7 +317,7 @@ class BatchProcessor(
         ------
         NotFittedError
             If the estimator has not been fitted yet.
-        '''
+        """
 
         # This is where X is copied too
         X = utils.check_df_input(
@@ -325,12 +326,12 @@ class BatchProcessor(
         )
 
         # Check if fit had been called
-        check_is_fitted(self, 'i_start_')
+        check_is_fitted(self, "i_start_")
 
         return X
 
     def preprocess(self, X: pd.DataFrame) -> Tuple[pd.DataFrame, dict]:
-        '''
+        """
         Preprocesses the input data. This method is intended to be overwritten
         by subclasses.
 
@@ -343,12 +344,12 @@ class BatchProcessor(
         -------
         Tuple[pd.DataFrame, dict]
             A tuple containing the preprocessed data and an empty dictionary.
-        '''
+        """
 
         return X, {}
 
     def postprocess(self, X: pd.DataFrame, resources: dict) -> pd.DataFrame:
-        '''
+        """
         Postprocesses the input DataFrame. This method is intended to be
         overwritten by subclasses.
 
@@ -364,6 +365,6 @@ class BatchProcessor(
         -------
         pd.DataFrame
             The postprocessed DataFrame.
-        '''
+        """
 
         return X
