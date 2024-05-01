@@ -1,6 +1,10 @@
 '''Convenient handling of raster data (images, GDAL datasets).
+This is largely not used in production, in favor of simpler, more-direct
+calculations, but is very useful for testing and inspecting.
+
+Because these are not production critical, documentation and testing are light.
 '''
-from typing import Union
+from typing import Union, Tuple
 
 import cv2
 import numpy as np
@@ -18,10 +22,20 @@ from .transformers.raster import RasterCoordinateTransformer
 
 
 class Image:
+    '''Simple image class that can be used to store and manipulate images.
+    '''
 
     io = data_io.ImageIO()
 
-    def __init__(self, img):
+    def __init__(self, img: np.ndarray):
+        '''
+        Initialize the Image object.
+
+        Parameters
+        ----------
+        img : np.ndarray
+            The input image as a NumPy array.
+        '''
         if np.issubdtype(img.dtype, np.floating):
             self.img = img.astype('float32')
         elif np.issubdtype(img.dtype, np.integer):
@@ -31,17 +45,50 @@ class Image:
             self.img = (img / max_val).astype(np.float32)
 
     @classmethod
-    def open(cls, fp, dtype: str = 'uint8', img_shape=(1200, 1920)):
+    def open(
+        cls,
+        fp: str,
+        dtype: str = 'uint8',
+        img_shape: Tuple[int] = (1200, 1920)
+    ) -> "Image":
+        '''
+        Opens an image file and returns an Image object.
+
+        Parameters
+        ----------
+        fp : str
+            The file path of the image file to be opened.
+        dtype : str, optional
+            The data type of the image, defaults to 'uint8'.
+        img_shape : Tuple[int], optional
+            The shape of the image, defaults to (1200, 1920).
+
+        Returns
+        -------
+        Image
+            An Image object representing the opened image file.
+        '''
 
         img = cls.io.load(fp, dtype=dtype, img_shape=img_shape)
 
         return Image(img)
 
-    def save(self, fp, img='img_int'):
+    def save(self, fp: str, img: str = 'img_int'):
+            '''
+            Save the image array to a file.
 
-        img_arr = getattr(self, img)
+            Parameters
+            ----------
+            fp : str
+                The file path where the image will be saved.
+            img : str, optional
+                The name of the image array attribute to be saved.
+                Default is 'img_int'.
+            '''
 
-        self.io.save(fp, img_arr)
+            img_arr = getattr(self, img)
+
+            self.io.save(fp, img_arr)
 
     @property
     def img(self):
@@ -56,6 +103,7 @@ class Image:
 
     @property
     def img_int(self) -> np.ndarray[int]:
+        '''Integer format for the image.'''
         if not hasattr(self, '_img_int'):
             self._img_int = self.get_img_int_from_img()
         return self._img_int
@@ -66,43 +114,88 @@ class Image:
 
     @property
     def img_shape(self):
+        '''Dimensions of the image.'''
         return self._img.shape[:2]
 
     @property
     def semitransparent_img(self) -> np.ndarray[float]:
+        '''Version of the image with an alpha channel,
+        where zero values are transparent.
+
+        Returns
+        -------
+        np.ndarray[float]
+            The image with an alpha channel.
+        '''
         if not hasattr(self, '_semitransparent_img'):
             self._semitransparent_img = self.get_semitransparent_img()
         return self._semitransparent_img
 
     @property
     def semitransparent_img_int(self) -> np.ndarray[int]:
+        '''Version of the image with an alpha channel,
+        where zero values are transparent. This is the integer version.
+
+        Returns
+        -------
+        np.ndarray[int]
+            The image with an alpha channel.
+        '''
         if not hasattr(self, '_semitransparent_img_int'):
             self._semitransparent_img_int = self.get_semitransparent_img_int()
         return self._semitransparent_img_int
 
     @property
     def kp(self):
+        '''Keypoints for the image, used for feature matching.'''
         if not hasattr(self, '_kp'):
             self.get_features()
         return self._kp
 
     @property
     def des(self):
+        '''Descriptors for the image, used for feature matching.'''
         if not hasattr(self, '_des'):
             self.get_features()
         return self._des
 
     def get_img_int_from_img(self) -> np.ndarray[int]:
+        '''Convert an image to integer format.
+
+        Returns
+        -------
+        np.ndarray[int]
+            The image as an integer array.
+        '''
 
         img_int = (self.img * 255).astype(np.uint8)
 
         return img_int
 
     def get_nonzero_mask(self) -> np.ndarray[bool]:
+        '''Get a mask of the image where the values are nonzero.
+
+        Returns
+        -------
+        np.ndarray[bool]
+            A boolean array representing the mask where True indicates
+            nonzero values in the image.
+        '''
 
         return self.img_int.sum(axis=2) > 0
 
     def get_semitransparent_img(self) -> np.ndarray[float]:
+        '''
+        Returns a semitransparent image with an alpha channel.
+
+        Returns
+        -------
+        np.ndarray[float]
+            The semitransparent image with shape (height, width, 4),
+            where the first three channels represent the RGB values
+            of the original image, and the fourth channel represents
+            the alpha (transparency) values.
+        '''
 
         if self.img.shape[2] == 4:
             return self.img
@@ -116,6 +209,17 @@ class Image:
         return semitransparent_img
 
     def get_semitransparent_img_int(self) -> np.ndarray[int]:
+        '''
+        Returns a semitransparent image with an alpha channel.
+
+        Returns
+        -------
+        np.ndarray[int]
+            The semitransparent image with shape (height, width, 4),
+            where the first three channels represent the RGB values
+            of the original image, and the fourth channel represents
+            the alpha (transparency) values.
+        '''
 
         if self.img_int.shape[2] == 4:
             return self.img_int
@@ -131,7 +235,9 @@ class Image:
 
         return semitransparent_img_int
 
-    def get_features(self):
+    def get_features(self) -> Tuple:
+        '''Get keypoints and descriptors for the image.
+        '''
 
         orb = cv2.ORB_create()
 
@@ -139,7 +245,9 @@ class Image:
 
         return self._kp, self._des
 
-    def get_pixel_coordinates(self):
+    def get_pixel_coordinates(self) -> Tuple[np.ndarray, np.ndarray]:
+        '''Get pixel coordinates for the image (ranging from 0 to width/height).
+        '''
 
         pxs = np.arange(self.img_shape[1])
         pys = np.arange(self.img_shape[0])
@@ -158,6 +266,33 @@ class Image:
         *args,
         **kwargs
     ):
+        '''Plot keypoints.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes, optional
+            The axes on which to plot the keypoints. If not provided, a new figure and axes will be created.
+        kp : list of cv2.KeyPoint, optional
+            The keypoints to plot. If not provided, the keypoints stored in the object will be used.
+        colors : array-like, optional
+            The colors to use for each keypoint. If not provided, the response values of the keypoints will be used.
+        crs_transform : callable, optional
+            A coordinate transformation function that takes x and y coordinates as input and returns transformed coordinates.
+        cmap : str or colormap, optional
+            The colormap to use for coloring the keypoints. Default is 'viridis'.
+        vmin : float, optional
+            The minimum value for the colormap. If not provided, the minimum value of the colors will be used.
+        vmax : float, optional
+            The maximum value for the colormap. If not provided, the maximum value of the colors will be used.
+        *args, **kwargs : additional arguments
+            Additional arguments to be passed to the scatter plot function.
+
+        Returns
+        -------
+        matplotlib.collections.PathCollection
+            The scatter plot object representing the keypoints.
+
+        '''
 
         if ax is None:
             fig = plt.figure(figsize=np.array(self.img_shape) / 60.)
@@ -208,14 +343,25 @@ class Image:
         **kwargs
     ):
         '''
-            NOTE: This will not be consistent with imshow, because with imshow
+        Display the image on the specified axes.
+
+        NOTE: This will not be consistent with imshow, because with imshow
         the y-axis increases downwards, consistent with old image
         processing schemes. Instead this is consistent with transposing and
         positively scaling the image to cartesian coordinates.
 
-        Args:
-        Kwargs:
-        Returns:
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes, optional
+            The axes on which to display the image. If not provided, a new figure and axes will be created.
+        img : str, optional
+            The name of the image attribute to display. Default is 'img'.
+        img_transformer : object, optional
+            An image transformer object that applies transformations to the image before displaying.
+        downsample : float, optional
+            The downsample factor for the figure size. Default is 240.
+        *args, **kwargs : optional
+            Additional arguments and keyword arguments to be passed to the `pcolormesh` function.
         '''
 
         if ax is None:
@@ -242,6 +388,7 @@ class Image:
 
 
 class ReferencedImage(Image):
+    '''Image with georeferencing.'''
 
     io = data_io.ReferencedImageIO()
     dataset_io = data_io.GDALDatasetIO()
@@ -254,6 +401,22 @@ class ReferencedImage(Image):
         cart_crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         latlon_crs: Union[str, pyproj.CRS] = 'EPSG:4326',
     ):
+        '''
+        Initialize a Raster object.
+
+        Parameters
+        ----------
+        img : ndarray
+            The image data.
+        x_bounds : tuple
+            The bounds of the x-axis.
+        y_bounds : tuple
+            The bounds of the y-axis.
+        cart_crs : str or pyproj.CRS, optional
+            The coordinate reference system (CRS) for the Cartesian coordinates. Defaults to 'EPSG:3857'.
+        latlon_crs : str or pyproj.CRS, optional
+            The CRS for the latitude and longitude coordinates. Defaults to 'EPSG:4326'.
+        '''
 
         cart_crs
 
@@ -279,6 +442,28 @@ class ReferencedImage(Image):
         cart_crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         latlon_crs: Union[str, pyproj.CRS] = 'EPSG:4326',
     ):
+        '''
+        Opens an image file and returns a ReferencedImage object.
+
+        Parameters
+        ----------
+        fp : str
+            The file path of the image file to be opened.
+        cart_crs : Union[str, pyproj.CRS], optional
+            The coordinate reference system (CRS) to be used for the Cartesian coordinates of the image. 
+            It can be specified as a string (e.g., 'EPSG:3857') or as a pyproj.CRS object. 
+            The default value is 'EPSG:3857'.
+        latlon_crs : Union[str, pyproj.CRS], optional
+            The coordinate reference system (CRS) to be used for the latitude and longitude coordinates of the image. 
+            It can be specified as a string (e.g., 'EPSG:4326') or as a pyproj.CRS object. 
+            The default value is 'EPSG:4326'.
+
+        Returns
+        -------
+        ReferencedImage
+            A ReferencedImage object representing the opened image, with associated coordinate reference systems.
+
+        '''
 
         cart_crs = pyproj.CRS(cart_crs)
         img, x_bounds, y_bounds = cls.io.load(fp, crs=cart_crs)
@@ -292,6 +477,16 @@ class ReferencedImage(Image):
         )
 
     def save(self, fp, img_key='img_int'):
+        '''
+        Save the raster image to a file.
+
+        Parameters
+        ----------
+        fp : str
+            The file path where the image will be saved.
+        img_key : str, optional
+            The key of the image array to be saved. Default is 'img_int'.
+        '''
 
         save_arr = getattr(self, img_key)
         x_bounds, y_bounds = self.cart_bounds
@@ -306,24 +501,28 @@ class ReferencedImage(Image):
 
     @property
     def latlon_bounds(self):
+        '''Bounds of the image in latitude and longitude coordinates.'''
         if not hasattr(self, '_latlon_bounds'):
             self._latlon_bounds = self.get_bounds(self.latlon_crs)
         return self._latlon_bounds
 
     @property
     def cart_bounds(self):
+        '''Bounds of the image in Cartesian coordinates.'''
         if not hasattr(self, '_cart_bounds'):
             self._cart_bounds = self.get_bounds(self.cart_crs)
         return self._cart_bounds
 
     @property
     def img_shape(self):
+        '''Shape of the image.'''
         if hasattr(self, '_img'):
             return self._img.shape[:2]
         else:
             return (self.dataset.RasterYSize, self.dataset.RasterXSize)
 
     def set_projections(self, cart_crs, latlon_crs):
+        '''Set the coordinate reference systems and transformations.'''
 
         # Establish CRS and conversions
         self.cart_crs = pyproj.CRS(cart_crs)
@@ -338,6 +537,7 @@ class ReferencedImage(Image):
         )
 
     def get_bounds(self, crs: pyproj.CRS):
+        '''Get the bounds of the image in the specified CRS.'''
 
         (
             x_bounds, y_bounds, pixel_width, pixel_height
@@ -346,6 +546,7 @@ class ReferencedImage(Image):
         return x_bounds, y_bounds
 
     def get_cart_coordinates(self):
+        '''Get the Cartesian coordinates of the pixels.'''
 
         x_bounds, y_bounds = self.cart_bounds
 
@@ -355,10 +556,12 @@ class ReferencedImage(Image):
         return xs, ys
 
     def get_pixel_widths(self):
+        '''Get the pixel widths in the x and y directions.'''
         xs, ys = self.get_cart_coordinates()
         return np.abs(xs[1] - xs[0]), np.abs(ys[1] - ys[0])
 
     def get_pixel_coordinates(self):
+        '''Get the coordinates of the pixels in pixel space.'''
 
         pxs = np.arange(self.dataset.RasterXSize)
         pys = np.arange(self.dataset.RasterYSize)
@@ -366,6 +569,24 @@ class ReferencedImage(Image):
         return pxs, pys
 
     def convert_pixel_to_cart(self, pxs, pys):
+        '''Convert the pixels to Cartesian coordinates.
+
+        This method takes the pixel coordinates (pxs, pys) and converts them to Cartesian coordinates (xs, ys) based on the defined cart_bounds.
+
+        Parameters
+        ----------
+        pxs : float or array-like
+            The x-coordinates of the pixels.
+        pys : float or array-like
+            The y-coordinates of the pixels.
+
+        Returns
+        -------
+        xs : float or array-like
+            The x-coordinates in Cartesian coordinates.
+        ys : float or array-like
+            The y-coordinates in Cartesian coordinates.
+        '''
 
         (x_min, x_max), (y_min, y_max) = self.cart_bounds
 
@@ -378,6 +599,22 @@ class ReferencedImage(Image):
         return xs, ys
 
     def convert_cart_to_pixel(self, xs, ys):
+        '''Convert the Cartesian coordinates to pixels.
+
+        Parameters
+        ----------
+        xs : float or array-like
+            The x-coordinate(s) in Cartesian coordinates.
+        ys : float or array-like
+            The y-coordinate(s) in Cartesian coordinates.
+
+        Returns
+        -------
+        pxs : float or array-like
+            The x-coordinate(s) in pixel coordinates.
+        pys : float or array-like
+            The y-coordinate(s) in pixel coordinates.
+        '''
 
         (x_min, x_max), (y_min, y_max) = self.cart_bounds
 
@@ -396,6 +633,22 @@ class ReferencedImage(Image):
         limits_padding=0.1,
         *args, **kwargs
     ):
+        '''Plot the extent of the image.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            The axes on which to plot the bounds.
+
+        set_limits : bool, optional
+            Whether to set the limits of the axes based on the bounds. Default is False.
+
+        limits_padding : float, optional
+            The padding factor to apply when setting the limits of the axes. Default is 0.1.
+
+        *args, **kwargs
+            Additional arguments and keyword arguments to pass to the `Rectangle` patch.
+        '''
 
         used_kwargs = {
             'linewidth': 3,
@@ -430,6 +683,26 @@ class ReferencedImage(Image):
             )
 
     def plot_kp(self, ax=None, crs_transform='cartesian', *args, **kwargs):
+        '''
+        Plot the keypoints on the image.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes, optional
+            The axes on which to plot the Kp index. If not provided, a new figure and axes will be created.
+        crs_transform : str or callable, optional
+            The coordinate reference system (CRS) transformation to use. If 'cartesian', the default Cartesian transformation
+            will be used. If a callable is provided, it should be a function that takes in the x and y coordinates and returns
+            the transformed coordinates.
+        *args : positional arguments
+            Additional positional arguments to be passed to the underlying `super().plot_kp()` method.
+        **kwargs : keyword arguments
+            Additional keyword arguments to be passed to the underlying `super().plot_kp()` method.
+
+        Returns
+        -------
+        The result of the underlying `super().plot_kp()` method.
+        '''
 
         if crs_transform == 'cartesian':
             crs_transform = self.convert_pixel_to_cart
@@ -442,7 +715,23 @@ class ReferencedImage(Image):
         )
 
     def show(self, ax=None, img='img', crs='pixel', *args, **kwargs):
-        '''
+        '''Plot the image itself.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes, optional
+            The axes on which to plot the image. If not provided, a new figure and axes will be created.
+        img : str, optional
+            The name of the image attribute to plot. Defaults to 'img'.
+        crs : str, optional
+            The coordinate reference system to use for plotting. Defaults to 'pixel'.
+        *args, **kwargs : optional
+            Additional arguments and keyword arguments to pass to the `pcolormesh` function.
+
+        Returns
+        -------
+        None
+            This method does not return anything.
         '''
 
         # Use existing functionality
@@ -472,12 +761,20 @@ class ReferencedImage(Image):
         label: str = 'referenced',
         include_corner_markers: bool = False
     ):
-        '''Add to a folium map.
-        
-        Args:
-            m (folium map): The map to add to.
-        '''
+        '''Add the raster image to a folium map.
 
+        Parameters
+        ----------
+        m : folium map
+            The map to add the raster image to.
+        img : str, optional
+            The name of the image attribute to use, by default 'semitransparent_img'
+        label : str, optional
+            The label/name of the raster image, by default 'referenced'
+        include_corner_markers : bool, optional
+            Whether to include corner markers on the map, by default False
+
+        '''
         # Let's keep this as an optional import for now.
         import folium
 
@@ -513,145 +810,3 @@ class ReferencedImage(Image):
                         ),
                     ).add_to(bounds_group)
             bounds_group.add_to(m)
-
-
-class DatasetWrapper:
-    '''Somewhat defunct wrapper for GDAL Dataset that better handles
-    working with bounds and pixel resolutions instead of
-    corners, array dimensions, and pixel resolutions.
-    This is useful for mosaics, where the overlap really matters.
-    '''
-
-    io = data_io.GDALDatasetIO()
-
-    def __init__(
-        self,
-        dataset: Union[str, gdal.Dataset],
-        x_bounds: np.ndarray,
-        y_bounds: np.ndarray,
-        pixel_width: float,
-        pixel_height: float,
-        n_bands: int = 4,
-        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
-    ):
-
-        assert False, 'Deprecated'
-
-        # Get dimensions
-        width = x_bounds[1] - x_bounds[0]
-        xsize = int(np.round(width / pixel_width))
-        height = y_bounds[1] - y_bounds[0]
-        ysize = int(np.round(height / -pixel_height))
-
-        # Re-record pixel values to account for rounding
-        pixel_width = width / xsize
-        pixel_height = -height / ysize
-
-        # Initialize an empty dataset
-        if isinstance(dataset, str):
-            driver = gdal.GetDriverByName('GTiff')
-            self.dataset = driver.Create(
-                dataset,
-                xsize=xsize,
-                ysize=ysize,
-                bands=n_bands,
-                options=['TILED=YES']
-            )
-        else:
-            self.dataset = dataset
-
-        # Properties
-        if isinstance(crs, str):
-            crs = pyproj.CRS(crs)
-        self.SetProjection(crs.to_wkt())
-        self.SetGeoTransform([
-            x_min,
-            pixel_width,
-            0.,
-            y_max,
-            0.,
-            pixel_height,
-        ])
-        if n_bands == 4:
-            self.GetRasterBand(4).SetMetadataItem('Alpha', '1')
-
-        # Store properties
-        self.x_min = x_min
-        self.x_max = x_max
-        self.y_min = y_min
-        self.y_max = y_max
-        self.pixel_width = pixel_width
-        self.pixel_height = pixel_height
-        self.n_bands = n_bands
-        self.crs = crs
-
-        # Set up the coordinate transformer
-        self.transformer = RasterCoordinateTransformer()
-        self.transformer.fit(
-            X=None,
-            y=None,
-            dataset=self.dataset,
-            crs=self.crs,
-        )
-
-    @classmethod
-    def open(
-        cls,
-        filename: str,
-        crs: Union[str, pyproj.CRS] = None,
-        *args,
-        **kwargs
-    ):
-
-        # Open up the file
-        dataset = gdal.Open(filename, *args, **kwargs)
-
-        # CRS handling
-        if isinstance(crs, str):
-            crs = pyproj.CRS(crs)
-
-        # Get bounds
-        (
-            x_bounds, y_bounds,
-            pixel_width, pixel_height,
-        ) = cls.io.get_bounds_from_dataset(
-            dataset,
-        )
-
-        return cls(
-            dataset,
-            x_bounds, y_bounds,
-            pixel_width, pixel_height,
-            n_bands=dataset.RasterCount,
-            crs=crs,
-        )
-
-    def get_image(self, x_min, x_max, y_min, y_max, trim: bool = False):
-        
-        x_off, y_off, x_size, y_size = self.transformer.physical_to_pixel(
-            x_min, x_max, y_min, y_max
-        )
-        x_off, y_off, x_size, y_size = self.transformer.handle_out_of_bounds(
-            x_off, y_off, x_size, y_size, trim=trim,
-        )
-
-        img = self.dataset.ReadAsArray(
-            xoff=x_off,
-            yoff=y_off,
-            xsize=x_size,
-            ysize=y_size
-        )
-        return img.transpose(1, 2, 0)
-
-    def save_image(self, img, x_min, x_max, y_min, y_max):
-
-        x_off, y_off, x_size, y_size = self.transformer.physical_to_pixel(
-            x_min, x_max, y_min, y_max
-        )
-
-        img_to_save = img.transpose(2, 0, 1)
-        self.dataset_.WriteArray(
-            img_to_save,
-            xoff=x_off,
-            yoff=y_off,
-        )
