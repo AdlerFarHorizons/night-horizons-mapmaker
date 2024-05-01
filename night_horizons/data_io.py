@@ -1,5 +1,5 @@
-'''This module provides classes for data input/output operations.
-'''
+"""This module provides classes for data input/output operations.
+"""
 
 from abc import ABC, abstractmethod
 import os
@@ -18,12 +18,11 @@ gdal.UseExceptions()
 
 
 class DataIO(ABC):
-    '''Abstract base class for all data input/output
-    '''
+    """Abstract base class for all data input/output"""
 
     @staticmethod
     def save(filepath: str, data: object):
-        '''Save data to disk.
+        """Save data to disk.
 
         Parameters
         ----------
@@ -32,7 +31,7 @@ class DataIO(ABC):
 
             data :
                 The data to save.
-        '''
+        """
 
     @staticmethod
     def load(filepath: str) -> object:
@@ -51,13 +50,13 @@ class DataIO(ABC):
 
 
 class ImageIO(DataIO):
-    '''Class for loading and saving images.
-    '''
-    name = 'image'
+    """Class for loading and saving images."""
+
+    name = "image"
 
     @staticmethod
     def save(filepath: str, data: np.ndarray):
-        '''Save an image to disk.
+        """Save an image to disk.
 
         Parameters
         ----------
@@ -66,7 +65,7 @@ class ImageIO(DataIO):
 
             data : np.ndarray
                 The image to save.
-        '''
+        """
 
         # Ensure the directory exists
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -77,10 +76,10 @@ class ImageIO(DataIO):
     @staticmethod
     def load(
         filepath: str,
-        dtype: Union[str, type] = 'uint8',
+        dtype: Union[str, type] = "uint8",
         img_shape: Tuple[int] = (1200, 1920),
     ) -> np.ndarray:
-        '''Load an image from disk.
+        """Load an image from disk.
 
         Parameters
         ----------
@@ -95,15 +94,15 @@ class ImageIO(DataIO):
         -------
             img : np.ndarray
                 Image as a numpy array.
-        '''
+        """
 
         if not os.path.isfile(filepath):
-            raise FileNotFoundError(f'File {filepath} not found')
+            raise FileNotFoundError(f"File {filepath} not found")
 
         ext = os.path.splitext(filepath)[1]
 
         # Load and reshape raw image data.
-        if ext == '.raw':
+        if ext == ".raw":
 
             raw_img = np.fromfile(filepath, dtype=np.uint16)
             raw_img = raw_img.reshape(img_shape)
@@ -111,7 +110,7 @@ class ImageIO(DataIO):
             img = cv2.cvtColor(raw_img, cv2.COLOR_BAYER_BG2RGB)
             img_max = 2**12 - 1
 
-        elif ext in ['.tiff', '.tif']:
+        elif ext in [".tiff", ".tif"]:
             img = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
 
             # CV2 defaults to BGR, but RGB is more standard for our purposes
@@ -119,7 +118,7 @@ class ImageIO(DataIO):
             img_max = np.iinfo(img.dtype).max
 
         else:
-            raise IOError('Cannot read filetype {}'.format(ext))
+            raise IOError("Cannot read filetype {}".format(ext))
 
         if isinstance(dtype, str):
             dtype = getattr(np, dtype)
@@ -144,10 +143,10 @@ class GDALDatasetIO(DataIO):
         Used for distinguishing between different data input/output classes.
     """
 
-    name = 'gdal_dataset'
+    name = "gdal_dataset"
 
     @staticmethod
-    def save(filepath: str, data: gdal.Dataset, driver: str = 'GTiff'):
+    def save(filepath: str, data: gdal.Dataset, driver: str = "GTiff"):
         """Save a raster dataset to a file.
 
         Parameters
@@ -162,16 +161,14 @@ class GDALDatasetIO(DataIO):
         """
 
         # Create a copy with a driver that saves to disk
-        driver = gdal.GetDriverByName('GTiff')
+        driver = gdal.GetDriverByName("GTiff")
         save_dataset = driver.CreateCopy(filepath, data, 0)
         save_dataset.FlushCache()
         save_dataset = None
 
     @staticmethod
     def load(
-        filepath: str,
-        mode: int = gdal.GA_ReadOnly,
-        crs: pyproj.CRS = None
+        filepath: str, mode: int = gdal.GA_ReadOnly, crs: pyproj.CRS = None
     ) -> gdal.Dataset:
         """Load a raster dataset from a file.
 
@@ -220,7 +217,7 @@ class GDALDatasetIO(DataIO):
         """
 
         if output_filepath is None:
-            output_filepath = filepath.replace('.h5', '.tiff')
+            output_filepath = filepath.replace(".h5", ".tiff")
 
         # If the conversion is already done
         if os.path.isfile(output_filepath):
@@ -236,13 +233,9 @@ class GDALDatasetIO(DataIO):
         rlayer = gdal.Open(subhdflayer, gdal.GA_ReadOnly)
 
         # collect bounding box coordinates
-        horizontal_tile_number = int(
-            rlayer.GetMetadata_Dict()["HorizontalTileNumber"]
-        )
-        vertical_tile_number = int(
-            rlayer.GetMetadata_Dict()["VerticalTileNumber"]
-        )
-            
+        horizontal_tile_number = int(rlayer.GetMetadata_Dict()["HorizontalTileNumber"])
+        vertical_tile_number = int(rlayer.GetMetadata_Dict()["VerticalTileNumber"])
+
         west_bound_coord = (10 * horizontal_tile_number) - 180
         north_bound_coord = 90 - (10 * vertical_tile_number)
         east_bound_coord = west_bound_coord + 10
@@ -255,19 +248,18 @@ class GDALDatasetIO(DataIO):
             epsg
             + " -a_ullr "
             + str(west_bound_coord)
-            + " " + str(north_bound_coord)
-            + " " + str(east_bound_coord)
-            + " " + str(south_bound_coord)
+            + " "
+            + str(north_bound_coord)
+            + " "
+            + str(east_bound_coord)
+            + " "
+            + str(south_bound_coord)
         )
         translateoptions = gdal.TranslateOptions(
             gdal.ParseCommandLine(translate_option_text)
         )
 
-        translated = gdal.Translate(
-            output_filepath,
-            rlayer,
-            options=translateoptions
-        )
+        translated = gdal.Translate(output_filepath, rlayer, options=translateoptions)
 
         return translated
 
@@ -282,10 +274,11 @@ class GDALDatasetIO(DataIO):
         x_size: int,
         y_size: int,
         n_bands: int = 4,
-        driver: str = 'MEM',
+        driver: str = "MEM",
         return_dataset: bool = True,
         options: list[str] = None,
-        *args, **kwargs
+        *args,
+        **kwargs,
     ):
         """
         Create an empty raster dataset.
@@ -330,7 +323,7 @@ class GDALDatasetIO(DataIO):
         """
 
         if options is None:
-            options = ['TILED=YES']
+            options = ["TILED=YES"]
 
         # Initialize an empty GeoTiff
         driver = gdal.GetDriverByName(driver)
@@ -340,23 +333,26 @@ class GDALDatasetIO(DataIO):
             ysize=y_size,
             bands=n_bands,
             options=options,
-            *args, **kwargs
+            *args,
+            **kwargs,
         )
 
         # Properties
         dataset.SetProjection(crs.to_wkt())
-        dataset.SetGeoTransform([
-            x_min,
-            pixel_width,
-            0.,
-            y_max,
-            0.,
-            pixel_height,
-        ])
+        dataset.SetGeoTransform(
+            [
+                x_min,
+                pixel_width,
+                0.0,
+                y_max,
+                0.0,
+                pixel_height,
+            ]
+        )
         if n_bands == 4:
-            dataset.GetRasterBand(4).SetMetadataItem('Alpha', '1')
+            dataset.GetRasterBand(4).SetMetadataItem("Alpha", "1")
 
-        if (driver == 'MEM') or return_dataset:
+        if (driver == "MEM") or return_dataset:
             return dataset
 
         # Close out the dataset for now. (Reduces likelihood of mem leaks.)
@@ -393,9 +389,9 @@ class GDALDatasetIO(DataIO):
             srs.ImportFromWkt(target_crs.to_wkt())
 
         converted_dataset = gdal.Warp(
-            '',
+            "",
             dataset,
-            format='MEM',
+            format="MEM",
             dstSRS=srs,
         )
 
@@ -420,8 +416,9 @@ class GDALDatasetIO(DataIO):
         """
 
         # Get the coordinates
-        x_min, pixel_width, x_rot, y_max, y_rot, pixel_height = \
+        x_min, pixel_width, x_rot, y_max, y_rot, pixel_height = (
             dataset.GetGeoTransform()
+        )
 
         # Get bounds
         x_max = x_min + pixel_width * dataset.RasterXSize
@@ -438,7 +435,7 @@ class GDALDatasetIO(DataIO):
 
 
 class ReferencedImageIO(DataIO):
-    name = 'referenced_image'
+    name = "referenced_image"
 
     @staticmethod
     def save(
@@ -447,10 +444,11 @@ class ReferencedImageIO(DataIO):
         x_bounds: np.ndarray,
         y_bounds: np.ndarray,
         crs: pyproj.CRS,
-        driver: str = 'GTiff',
-        *args, **kwargs
+        driver: str = "GTiff",
+        *args,
+        **kwargs,
     ):
-        '''
+        """
         Save an image to a file.
 
         Parameters
@@ -473,9 +471,9 @@ class ReferencedImageIO(DataIO):
         Example
         -------
         save('output.tif', image_data, x_bounds, y_bounds, crs)
-        '''
+        """
 
-        if filepath != '':
+        if filepath != "":
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         # Get data type
@@ -497,14 +495,15 @@ class ReferencedImageIO(DataIO):
             n_bands=img.shape[2],
             driver=driver,
             eType=gdal_dtype,
-            *args, **kwargs
+            *args,
+            **kwargs,
         )
 
         # Write to the dataset
         dataset.WriteArray(img.transpose(2, 0, 1))
 
         # Stop and return if we want to keep the dataset open
-        if driver == 'MEM':
+        if driver == "MEM":
             return dataset
 
         dataset.FlushCache()
@@ -512,10 +511,9 @@ class ReferencedImageIO(DataIO):
 
     @staticmethod
     def load(
-        filepath: str,
-        crs: pyproj.CRS = None
+        filepath: str, crs: pyproj.CRS = None
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        '''Load a referenced image from a file.
+        """Load a referenced image from a file.
 
         Parameters
         ----------
@@ -528,7 +526,7 @@ class ReferencedImageIO(DataIO):
         -------
         tuple
             A tuple containing the loaded image, x bounds, and y bounds.
-        '''
+        """
 
         # Get image
         dataset = GDALDatasetIO.load(filepath, crs=crs)
@@ -539,9 +537,7 @@ class ReferencedImageIO(DataIO):
             img = img.transpose(1, 2, 0)
 
         # Get bounds
-        (
-            x_bounds, y_bounds, dx, dy
-        ) = GDALDatasetIO.get_bounds_from_dataset(dataset)
+        (x_bounds, y_bounds, dx, dy) = GDALDatasetIO.get_bounds_from_dataset(dataset)
 
         data = (img, x_bounds, y_bounds)
 
@@ -549,11 +545,11 @@ class ReferencedImageIO(DataIO):
 
 
 class TabularIO(DataIO):
-    name = 'tabular'
+    name = "tabular"
 
     @staticmethod
     def save(filepath: str, data: pd.DataFrame):
-        '''
+        """
         Save data to a CSV file.
 
         Parameters
@@ -563,12 +559,12 @@ class TabularIO(DataIO):
         data : pd.DataFrame
             The data to be saved. It can be a list of dictionaries
             or a dictionary of lists.
-        '''
+        """
         data.to_csv(filepath, index=False)
 
     @staticmethod
     def load(filepath: str) -> pd.DataFrame:
-        '''Load data from a CSV file.
+        """Load data from a CSV file.
 
         Parameters
         ----------
@@ -579,6 +575,6 @@ class TabularIO(DataIO):
         -------
         pandas.DataFrame
             The loaded data as a pandas DataFrame.
-        '''
+        """
         df = pd.read_csv(filepath)
         return df
