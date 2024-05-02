@@ -1,3 +1,6 @@
+"""Module for performing isolated operations on images, using only the images
+and not considering any metadata.
+"""
 from abc import ABC, abstractmethod
 import copy
 from typing import Union

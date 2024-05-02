@@ -244,8 +244,6 @@ class SequentialMosaicker(Mosaicker):
         processor: processors.Processor,
         mosaicker_train: Mosaicker,
         scorer: processors.Processor = None,
-        progress_images_subdir: str = "progress_images",
-        save_return_codes: list[str] = [],
         memory_snapshot_freq: int = 10,
         pixel_width: float = None,
         pixel_height: float = None,
@@ -270,13 +268,6 @@ class SequentialMosaicker(Mosaicker):
             The Mosaicker object used for the starting mosaic of referenced images.
         scorer : processors.Processor, optional
             The scorer object used for scoring the mosaic, by default None.
-        progress_images_subdir : str, optional
-            The subdirectory name for storing images of the mosaic under certain return
-            codes.
-        save_return_codes : list[str], optional
-            The list of return codes to save to the progress images dir,
-            by default []. These are the return codes from the processor object,
-            and indicate success, failure, etc.
         memory_snapshot_freq : int, optional
             How often to take a snapshot of the memory usage, by default 10.
             Memory snapshots are only taken if the key "snapshot" is in log_keys.
@@ -316,8 +307,6 @@ class SequentialMosaicker(Mosaicker):
         )
 
         self.mosaicker_train = mosaicker_train
-        self.progress_images_subdir = progress_images_subdir
-        self.save_return_codes = save_return_codes
         self.memory_snapshot_freq = memory_snapshot_freq
 
     def fit(
