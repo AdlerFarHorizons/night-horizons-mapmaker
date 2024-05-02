@@ -7,32 +7,86 @@ import numpy as np
 import psutil
 
 from .. import utils, exceptions
+from ..transformers.raster import BaseImageTransformer
 
 # Set up the logger
 LOGGER = utils.get_logger(__name__)
 
 
 class BaseImageOperator(utils.LoggerMixin, ABC):
+    '''Base class for image operators—classes that perform an operation on two images.
+    '''
 
     @abstractmethod
-    def operate(self, src_img, dst_img):
-        pass
+    def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
+            '''Abstract method for performing an operation on two images.
+
+            Parameters
+            ----------
+            src_img : numpy.ndarray
+                The source image on which the operation will be performed.
+            dst_img : numpy.ndarray
+                The destination image where the result of the operation will be stored.
+
+            Returns
+            -------
+            dict
+                Results dictionary.
+            '''
+            pass
 
 
 class ImageBlender(BaseImageOperator):
+    '''Class for combining two images by filling empty space in the dst image
+    with the src image. No averaging is performed.
+    '''
 
     def __init__(
         self,
         fill_value: Union[float, int] = None,
-        outline: int = 0.,
+        outline: int = 0,
         log_keys: list[str] = [],
     ):
+        '''
+        Initialize the ImageBlender object.
 
+        Parameters
+        ----------
+        fill_value : Union[float, int], optional
+            The value used to fill empty pixels in the image. Defaults to values
+            that are maximum for the band.
+        outline : int, optional
+            The width of the outline to draw around the blended image. Good for
+            checking how images are combined.
+        log_keys : list[str], optional
+            A list of internal variables to log the values of.
+            Defaults to an empty list.
+        '''
         self.fill_value = fill_value
         self.outline = outline
         self.log_keys = log_keys
 
     def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
+        '''Perform the blending operation.
+
+        This method takes in a source image and a destination image, and performs
+        the blending operation. It resizes the source image to match the dimensions
+        of the destination image, and then blends the two images together using the
+        `blend` method.
+
+        Parameters
+        ----------
+        src_img : np.ndarray
+            The source image to be blended.
+
+        dst_img : np.ndarray
+            The destination image.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the blended image.
+        '''
 
         # Resize the source image
         src_img_resized = cv2.resize(
@@ -52,6 +106,21 @@ class ImageBlender(BaseImageOperator):
         src_img: np.ndarray,
         dst_img: np.ndarray,
     ) -> np.ndarray:
+        '''Blend images together, filling empty space in the destination image
+        with the source image.
+
+        Parameters
+        ----------
+        src_img : np.ndarray
+            The source image to blend into the destination image.
+        dst_img : np.ndarray
+            The destination image where the source image will be blended.
+
+        Returns
+        -------
+        np.ndarray
+            The blended image.
+        '''
 
         # Fill value defaults to values that would be opaque
         if self.fill_value is None:
@@ -60,6 +129,7 @@ class ImageBlender(BaseImageOperator):
             else:
                 fill_value = 1.
 
+        # Find where the sum of the bands is zero, i.e. the image is empty.
         # Doesn't consider zeros in the final channel as empty
         n_bands = dst_img.shape[-1]
         is_empty = (dst_img[:, :, :n_bands - 1].sum(axis=2) == 0)
@@ -97,22 +167,64 @@ class ImageBlender(BaseImageOperator):
 
 
 class ImageAligner(BaseImageOperator):
+    '''Class for aligning a source image with a destination image based on
+    the features detected in the images.
+    '''
 
     def __init__(
         self,
-        feature_detector,
-        feature_matcher,
-        image_transformer,
-        det_min=0.6,
-        det_max=1.7,
-        required_brightness=0.03,
-        required_bright_pixel_area=50000,
-        n_matches_used=500,
-        homography_method=cv2.RANSAC,
-        reproj_threshold=5.,
-        find_homography_options={},
+        feature_detector: cv2.Feature2D,
+        feature_matcher: cv2.DescriptorMatcher,
+        image_transformer: BaseImageTransformer,
+        det_min: float = 0.6,
+        det_max: float = 1.7,
+        required_brightness: float = 0.03,
+        required_bright_pixel_area: int = 50000,
+        n_matches_used: int = 500,
+        find_homography_options: dict = {
+            'method': cv2.RANSAC,
+            'ransacReprojThreshold': 5.0,
+        },
         log_keys: list[str] = ['abs_det_M', 'duration'],
     ):
+        '''
+        Initializes the Operator object.
+
+        Parameters
+        ----------
+        feature_detector : cv2.Feature2D
+            The feature detector used for detecting keypoints in images.
+        feature_matcher : cv2.DescriptorMatcher
+            The feature matcher used for matching keypoints between images.
+        image_transformer : BaseImageTransformer
+            The image transformer used for transforming images before detection
+            and matching. Can be used to apply a logscale transformation for example.
+        det_min : float, optional
+            The minimum determinant value for accepting a homography matrix,
+            by default 0.6. Values less than this indicate a highly warped image,
+            consistent with a bad homography.
+        det_max : float, optional
+            The maximum determinant value for accepting a homography matrix,
+            by default 1.7. Values greater than this indicate a highly warped image,
+            consistent with a bad homography.
+        required_brightness : float, optional
+            The minimum value for a given pixel to be considered as having data
+            (as opposed to being dark) as a fraction of the maximum possible value.
+            Default is 0.03.
+        required_bright_pixel_area : int, optional
+            The required area in square pixels of bright pixels for an image not to be
+            a dark frame., Default is 50000.
+        n_matches_used : int, optional
+            The number of matches used for computing the homography matrix,
+            by default 500.
+        find_homography_options : dict, optional
+            Options passed to the findHomography function. More info in the docstring
+            for opencv's findHomography function. Default is RANSAC with a reprojection
+            threshold of 5.
+        log_keys : list[str], optional
+            Local variables to be logged during the operator execution,
+            by default ['abs_det_M', 'duration'].
+        '''
 
         self.feature_detector = feature_detector
         self.feature_matcher = feature_matcher
@@ -122,12 +234,29 @@ class ImageAligner(BaseImageOperator):
         self.required_brightness = required_brightness
         self.required_bright_pixel_area = required_bright_pixel_area
         self.n_matches_used = n_matches_used
-        self.homography_method = homography_method
-        self.reproj_threshold = reproj_threshold
         self.find_homography_options = find_homography_options
         self.log_keys = log_keys
 
-    def operate(self, src_img, dst_img):
+    def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
+        '''Align the src_img with the dst_img.
+
+        Parameters
+        ----------
+        src_img : numpy.ndarray
+            The source image to be aligned.
+
+        dst_img : numpy.ndarray
+            The destination image to align the source image with.
+
+        Returns
+        -------
+        dict
+            The results dictionary containing the following keys:
+            - 'warped_image': The warped source image aligned with the
+                destination image.
+            - 'warped_bounds': The bounding box of the warped image.
+
+        '''
 
         src_img_t, dst_img_t = self.image_transformer.fit_transform(
             [src_img, dst_img])
@@ -149,23 +278,24 @@ class ImageAligner(BaseImageOperator):
 
         return results
 
-    def apply_img_transform(self, img):
+    def find_valid_homography(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
+        '''Find a valid homography transform between the source image and
+        the destination image. Raises an error if there is no valid homography.
 
-        if self.img_transform is None:
-            return img
-
-        return self.img_transform(img)
-
-    def find_valid_homography(self, src_img, dst_img):
-        '''
         Parameters
         ----------
+        src_img : np.ndarray
+            The source image.
+        dst_img : np.ndarray
+            The destination image.
+
         Returns
         -------
-            results:
-                M: Homography transform.
-                src_kp: Keypoints for the src image.
-                src_des: Keypoint descriptors for the src image.
+        dict
+            A dictionary containing the following results:
+            - M : Homography transform.
+            - src_kp : Keypoints for the source image.
+            - src_des : Keypoint descriptors for the source image.
         '''
 
         # Check what's in bounds, exit if nothing
@@ -219,17 +349,52 @@ class ImageAligner(BaseImageOperator):
 
         return results
 
-    def detect_and_compute(self, img):
+    def detect_and_compute(
+        self,
+        img: np.ndarray
+    ) -> tuple[list[cv2.KeyPoint], list[np.ndarray]]:
+        '''Detect and compute feature-matching keypoints in an image,
+        as well as their descriptors.
+
+        Parameters
+        ----------
+        img: np.ndarray
+            Input image to detect keypoitns for.
+
+        Returns
+        -------
+        tuple[list[cv2.KeyPoint], list[np.ndarray]]:
+            The detected keypoints and their descriptors.
+        '''
 
         return self.feature_detector.detectAndCompute(img, None)
 
     def find_homography(
         self,
-        src_kp,
-        src_des,
-        dst_kp,
-        dst_des,
-    ):
+        src_kp: list[cv2.KeyPoint],
+        src_des: list[np.ndarray],
+        dst_kp: list[cv2.KeyPoint],
+        dst_des: list[np.ndarray],
+    ) -> np.ndarray:
+        '''Find the homography transform between the source and destination images.
+
+        Parameters
+        ----------
+        src_kp : list[cv2.KeyPoint]
+            List of keypoints in the source image.
+        src_des : list[np.ndarray]
+            List of descriptors in the source image.
+        dst_kp : list[cv2.KeyPoint]
+            List of keypoints in the destination image.
+        dst_des : list[np.ndarray]
+            List of descriptors in the destination image.
+
+        Returns
+        -------
+        np.ndarray
+            The homography matrix representing the transformation between
+            the source and destination images.
+        '''
 
         LOGGER.info('Matching...')
 
@@ -254,8 +419,6 @@ class ImageAligner(BaseImageOperator):
         M, mask = cv2.findHomography(
             src_pts,
             dst_pts,
-            method=self.homography_method,
-            ransacReprojThreshold=self.reproj_threshold,
             **self.find_homography_options
         )
 
@@ -265,7 +428,26 @@ class ImageAligner(BaseImageOperator):
         return M
 
     @staticmethod
-    def warp(src_img, dst_img, M):
+    def warp(src_img: np.ndarray, dst_img: np.ndarray, M: np.ndarray) -> np.ndarray:
+        '''
+        Warp the source image using a perspective transformation matrix.
+
+        Parameters
+        ----------
+        src_img : np.ndarray
+            The source image to be warped.
+
+        dst_img : np.ndarray
+            The destination image where the warped image will be placed.
+
+        M : np.ndarray
+            The perspective transformation matrix.
+
+        Returns
+        -------
+        np.ndarray
+            The warped image.
+        '''
 
         # Warp the image being fit
         height, width = dst_img.shape[:2]
@@ -274,14 +456,23 @@ class ImageAligner(BaseImageOperator):
         return warped_img
 
     @staticmethod
-    def warp_bounds(src_img, M):
+    def warp_bounds(src_img: np.ndarray, M: np.ndarray) -> list[int]:
         '''Warp the bounds of the source image to get the bounds of the
         warped image in the frame of the destination image.
 
         Parameters
         ----------
+        src_img : np.ndarray
+            The source image to be warped.
+
+        M : np.ndarray
+            The transformation matrix used for warping.
+
         Returns
         -------
+        list[int]
+            A list containing the x offset, y offset, width, and height of the
+            warped image in the frame of the destination image.
         '''
 
         bounds = np.array([
@@ -307,15 +498,38 @@ class ImageAligner(BaseImageOperator):
 
         return x_off, y_off, x_size, y_size
 
-    def validate_warp(self, dst_img, x_off, y_off, x_size, y_size):
-        '''The viable range in the destination image frame is
-        (0, dst_img.shape[1]) in the x-direction, and (0, dst_img.shape[0])
-        in the y direction.
+    def validate_warp(
+        self,
+        dst_img: np.ndarray,
+        x_off: int,
+        y_off: int,
+        x_size: int,
+        y_size: int
+    ):
+        '''Check if a warp is valid.
+
+        This method checks if the specified warp is valid by ensuring that the
+        destination image frame is not exceeded. The viable range in the destination
+        image frame is (0, dst_img.shape[1]) in the x-direction, and (0, dst_img.shape[0])
+        in the y-direction.
 
         Parameters
         ----------
-        Returns
-        -------
+        dst_img : np.ndarray
+            The destination image frame.
+        x_off : int
+            The x-coordinate offset of the warp.
+        y_off : int
+            The y-coordinate offset of the warp.
+        x_size : int
+            The width of the warp.
+        y_size : int
+            The height of the warp.
+
+        Raises
+        ------
+        exceptions.OutOfBoundsError
+            If the warp results in an out-of-bounds image.
         '''
 
         if (
@@ -328,7 +542,23 @@ class ImageAligner(BaseImageOperator):
                 'Warping results in out-of-bounds image'
             )
 
-    def validate_brightness(self, img, error_type='src'):
+    def validate_brightness(self, img: np.ndarray, error_type: str = 'src'):
+        '''Check if the image is bright enough to perform feature matching on.
+
+        Parameters
+        ----------
+        img : np.ndarray
+            The input image to be validated.
+
+        error_type : str, optional
+            The type of error to raise if the image is not bright enough (i.e. is
+            this an error with the source or the destination).Default is 'src'.
+
+        Raises
+        ------
+        exceptions.SrcDarkFrameError or exceptions.DstDarkFrameError or KeyError
+            If the image does not meet the required brightness criteria.
+        '''
 
         # Get values as fraction of max possible
         values = img.flatten()
@@ -359,7 +589,21 @@ class ImageAligner(BaseImageOperator):
                 f'i.e. a bright frac of {req_bright_frac:.3g}.'
             )
 
-    def validate_homography(self, M):
+    def validate_homography(self, M: np.ndarray):
+        '''Check if the homography matrix is valid, i.e. it will not result in extreme
+        warping when applied.
+
+        Parameters
+        ----------
+        M : np.ndarray
+            The homography matrix to be validated.
+
+        Raises
+        ------
+        HomographyTransformError
+            If the transform matrix M is None or if the determinant of M is outside the
+            specified range.
+        '''
 
         if M is None:
             raise exceptions.HomographyTransformError(
