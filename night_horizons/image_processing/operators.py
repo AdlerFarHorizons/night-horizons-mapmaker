@@ -14,7 +14,8 @@ LOGGER = utils.get_logger(__name__)
 
 
 class BaseImageOperator(utils.LoggerMixin, ABC):
-    """Base class for image operators—classes that perform an operation on two images."""
+    """Base class for image operators—classes that perform an operation on
+    two images."""
 
     @abstractmethod
     def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
@@ -150,9 +151,9 @@ class ImageBlender(BaseImageOperator):
         # Add an outline
         if self.outline > 0:
             blended_img[: self.outline] = fill_value
-            blended_img[-1 - self.outline :] = fill_value
+            blended_img[-1 - self.outline:] = fill_value
             blended_img[:, : self.outline] = fill_value
-            blended_img[:, -1 - self.outline :] = fill_value
+            blended_img[:, -1 - self.outline:] = fill_value
 
         self.update_log(locals())
 
@@ -492,8 +493,8 @@ class ImageAligner(BaseImageOperator):
 
         This method checks if the specified warp is valid by ensuring that the
         destination image frame is not exceeded. The viable range in the destination
-        image frame is (0, dst_img.shape[1]) in the x-direction, and (0, dst_img.shape[0])
-        in the y-direction.
+        image frame is (0, dst_img.shape[1]) in the x-direction, and
+        (0, dst_img.shape[0]) in the y-direction.
 
         Parameters
         ----------
