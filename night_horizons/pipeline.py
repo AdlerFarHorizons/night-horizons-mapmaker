@@ -544,13 +544,13 @@ class SequentialMosaicMaker(MosaicMaker):
         # The processor for the sequential mosaicker
         self.container.register_service(
             "processor",
-            lambda *args, **kwargs: processors.DatasetRegistrar(
+            lambda *args, **kwargs: processors.ReferencerDatasetUpdater(
                 io_manager=self.container.get_service("io_manager"),
                 image_operator=self.container.get_service("image_operator"),
                 *args,
                 **kwargs,
             ),
-            wrapped_constructor=processors.DatasetRegistrar,
+            wrapped_constructor=processors.ReferencerDatasetUpdater,
         )
 
         # Our scorer.

@@ -12,6 +12,7 @@ import pyproj
 
 import time
 from abc import ABC, abstractmethod
+from osgeo import gdal
 
 from night_horizons import exceptions, utils
 from night_horizons.data_io import ImageIO, ReferencedImageIO
@@ -161,7 +162,7 @@ class Processor(utils.LoggerMixin, ABC):
         i : int
             Index of the current image.
         row : pd.Series
-            Series containing the data for the current image.
+            Series containing the metadata for the current image.
         resources : dict
             Dictionary containing additional resources.
         src : np.ndarray
@@ -225,7 +226,7 @@ class Processor(utils.LoggerMixin, ABC):
         i : int
             Index of the current image.
         row : pd.Series
-            Series containing the data for the current image.
+            Series containing the metadata for the current image.
         resources : dict
             Dictionary containing additional resources.
 
@@ -244,7 +245,7 @@ class Processor(utils.LoggerMixin, ABC):
         i : int
             Index of the current image.
         row : pd.Series
-            Series containing the data for the current image.
+            Series containing the metadata for the current image.
         resources : dict
             Dictionary containing additional resources.
 
@@ -270,7 +271,7 @@ class Processor(utils.LoggerMixin, ABC):
         i : int
             Index of the current image.
         row : pd.Series
-            Series containing the data for the current image.
+            Series containing the metadata for the current image.
         resources : dict
             Dictionary containing additional resources.
         src:
@@ -299,7 +300,7 @@ class Processor(utils.LoggerMixin, ABC):
         i : int
             Index of the current image.
         row : pd.Series
-            Series containing the data for the current image.
+            Series containing the metadata for the current image.
         resources : dict
             Dictionary containing additional resources.
         results:
@@ -313,16 +314,43 @@ class Processor(utils.LoggerMixin, ABC):
 
 
 class DatasetProcessor(Processor):
+    '''Class for operating on src images and a dataset from which we draw dst images.
+    Primary role is to be a parent class that enables shared functionality between
+    DatasetUpdater and DatasetScorer.
+    '''
 
     def __init__(
         self,
-        io_manager,
-        image_operator,
+        io_manager: IOManager,
+        image_operator: BaseImageOperator,
         log_keys: list[str] = [],
         save_return_codes: list[str] = [],
         use_safe_process: bool = True,
         dtype: str = 'uint8',
     ):
+        """
+        Initialize a Dataset Processor object.
+
+        Parameters
+        ----------
+        io_manager : IOManager
+            The IOManager object responsible for managing input/output operations.
+        image_operator : BaseImageOperator
+            The image operator object used for the operations at the core of
+            processing.
+        log_keys : list[str], optional
+            The list of local variables to log in tabular form,
+            by default an empty list.
+        save_return_codes : list[str], optional
+            The list of return codes to save to the progress images directory,
+            by default an empty list. These return codes indicate the success,
+            failure, or other status of the processor object.
+        use_safe_process : bool, optional
+            Flag indicating whether to use safe process, by default True.
+            Safe process catches errors and logs them, rather than crashing.
+        dtype : str
+            Data type to use for the image, by default 'uint8'.
+        """
 
         super().__init__(
             io_manager=io_manager,
@@ -334,6 +362,22 @@ class DatasetProcessor(Processor):
         self.dtype = getattr(np, dtype)
 
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
+        '''Load an image using the "filepath" column of the metadata.
+
+        Parameters
+        ----------
+        i : int
+            Index of the current image.
+        row : pd.Series
+            Series containing the metadata for the current image.
+        resources : dict
+            Dictionary containing additional resources.
+
+        Returns
+        -------
+        dict
+            Results dictionary.
+        '''
 
         LOGGER.info('Getting src...')
 
@@ -345,6 +389,23 @@ class DatasetProcessor(Processor):
         return {'image': src_img}
 
     def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:
+        '''Load an image from the dataset stored in resources, using the row's
+        x_off, y_off, x_size, and y_size.
+
+        Parameters
+        ----------
+        i : int
+            Index of the current image.
+        row : pd.Series
+            Series containing the metadata for the current image.
+        resources : dict
+            Dictionary containing additional resources.
+
+        Returns
+        -------
+        dict
+            Results dictionary.
+        '''
 
         LOGGER.info('Getting dst...')
 
@@ -361,10 +422,43 @@ class DatasetProcessor(Processor):
     ########################################
     # Auxillary functions below
 
-    def get_image_from_dataset(self, dataset, x_off, y_off, x_size, y_size):
-        '''Really we should refactor all IO into DataIO.
-        '''
+    def get_image_from_dataset(
+        self,
+        dataset: gdal.Dataset,
+        x_off: int,
+        y_off: int,
+        x_size: int,
+        y_size: int,
+    ) -> np.ndarray:
+        '''Get an image from the dataset.
 
+        This method retrieves an image from the given dataset based on the specified
+        offset and size.
+
+        Parameters
+        ----------
+        dataset : gdal.Dataset
+            The GDAL dataset from which to retrieve the image.
+        x_off : int
+            The x-coordinate offset of the image within the dataset.
+        y_off : int
+            The y-coordinate offset of the image within the dataset.
+        x_size : int
+            The width of the image.
+        y_size : int
+            The height of the image.
+
+        Returns
+        -------
+        numpy.ndarray
+            The image as a NumPy array.
+
+        Raises
+        ------
+        AssertionError
+            If the specified offsets and sizes are out of bounds of the dataset.
+
+        '''
         assert x_off >= 0, 'x_off cannot be less than 0'
         assert x_off + x_size <= dataset.RasterXSize, \
             'x_off + x_size cannot be greater than self.x_size_'
@@ -372,8 +466,8 @@ class DatasetProcessor(Processor):
         assert y_off + y_size <= dataset.RasterYSize, \
             'y_off + y_size cannot be greater than self.y_size_'
 
-        # Note that we cast the input as int, in case we the input was numpy
-        # integers instead of python integers.
+        # Note that we cast the input as int, in case the input was numpy
+        # integers instead of Python integers.
         img = dataset.ReadAsArray(
             xoff=int(x_off),
             yoff=int(y_off),
@@ -386,7 +480,26 @@ class DatasetProcessor(Processor):
 
         return img
 
-    def save_image_to_dataset(self, dataset, img, x_off, y_off):
+    def save_image_to_dataset(
+        self,
+        dataset: gdal.Dataset,
+        img: np.ndarray,
+        x_off: int,
+        y_off: int,
+    ):
+        '''Save an image to a gdal Dataset.
+
+        Parameters
+        ----------
+        dataset : gdal.Dataset
+            The GDAL dataset from which to retrieve the image.
+        img : np.ndarray
+            The image to save.
+        x_off : int
+            The x-coordinate offset of the image within the dataset.
+        y_off : int
+            The y-coordinate offset of the image within the dataset.
+        '''
 
         img_to_save = img.transpose(2, 0, 1)
         dataset.WriteArray(
@@ -399,12 +512,7 @@ class DatasetProcessor(Processor):
 
 
 class DatasetUpdater(DatasetProcessor):
-    '''
-
-    Parameters
-    ----------
-    Returns
-    -------
+    '''Class for updating a dataset based on the provided image.
     '''
 
     def process(
@@ -415,6 +523,26 @@ class DatasetUpdater(DatasetProcessor):
         src: dict,
         dst: dict,
     ) -> dict:
+        '''Processing for the dataset updater.
+
+        Parameters
+        ----------
+        i : int
+            Index of the current image.
+        row : pd.Series
+            Series containing the metadata for the current image.
+        resources : dict
+            Dictionary containing additional resources.
+        src:
+            Dictionary containing source image and parameters.
+        dst:
+            Dictionary containing destination image and parameters.
+
+        Returns
+        -------
+        dict
+            Results dictionary.
+        '''
 
         LOGGER.info('Performing image operation...')
 
@@ -436,7 +564,20 @@ class DatasetUpdater(DatasetProcessor):
         row: pd.Series,
         resources: dict,
         results: dict,
-    ):
+    ) -> pd.Series:
+        '''Store results, i.e. update the dataset.
+
+        Parameters
+        ----------
+        i : int
+            Index of the current image.
+        row : pd.Series
+            Series containing the metadata for the current image.
+        resources : dict
+            Dictionary containing additional resources.
+        results:
+            Results dictionary to store.
+        '''
 
         LOGGER.info('Updating dataset...')
 
@@ -503,7 +644,10 @@ class DatasetUpdater(DatasetProcessor):
         return row
 
 
-class DatasetRegistrar(DatasetUpdater):
+class ReferencerDatasetUpdater(DatasetUpdater):
+    '''Class for not just updating the dataset, but also saving now-referenced
+    images based on the processing done.
+    '''
 
     def store_results(
         self,
@@ -512,6 +656,19 @@ class DatasetRegistrar(DatasetUpdater):
         resources: dict,
         results: dict,
     ):
+        '''Store results, i.e. update the dataset and save a referenced image.
+
+        Parameters
+        ----------
+        i : int
+            Index of the current image.
+        row : pd.Series
+            Series containing the metadata for the current image.
+        resources : dict
+            Dictionary containing additional resources.
+        results:
+            Results dictionary to store.
+        '''
 
         LOGGER.info('Starting DatasetRegistrar.store_results...')
 

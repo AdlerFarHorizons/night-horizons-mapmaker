@@ -68,7 +68,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         mapmaker.container.register_service(
             'dataset_registrar',
             lambda use_safe_process=False, *args, **kwargs:
-                processors.DatasetRegistrar(
+                processors.ReferencerDatasetUpdater(
                     io_manager=mapmaker.container.get_service('io_manager'),
                     image_operator=mapmaker.container.get_service(
                         'image_operator'),
@@ -282,7 +282,7 @@ class TestDatasetRegistrar(unittest.TestCase):
 
         original_image = ReferencedImage.open(original_fp)
 
-        processor: processors.DatasetRegistrar = \
+        processor: processors.ReferencerDatasetUpdater = \
             self.container.get_service('dataset_registrar')
 
         # Revised version that's padded
