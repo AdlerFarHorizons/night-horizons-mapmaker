@@ -1,4 +1,6 @@
-'''Main module for performing georeferencing
+'''Main module for performing georeferencing. Only includes relatively simple methods
+for performing image registration. The others are typically aligned as part of a batch
+process.
 '''
 from typing import Union
 
@@ -15,21 +17,49 @@ from .. import utils
 
 class MetadataImageRegistrar(BaseEstimator):
     '''Perform georeferencing based on sensor metadata.
-
-    Parameters
-    ----------
-    crs:
-        Coordinate reference system to use.
+    This gives an approximate search zone, but is not accurate enough to use for
+    anything else.
     '''
     def __init__(
         self,
         crs: Union[str, pyproj.CRS] = 'EPSG:3857',
         passthrough: Union[bool, list[str]] = False,
-        use_direct_estimate: bool = True,
+        use_observed_error: bool = True,
         camera_angles: dict[float] = {0: 30., 1: 0., 2: 30.},
         angle_error: float = 5.,
         padding_fraction: float = 1.5,
     ):
+        '''
+        Initialize the Registration object.
+
+        Parameters
+        ----------
+        crs : Union[str, pyproj.CRS], optional
+            The coordinate reference system (CRS) to use for the registration,
+            by default 'EPSG:3857'.
+        passthrough : Union[bool, list[str]], optional
+            Whether to pass through certain columns from the input DataFrame,
+            by default False.
+            If False, only the required columns will be kept.
+            If True, all columns will be passed through.
+            If a list of column names is provided, only those columns
+            will be passed through.
+        use_observed_error : bool, optional
+            Whether to use the error in the sensor coordinates, when possible.
+            Otherwise we estimate the error using the height and the camera angle.
+        camera_angles : dict[float], optional
+            The camera angles for each camera number,
+            by default {0: 30., 1: 0., 2: 30.}.
+            The keys are the camera numbers and the values are
+            the corresponding angles in degrees.
+        angle_error : float, optional
+            The assumed error in a camera's pointing; part of the calculation when
+            using the observed error is not possible.
+        padding_fraction : float, optional
+            The fraction of padding to add around the registered image, by default 1.5.
+            This is a multiplier on the estimated spatial error that is used to
+            create the actual search zone.
+        '''
         self.crs = crs
         self.passthrough = passthrough
         self.required_columns = [
@@ -38,15 +68,15 @@ class MetadataImageRegistrar(BaseEstimator):
             'camera_num',
             'mAltitude',
         ]
-        self.use_direct_estimate = use_direct_estimate
+        self.use_direct_estimate = use_observed_error
         self.camera_angles = camera_angles
         self.angle_error = angle_error
         self.padding_fraction = padding_fraction
 
     @utils.enable_passthrough
-    def fit(self, X, y):
-        '''A reference implementation of a fitting function.
-
+    def fit(self, X: pd.DataFrame, y: pd.DataFrame):
+        '''Get the spatial error from the sensor data.
+    
         This currently parameterizes the estimates using the
         geotransforms, which are anchored by x_min and y_max.
         However, the sensor x and y are more-closely related to
@@ -55,9 +85,9 @@ class MetadataImageRegistrar(BaseEstimator):
 
         Parameters
         ----------
-        X :
+        X : pd.DataFrame
             Sensor coords and filepaths.
-        y :
+        y : pd.DataFrame
             Geotransforms identifying location.
 
         Returns
@@ -104,18 +134,18 @@ class MetadataImageRegistrar(BaseEstimator):
         return self
 
     @utils.enable_passthrough
-    def predict(self, X):
-        ''' A reference implementation of a predicting function.
+    def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+        '''Estimate the search regions
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The training input samples.
+        X : pd.DataFrame
+            The input DataFrame with sensor coordinates.
 
         Returns
         -------
-        y : ndarray, shape (n_samples,)
-            Returns an array of ones.
+        pd.DataFrame
+            DataFrame now with estimated search regions.
         '''
 
         check_is_fitted(self, 'is_fitted_')
@@ -169,6 +199,7 @@ class MetadataImageRegistrar(BaseEstimator):
         return X
 
     def transform(self, X):
+        '''Same as predict.'''
         return self.predict(X)
 
     def score_samples(self, X, y):
