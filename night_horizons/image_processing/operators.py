@@ -627,24 +627,71 @@ class ImageAligner(BaseImageOperator):
 
 
 class ImageAlignerBlender(ImageAligner, ImageBlender):
+    '''Class for first aligning a src image with a dst image, and then blending
+    the two.'''
 
     def __init__(
         self,
-        feature_detector,
-        feature_matcher,
-        image_transformer,
-        det_min=0.6,
-        det_max=1.7,
-        required_brightness=0.03,
-        required_bright_pixel_area=50000,
-        n_matches_used=500,
-        homography_method=cv2.RANSAC,
-        reproj_threshold=5.,
-        find_homography_options={},
+        feature_detector: cv2.Feature2D,
+        feature_matcher: cv2.DescriptorMatcher,
+        image_transformer: BaseImageTransformer,
+        det_min: float = 0.6,
+        det_max: float = 1.7,
+        required_brightness: float = 0.03,
+        required_bright_pixel_area: int = 50000,
+        n_matches_used: int = 500,
+        find_homography_options: dict = {
+            'method': cv2.RANSAC,
+            'ransacReprojThreshold': 5.0,
+        },
         fill_value: Union[float, int] = None,
         outline: int = 0,
         log_keys: list[str] = ['abs_det_M', 'duration'],
     ):
+        '''
+        Initializes the ImageAlignerBlender.
+
+        Parameters
+        ----------
+        feature_detector : cv2.Feature2D
+            The feature detector used for detecting keypoints in images.
+        feature_matcher : cv2.DescriptorMatcher
+            The feature matcher used for matching keypoints between images.
+        image_transformer : BaseImageTransformer
+            The image transformer used for transforming images before detection
+            and matching. Can be used to apply a logscale transformation for example.
+        det_min : float, optional
+            The minimum determinant value for accepting a homography matrix,
+            by default 0.6. Values less than this indicate a highly warped image,
+            consistent with a bad homography.
+        det_max : float, optional
+            The maximum determinant value for accepting a homography matrix,
+            by default 1.7. Values greater than this indicate a highly warped image,
+            consistent with a bad homography.
+        required_brightness : float, optional
+            The minimum value for a given pixel to be considered as having data
+            (as opposed to being dark) as a fraction of the maximum possible value.
+            Default is 0.03.
+        required_bright_pixel_area : int, optional
+            The required area in square pixels of bright pixels for an image not to be
+            a dark frame., Default is 50000.
+        n_matches_used : int, optional
+            The number of matches used for computing the homography matrix,
+            by default 500.
+        find_homography_options : dict, optional
+            Options passed to the findHomography function. More info in the docstring
+            for opencv's findHomography function. Default is RANSAC with a reprojection
+            threshold of 5.
+        fill_value : Union[float, int], optional
+            The value used to fill empty pixels in the image. Defaults to values
+            that are maximum for the band.
+        outline : int, optional
+            The width of the outline to draw around the blended image. Good for
+            checking how images are combined.
+        log_keys : list[str], optional
+            Local variables to be logged during the operator execution,
+            by default ['abs_det_M', 'duration'].
+        '''
 
         super().__init__(
             feature_detector=feature_detector,
@@ -655,8 +702,6 @@ class ImageAlignerBlender(ImageAligner, ImageBlender):
             required_brightness=required_brightness,
             required_bright_pixel_area=required_bright_pixel_area,
             n_matches_used=n_matches_used,
-            homography_method=homography_method,
-            reproj_threshold=reproj_threshold,
             find_homography_options=find_homography_options,
         )
 
@@ -666,7 +711,22 @@ class ImageAlignerBlender(ImageAligner, ImageBlender):
             log_keys=log_keys,
         )
 
-    def operate(self, src_img, dst_img):
+    def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
+        '''
+        Perform image alignment and blending.
+
+        Parameters
+        ----------
+        src_img : np.ndarray
+            The source image to be aligned and blended.
+        dst_img : np.ndarray
+            The destination image onto which the source image will be blended.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the results of the image alignment and blending.
+        '''
 
         LOGGER.info('Aligning image...')
 
@@ -684,10 +744,25 @@ class ImageAlignerBlender(ImageAligner, ImageBlender):
         return results
 
 
-class ImageProcessorQueue:
+class ImageOperatorQueue:
+    '''Class for operating on images using a queue of image operators.
+    The first image operator in the queue attempts to analyze one image.
+    If it fails, the next image operator in the queue is used, and so on.
+    '''
 
-    def __init__(self, defaults, variations):
-        '''
+    def __init__(self, defaults: dict, variations: list[dict]):
+        '''Construct the ImageOperatorQueue object.
+
+        Parameters
+        ----------
+        defaults : dict
+            A dictionary containing the default options for the image operator.
+
+        variations : list[dict]
+            A list of dictionaries, where each dictionary represents a variation
+            of the image operator options. Each dictionary should contain the
+            keys that need to be overridden from the default options.
+
         Example
         -------
         defaults = {
@@ -698,7 +773,7 @@ class ImageProcessorQueue:
             {'n_matches_used': 100},
             {'n_matches_used': None},
         ]
-        image_joiner_queue = ImageJoinerQueue(defaults, variations)
+        image_operator_queue = ImageOperatorQueue(defaults, variations)
         '''
         self.image_joiners = []
         for var in variations:
@@ -707,7 +782,21 @@ class ImageProcessorQueue:
             image_joiner = ImageAlignerBlender(**options)
             self.image_joiners.append(image_joiner)
 
-    def operate(self, src_img, dst_img):
+    def operate(self, src_img: np.ndarray, dst_img: np.ndarray) -> dict:
+        '''Perform the operations in order, until one succeeds.
+
+        Parameters
+        ----------
+        src_img : np.ndarray
+            The source image on which the operations will be performed.
+        dst_img : np.ndarray
+            The destination image where the result of the operations will be stored.
+
+        Returns
+        -------
+        tuple
+            A tuple containing the result code, the result image, and a log dictionary.
+        '''
 
         for i, image_joiner in enumerate(self.image_joiners):
 
