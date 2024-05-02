@@ -38,7 +38,6 @@ class Mosaicker(BatchProcessor):
         dtype: str = "uint8",
         fill_value: Union[int, float] = None,
         n_bands: int = 4,
-        outline: int = 0,
         log_keys: list[str] = ["ind", "return_code"],
         passthrough: Union[list[str], bool] = True,
     ):
@@ -67,9 +66,6 @@ class Mosaicker(BatchProcessor):
             Value used to fill in the empty space in the mosaic. Defaults to 0
         n_bands : int, optional
             The number of bands in the images.
-        outline : int, optional
-            The width of the outline to draw around each image, good for checking
-            how images are combined.
         log_keys : list of str, optional
             The list of variables that are tracked.
         passthrough : list of str or bool, optional
@@ -92,7 +88,6 @@ class Mosaicker(BatchProcessor):
         self.dtype = getattr(np, dtype)
         self.fill_value = fill_value
         self.n_bands = n_bands
-        self.outline = outline
 
         self.required_columns = ["filepath"] + preprocessors.GEOTRANSFORM_COLS
 
@@ -258,7 +253,6 @@ class SequentialMosaicker(Mosaicker):
         dtype: str = "uint8",
         n_bands: int = 4,
         passthrough: Union[bool, list[str]] = True,
-        outline: int = 0,
         log_keys: list[str] = ["i", "ind", "return_code", "abs_det_M"],
     ):
         """
@@ -298,9 +292,6 @@ class SequentialMosaicker(Mosaicker):
             The data type of the resulting mosaic. Defaults to a 0 to 255 value range.
         n_bands : int, optional
             The number of bands in the images.
-        outline : int, optional
-            The width of the outline to draw around each image, good for checking
-            how images are combined.
         log_keys : list[str], optional
             The list of keys to log, by default
             ["i", "ind", "return_code", "abs_det_M"].
@@ -321,7 +312,6 @@ class SequentialMosaicker(Mosaicker):
             dtype=dtype,
             n_bands=n_bands,
             passthrough=passthrough,
-            outline=outline,
             log_keys=log_keys,
         )
 
