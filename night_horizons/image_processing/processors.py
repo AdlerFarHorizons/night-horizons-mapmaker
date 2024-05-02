@@ -1,3 +1,6 @@
+"""Module for processing a single "row", aka a single image, in the context of
+other images and metadata.
+"""
 import glob
 import os
 
@@ -12,7 +15,9 @@ from abc import ABC, abstractmethod
 
 from night_horizons import exceptions, utils
 from night_horizons.data_io import ImageIO, ReferencedImageIO
+from night_horizons.io_manager import IOManager
 from night_horizons.transformers.raster import RasterCoordinateTransformer
+from .operators import BaseImageOperator
 
 
 # Set up the logger
@@ -20,39 +25,65 @@ LOGGER = utils.get_logger(__name__)
 
 
 class Processor(utils.LoggerMixin, ABC):
-    '''This could probably be framed as an sklearn estimator too, but let's
-    not do that until necessary.
+    '''Processor is an abstract class that defines the structure of a processor.
 
-    Parameters
-    ----------
-    Returns
-    -------
+    This could probably be framed as an sklearn estimator too, but let's
+    not do that until necessary.
     '''
 
     def __init__(
         self,
-        io_manager,
-        image_operator,
+        io_manager: IOManager,
+        image_operator: BaseImageOperator,
         log_keys: list[str] = [],
         save_return_codes: list[str] = [],
         use_safe_process: bool = True,
     ):
+        """
+        Initialize a Processor object.
 
+        Parameters
+        ----------
+        io_manager : IOManager
+            The IOManager object responsible for managing input/output operations.
+        image_operator : BaseImageOperator
+            The image operator object used for the operations at the core of
+            processing.
+        log_keys : list[str], optional
+            The list of local variables to log in tabular form,
+            by default an empty list.
+        save_return_codes : list[str], optional
+            The list of return codes to save to the progress images directory,
+            by default an empty list. These return codes indicate the success,
+            failure, or other status of the processor object.
+        use_safe_process : bool, optional
+            Flag indicating whether to use safe process, by default True.
+            Safe process catches errors and logs them, rather than crashing.
+        """
         self.io_manager = io_manager
         self.image_operator = image_operator
         self.log_keys = log_keys
         self.save_return_codes = save_return_codes
         self.use_safe_process = use_safe_process
 
-    def fit(self, batch_processor):
+    def fit(self, batch_processor: "BatchProcessor") -> "Processor":
         '''Copy over fit values from the batch processor.
 
-        We may be able to get rid of this function.
+        This method copies over fit values from the given batch processor to
+        the current instance.
+        It iterates through all attributes of the batch processor and checks if
+        the attribute name ends with an underscore, indicating that it is a
+        fit variable. If so, it copies the attribute value to the current instance.
 
         Parameters
         ----------
+        batch_processor : BatchProcessor
+            The batch processor from which to copy the fit values.
+
         Returns
         -------
+        self : Processor
+            The current instance with the fit values copied over.
         '''
 
         for attr_name in batch_processor.__dir__():
@@ -70,7 +101,10 @@ class Processor(utils.LoggerMixin, ABC):
         row: pd.Series,
         resources: dict,
     ) -> pd.Series:
-        '''Generally speaking, src refers to our new data, and dst refers to
+        '''Process one image, with metadata stored in row and other context in
+        resources.
+
+        Generally speaking, src refers to our new data, and dst refers to
         the existing data (including if the existing data was just updated
         with src in a previous row).
 
@@ -79,8 +113,17 @@ class Processor(utils.LoggerMixin, ABC):
 
         Parameters
         ----------
+        i : int
+            The index of the image being processed.
+        row : pd.Series
+            The metadata of the image being processed, including the filename.
+        resources : dict
+            Additional context and resources for the image processing.
+
         Returns
         -------
+        pd.Series
+            The updated metadata of the image after processing.
         '''
 
         self.start_logging()
@@ -103,18 +146,48 @@ class Processor(utils.LoggerMixin, ABC):
 
         return row
 
-    def safe_process(self, i, row, resources, src, dst):
-        '''
+    def safe_process(
+        self,
+        i: int,
+        row: pd.Series,
+        resources: dict,
+        src: dict,
+        dst: dict,
+    ) -> dict:
+        '''Same as process, but catching anticipated errors.
+
         Parameters
         ----------
+        i : int
+            Index of the current image.
+        row : pd.Series
+            Series containing the data for the current image.
+        resources : dict
+            Dictionary containing additional resources.
+        src : np.ndarray
+            Source image.
+        dst : np.ndarray
+            Destination image.
+
         Returns
         -------
-            results:
-                blended_img: Combined image. Not always returned.
-                M: Homography transform. Not always returned.
-                src_kp: Keypoints for the src image. Not always returned.
-                src_des: KP descriptors for the src image. Not always returned.
-                duration: Time spent.
+        results : dict
+            Dictionary containing the results of the processing.
+            Possible keys:
+            - blended_img: Combined image. Not always returned.
+            - M: Homography transform. Not always returned.
+            - src_kp: Keypoints for the src image. Not always returned.
+            - src_des: KP descriptors for the src image. Not always returned.
+            - duration: Time spent.
+            - return_code: Code indicating the outcome of the processing.
+                Possible values:
+                - 'success': Processing completed successfully.
+                - 'opencv_err': OpenCV error occurred.
+                - 'bad_det': Homography transform error occurred.
+                - 'dark_frame': Src dark frame error occurred.
+                - 'dst_dark_frame': Dst dark frame error occurred.
+                - 'linalg_err': Linear algebra error occurred.
+                - 'out_of_bounds': Out of bounds error occurred.
         '''
 
         start = time.time()
@@ -145,11 +218,41 @@ class Processor(utils.LoggerMixin, ABC):
 
     @abstractmethod
     def get_src(self, i: int, row: pd.Series, resources: dict) -> dict:
-        pass
+        '''Abstract base method for getting the source image.
+
+        Parameters
+        ----------
+        i : int
+            Index of the current image.
+        row : pd.Series
+            Series containing the data for the current image.
+        resources : dict
+            Dictionary containing additional resources.
+
+        Returns
+        -------
+        dict
+            Results dictionary.
+        '''
 
     @abstractmethod
     def get_dst(self, i: int, row: pd.Series, resources: dict) -> dict:
-        pass
+        '''Abstract base method for getting the destination image.
+
+        Parameters
+        ----------
+        i : int
+            Index of the current image.
+        row : pd.Series
+            Series containing the data for the current image.
+        resources : dict
+            Dictionary containing additional resources.
+
+        Returns
+        -------
+        dict
+            Results dictionary.
+        '''
 
     @abstractmethod
     def process(
@@ -160,7 +263,26 @@ class Processor(utils.LoggerMixin, ABC):
         src: dict,
         dst: dict,
     ) -> dict:
-        pass
+        '''Abstract base method for main processing function.
+
+        Parameters
+        ----------
+        i : int
+            Index of the current image.
+        row : pd.Series
+            Series containing the data for the current image.
+        resources : dict
+            Dictionary containing additional resources.
+        src:
+            Dictionary containing source image and parameters.
+        dst:
+            Dictionary containing destination image and parameters.
+
+        Returns
+        -------
+        dict
+            Results dictionary.
+        '''
 
     @abstractmethod
     def store_results(
@@ -170,7 +292,24 @@ class Processor(utils.LoggerMixin, ABC):
         resources: dict,
         results: dict,
     ) -> pd.Series:
-        pass
+        '''Abstract base method for storing results.
+
+        Parameters
+        ----------
+        i : int
+            Index of the current image.
+        row : pd.Series
+            Series containing the data for the current image.
+        resources : dict
+            Dictionary containing additional resources.
+        results:
+            Dictionary containing output of processing.
+
+        Returns
+        -------
+        pd.Series
+            Metadata for the processed image.
+        '''
 
 
 class DatasetProcessor(Processor):
