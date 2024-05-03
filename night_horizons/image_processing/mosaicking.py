@@ -32,7 +32,7 @@ class Mosaicker(BatchProcessor):
         io_manager: IOManager,
         crs: pyproj.CRS,
         processor: processors.Processor,
-        scorer: processors.Processor = None,
+        scorer: processors.Processor,
         pixel_width: float = None,
         pixel_height: float = None,
         dtype: str = "uint8",
@@ -48,12 +48,12 @@ class Mosaicker(BatchProcessor):
         ----------
         io_manager : object
             The input/output manager object, essential for saving and loading.
+        crs : str or pyproj.CRS, optional
+            The coordinate reference system.
         processor : object
             The processor object that does the actual per-row calculations.
         scorer : object, optional
-            The scorer object. Default is None.
-        crs : str or pyproj.CRS, optional
-            The coordinate reference system.
+            The scorer object used to calculate performance. Can be None.
         pixel_width : float, optional
             The pixel width in meters. Defaults to using the pixel width of the
             input images.
@@ -243,7 +243,7 @@ class SequentialMosaicker(Mosaicker):
         crs: pyproj.CRS,
         processor: processors.Processor,
         mosaicker_train: Mosaicker,
-        scorer: processors.Processor = None,
+        scorer: processors.Processor,
         memory_snapshot_freq: int = 10,
         pixel_width: float = None,
         pixel_height: float = None,

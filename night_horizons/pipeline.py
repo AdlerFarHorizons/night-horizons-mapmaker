@@ -625,6 +625,7 @@ class SequentialMosaicMaker(MosaicMaker):
                 io_manager=self.container.get_service("io_manager_train"),
                 processor=self.container.get_service("processor_train"),
                 crs=self.container.get_service("crs"),
+                scorer=None,
                 **kwargs,
             ),
             wrapped_constructor=mosaicking.Mosaicker,
