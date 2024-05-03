@@ -1,7 +1,8 @@
-'''Main module for performing georeferencing. Only includes relatively simple methods
+"""Main module for performing georeferencing. Only includes relatively simple methods
 for performing image registration. The others are typically aligned as part of a batch
 process.
-'''
+"""
+
 from typing import Union
 
 import numpy as np
@@ -16,21 +17,22 @@ from .. import utils
 
 
 class MetadataImageRegistrar(BaseEstimator):
-    '''Perform georeferencing based on sensor metadata.
+    """Perform georeferencing based on sensor metadata.
     This gives an approximate search zone, but is not accurate enough to use for
     anything else.
-    '''
+    """
+
     def __init__(
         self,
-        crs: Union[str, pyproj.CRS] = 'EPSG:3857',
+        crs: Union[str, pyproj.CRS] = "EPSG:3857",
         passthrough: Union[bool, list[str]] = False,
         use_observed_error: bool = True,
-        camera_angles: dict[float] = {0: 30., 1: 0., 2: 30.},
-        angle_error: float = 5.,
+        camera_angles: dict[float] = {0: 30.0, 1: 0.0, 2: 30.0},
+        angle_error: float = 5.0,
         padding_fraction: float = 1.5,
     ):
-        '''
-        Initialize the Registration object.
+        """
+        Initialize the MetadataImageRegistrar object.
 
         Parameters
         ----------
@@ -56,17 +58,17 @@ class MetadataImageRegistrar(BaseEstimator):
             The assumed error in a camera's pointing; part of the calculation when
             using the observed error is not possible.
         padding_fraction : float, optional
-            The fraction of padding to add around the registered image, by default 1.5.
-            This is a multiplier on the estimated spatial error that is used to
-            create the actual search zone.
-        '''
+            The fraction of padding to add around the edges of the estimated
+            registered image, in units of the hypotenuse of the estimated registered
+            image. Defaults to 1.5.
+        """
         self.crs = crs
         self.passthrough = passthrough
         self.required_columns = [
-            'sensor_x',
-            'sensor_y',
-            'camera_num',
-            'mAltitude',
+            "sensor_x",
+            "sensor_y",
+            "camera_num",
+            "mAltitude",
         ]
         self.use_direct_estimate = use_observed_error
         self.camera_angles = camera_angles
@@ -75,8 +77,8 @@ class MetadataImageRegistrar(BaseEstimator):
 
     @utils.enable_passthrough
     def fit(self, X: pd.DataFrame, y: pd.DataFrame):
-        '''Get the spatial error from the sensor data.
-    
+        """Get the spatial error from the sensor data.
+
         This currently parameterizes the estimates using the
         geotransforms, which are anchored by x_min and y_max.
         However, the sensor x and y are more-closely related to
@@ -94,7 +96,7 @@ class MetadataImageRegistrar(BaseEstimator):
         -------
         self : object
             Returns self.
-        '''
+        """
         utils.check_df_input(
             X,
             self.required_columns,
@@ -104,30 +106,26 @@ class MetadataImageRegistrar(BaseEstimator):
             self.crs = pyproj.CRS(self.crs)
 
         # Calculate offsets
-        widths = y['pixel_width'] * y['x_size']
-        heights = -y['pixel_height'] * y['y_size']
+        widths = y["pixel_width"] * y["x_size"]
+        heights = -y["pixel_height"] * y["y_size"]
 
         # Estimate values that are just averages
         self.width_ = np.nanmedian(widths)
         self.height_ = np.nanmedian(heights)
-        self.pixel_width_ = np.nanmedian(y['pixel_width'])
-        self.pixel_height_ = np.nanmedian(y['pixel_height'])
-        self.x_rot_ = np.nanmedian(y['x_rot'])
-        self.y_rot_ = np.nanmedian(y['y_rot'])
-        self.x_size_ = np.round(
-            self.width_ / self.pixel_width_
-        ).astype(int)
-        self.y_size_ = np.round(np.abs(
-            self.height_ / self.pixel_height_
-        )).astype(int)
+        self.pixel_width_ = np.nanmedian(y["pixel_width"])
+        self.pixel_height_ = np.nanmedian(y["pixel_height"])
+        self.x_rot_ = np.nanmedian(y["x_rot"])
+        self.y_rot_ = np.nanmedian(y["y_rot"])
+        self.x_size_ = np.round(self.width_ / self.pixel_width_).astype(int)
+        self.y_size_ = np.round(np.abs(self.height_ / self.pixel_height_)).astype(int)
 
         # Estimate spatial error
-        X['offset'] = np.sqrt(
-            (X['sensor_x'] - y['x_center'])**2.
-            + (X['sensor_y'] - y['y_center'])**2.
+        X["offset"] = np.sqrt(
+            (X["sensor_x"] - y["x_center"]) ** 2.0
+            + (X["sensor_y"] - y["y_center"]) ** 2.0
         )
-        X_cam = X.groupby('camera_num')
-        self.spatial_error_ = X_cam['offset'].mean()
+        X_cam = X.groupby("camera_num")
+        self.spatial_error_ = X_cam["offset"].mean()
 
         # `fit` should always return `self`
         self.is_fitted_ = True
@@ -135,7 +133,7 @@ class MetadataImageRegistrar(BaseEstimator):
 
     @utils.enable_passthrough
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
-        '''Estimate the search regions
+        """Estimate the search regions.
 
         Parameters
         ----------
@@ -145,10 +143,11 @@ class MetadataImageRegistrar(BaseEstimator):
         Returns
         -------
         pd.DataFrame
-            DataFrame now with estimated search regions.
-        '''
+            DataFrame now with estimated search regions. New columns:
+            - x_min, x_max, y_min, y_max, x_center, y_center, spatial_eror, padding
+        """
 
-        check_is_fitted(self, 'is_fitted_')
+        check_is_fitted(self, "is_fitted_")
         utils.check_df_input(
             X,
             self.required_columns,
@@ -156,70 +155,117 @@ class MetadataImageRegistrar(BaseEstimator):
 
         # Calculate properties
         set_manually = [
-            'x_min', 'x_max',
-            'y_min', 'y_max',
-            'x_center', 'y_center',
-            'spatial_error', 'padding',
+            "x_min",
+            "x_max",
+            "y_min",
+            "y_max",
+            "x_center",
+            "y_center",
+            "spatial_error",
+            "padding",
         ]
         for key in preprocessors.GEOTRANSFORM_COLS:
             if key in set_manually:
                 continue
-            X[key] = getattr(self, key + '_')
-        X['x_min'] = X['sensor_x'] - 0.5 * self.width_
-        X['x_max'] = X['sensor_x'] + 0.5 * self.width_
-        X['y_min'] = X['sensor_y'] - 0.5 * self.height_
-        X['y_max'] = X['sensor_y'] + 0.5 * self.height_
-        X['x_center'] = X['sensor_x']
-        X['y_center'] = X['sensor_y']
+            X[key] = getattr(self, key + "_")
+        X["x_min"] = X["sensor_x"] - 0.5 * self.width_
+        X["x_max"] = X["sensor_x"] + 0.5 * self.width_
+        X["y_min"] = X["sensor_y"] - 0.5 * self.height_
+        X["y_max"] = X["sensor_y"] + 0.5 * self.height_
+        X["x_center"] = X["sensor_x"]
+        X["y_center"] = X["sensor_y"]
 
         # Estimate spatial error
-        X['spatial_error'] = np.nan
+        X["spatial_error"] = np.nan
         # First, we identify what cameras we can use a direct inference for.
-        if hasattr(self, 'spatial_error_') and self.use_direct_estimate:
-            has_direct_estimate = X['camera_num'].isin(
-                self.spatial_error_.index)
-            X.loc[has_direct_estimate, 'spatial_error'] = \
-                self.spatial_error_.loc[
-                    X.loc[has_direct_estimate, 'camera_num']].values
+        if hasattr(self, "spatial_error_") and self.use_direct_estimate:
+            has_direct_estimate = X["camera_num"].isin(self.spatial_error_.index)
+            X.loc[has_direct_estimate, "spatial_error"] = self.spatial_error_.loc[
+                X.loc[has_direct_estimate, "camera_num"]
+            ].values
         # Second, fall-back to expected values based on camera angles
-        is_na = X['spatial_error'].isna()
+        is_na = X["spatial_error"].isna()
         if is_na.sum() > 0:
-            camera_angles = X['camera_num'].map(self.camera_angles)
-            X.loc[is_na, 'spatial_error'] = X.loc[is_na, 'mAltitude'] * np.tan(
-                (camera_angles + self.angle_error) * np.pi / 180.
+            camera_angles = X["camera_num"].map(self.camera_angles)
+            X.loc[is_na, "spatial_error"] = X.loc[is_na, "mAltitude"] * np.tan(
+                (camera_angles + self.angle_error) * np.pi / 180.0
             )
 
         # Add padding
-        X['padding'] = self.padding_fraction * X['spatial_error']
+        X["padding"] = self.padding_fraction * X["spatial_error"]
 
         # Ensure correct type
-        X[preprocessors.GEOTRANSFORM_COLS] = \
-            X[preprocessors.GEOTRANSFORM_COLS].astype(float)
+        X[preprocessors.GEOTRANSFORM_COLS] = X[preprocessors.GEOTRANSFORM_COLS].astype(
+            float
+        )
 
         return X
 
-    def transform(self, X):
-        '''Same as predict.'''
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Same as predict.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input DataFrame with sensor coordinates.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame now with estimated search regions. New columns:
+            - x_min, x_max, y_min, y_max, x_center, y_center, spatial_eror, padding
+        """
         return self.predict(X)
 
-    def score_samples(self, X, y):
+    def score_samples(self, X: pd.DataFrame, y: pd.DataFrame) -> pd.Series:
+        """Score the samples, according to the error in the predicted center compared
+        to the actual center.
 
-        check_is_fitted(self, 'is_fitted_')
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input features used for prediction.
+
+        y : pd.DataFrame
+            The dataframe containing the actual center coordinates.
+
+        Returns
+        -------
+        pd.Series
+            The scores representing the error in the predicted center
+            compared to the actual center.
+        """
+
+        check_is_fitted(self, "is_fitted_")
 
         y_pred = self.predict(X)
-        pred_xs = 0.5 * (y_pred['x_min'] + y_pred['x_max'])
-        pred_ys = 0.5 * (y_pred['y_min'] + y_pred['y_max'])
+        pred_xs = 0.5 * (y_pred["x_min"] + y_pred["x_max"])
+        pred_ys = 0.5 * (y_pred["y_min"] + y_pred["y_max"])
 
-        actual_xs = 0.5 * (y['x_min'] + y['x_max'])
-        actual_ys = 0.5 * (y['y_min'] + y['y_max'])
+        actual_xs = 0.5 * (y["x_min"] + y["x_max"])
+        actual_ys = 0.5 * (y["y_min"] + y["y_max"])
 
         self.scores_ = np.sqrt(
-            (pred_xs - actual_xs)**2.
-            + (pred_ys - actual_ys)**2.
+            (pred_xs - actual_xs) ** 2.0 + (pred_ys - actual_ys) ** 2.0
         )
 
         return self.scores_
 
-    def score(self, X, y):
+    def score(self, X: pd.DataFrame, y: pd.DataFrame) -> float:
+        """Return the median score of the samples.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input features used for prediction.
+
+        y : pd.DataFrame
+            The dataframe containing the actual center coordinates.
+
+        Returns
+        -------
+        float
+            The median score of the samples.
+        """
 
         return np.median(self.score_samples(X, y))
