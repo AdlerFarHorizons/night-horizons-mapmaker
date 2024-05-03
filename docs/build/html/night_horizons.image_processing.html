@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
     <script src="_static/documentation_options.js?v=2709fde1"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -73,7 +73,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageAligner"><code class="docutils literal notranslate"><span class="pre">ImageAligner</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageAligner.apply_img_transform"><code class="docutils literal notranslate"><span class="pre">ImageAligner.apply_img_transform()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageAligner.detect_and_compute"><code class="docutils literal notranslate"><span class="pre">ImageAligner.detect_and_compute()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageAligner.find_homography"><code class="docutils literal notranslate"><span class="pre">ImageAligner.find_homography()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageAligner.find_valid_homography"><code class="docutils literal notranslate"><span class="pre">ImageAligner.find_valid_homography()</span></code></a></li>
@@ -94,8 +93,8 @@
 <li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageBlender.operate"><code class="docutils literal notranslate"><span class="pre">ImageBlender.operate()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageProcessorQueue"><code class="docutils literal notranslate"><span class="pre">ImageProcessorQueue</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageProcessorQueue.operate"><code class="docutils literal notranslate"><span class="pre">ImageProcessorQueue.operate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageOperatorQueue"><code class="docutils literal notranslate"><span class="pre">ImageOperatorQueue</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageOperatorQueue.operate"><code class="docutils literal notranslate"><span class="pre">ImageOperatorQueue.operate()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -106,10 +105,6 @@
 <li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.DatasetProcessor.get_image_from_dataset"><code class="docutils literal notranslate"><span class="pre">DatasetProcessor.get_image_from_dataset()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.DatasetProcessor.get_src"><code class="docutils literal notranslate"><span class="pre">DatasetProcessor.get_src()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.DatasetProcessor.save_image_to_dataset"><code class="docutils literal notranslate"><span class="pre">DatasetProcessor.save_image_to_dataset()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.DatasetRegistrar"><code class="docutils literal notranslate"><span class="pre">DatasetRegistrar</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.DatasetRegistrar.store_results"><code class="docutils literal notranslate"><span class="pre">DatasetRegistrar.store_results()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.DatasetUpdater"><code class="docutils literal notranslate"><span class="pre">DatasetUpdater</span></code></a><ul>
@@ -125,6 +120,10 @@
 <li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.Processor.process_row"><code class="docutils literal notranslate"><span class="pre">Processor.process_row()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.Processor.safe_process"><code class="docutils literal notranslate"><span class="pre">Processor.safe_process()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.Processor.store_results"><code class="docutils literal notranslate"><span class="pre">Processor.store_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.ReferencerDatasetUpdater"><code class="docutils literal notranslate"><span class="pre">ReferencerDatasetUpdater</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.ReferencerDatasetUpdater.store_results"><code class="docutils literal notranslate"><span class="pre">ReferencerDatasetUpdater.store_results()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -197,7 +196,7 @@
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
@@ -205,7 +204,7 @@
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 
 
@@ -223,7 +222,7 @@
       &#169;2024, Zachary Hafen-Saavedra.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |

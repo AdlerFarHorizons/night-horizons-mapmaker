@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
     <script src="_static/documentation_options.js?v=2709fde1"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,26 +32,12 @@
             
   <section id="module-night_horizons.transformers.preprocessors">
 <span id="night-horizons-transformers-preprocessors-module"></span><h1>night_horizons.transformers.preprocessors module<a class="headerlink" href="#module-night_horizons.transformers.preprocessors" title="Link to this heading">¶</a></h1>
+<p>Module for miscellaneous preprocessing of the data.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.GeoTIFFPreprocessor">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.preprocessors.</span></span><span class="sig-name descname"><span class="pre">GeoTIFFPreprocessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">CRS</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'EPSG:3857'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spatial_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.GeoTIFFPreprocessor" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.preprocessors.</span></span><span class="sig-name descname"><span class="pre">GeoTIFFPreprocessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spatial_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.GeoTIFFPreprocessor" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code></p>
-<p>Transform filepaths into geotransform properties.</p>
-<section id="parameters">
-<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h2>
-<dl class="simple">
-<dt>output_columns :</dt><dd><p>What columns to include in the output.</p>
-</dd>
-<dt>crs:</dt><dd><p>The coordinate reference system to use.</p>
-</dd>
-</dl>
-</section>
-<section id="attributes">
-<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h2>
-<dl class="simple">
-<dt><a href="#id6"><span class="problematic" id="id7">n_features_</span></a><span class="classifier">int</span></dt><dd><p>The number of features of the data passed to <a class="reference internal" href="#night_horizons.transformers.preprocessors.GeoTIFFPreprocessor.fit" title="night_horizons.transformers.preprocessors.GeoTIFFPreprocessor.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code></a>.</p>
-</dd>
-</dl>
+<p>Class for getting geotransforms out from a list of GeoTIFF filepaths.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.GeoTIFFPreprocessor.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.GeoTIFFPreprocessor.fit" title="Link to this definition">¶</a></dt>
@@ -62,134 +48,141 @@
 <span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.GeoTIFFPreprocessor.transform" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
-</section>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.preprocessors.</span></span><span class="sig-name descname"><span class="pre">NITELitePreprocessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">io_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager" title="night_horizons.io_manager.IOManager"><span class="pre">IOManager</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">CRS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cached_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unhandled_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'drop'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.preprocessors.</span></span><span class="sig-name descname"><span class="pre">MetadataPreprocessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">io_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager" title="night_horizons.io_manager.IOManager"><span class="pre">IOManager</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cached_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unhandled_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'drop'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_offset_in_hr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code></p>
-<p>Transform filepaths into a metadata dataframe.</p>
-<p>TODO: Rename NITELitePreprocessor to MetadataPreprocessor</p>
-<section id="id1">
-<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
-<dl class="simple">
-<dt>output_columns :</dt><dd><p>What columns to include in the output.</p>
-</dd>
-<dt>crs:</dt><dd><p>The coordinate reference system to use.</p>
-</dd>
-</dl>
-</section>
-<section id="id2">
-<h2>Attributes<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
-<dl class="simple">
-<dt><a href="#id8"><span class="problematic" id="id9">n_features_</span></a><span class="classifier">int</span></dt><dd><p>The number of features of the data passed to <a class="reference internal" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor.fit" title="night_horizons.transformers.preprocessors.NITELitePreprocessor.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code></a>.</p>
-</dd>
-</dl>
+<p>Class for transforming filepaths into a metadata dataframe.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor.fit" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor.get_logs">
-<span class="sig-name descname"><span class="pre">get_logs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imu_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gps_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_offset_in_hr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor.get_logs" title="Link to this definition">¶</a></dt>
-<dd><p>Combine the different logs</p>
-<section id="id3">
-<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
-<blockquote>
-<div><dl class="simple">
-<dt>img_log_df:</dt><dd><p>DataFrame containing image metadata.</p>
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor" title="night_horizons.transformers.preprocessors.MetadataPreprocessor"><span class="pre">MetadataPreprocessor</span></a></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor.fit" title="Link to this definition">¶</a></dt>
+<dd><p>Fits the MetadataPreprocessor to the input data.</p>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>X<span class="classifier">Union[np.ndarray[str], list[str], pd.DataFrame]</span></dt><dd><p>The input filepaths to fit the preprocessor on.</p>
 </dd>
-<dt>imu_log_df:</dt><dd><p>DataFrame containing IMU metadata.</p>
-</dd>
-<dt>gps_log_df:</dt><dd><p>DataFrame containing GPS metadata.</p>
+<dt>y<span class="classifier">None, optional</span></dt><dd><p>The target variable (default is None).</p>
 </dd>
 </dl>
-</div></blockquote>
 </section>
 <section id="returns">
-<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h3>
-<blockquote>
-<div><dl class="simple">
-<dt>log_df:</dt><dd><p>Combined dataframe containing IMU and GPS metadata
-for each image.</p>
+<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>MetadataPreprocessor</dt><dd><p>The fitted MetadataPreprocessor object.</p>
 </dd>
 </dl>
-</div></blockquote>
 </section>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor.transform">
-<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor.transform" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor.get_logs">
+<span class="sig-name descname"><span class="pre">get_logs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor.get_logs" title="Link to this definition">¶</a></dt>
+<dd><p>Combine the different logs</p>
+<section id="id1">
+<h2>Returns<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>log_df<span class="classifier">pd.DataFrame</span></dt><dd><p>Combined dataframe containing IMG, IMU, and GPS metadata for each image.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor.transform" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
-</section>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor135">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.preprocessors.</span></span><span class="sig-name descname"><span class="pre">NITELitePreprocessor135</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">io_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager" title="night_horizons.io_manager.IOManager"><span class="pre">IOManager</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">CRS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cached_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unhandled_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'drop'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor135" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor" title="night_horizons.transformers.preprocessors.NITELitePreprocessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">NITELitePreprocessor</span></code></a></p>
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor135">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.preprocessors.</span></span><span class="sig-name descname"><span class="pre">MetadataPreprocessor135</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">io_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager" title="night_horizons.io_manager.IOManager"><span class="pre">IOManager</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cached_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unhandled_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'drop'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_offset_in_hr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor135" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor" title="night_horizons.transformers.preprocessors.MetadataPreprocessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetadataPreprocessor</span></code></a></p>
+<p>Subclass of Metadata for working with Metadata formatted similar to how it was
+formatted for FH135.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor135.load_gps_log">
-<span class="sig-name descname"><span class="pre">load_gps_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gps_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latlon_crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'EPSG:4326'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor135.load_gps_log" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor135.load_gps_log">
+<span class="sig-name descname"><span class="pre">load_gps_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gps_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latlon_crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'EPSG:4326'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor135.load_gps_log" title="Link to this definition">¶</a></dt>
 <dd><p>Load the GPS log.</p>
+<section id="id2">
+<h2>Parameters<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
 <dl class="simple">
-<dt>Args:</dt><dd><dl class="simple">
-<dt>gps_log_fp: Location of the GPS log.</dt><dd><p>Defaults to the one provided at init.</p>
+<dt>gps_log_fp:</dt><dd><p>Location of the GPS log.
+Defaults to the one provided at init.</p>
+</dd>
+<dt>latlon_crs: str</dt><dd><p>The CRS of the latitude and longitude coordinates.</p>
 </dd>
 </dl>
+</section>
+<section id="id3">
+<h2>Returns<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>gps_log_df: pd.DataFrame</dt><dd><p>Dataframe containing the GPS log.</p>
 </dd>
 </dl>
+</section>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor135.load_img_log">
-<span class="sig-name descname"><span class="pre">load_img_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor135.load_img_log" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor135.load_img_log">
+<span class="sig-name descname"><span class="pre">load_img_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor135.load_img_log" title="Link to this definition">¶</a></dt>
 <dd><p>Load the images log.</p>
 <section id="id4">
 <h2>Parameters<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h2>
-<blockquote>
-<div><dl class="simple">
+<dl class="simple">
 <dt>img_log_fp: Location of the image log.</dt><dd><p>Defaults to the one provided at init.</p>
 </dd>
 </dl>
-</div></blockquote>
+</section>
+<section id="id5">
+<h2>Returns<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>img_log_df: pd.DataFrame</dt><dd><p>Dataframe containing the image log.</p>
+</dd>
+</dl>
 </section>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor135.load_imu_log">
-<span class="sig-name descname"><span class="pre">load_imu_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">imu_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor135.load_imu_log" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor135.load_imu_log">
+<span class="sig-name descname"><span class="pre">load_imu_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">imu_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor135.load_imu_log" title="Link to this definition">¶</a></dt>
 <dd><p>Load the IMU log.</p>
+<section id="id6">
+<h2>Parameters<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h2>
 <dl class="simple">
-<dt>Args:</dt><dd><dl class="simple">
 <dt>imu_log_fp: Location of the IMU log.</dt><dd><p>Defaults to the one provided at init.</p>
 </dd>
 </dl>
+</section>
+<section id="id7">
+<h2>Returns<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>imu_log_df: pd.DataFrame</dt><dd><p>Dataframe containing the IMU log.</p>
 </dd>
 </dl>
+</section>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor145">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.preprocessors.</span></span><span class="sig-name descname"><span class="pre">NITELitePreprocessor145</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">io_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager" title="night_horizons.io_manager.IOManager"><span class="pre">IOManager</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">CRS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cached_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unhandled_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'drop'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor145" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor" title="night_horizons.transformers.preprocessors.NITELitePreprocessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">NITELitePreprocessor</span></code></a></p>
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor145">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.preprocessors.</span></span><span class="sig-name descname"><span class="pre">MetadataPreprocessor145</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">io_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="night_horizons.io_manager.html#night_horizons.io_manager.IOManager" title="night_horizons.io_manager.IOManager"><span class="pre">IOManager</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cached_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unhandled_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'drop'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_offset_in_hr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passthrough</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor145" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor" title="night_horizons.transformers.preprocessors.MetadataPreprocessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetadataPreprocessor</span></code></a></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor145.load_gps_log">
-<span class="sig-name descname"><span class="pre">load_gps_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gps_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latlon_crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'EPSG:4326'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor145.load_gps_log" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor145.load_gps_log">
+<span class="sig-name descname"><span class="pre">load_gps_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gps_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latlon_crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'EPSG:4326'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor145.load_gps_log" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor145.load_img_log">
-<span class="sig-name descname"><span class="pre">load_img_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor145.load_img_log" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor145.load_img_log">
+<span class="sig-name descname"><span class="pre">load_img_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor145.load_img_log" title="Link to this definition">¶</a></dt>
 <dd><p>Load the images log.</p>
-<section id="id5">
-<h2>Parameters<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h2>
+<section id="id8">
+<h2>Parameters<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h2>
 <blockquote>
 <div><dl class="simple">
 <dt>img_log_fp: Location of the image log.</dt><dd><p>Defaults to the one provided at init.</p>
@@ -200,8 +193,8 @@ for each image.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.NITELitePreprocessor145.load_imu_log">
-<span class="sig-name descname"><span class="pre">load_imu_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">imu_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.NITELitePreprocessor145.load_imu_log" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="night_horizons.transformers.preprocessors.MetadataPreprocessor145.load_imu_log">
+<span class="sig-name descname"><span class="pre">load_imu_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">imu_log_fp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.preprocessors.MetadataPreprocessor145.load_imu_log" title="Link to this definition">¶</a></dt>
 <dd><p>Load the IMU log.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -245,7 +238,7 @@ for each image.</p>
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
@@ -253,7 +246,7 @@ for each image.</p>
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 
 
@@ -271,7 +264,7 @@ for each image.</p>
       &#169;2024, Zachary Hafen-Saavedra.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |

@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
     <script src="_static/documentation_options.js?v=2709fde1"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,42 +32,107 @@
             
   <section id="module-night_horizons.transformers.raster">
 <span id="night-horizons-transformers-raster-module"></span><h1>night_horizons.transformers.raster module<a class="headerlink" href="#module-night_horizons.transformers.raster" title="Link to this heading">¶</a></h1>
+<p>Module for transforming raster data.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.BaseImageTransformer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.raster.</span></span><span class="sig-name descname"><span class="pre">BaseImageTransformer</span></span><a class="headerlink" href="#night_horizons.transformers.raster.BaseImageTransformer" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code></p>
-<p>Transformer for image data.</p>
+<p>Base class transformer for image data.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="night_horizons.transformers.raster.BaseImageTransformer.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#night_horizons.transformers.raster.BaseImageTransformer" title="night_horizons.transformers.raster.BaseImageTransformer"><span class="pre">BaseImageTransformer</span></a></span></span><a class="headerlink" href="#night_horizons.transformers.raster.BaseImageTransformer.fit" title="Link to this definition">¶</a></dt>
+<dd><p>Fitting is a no-op, i.e. nothing is done.</p>
 <section id="parameters">
 <h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>X<span class="classifier">pd.DataFrame</span></dt><dd><p>The input data to fit the transformer on.</p>
+</dd>
+<dt>y<span class="classifier">None, optional</span></dt><dd><p>The target variable. This parameter is ignored in this method.</p>
+</dd>
+</dl>
 </section>
 <section id="returns">
 <h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h2>
-<dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.transformers.raster.BaseImageTransformer.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.BaseImageTransformer.fit" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="simple">
+<dt>OrderTransformer</dt><dd><p>The fitted transformer instance.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.BaseImageTransformer.transform">
-<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.BaseImageTransformer.transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#night_horizons.transformers.raster.BaseImageTransformer.transform" title="Link to this definition">¶</a></dt>
+<dd><p>Perform the transformation defined in “transform_image” on each image in X.</p>
+<section id="id1">
+<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>X<span class="classifier">list[np.ndarray]</span></dt><dd><p>A list of numpy arrays representing the input images.</p>
+</dd>
+</dl>
+</section>
+<section id="id2">
+<h2>Returns<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>list[np.ndarray]</dt><dd><p>A list of numpy arrays representing the transformed images.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.BaseImageTransformer.transform_image">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transform_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.BaseImageTransformer.transform_image" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transform_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#night_horizons.transformers.raster.BaseImageTransformer.transform_image" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract method for applying a transform, overwritten by subclasses.</p>
+<section id="id3">
+<h2>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>img<span class="classifier">np.ndarray</span></dt><dd><p>The input image to be transformed.</p>
+</dd>
+</dl>
 </section>
+<section id="id4">
+<h2>Returns<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>np.ndarray</dt><dd><p>The transformed image.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="night_horizons.transformers.raster.CLEAN_LOGSCALE_IMAGE_PIPELINE">
+<span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.raster.</span></span><span class="sig-name descname"><span class="pre">CLEAN_LOGSCALE_IMAGE_PIPELINE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Pipeline(steps=[('clean',</span> <span class="pre">CleanImageTransformer()),</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">('logscale',</span> <span class="pre">LogscaleImageTransformer())])</span></em><a class="headerlink" href="#night_horizons.transformers.raster.CLEAN_LOGSCALE_IMAGE_PIPELINE" title="Link to this definition">¶</a></dt>
+<dd><p>Image transformer that consists of a CleanImageTransformer followed by a
+LogscaleImageTransformer.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.CleanImageTransformer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.raster.</span></span><span class="sig-name descname"><span class="pre">CleanImageTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.03</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.CleanImageTransformer" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.raster.</span></span><span class="sig-name descname"><span class="pre">CleanImageTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.03</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.CleanImageTransformer" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#night_horizons.transformers.raster.BaseImageTransformer" title="night_horizons.transformers.raster.BaseImageTransformer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseImageTransformer</span></code></a></p>
+<p>Class for cleaning images by setting all values below a threshold to 0.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.CleanImageTransformer.transform_image">
-<span class="sig-name descname"><span class="pre">transform_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.CleanImageTransformer.transform_image" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">transform_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#night_horizons.transformers.raster.CleanImageTransformer.transform_image" title="Link to this definition">¶</a></dt>
+<dd><p>Transform the image by setting all values below a threshold to 0.</p>
+<section id="id5">
+<h2>Parameters<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>img<span class="classifier">np.ndarray</span></dt><dd><p>The input image to be transformed.</p>
+</dd>
+</dl>
+</section>
+<section id="id6">
+<h2>Returns<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>np.ndarray</dt><dd><p>The transformed image with values below the threshold set to 0.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 </dd></dl>
 
@@ -75,10 +140,27 @@
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.LogscaleImageTransformer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.raster.</span></span><span class="sig-name descname"><span class="pre">LogscaleImageTransformer</span></span><a class="headerlink" href="#night_horizons.transformers.raster.LogscaleImageTransformer" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#night_horizons.transformers.raster.BaseImageTransformer" title="night_horizons.transformers.raster.BaseImageTransformer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseImageTransformer</span></code></a></p>
+<p>Class for logscaling images.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.LogscaleImageTransformer.transform_image">
-<span class="sig-name descname"><span class="pre">transform_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.LogscaleImageTransformer.transform_image" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">transform_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#night_horizons.transformers.raster.LogscaleImageTransformer.transform_image" title="Link to this definition">¶</a></dt>
+<dd><p>Logscale the image. We add 1 to the image before taking the log
+to avoid log(0).</p>
+<section id="id7">
+<h2>Parameters<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>img<span class="classifier">np.ndarray</span></dt><dd><p>The input image to be transformed.</p>
+</dd>
+</dl>
+</section>
+<section id="id8">
+<h2>Returns<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>np.ndarray</dt><dd><p>The transformed image with log scaling applied.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 </dd></dl>
 
@@ -86,10 +168,26 @@
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.PassImageTransformer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.raster.</span></span><span class="sig-name descname"><span class="pre">PassImageTransformer</span></span><a class="headerlink" href="#night_horizons.transformers.raster.PassImageTransformer" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#night_horizons.transformers.raster.BaseImageTransformer" title="night_horizons.transformers.raster.BaseImageTransformer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseImageTransformer</span></code></a></p>
+<p>Class for not altering images. This exists for compatibility with the pipeline.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.PassImageTransformer.transform_image">
-<span class="sig-name descname"><span class="pre">transform_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.PassImageTransformer.transform_image" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">transform_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#night_horizons.transformers.raster.PassImageTransformer.transform_image" title="Link to this definition">¶</a></dt>
+<dd><p>Return the image unchanged.</p>
+<section id="id9">
+<h2>Parameters<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>img<span class="classifier">np.ndarray</span></dt><dd><p>The input image to be transformed.</p>
+</dd>
+</dl>
+</section>
+<section id="id10">
+<h2>Returns<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>np.ndarray</dt><dd><p>The transformed image.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 </dd></dl>
 
@@ -97,48 +195,195 @@
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.RasterCoordinateTransformer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.transformers.raster.</span></span><span class="sig-name descname"><span class="pre">RasterCoordinateTransformer</span></span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code></p>
-<p>Transforms physical coordinates to/from pixel coordinates.
-Assumes Cartesian coordinates! Distances don’t work otherwise.</p>
-<section id="id1">
-<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
-</section>
-<section id="id2">
-<h2>Returns<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<p>Class for transforming a rectangle of physical coordinates
+to/from pixel coordinates. Assumes Cartesian coordinates!
+Distances don’t work otherwise.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.RasterCoordinateTransformer.check_bounds">
-<span class="sig-name descname"><span class="pre">check_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_off</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_off</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.check_bounds" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">check_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_off</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_off</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.check_bounds" title="Link to this definition">¶</a></dt>
+<dd><p>Check if pixel coordinates are out of bounds.</p>
+<section id="id11">
+<h2>Parameters<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>x_off<span class="classifier">int</span></dt><dd><p>The x-coordinate offset of the pixel.</p>
+</dd>
+<dt>y_off<span class="classifier">int</span></dt><dd><p>The y-coordinate offset of the pixel.</p>
+</dd>
+<dt>x_size<span class="classifier">int</span></dt><dd><p>The width of the pixel.</p>
+</dd>
+<dt>y_size<span class="classifier">int</span></dt><dd><p>The height of the pixel.</p>
+</dd>
+</dl>
+</section>
+<section id="raises">
+<h2>Raises<a class="headerlink" href="#raises" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>OutOfBoundsError</dt><dd><p>If the provided coordinates are outside the bounds of the raster dataset.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.RasterCoordinateTransformer.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.fit" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#night_horizons.transformers.raster.RasterCoordinateTransformer" title="night_horizons.transformers.raster.RasterCoordinateTransformer"><span class="pre">RasterCoordinateTransformer</span></a></span></span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.fit" title="Link to this definition">¶</a></dt>
+<dd><p>Fits the RasterCoordinateTransformer to the given data. This sets all
+the parameters needed for converting between physical (e.g. x_min)
+and pixel.</p>
+<section id="id12">
+<h2>Parameters<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>X<span class="classifier">pd.DataFrame</span></dt><dd><p>The input data containing the coordinates and other relevant information.
+Required columns:
+- x_min: The minimum x-coordinate.
+- x_max: The maximum x-coordinate.
+- y_min: The minimum y-coordinate.
+- y_max: The maximum y-coordinate.
+- pixel_width: The width of a pixel.
+- pixel_height: The height of a pixel.
+- padding: The padding value to be added to the coordinates.</p>
+</dd>
+<dt>y<span class="classifier">None, optional</span></dt><dd><p>The target variable (not used in this method), by default None.</p>
+</dd>
+<dt>pixel_width<span class="classifier">float, optional</span></dt><dd><p>The desired pixel width, by default None.</p>
+</dd>
+<dt>pixel_height<span class="classifier">float, optional</span></dt><dd><p>The desired pixel height, by default None.</p>
+</dd>
+<dt>padding<span class="classifier">float, optional</span></dt><dd><p>The padding value to be added to the coordinates, by default None.</p>
+</dd>
+<dt>crs<span class="classifier">pyproj.CRS, optional</span></dt><dd><p>The coordinate reference system, by default None.</p>
+</dd>
+</dl>
+</section>
+<section id="id13">
+<h2>Returns<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>RasterCoordinateTransformer</dt><dd><p>The fitted RasterCoordinateTransformer object.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.RasterCoordinateTransformer.fit_to_dataset">
-<span class="sig-name descname"><span class="pre">fit_to_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.fit_to_dataset" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">fit_to_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#night_horizons.transformers.raster.RasterCoordinateTransformer" title="night_horizons.transformers.raster.RasterCoordinateTransformer"><span class="pre">RasterCoordinateTransformer</span></a></span></span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.fit_to_dataset" title="Link to this definition">¶</a></dt>
+<dd><p>Alternative to fit that takes a GDAL dataset as input.</p>
+<p>This method fits the raster coordinate transformer to the provided GDAL dataset.
+It calculates the bounds, pixel size, size of the dataset, and CRS
+based on the information from the dataset.</p>
+<section id="id14">
+<h2>Parameters<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>dataset<span class="classifier">gdal.Dataset</span></dt><dd><p>The GDAL dataset to fit the transformer to.</p>
+</dd>
+</dl>
+</section>
+<section id="id15">
+<h2>Returns<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>RasterCoordinateTransformer</dt><dd><p>The fitted RasterCoordinateTransformer object.</p>
+</dd>
+</dl>
+</section>
+<section id="id16">
+<h2>Raises<a class="headerlink" href="#id16" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>TypeError</dt><dd><p>If the dataset is None.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.RasterCoordinateTransformer.handle_out_of_bounds">
-<span class="sig-name descname"><span class="pre">handle_out_of_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_off</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_off</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.handle_out_of_bounds" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">handle_out_of_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_off</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_off</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.handle_out_of_bounds" title="Link to this definition">¶</a></dt>
+<dd><p>Checks what pixels are in bounds, and trims those that aren’t
+if trim is True. Otherwise raises an error.</p>
+<section id="id17">
+<h2>Parameters<a class="headerlink" href="#id17" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>x_off<span class="classifier">int or np.ndarray</span></dt><dd><p>The x-coordinate offset of the pixel.</p>
+</dd>
+<dt>y_off<span class="classifier">int or np.ndarray</span></dt><dd><p>The y-coordinate offset of the pixel.</p>
+</dd>
+<dt>x_size<span class="classifier">int or np.ndarray</span></dt><dd><p>The width of the pixel.</p>
+</dd>
+<dt>y_size<span class="classifier">int or np.ndarray</span></dt><dd><p>The height of the pixel.</p>
+</dd>
+<dt>trim<span class="classifier">bool, optional</span></dt><dd><p>If True, trims the out-of-bounds pixels. If False, and there are
+out-of-bounds pixels, raises an error.
+Default is False.</p>
+</dd>
+</dl>
+</section>
+<section id="id18">
+<h2>Returns<a class="headerlink" href="#id18" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Tuple[</dt><dd><p>int or np.ndarray,
+int or np.ndarray,
+int or np.ndarray,
+int or np.ndarray</p>
+</dd>
+<dt>] :</dt><dd><p>The updated x_off, y_off, x_size, and y_size values after handling
+out-of-bounds pixels.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.RasterCoordinateTransformer.physical_to_pixel">
-<span class="sig-name descname"><span class="pre">physical_to_pixel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.physical_to_pixel" title="Link to this definition">¶</a></dt>
-<dd><section id="id3">
-<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<span class="sig-name descname"><span class="pre">physical_to_pixel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.physical_to_pixel" title="Link to this definition">¶</a></dt>
+<dd><p>Convert the physical bounds of a rectangle to pixel coordinates.</p>
+<section id="id19">
+<h2>Parameters<a class="headerlink" href="#id19" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>x_min<span class="classifier">float</span></dt><dd><p>The minimum x-coordinate of the physical bounds.</p>
+</dd>
+<dt>x_max<span class="classifier">float</span></dt><dd><p>The maximum x-coordinate of the physical bounds.</p>
+</dd>
+<dt>y_min<span class="classifier">float</span></dt><dd><p>The minimum y-coordinate of the physical bounds.</p>
+</dd>
+<dt>y_max<span class="classifier">float</span></dt><dd><p>The maximum y-coordinate of the physical bounds.</p>
+</dd>
+</dl>
 </section>
-<section id="id4">
-<h3>Returns<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<section id="id20">
+<h2>Returns<a class="headerlink" href="#id20" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Tuple[int, int, int, int]</dt><dd><p>A tuple containing the x-offset, y-offset, width,
+and height in pixel coordinates.</p>
+</dd>
+</dl>
 </section>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.RasterCoordinateTransformer.pixel_to_physical">
-<span class="sig-name descname"><span class="pre">pixel_to_physical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_off</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_off</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.pixel_to_physical" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">pixel_to_physical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_off</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_off</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.pixel_to_physical" title="Link to this definition">¶</a></dt>
+<dd><p>Converts a the pixel offsets and sizes of a rectangle to physical bounds.</p>
+<section id="id21">
+<h2>Parameters<a class="headerlink" href="#id21" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>x_off<span class="classifier">int</span></dt><dd><p>The x-offset of the pixel.</p>
+</dd>
+<dt>y_off<span class="classifier">int</span></dt><dd><p>The y-offset of the pixel.</p>
+</dd>
+<dt>x_size<span class="classifier">int</span></dt><dd><p>The number of pixels in the x-direction.</p>
+</dd>
+<dt>y_size<span class="classifier">int</span></dt><dd><p>The number of pixels in the y-direction.</p>
+</dd>
+</dl>
+</section>
+<section id="id22">
+<h2>Returns<a class="headerlink" href="#id22" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>Tuple[float, float, float, float]</dt><dd><p>A tuple containing the minimum and maximum x and y coordinates
+in physical units.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.RasterCoordinateTransformer.set_fit_request">
@@ -159,7 +404,7 @@ mechanism works.</p>
 existing request. This allows you to change the request for some
 parameters and not others.</p>
 <div class="versionadded">
-<p><span class="versionmodified added">New in version 1.3.</span></p>
+<p><span class="versionmodified added">Added in version 1.3.</span></p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -167,8 +412,8 @@ parameters and not others.</p>
 sub-estimator of a meta-estimator, e.g. used inside a
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code>. Otherwise it has no effect.</p>
 </div>
-<section id="id5">
-<h3>Parameters<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<section id="id23">
+<h2>Parameters<a class="headerlink" href="#id23" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>crs<span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">crs</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p>
 </dd>
@@ -180,8 +425,8 @@ sub-estimator of a meta-estimator, e.g. used inside a
 </dd>
 </dl>
 </section>
-<section id="id6">
-<h3>Returns<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<section id="id24">
+<h2>Returns<a class="headerlink" href="#id24" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>self<span class="classifier">object</span></dt><dd><p>The updated object.</p>
 </dd>
@@ -208,7 +453,7 @@ mechanism works.</p>
 existing request. This allows you to change the request for some
 parameters and not others.</p>
 <div class="versionadded">
-<p><span class="versionmodified added">New in version 1.3.</span></p>
+<p><span class="versionmodified added">Added in version 1.3.</span></p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -216,15 +461,15 @@ parameters and not others.</p>
 sub-estimator of a meta-estimator, e.g. used inside a
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code>. Otherwise it has no effect.</p>
 </div>
-<section id="id7">
-<h3>Parameters<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<section id="id25">
+<h2>Parameters<a class="headerlink" href="#id25" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>direction<span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">direction</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">transform</span></code>.</p>
 </dd>
 </dl>
 </section>
-<section id="id8">
-<h3>Returns<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<section id="id26">
+<h2>Returns<a class="headerlink" href="#id26" title="Link to this heading">¶</a></h2>
 <dl class="simple">
 <dt>self<span class="classifier">object</span></dt><dd><p>The updated object.</p>
 </dd>
@@ -234,20 +479,89 @@ sub-estimator of a meta-estimator, e.g. used inside a
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.RasterCoordinateTransformer.transform">
-<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'to_pixel'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'to_pixel'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.transform" title="Link to this definition">¶</a></dt>
+<dd><p>Transform a dataframe to/from pixel coordinates, i.e. adds new columns
+for the pixel/physical coordinates. The dataframe must contain appropriate
+columns corresponding to rectangular regions.</p>
+<section id="id27">
+<h2>Parameters<a class="headerlink" href="#id27" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>X<span class="classifier">pd.DataFrame</span></dt><dd><p>The input dataframe to be transformed.</p>
+</dd>
+<dt>direction<span class="classifier">str, optional</span></dt><dd><p>The direction of the transformation. Default is ‘to_pixel’.
+Valid values are ‘to_pixel’ and ‘to_physical’.</p>
+</dd>
+</dl>
+</section>
+<section id="id28">
+<h2>Returns<a class="headerlink" href="#id28" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>The transformed dataframe with added columns for pixel/physical coordinates.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.RasterCoordinateTransformer.transform_to_physical">
-<span class="sig-name descname"><span class="pre">transform_to_physical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.transform_to_physical" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">transform_to_physical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.transform_to_physical" title="Link to this definition">¶</a></dt>
+<dd><p>Transform a series of rectangles in pixel space to physical space.</p>
+<p>This method takes a DataFrame <cite>X</cite> containing information about rectangles in pixel space,
+and transforms their coordinates to physical space using the <cite>pixel_to_physical</cite> method.</p>
+<section id="id29">
+<h2>Parameters<a class="headerlink" href="#id29" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>X<span class="classifier">pd.DataFrame</span></dt><dd><p>DataFrame containing information about rectangles in pixel space.
+It should have the following columns:
+- x_off: x-coordinate of the top-left corner of the rectangle
+- y_off: y-coordinate of the top-left corner of the rectangle
+- x_size: width of the rectangle
+- y_size: height of the rectangle</p>
+</dd>
+</dl>
+</section>
+<section id="id30">
+<h2>Returns<a class="headerlink" href="#id30" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>DataFrame with the transformed coordinates in physical space.
+It will have the following additional columns:
+- x_min: minimum x-coordinate in physical space
+- x_max: maximum x-coordinate in physical space
+- y_min: minimum y-coordinate in physical space
+- y_max: maximum y-coordinate in physical space</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.transformers.raster.RasterCoordinateTransformer.transform_to_pixel">
-<span class="sig-name descname"><span class="pre">transform_to_pixel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.transform_to_pixel" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<span class="sig-name descname"><span class="pre">transform_to_pixel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.transformers.raster.RasterCoordinateTransformer.transform_to_pixel" title="Link to this definition">¶</a></dt>
+<dd><p>Transform a series of rectangles in physical space to pixel space.</p>
+<section id="id31">
+<h2>Parameters<a class="headerlink" href="#id31" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>X<span class="classifier">pd.DataFrame</span></dt><dd><p>The input DataFrame containing the coordinates to be transformed.
+Must include the following columns:
+- x_min: The minimum x-coordinate.
+- x_max: The maximum x-coordinate.
+- y_min: The minimum y-coordinate.
+- y_max: The maximum y-coordinate.</p>
+</dd>
+<dt>trim<span class="classifier">bool, optional</span></dt><dd><p>Specifies whether to trim the coordinates that are out of bounds,
+by default False.</p>
+</dd>
+</dl>
 </section>
+<section id="id32">
+<h2>Returns<a class="headerlink" href="#id32" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>The transformed DataFrame with the coordinates converted to pixel values.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -281,7 +595,7 @@ sub-estimator of a meta-estimator, e.g. used inside a
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
@@ -289,7 +603,7 @@ sub-estimator of a meta-estimator, e.g. used inside a
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 
 
@@ -307,7 +621,7 @@ sub-estimator of a meta-estimator, e.g. used inside a
       &#169;2024, Zachary Hafen-Saavedra.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |

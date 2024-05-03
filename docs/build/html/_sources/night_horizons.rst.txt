@@ -20,7 +20,6 @@ Submodules
    night_horizons.data_io
    night_horizons.exceptions
    night_horizons.io_manager
-   night_horizons.metrics
    night_horizons.pipeline
    night_horizons.raster
    night_horizons.utils

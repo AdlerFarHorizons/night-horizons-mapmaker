@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
     <script src="_static/documentation_options.js?v=2709fde1"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -32,20 +32,48 @@
             
   <section id="module-night_horizons.data_io">
 <span id="night-horizons-data-io-module"></span><h1>night_horizons.data_io module<a class="headerlink" href="#module-night_horizons.data_io" title="Link to this heading">¶</a></h1>
-<p>TODO: Finish implementing this.</p>
+<p>This module provides classes for data input/output operations.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="night_horizons.data_io.DataIO">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.data_io.</span></span><span class="sig-name descname"><span class="pre">DataIO</span></span><a class="headerlink" href="#night_horizons.data_io.DataIO" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for all data input/output</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.DataIO.load">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.DataIO.load" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">object</span></span></span><a class="headerlink" href="#night_horizons.data_io.DataIO.load" title="Link to this definition">¶</a></dt>
+<dd><p>Load data from a file.</p>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>filepath<span class="classifier">str</span></dt><dd><p>The path to the file to be loaded.</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>data<span class="classifier">object</span></dt><dd><p>The loaded data.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.DataIO.save">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.DataIO.save" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.DataIO.save" title="Link to this definition">¶</a></dt>
+<dd><p>Save data to disk.</p>
+<section id="id1">
+<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<blockquote>
+<div><dl class="simple">
+<dt>filepath<span class="classifier">str</span></dt><dd><p>Location to save the data.</p>
+</dd>
+<dt>data :</dt><dd><p>The data to save.</p>
+</dd>
+</dl>
+</div></blockquote>
+</section>
+</dd></dl>
 
 </dd></dl>
 
@@ -53,54 +81,146 @@
 <dt class="sig sig-object py" id="night_horizons.data_io.GDALDatasetIO">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.data_io.</span></span><span class="sig-name descname"><span class="pre">GDALDatasetIO</span></span><a class="headerlink" href="#night_horizons.data_io.GDALDatasetIO" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#night_horizons.data_io.DataIO" title="night_horizons.data_io.DataIO"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataIO</span></code></a></p>
+<p>Class for reading and writing raster datasets using GDAL.</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>name<span class="classifier">str</span></dt><dd><p>Used for distinguishing between different data input/output classes.</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.GDALDatasetIO.convert">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.GDALDatasetIO.convert" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="headerlink" href="#night_horizons.data_io.GDALDatasetIO.convert" title="Link to this definition">¶</a></dt>
+<dd><p>Convert the coordinate reference system (CRS) of a raster dataset.</p>
+<section id="id2">
+<h3>Parameters<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>dataset<span class="classifier">gdal.Dataset</span></dt><dd><p>The raster dataset to be converted.</p>
+</dd>
+<dt>target_crs<span class="classifier">pyproj.CRS</span></dt><dd><p>The target coordinate reference system (CRS) for the conversion.</p>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h3>Returns<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>gdal.Dataset</dt><dd><p>The converted raster dataset.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.GDALDatasetIO.create">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">driver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'MEM'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['TILED=YES']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.GDALDatasetIO.create" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">driver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'MEM'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.GDALDatasetIO.create" title="Link to this definition">¶</a></dt>
+<dd><p>Create an empty raster dataset.</p>
+<section id="id4">
+<h3>Parameters<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>filepath<span class="classifier">str</span></dt><dd><p>Path to the output file.</p>
+</dd>
+<dt>x_min<span class="classifier">float</span></dt><dd><p>Minimum x-coordinate of the dataset.</p>
+</dd>
+<dt>y_max<span class="classifier">float</span></dt><dd><p>Maximum y-coordinate of the dataset.</p>
+</dd>
+<dt>pixel_width<span class="classifier">float</span></dt><dd><p>Width of each pixel in the dataset.</p>
+</dd>
+<dt>pixel_height<span class="classifier">float</span></dt><dd><p>Height of each pixel in the dataset.</p>
+</dd>
+<dt>crs<span class="classifier">pyproj.CRS</span></dt><dd><p>Coordinate reference system (CRS) of the dataset.</p>
+</dd>
+<dt>x_size<span class="classifier">int</span></dt><dd><p>Number of pixels in the x-direction.</p>
+</dd>
+<dt>y_size<span class="classifier">int</span></dt><dd><p>Number of pixels in the y-direction.</p>
+</dd>
+<dt>n_bands<span class="classifier">int, optional</span></dt><dd><p>Number of bands in the dataset. Defaults to 4.</p>
+</dd>
+<dt>driver<span class="classifier">str, optional</span></dt><dd><p>The GDAL driver to be used for creating the dataset.
+Defaults to ‘MEM’.</p>
+</dd>
+<dt>return_dataset<span class="classifier">bool, optional</span></dt><dd><p>Whether to return the created dataset. Defaults to True.</p>
+</dd>
+<dt>options<span class="classifier">list[str], optional</span></dt><dd><p>Additional options for creating the dataset.
+Defaults to [‘TILED=YES’].</p>
+</dd>
+<dt><a href="#id5"><span class="problematic" id="id6">*</span></a>args, <a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs</dt><dd><p>Additional arguments and keyword arguments to be passed to
+the GDAL driver.</p>
+</dd>
+</dl>
+</section>
+<section id="id9">
+<h3>Returns<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>gdal.Dataset or None</dt><dd><p>The created raster dataset if <cite>return_dataset</cite> is True,
+otherwise None.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.GDALDatasetIO.get_bounds_from_dataset">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_bounds_from_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">CRS</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#night_horizons.data_io.GDALDatasetIO.get_bounds_from_dataset" title="Link to this definition">¶</a></dt>
-<dd><p>Get image bounds in a given coordinate system.</p>
+<dd><p>Get the image bounds in a given coordinate system.</p>
+<section id="id10">
+<h3>Parameters<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
 <dl class="simple">
-<dt>Args:</dt><dd><p>crs: Desired coordinate system.</p>
-</dd>
-<dt>Returns:</dt><dd><p>x_bounds: x_min, x_max of the image in the target coordinate system
-y_bounds: y_min, y_max of the image in the target coordinate system
-pixel_width
-pixel_height</p>
+<dt>dataset<span class="classifier">gdal.Dataset</span></dt><dd><p>The raster dataset.</p>
 </dd>
 </dl>
+</section>
+<section id="id11">
+<h3>Returns<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>Tuple[np.ndarray, np.ndarray, float, float, pyproj.CRS]</dt><dd><p>The x and y bounds of the image in the target coordinate system,
+pixel width, pixel height, and the coord reference system (CRS).</p>
+</dd>
+</dl>
+</section>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.GDALDatasetIO.load">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="headerlink" href="#night_horizons.data_io.GDALDatasetIO.load" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Load a raster dataset from a file.</p>
+<section id="id12">
+<h3>Parameters<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>filepath<span class="classifier">str</span></dt><dd><p>Path to the input file.</p>
+</dd>
+<dt>mode<span class="classifier">int, optional</span></dt><dd><p>GDAL access mode. Defaults to gdal.GA_ReadOnly.</p>
+</dd>
+<dt>crs<span class="classifier">pyproj.CRS, optional</span></dt><dd><p>Desired coordinate system. Defaults to None.</p>
+</dd>
+</dl>
+</section>
+<section id="id13">
+<h3>Returns<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>gdal.Dataset</dt><dd><p>The loaded raster dataset.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.GDALDatasetIO.load_from_viirs_hdf5">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_from_viirs_hdf5</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="headerlink" href="#night_horizons.data_io.GDALDatasetIO.load_from_viirs_hdf5" title="Link to this definition">¶</a></dt>
-<dd><p>Load a VIIRS HDF5 file.</p>
-<section id="parameters">
-<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h2>
+<dd><p>Load a VIIRS HDF5 file and convert it to a raster dataset.</p>
+<section id="id14">
+<h3>Parameters<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h3>
 <dl class="simple">
-<dt>filepath</dt><dd><p>Path to the VIIRS HDF5 file.</p>
+<dt>filepath<span class="classifier">str</span></dt><dd><p>Path to the VIIRS HDF5 file.</p>
 </dd>
-<dt>crs</dt><dd><p>Desired coordinate system. Defaults to None, which means the
-coordinate system of the VIIRS file will be used.</p>
+<dt>output_filepath<span class="classifier">str, optional</span></dt><dd><p>Path to the output raster file. If not provided, a default
+output file path will be used.</p>
 </dd>
 </dl>
 </section>
-<section id="returns">
-<h2>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h2>
+<section id="id15">
+<h3>Returns<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h3>
 <dl class="simple">
-<dt>data</dt><dd><p>Image data.</p>
+<dt>gdal.Dataset</dt><dd><p>The loaded and converted raster dataset.</p>
 </dd>
 </dl>
 </section>
@@ -113,44 +233,52 @@ coordinate system of the VIIRS file will be used.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.GDALDatasetIO.save">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">driver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GTiff'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.GDALDatasetIO.save" title="Link to this definition">¶</a></dt>
-<dd><p>The alternative is to flush the cache and then re-open from disk.</p>
-<section id="id1">
-<h2>Parameters<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
-</section>
-<section id="id2">
-<h2>Returns<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">driver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GTiff'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.GDALDatasetIO.save" title="Link to this definition">¶</a></dt>
+<dd><p>Save a raster dataset to a file.</p>
+<section id="id16">
+<h3>Parameters<a class="headerlink" href="#id16" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>filepath<span class="classifier">str</span></dt><dd><p>Path to the output file.</p>
+</dd>
+<dt>data<span class="classifier">gdal.Dataset</span></dt><dd><p>The raster dataset to be saved.</p>
+</dd>
+<dt>driver<span class="classifier">str, optional</span></dt><dd><p>The GDAL driver to be used for saving the dataset.
+Defaults to ‘GTiff’.</p>
+</dd>
+</dl>
 </section>
 </dd></dl>
 
+</section>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="night_horizons.data_io.ImageIO">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.data_io.</span></span><span class="sig-name descname"><span class="pre">ImageIO</span></span><a class="headerlink" href="#night_horizons.data_io.ImageIO" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#night_horizons.data_io.DataIO" title="night_horizons.data_io.DataIO"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataIO</span></code></a></p>
+<p>Class for loading and saving images.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.ImageIO.load">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'uint8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1200,</span> <span class="pre">1920)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#night_horizons.data_io.ImageIO.load" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'uint8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1200,</span> <span class="pre">1920)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#night_horizons.data_io.ImageIO.load" title="Link to this definition">¶</a></dt>
 <dd><p>Load an image from disk.</p>
-<section id="id3">
-<h2>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
+<section id="id17">
+<h2>Parameters<a class="headerlink" href="#id17" title="Link to this heading">¶</a></h2>
 <blockquote>
 <div><dl class="simple">
-<dt>filepath</dt><dd><p>Location of the image.</p>
+<dt>filepath<span class="classifier">str</span></dt><dd><p>Location of the image.</p>
 </dd>
-<dt>dtype</dt><dd><p>Datatype. Defaults to integer from 0 to 255.</p>
+<dt>dtype<span class="classifier">Union[str, type], optional</span></dt><dd><p>Datatype. Defaults to integer from 0 to 255.</p>
 </dd>
-<dt>img_shape</dt><dd><p>Image dimensions, used if loading a file of the ‘.raw’ type.</p>
+<dt>img_shape<span class="classifier">Tuple[int], optional</span></dt><dd><p>Image dimensions, used if loading a file of the ‘.raw’ type.</p>
 </dd>
 </dl>
 </div></blockquote>
 </section>
-<section id="id4">
-<h2>Returns<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h2>
+<section id="id18">
+<h2>Returns<a class="headerlink" href="#id18" title="Link to this heading">¶</a></h2>
 <blockquote>
 <div><dl class="simple">
-<dt>img</dt><dd><p>Image as a numpy array.</p>
+<dt>img<span class="classifier">np.ndarray</span></dt><dd><p>Image as a numpy array.</p>
 </dd>
 </dl>
 </div></blockquote>
@@ -164,29 +292,82 @@ coordinate system of the VIIRS file will be used.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.ImageIO.save">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.ImageIO.save" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.ImageIO.save" title="Link to this definition">¶</a></dt>
+<dd><p>Save an image to disk.</p>
+<section id="id19">
+<h2>Parameters<a class="headerlink" href="#id19" title="Link to this heading">¶</a></h2>
+<blockquote>
+<div><dl class="simple">
+<dt>filepath<span class="classifier">str</span></dt><dd><p>Location to save the data.</p>
+</dd>
+<dt>data<span class="classifier">np.ndarray</span></dt><dd><p>The image to save.</p>
+</dd>
+</dl>
+</div></blockquote>
+</section>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="night_horizons.data_io.RegisteredImageIO">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.data_io.</span></span><span class="sig-name descname"><span class="pre">RegisteredImageIO</span></span><a class="headerlink" href="#night_horizons.data_io.RegisteredImageIO" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="night_horizons.data_io.ReferencedImageIO">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.data_io.</span></span><span class="sig-name descname"><span class="pre">ReferencedImageIO</span></span><a class="headerlink" href="#night_horizons.data_io.ReferencedImageIO" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#night_horizons.data_io.DataIO" title="night_horizons.data_io.DataIO"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataIO</span></code></a></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.data_io.RegisteredImageIO.load">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.RegisteredImageIO.load" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="night_horizons.data_io.ReferencedImageIO.load">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#night_horizons.data_io.ReferencedImageIO.load" title="Link to this definition">¶</a></dt>
+<dd><p>Load a referenced image from a file.</p>
+<section id="id20">
+<h2>Parameters<a class="headerlink" href="#id20" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>filepath<span class="classifier">str</span></dt><dd><p>The path to the image file.</p>
+</dd>
+<dt>crs<span class="classifier">pyproj.CRS, optional</span></dt><dd><p>The coordinate reference system of the image. Defaults to None.</p>
+</dd>
+</dl>
+</section>
+<section id="id21">
+<h2>Returns<a class="headerlink" href="#id21" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>tuple</dt><dd><p>A tuple containing the loaded image, x bounds, and y bounds.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="night_horizons.data_io.RegisteredImageIO.name">
-<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'registered_image'</span></em><a class="headerlink" href="#night_horizons.data_io.RegisteredImageIO.name" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="night_horizons.data_io.ReferencedImageIO.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'referenced_image'</span></em><a class="headerlink" href="#night_horizons.data_io.ReferencedImageIO.name" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.data_io.RegisteredImageIO.save">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">driver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GTiff'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.RegisteredImageIO.save" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="night_horizons.data_io.ReferencedImageIO.save">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">driver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GTiff'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.ReferencedImageIO.save" title="Link to this definition">¶</a></dt>
+<dd><p>Save an image to a file.</p>
+<section id="id22">
+<h2>Parameters<a class="headerlink" href="#id22" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>filepath<span class="classifier">str</span></dt><dd><p>The path to the output file.</p>
+</dd>
+<dt>img<span class="classifier">np.ndarray</span></dt><dd><p>The image data to be saved.</p>
+</dd>
+<dt>x_bounds<span class="classifier">np.ndarray</span></dt><dd><p>The x-coordinates bounds of the image.</p>
+</dd>
+<dt>y_bounds<span class="classifier">np.ndarray</span></dt><dd><p>The y-coordinates bounds of the image.</p>
+</dd>
+<dt>crs<span class="classifier">pyproj.CRS</span></dt><dd><p>The coordinate reference system of the image.</p>
+</dd>
+<dt>driver<span class="classifier">str, optional</span></dt><dd><p>The GDAL driver to use for saving the image. Defaults to ‘GTiff’.</p>
+</dd>
+<dt><a href="#id23"><span class="problematic" id="id24">*</span></a>args, <a href="#id25"><span class="problematic" id="id26">**</span></a>kwargs</dt><dd><p>Additional arguments to be passed to GDALDatasetIO.create</p>
+</dd>
+</dl>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading">¶</a></h2>
+<p>save(‘output.tif’, image_data, x_bounds, y_bounds, crs)</p>
+</section>
+</dd></dl>
 
 </dd></dl>
 
@@ -196,8 +377,23 @@ coordinate system of the VIIRS file will be used.</p>
 <dd><p>Bases: <a class="reference internal" href="#night_horizons.data_io.DataIO" title="night_horizons.data_io.DataIO"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataIO</span></code></a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.TabularIO.load">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.TabularIO.load" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#night_horizons.data_io.TabularIO.load" title="Link to this definition">¶</a></dt>
+<dd><p>Load data from a CSV file.</p>
+<section id="id27">
+<h2>Parameters<a class="headerlink" href="#id27" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>filepath<span class="classifier">str</span></dt><dd><p>The path to the CSV file.</p>
+</dd>
+</dl>
+</section>
+<section id="id28">
+<h2>Returns<a class="headerlink" href="#id28" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>pandas.DataFrame</dt><dd><p>The loaded data as a pandas DataFrame.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="night_horizons.data_io.TabularIO.name">
@@ -206,29 +402,19 @@ coordinate system of the VIIRS file will be used.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="night_horizons.data_io.TabularIO.save">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.TabularIO.save" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.TabularIO.save" title="Link to this definition">¶</a></dt>
+<dd><p>Save data to a CSV file.</p>
+<section id="id29">
+<h2>Parameters<a class="headerlink" href="#id29" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>filepath<span class="classifier">str</span></dt><dd><p>The path to the CSV file where the data will be saved.</p>
+</dd>
+<dt>data<span class="classifier">pd.DataFrame</span></dt><dd><p>The data to be saved. It can be a list of dictionaries
+or a dictionary of lists.</p>
+</dd>
+</dl>
+</section>
 </dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="night_horizons.data_io.YAMLIO">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">night_horizons.data_io.</span></span><span class="sig-name descname"><span class="pre">YAMLIO</span></span><a class="headerlink" href="#night_horizons.data_io.YAMLIO" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#night_horizons.data_io.DataIO" title="night_horizons.data_io.DataIO"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataIO</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.data_io.YAMLIO.load">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.YAMLIO.load" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="night_horizons.data_io.YAMLIO.name">
-<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'yaml'</span></em><a class="headerlink" href="#night_horizons.data_io.YAMLIO.name" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="night_horizons.data_io.YAMLIO.save">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#night_horizons.data_io.YAMLIO.save" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 
@@ -263,7 +449,7 @@ coordinate system of the VIIRS file will be used.</p>
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
@@ -271,7 +457,7 @@ coordinate system of the VIIRS file will be used.</p>
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 
 
@@ -289,7 +475,7 @@ coordinate system of the VIIRS file will be used.</p>
       &#169;2024, Zachary Hafen-Saavedra.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |
