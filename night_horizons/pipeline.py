@@ -94,20 +94,18 @@ class Stage(ABC):
         self.container.register_service("metadata_processor", constructor=None)
         self.container.register_service(
             "fh135_metadata_processor",
-            lambda *args, **kwargs: preprocessors.MetadataPreprocessor135(
+            lambda **kwargs: preprocessors.MetadataPreprocessor135(
                 io_manager=self.container.get_service("io_manager"),
                 crs=self.container.get_service("crs"),
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=preprocessors.MetadataPreprocessor135,
         )
         self.container.register_service(
             "fh145_metadata_processor",
-            lambda *args, **kwargs: preprocessors.MetadataPreprocessor145(
+            lambda **kwargs: preprocessors.MetadataPreprocessor145(
                 io_manager=self.container.get_service("io_manager"),
                 crs=self.container.get_service("crs"),
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=preprocessors.MetadataPreprocessor145,
@@ -247,8 +245,9 @@ class MosaicMaker(Stage):
         # Preprocessor to get geotiff metadata (which includes georeferencing)
         self.container.register_service(
             "geotiff_preprocessor",
-            lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
-                crs=self.container.get_service("crs"), *args, **kwargs
+            lambda **kwargs: preprocessors.GeoTIFFPreprocessor(
+                crs=self.container.get_service("crs"),
+                **kwargs
             ),
             wrapped_constructor=preprocessors.GeoTIFFPreprocessor,
         )
@@ -256,19 +255,18 @@ class MosaicMaker(Stage):
         # Preprocessor to order images
         self.container.register_service(
             "quality_order",
-            lambda quality_col="imuGyroMag", *args, **kwargs: order.OrderTransformer(
-                order_columns=quality_col, *args, **kwargs
+            lambda quality_col="imuGyroMag", **kwargs: order.OrderTransformer(
+                order_columns=quality_col, **kwargs
             ),
             wrapped_constructor=order.OrderTransformer,
         )
 
         # Put it all together
-        def make_preprocessor_pipeline(*args, steps: list[str] = None, **kwargs):
+        def make_preprocessor_pipeline(steps: list[str] = None, **kwargs):
             if steps is None:
                 steps = ["geotiff_preprocessor"]
             return Pipeline(
                 [(step, self.container.get_service(step)) for step in steps],
-                *args,
                 **kwargs,
             )
 
@@ -284,12 +282,11 @@ class MosaicMaker(Stage):
         # Finally, the mosaicker itself, which is a batch processor
         self.container.register_service(
             "mosaicker",
-            lambda *args, **kwargs: mosaicking.Mosaicker(
+            lambda **kwargs: mosaicking.Mosaicker(
                 io_manager=self.container.get_service("io_manager"),
                 processor=self.container.get_service("processor"),
                 scorer=self.container.get_service("scorer"),
                 crs=self.container.get_service("crs"),
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=mosaicking.Mosaicker,
@@ -301,10 +298,9 @@ class MosaicMaker(Stage):
         # the same io_manager throughout
         self.container.register_service(
             "processor",
-            lambda *args, **kwargs: processors.DatasetUpdater(
+            lambda **kwargs: processors.DatasetUpdater(
                 io_manager=self.container.get_service("io_manager"),
                 image_operator=self.container.get_service("image_operator"),
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=processors.DatasetUpdater,
@@ -313,10 +309,9 @@ class MosaicMaker(Stage):
         # This is the corresponding processor for scoring images
         self.container.register_service(
             "scorer",
-            lambda *args, **kwargs: scorers.DatasetScorer(
+            lambda **kwargs: scorers.DatasetScorer(
                 io_manager=self.container.get_service("io_manager"),
                 image_operator=self.container.get_service("image_scorer"),
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=scorers.DatasetScorer,
@@ -505,12 +500,10 @@ class SequentialMosaicMaker(MosaicMaker):
                 "metadata_image_registrar",
                 "order",
             ],
-            *args,
             **kwargs,
         ):
             return Pipeline(
                 [(step, self.container.get_service(step)) for step in steps],
-                *args,
                 **kwargs,
             )
 

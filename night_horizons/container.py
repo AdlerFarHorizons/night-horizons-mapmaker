@@ -285,7 +285,7 @@ class DIContainer:
 
             wrapped_constructor = constructor_dict["wrapped_constructor"]
             if wrapped_constructor is not None:
-                constructor = constructor
+                constructor = wrapped_constructor
 
             # Comment the name of the constructor
             doc.yaml_add_eol_comment(
@@ -296,7 +296,7 @@ class DIContainer:
             # Get the used arguments
             _, kwargs = self.get_used_args(name, constructor)
 
-            if kwargs != {}:
+            if kwargs:
                 doc[name] = kwargs
 
         with open(filepath, "w", encoding="UTF-8") as file:

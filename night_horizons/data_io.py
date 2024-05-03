@@ -1,7 +1,7 @@
 """This module provides classes for data input/output operations.
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
 import os
 from typing import Tuple, Union
 
@@ -273,11 +273,11 @@ class GDALDatasetIO(DataIO):
         crs: pyproj.CRS,
         x_size: int,
         y_size: int,
+        *args,
         n_bands: int = 4,
         driver: str = "MEM",
         return_dataset: bool = True,
         options: list[str] = None,
-        *args,
         **kwargs,
     ):
         """
@@ -416,7 +416,7 @@ class GDALDatasetIO(DataIO):
         """
 
         # Get the coordinates
-        x_min, pixel_width, x_rot, y_max, y_rot, pixel_height = (
+        x_min, pixel_width, _, y_max, _, pixel_height = (
             dataset.GetGeoTransform()
         )
 
@@ -444,8 +444,8 @@ class ReferencedImageIO(DataIO):
         x_bounds: np.ndarray,
         y_bounds: np.ndarray,
         crs: pyproj.CRS,
-        driver: str = "GTiff",
         *args,
+        driver: str = "GTiff",
         **kwargs,
     ):
         """
@@ -537,7 +537,7 @@ class ReferencedImageIO(DataIO):
             img = img.transpose(1, 2, 0)
 
         # Get bounds
-        (x_bounds, y_bounds, dx, dy) = GDALDatasetIO.get_bounds_from_dataset(dataset)
+        (x_bounds, y_bounds, _, _) = GDALDatasetIO.get_bounds_from_dataset(dataset)
 
         data = (img, x_bounds, y_bounds)
 

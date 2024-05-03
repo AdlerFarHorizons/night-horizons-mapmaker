@@ -1,3 +1,4 @@
+"""Module for managing input and output."""
 from abc import abstractmethod
 import copy
 import inspect
@@ -8,6 +9,7 @@ import shutil
 from typing import Tuple, Union
 
 import numpy as np
+from numpy.random import RandomState
 from osgeo import gdal
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -214,7 +216,7 @@ class IOManager:
 
         # Walk the tree to get files
         fps = []
-        for root, dirs, files in os.walk(directory):
+        for root, _, files in os.walk(directory):
             for name in files:
                 fps.append(os.path.join(root, name))
         fps = pd.Series(fps)
@@ -360,7 +362,7 @@ class IOManager:
             except TypeError:
                 value = "no string repr"
             settings[setting] = value
-        with open(self.output_filepaths["settings"], "w") as file:
+        with open(self.output_filepaths["settings"], "w", encoding="utf-8") as file:
             yaml.dump(settings, file)
 
     def get_checkpoint_filepatterns(
@@ -441,7 +443,7 @@ class IOManager:
         pattern = re.compile(search_pattern)
         possible_files = os.listdir(self.checkpoint_dir)
         filenames = []
-        for j, filename in enumerate(possible_files):
+        for filename in possible_files:
             match = pattern.search(filename)
             if not match:
                 continue
@@ -825,7 +827,7 @@ class ReferencedRawSplitter:
         test_size: Union[int, float] = 0.2,
         max_raw_size: int = None,
         drop_raw_images: bool = False,
-        random_state: Union[int, np.random.RandomState] = None,
+        random_state: Union[int, RandomState] = None,
         use_test_dir: bool = False,
     ):
         """Initialize the ReferencedRawSplitter object.
