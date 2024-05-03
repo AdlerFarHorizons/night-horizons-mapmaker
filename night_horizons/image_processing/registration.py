@@ -24,7 +24,7 @@ class MetadataImageRegistrar(BaseEstimator):
 
     def __init__(
         self,
-        crs: Union[str, pyproj.CRS] = "EPSG:3857",
+        crs: pyproj.CRS,
         passthrough: Union[bool, list[str]] = False,
         use_observed_error: bool = True,
         camera_angles: dict[float] = {0: 30.0, 1: 0.0, 2: 30.0},
@@ -36,7 +36,7 @@ class MetadataImageRegistrar(BaseEstimator):
 
         Parameters
         ----------
-        crs : Union[str, pyproj.CRS], optional
+        crs : pyproj.CRS
             The coordinate reference system (CRS) to use for the registration,
             by default 'EPSG:3857'.
         passthrough : Union[bool, list[str]], optional
@@ -101,9 +101,6 @@ class MetadataImageRegistrar(BaseEstimator):
             X,
             self.required_columns,
         )
-
-        if isinstance(self.crs, str):
-            self.crs = pyproj.CRS(self.crs)
 
         # Calculate offsets
         widths = y["pixel_width"] * y["x_size"]

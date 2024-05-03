@@ -41,7 +41,7 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
     def __init__(
         self,
         io_manager: io_manager.IOManager,
-        crs: Union[str, pyproj.CRS],
+        crs: pyproj.CRS,
         output_columns: list[str] = None,
         use_cached_output: bool = True,
         unhandled_files: str = "drop",
@@ -55,7 +55,7 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
         ----------
         io_manager : io_manager.IOManager
             The IOManager object used for input/output operations.
-        crs : Union[str, pyproj.CRS]
+        crs : pyproj.CRS
             The coordinate reference system (CRS) to be used for the data.
         output_columns : list[str], optional
             The list of output column names, by default None, which keeps all
@@ -106,10 +106,6 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
             X,
             passthrough=self.passthrough,
         )
-
-        # Convert CRS as needed
-        if isinstance(self.crs, str):
-            self.crs = pyproj.CRS(self.crs)
 
         self.is_fitted_ = True
         return self
@@ -559,7 +555,7 @@ class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        crs: Union[str, pyproj.CRS] = "EPSG:3857",
+        crs: pyproj.CRS,
         spatial_error: float = 0.0,
         padding_fraction: float = 0.1,
         passthrough: bool = True,
@@ -569,7 +565,7 @@ class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        crs : Union[str, pyproj.CRS], optional
+        crs : pyproj.CRS
             The coordinate reference system (CRS) to use for the data.
             It can be specified as a string in the format 'EPSG:<code>' or as a
             pyproj.CRS object. The default is 'EPSG:3857'.
@@ -614,10 +610,6 @@ class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
         """
 
         X = utils.check_filepaths_input(X, required_columns=self.required_columns)
-
-        # Convert CRS as needed
-        if isinstance(self.crs, str):
-            self.crs = pyproj.CRS(self.crs)
 
         self.is_fitted_ = True
         return self
