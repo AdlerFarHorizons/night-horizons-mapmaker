@@ -28,3 +28,15 @@ random_state: # sklearn.utils.validation.check_random_state
   seed: 159234
 metadata_processor:
   version: fh135_metadata_processor
+fh135_metadata_processor:  # night_horizons.transformers.preprocessors.MetadataPreprocessor135
+  output_columns:
+  use_cached_output: true
+  unhandled_files: drop
+  tz_offset_in_hr: 5.0
+  passthrough: &id001 []
+fh145_metadata_processor:  # night_horizons.transformers.preprocessors.MetadataPreprocessor145
+  output_columns:
+  use_cached_output: true
+  unhandled_files: drop
+  tz_offset_in_hr: 5.0
+  passthrough: *id001
