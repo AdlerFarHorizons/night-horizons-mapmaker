@@ -45,8 +45,8 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
         output_columns: list[str] = None,
         use_cached_output: bool = True,
         unhandled_files: str = "drop",
-        passthrough: list[str] = [],
         tz_offset_in_hr: float = 5.0,
+        passthrough: list[str] = [],
     ):
         """
         Initialize the MetadataPreprocessor object.
@@ -73,11 +73,11 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
         self.io_manager = io_manager
         self.crs = crs
         self.output_columns = output_columns
+        self.required_columns = ["filepath"]
         self.use_cached_output = use_cached_output
         self.unhandled_files = unhandled_files
-        self.passthrough = passthrough
-        self.required_columns = ["filepath"]
         self.tz_offset_in_hr = tz_offset_in_hr
+        self.passthrough = passthrough
 
     def fit(
         self,
@@ -555,14 +555,14 @@ class MetadataPreprocessor145(MetadataPreprocessor):
 
 
 class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
-    """Transform filepaths into geotransform properties."""
+    """Class for getting geotransforms out from a list of GeoTIFF filepaths."""
 
     def __init__(
         self,
         crs: Union[str, pyproj.CRS] = "EPSG:3857",
-        passthrough: bool = True,
         spatial_error: float = 0.0,
         padding_fraction: float = 0.1,
+        passthrough: bool = True,
     ):
         """
         Initialize the Preprocessor object.
@@ -585,17 +585,33 @@ class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
             of image hypotenuse. Default is 0.1
         """
         self.crs = crs
-        self.passthrough = passthrough
         self.required_columns = ["filepath"]
         self.spatial_error = spatial_error
         self.padding_fraction = padding_fraction
+        self.passthrough = passthrough
 
     @utils.enable_passthrough
     def fit(
         self,
         X: Union[np.ndarray[str], list[str], pd.DataFrame],
         y=None,
-    ):
+    ) -> "GeoTIFFPreprocessor":
+        """
+        Fits the GeoTIFFPreprocessor to the input data.
+
+        Parameters
+        ----------
+        X : Union[np.ndarray[str], list[str], pd.DataFrame]
+            The input filepaths to fit the preprocessor on.
+
+        y : None, optional
+            The target variable (default is None).
+
+        Returns
+        -------
+        GeoTIFFPreprocessor
+            The fitted GeoTIFFPreprocessor object.
+        """
 
         X = utils.check_filepaths_input(X, required_columns=self.required_columns)
 
@@ -611,15 +627,20 @@ class GeoTIFFPreprocessor(TransformerMixin, BaseEstimator):
         self,
         X: Union[np.ndarray[str], list[str], pd.DataFrame],
         y=None,
-    ):
-        """
-        Note that much of the code in the loop is duplicated, so this function
-        could be cleaned up even more, including by using data_io.
+    ) -> pd.DataFrame:
+        """Transform the input dataframe to also hold geotransform information.
 
         Parameters
         ----------
+        X : Union[np.ndarray[str], list[str], pd.DataFrame]
+            The input filepaths to be transformed.
+        y : None, optional
+            The target variable, if applicable. Default is None.
+
         Returns
         -------
+        pd.DataFrame
+            The transformed data as a DataFrame.
         """
 
         # Check the input is good.
