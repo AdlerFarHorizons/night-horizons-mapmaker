@@ -284,9 +284,9 @@ class MosaicMaker(Stage):
             "mosaicker",
             lambda **kwargs: mosaicking.Mosaicker(
                 io_manager=self.container.get_service("io_manager"),
+                crs=self.container.get_service("crs"),
                 processor=self.container.get_service("processor"),
                 scorer=self.container.get_service("scorer"),
-                crs=self.container.get_service("crs"),
                 **kwargs,
             ),
             wrapped_constructor=mosaicking.Mosaicker,
@@ -439,10 +439,9 @@ class SequentialMosaicMaker(MosaicMaker):
         # For splitting the data
         self.container.register_service(
             "data_splitter",
-            lambda *args, **kwargs: ReferencedRawSplitter(
+            lambda **kwargs: ReferencedRawSplitter(
                 io_manager=self.container.get_service("io_manager"),
                 random_state=self.container.get_service("random_state"),
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=ReferencedRawSplitter,
@@ -451,11 +450,10 @@ class SequentialMosaicMaker(MosaicMaker):
         # Preprocessor to use metadata to georeference
         self.container.register_service(
             "metadata_image_registrar",
-            lambda passthrough=True, *args, **kwargs: (
+            lambda passthrough=True, **kwargs: (
                 registration.MetadataImageRegistrar(
                     crs=self.container.get_service("crs"),
                     passthrough=passthrough,
-                    *args,
                     **kwargs,
                 )
             ),
@@ -465,8 +463,8 @@ class SequentialMosaicMaker(MosaicMaker):
         # Preprocessor to get geotiff metadata (which includes georeferencing)
         self.container.register_service(
             "geotiff_preprocessor",
-            lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
-                crs=self.container.get_service("crs"), *args, **kwargs
+            lambda **kwargs: preprocessors.GeoTIFFPreprocessor(
+                crs=self.container.get_service("crs"), **kwargs
             ),
             wrapped_constructor=preprocessors.GeoTIFFPreprocessor,
         )
@@ -522,13 +520,12 @@ class SequentialMosaicMaker(MosaicMaker):
         # Finally, the mosaicker itself
         self.container.register_service(
             "mosaicker",
-            lambda *args, **kwargs: mosaicking.SequentialMosaicker(
+            lambda **kwargs: mosaicking.SequentialMosaicker(
                 io_manager=self.container.get_service("io_manager"),
                 processor=self.container.get_service("processor"),
                 mosaicker_train=self.container.get_service("mosaicker_train"),
                 scorer=self.container.get_service("scorer"),
                 crs=self.container.get_service("crs"),
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=mosaicking.SequentialMosaicker,
@@ -537,10 +534,9 @@ class SequentialMosaicMaker(MosaicMaker):
         # The processor for the sequential mosaicker
         self.container.register_service(
             "processor",
-            lambda *args, **kwargs: processors.ReferencerDatasetUpdater(
+            lambda **kwargs: processors.ReferencerDatasetUpdater(
                 io_manager=self.container.get_service("io_manager"),
                 image_operator=self.container.get_service("image_operator"),
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=processors.ReferencerDatasetUpdater,
@@ -550,11 +546,10 @@ class SequentialMosaicMaker(MosaicMaker):
         # We default to not using an image operator because that's expensive
         self.container.register_service(
             "scorer",
-            lambda *args, **kwargs: scorers.ReferencedImageScorer(
+            lambda **kwargs: scorers.ReferencedImageScorer(
                 crs=self.container.get_service("crs"),
                 io_manager=self.container.get_service("io_manager"),
                 image_operator=None,
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=scorers.ReferencedImageScorer,
@@ -563,11 +558,10 @@ class SequentialMosaicMaker(MosaicMaker):
         # Operator for the sequential mosaicker--align and blend
         self.container.register_service(
             "image_operator",
-            lambda *args, **kwargs: operators.ImageAlignerBlender(
+            lambda **kwargs: operators.ImageAlignerBlender(
                 image_transformer=self.container.get_service("image_transformer"),
                 feature_detector=self.container.get_service("feature_detector"),
                 feature_matcher=self.container.get_service("feature_matcher"),
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=operators.ImageAlignerBlender,
@@ -593,8 +587,8 @@ class SequentialMosaicMaker(MosaicMaker):
         # Preprocessor for the referenced mosaic is just a GeoTIFFPreprocessor
         self.container.register_service(
             "preprocessor_train",
-            lambda *args, **kwargs: preprocessors.GeoTIFFPreprocessor(
-                crs=self.container.get_service("crs"), *args, **kwargs
+            lambda **kwargs: preprocessors.GeoTIFFPreprocessor(
+                crs=self.container.get_service("crs"), **kwargs
             ),
             wrapped_constructor=preprocessors.GeoTIFFPreprocessor,
         )
@@ -616,10 +610,9 @@ class SequentialMosaicMaker(MosaicMaker):
         # The processor for the training mosaic
         self.container.register_service(
             "processor_train",
-            lambda *args, **kwargs: processors.DatasetUpdater(
+            lambda **kwargs: processors.DatasetUpdater(
                 io_manager=self.container.get_service("io_manager_train"),
                 image_operator=self.container.get_service("image_operator_train"),
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=processors.DatasetUpdater,
@@ -628,11 +621,10 @@ class SequentialMosaicMaker(MosaicMaker):
         # The actual training mosaicker
         self.container.register_service(
             "mosaicker_train",
-            lambda *args, **kwargs: mosaicking.Mosaicker(
+            lambda **kwargs: mosaicking.Mosaicker(
                 io_manager=self.container.get_service("io_manager_train"),
                 processor=self.container.get_service("processor_train"),
                 crs=self.container.get_service("crs"),
-                *args,
                 **kwargs,
             ),
             wrapped_constructor=mosaicking.Mosaicker,

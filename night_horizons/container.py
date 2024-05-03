@@ -91,7 +91,7 @@ class DIContainer:
             ),
         }
 
-    def get_service(self, name: str, *args, version: str = None, **kwargs):
+    def get_service(self, name: str, version: str = None, **kwargs):
         """
         Get an instance of a registered service.
 
@@ -101,8 +101,6 @@ class DIContainer:
             The name of the service.
         version : str, optional
             The version of the service, by default None.
-        *args
-            Positional arguments to be passed to the service constructor.
         **kwargs
             Keyword arguments to be passed to the service constructor.
 
@@ -138,17 +136,17 @@ class DIContainer:
         constructor = constructor_dict["constructor"]
 
         # Next, get the kwargs for the service
-        args, kwargs = self.get_used_args(name, constructor, *args, **kwargs)
+        kwargs = self.get_used_args(name, constructor, **kwargs)
 
         # Finally, construct the service
-        service = constructor(*args, **kwargs)
+        service = constructor(**kwargs)
         if constructor_dict["singleton"]:
             self.services[name] = service
 
         return service
 
     def get_used_args(
-        self, name: str, constructor: callable, *args, **kwargs
+        self, name: str, constructor: callable, **kwargs
     ) -> tuple[tuple, dict]:
         """
         Get the used arguments for a service, based on the config,
@@ -160,8 +158,6 @@ class DIContainer:
             The name of the service.
         constructor : callable
             The constructor function for the service.
-        *args
-            Positional arguments to be passed to the service constructor.
         **kwargs
             Keyword arguments to be passed to the service constructor.
 
@@ -181,7 +177,7 @@ class DIContainer:
         default_kwargs = self.get_default_args(constructor)
         kwargs = deep_merge(default_kwargs, kwargs)
 
-        return args, kwargs
+        return kwargs
 
     def get_default_args(self, constructor: callable) -> dict:
         """
@@ -294,7 +290,7 @@ class DIContainer:
             )
 
             # Get the used arguments
-            _, kwargs = self.get_used_args(name, constructor)
+            kwargs = self.get_used_args(name, constructor)
 
             if kwargs:
                 doc[name] = kwargs
