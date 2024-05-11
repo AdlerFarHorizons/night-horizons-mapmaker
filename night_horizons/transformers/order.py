@@ -115,7 +115,7 @@ class SensorAndDistanceOrder(OrderTransformer):
         self.sensor_order_map = sensor_order_map
         self.coords_cols = coords_cols
 
-        super().__init__(apply=apply, order_columns=["sensor_order", "d_to_center"])
+        super().__init__(apply=apply, order_columns=["sensor_order", "distance_to_starting_image"])
 
     def fit(self, X: pd.DataFrame, y=None) -> "SensorAndDistanceOrder":
         """Fits the transformer to the input data, i.e. sets the center.
@@ -156,6 +156,6 @@ class SensorAndDistanceOrder(OrderTransformer):
         X["sensor_order"] = X[self.sensor_order_col].map(self.sensor_order_map)
 
         offset = X[self.coords_cols] - self.center_
-        X["d_to_center"] = np.linalg.norm(offset, axis=1)
+        X["distance_to_starting_image"] = np.linalg.norm(offset, axis=1)
 
         return super().transform(X)
