@@ -11,6 +11,7 @@ import pandas as pd
 
 import night_horizons.transformers.preprocessors as preprocessors
 import night_horizons.utils as utils
+from night_horizons.data_dictionary import get_data_dictionary
 from night_horizons.pipeline import create_stage
 
 
@@ -80,6 +81,12 @@ class TestMetadataPreprocessor(unittest.TestCase):
         metadata2 = self.transformer.fit_transform(fps)
 
         assert metadata.equals(metadata2)
+
+        # Check that we have descriptions for all the columns
+        data_dict = get_data_dictionary(metadata)
+        for column in metadata.columns:
+            assert column in data_dict
+        assert len(data_dict) == len(metadata.columns)
 
     def test_output_referenced_files(self):
         '''Tests that the transformation works on referenced GeoTIFFs.'''
