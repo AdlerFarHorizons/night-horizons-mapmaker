@@ -12,6 +12,368 @@ DATA_DICTONARIES = {
             "units": np.nan,
         },
     },
+    "metadata": {
+        "ClimbErr": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "GPSAlt": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "GPSHeading": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "LatErr": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "LonErr": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "SpeerErr": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "TempC": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "camera_num": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "center_diff": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "d_to_center": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "duration": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "exposure_time": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "filename": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "filename_x": {
+            "description": "",
+            "type": np.object,
+            "units": np.nan,
+        },
+        "filename_y": {
+            "description": "",
+            "type": np.object,
+            "units": np.nan,
+        },
+        "filepath": {
+            "description": "",
+            "type": np.object,
+            "units": np.nan,
+        },
+        "imuAccelX": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuAccelY": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuAccelZ": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuGyroMag": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuGyroX": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuGyroY": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuGyroZ": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuMagX": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuMagY": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuMagZ": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuPitch": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuRoll": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "imuYaw": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "internal_temp": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "mAltitude": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "obc_filename": {
+            "description": "",
+            "type": np.object,
+            "units": np.nan,
+        },
+        "obc_timestamp": {
+            "description": "",
+            "type": np.object,
+            "units": np.nan,
+        },
+        "odroid_timestamp": {
+            "description": "",
+            "type": np.object,
+            "units": np.nan,
+        },
+        "order": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "output_filepath": {
+            "description": "",
+            "type": np.object,
+            "units": np.nan,
+        },
+        "padding": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "pixel_height": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "pixel_height_diff": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "pixel_width": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "pixel_width_diff": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "pressure": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "return_code": {
+            "description": "",
+            "type": np.object,
+            "units": np.nan,
+        },
+        "score": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "sensor_order": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "sensor_x": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "sensor_y": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "sequence_ind": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "serial_num": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "spatial_error": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "timestamp": {
+            "description": "",
+            "type": np.object,
+            "units": np.nan,
+        },
+        "timestamp_id": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "timestamp_int_gps": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "timestamp_int_imu": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "x_center": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "x_max": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "x_max_diff": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "x_min": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "x_min_diff": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "x_off": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "x_rot": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "x_size": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "x_size_diff": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "y_center": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "y_max": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "y_max_diff": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "y_min": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "y_min_diff": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "y_off": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "y_rot": {
+            "description": "",
+            "type": np.float64,
+            "units": np.nan,
+        },
+        "y_size": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+        "y_size_diff": {
+            "description": "",
+            "type": np.int64,
+            "units": np.nan,
+        },
+    },
 }
 
 
