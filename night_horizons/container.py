@@ -289,6 +289,7 @@ class DIContainer:
             # Make the comment to go on the end of the line.
             if (
                 documentation_url is not None
+                and constructor.__module__ is not None
                 and constructor.__module__.split(".")[0] == "night_horizons"
             ):
                 eol_comment = f"{documentation_url}/{constructor.__module__}.html#"
