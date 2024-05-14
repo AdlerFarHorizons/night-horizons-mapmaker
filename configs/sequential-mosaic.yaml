@@ -8,15 +8,17 @@ pipeline:
 
 # I/O settings
 # These settings assume that the user has mounted their data directory at /data
+# The "&" is a yaml anchor, which allows you to reuse the same settings in multiple places
 io_manager: &default_io_settings
-  # Specifies the input data
+  # input_dir and input_description specify the location of the input data
   input_dir: /data/input
   input_description:
     # Metadata files. This is the path relative to the input_dir.
-    # metadata: metadata/220513-FH135/combined_metadata.csv
     img_log: metadata/220513-FH135/image.log
     imu_log: metadata/220513-FH135/PresIMULog.csv
     gps_log: metadata/220513-FH135/GPSLog.csv
+    # Alternatively, you can specify a combined metadata file.
+    metadata: metadata/220513-FH135/combined_metadata.csv
     # Images without georeferencing.
     images:
       # Relative to input_dir
@@ -30,12 +32,12 @@ io_manager: &default_io_settings
       directory: referenced_images/220513-FH135
       # This is a RegEx pattern. The "1" selects nadir images only.
       pattern: 'Geo\s\d+_1\.(tif|tiff)$'
-  # Where the output files will be saved
+  # output_dir and output_description specify where to save the output data
   output_dir: /data/output
   output_description:
     used_config: used-config.yaml
-  # DEBUG
-  # checkpoint_freq: 1
+  # How often we want to checkpoint the data
+  checkpoint_freq: 1
 
 # The new io manager inherits the default settings
 io_manager_train:
@@ -57,3 +59,35 @@ crs:
 # Random state for reproducibility
 random_state: 
   seed: 1592
+
+# The data splitter is used to split the data into training and testing sets
+# Even during production, we reserve a fraction of the manually-referenced images for testing (test_size)
+data_splitter:
+  test_size: 0.2 # The fraction reserved for testing
+
+# We filter the data by altitude to focus on only images in the float phase.
+# This tosses out everything below an altitude float_altitude
+altitude_filter:
+  column: mAltitude
+  float_altitude: 13000.0
+# We also filter the data by steadiness to toss out images we suspect are blurry.
+steady_filter:
+  column: imuGyroMag
+  max_gyro: 0.075
+
+# These are settings for the mosaicker, which loops through all the images and makes the mosaic.
+mosaicker:
+  pixel_width: # By leaving this blank, the pixel width is set based on the width of the referenced images.
+  pixel_height: # By leaving this blank, the pixel height is set based on the width of the referenced images.
+  dtype: uint8 # The data type of the output image. uint8 is standard.
+  n_bands: 4 # RGB +Alpha = 4 ba
+
+# The image operator is used to align and blend each pair of images.
+image_operator:
+  # The determinant of the homography matrix indicates how much the image has been scaled up or down. A high or low determinant indicates a bad match.
+  det_min: 0.6 
+  det_max: 1.7
+  required_brightness: 0.03 # The minimum brightness to count as "light" relative to 1.0. Used for filtering out dark images.
+  required_bright_pixel_area: 50000 # The number of pixels that must be bright to count as "light". Used for filtering out dark images.
+  outline: 0 # You can place a border around the image to help see how blending worked. This value is the width of the border.
+ds.
