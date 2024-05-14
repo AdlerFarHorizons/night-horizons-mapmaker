@@ -121,114 +121,134 @@ DATA_DICTONARIES = {
             "units": "TBD",
         },
         "imuGyroMag": {
-            "description": "",
+            "description": "Magnitude of the IMU gyroscope value.",
             "type": np.float64,
             "units": "",
         },
         "imuGyroX": {
-            "description": "X-direction magnitude",
+            "description": "X-direction IMU gyroscope value.",
             "type": np.float64,
-            "units": "",
+            "units": "TBD",
         },
         "imuGyroY": {
-            "description": "",
+            "description": "Y-direction IMU gyroscope value.",
             "type": np.float64,
-            "units": "",
+            "units": "TBD",
         },
         "imuGyroZ": {
-            "description": "",
+            "description": "Z-direction IMU gyroscope value.",
             "type": np.float64,
-            "units": "",
+            "units": "TBD",
         },
         "imuMagX": {
-            "description": "",
+            "description": "X-direction IMU magnetometer value.",
             "type": np.float64,
             "units": "",
         },
         "imuMagY": {
-            "description": "",
+            "description": "Y-direction IMU magnetometer value.",
             "type": np.float64,
             "units": "",
         },
         "imuMagZ": {
-            "description": "",
+            "description": "Z-direction IMU magnetometer value.",
             "type": np.float64,
             "units": "",
         },
         "imuPitch": {
-            "description": "",
+            "description": (
+                "Pitch, estimated from the IMU instrument measurements. "
+                "As of writing, not robust."
+            ),
             "type": np.float64,
             "units": "",
         },
         "imuRoll": {
-            "description": "",
+            "description": (
+                "Roll, estimated from the IMU instrument measurements. "
+                "As of writing, not robust."
+            ),
             "type": np.float64,
             "units": "",
         },
         "imuYaw": {
-            "description": "",
+            "description": (
+                "Yaw, estimated from the IMU instrument measurements. "
+                "As of writing, not robust."
+            ),
             "type": np.float64,
             "units": "",
         },
         "internal_temp": {
-            "description": "",
+            "description": "TBD",
             "type": np.int64,
-            "units": "",
+            "units": "TBD",
         },
         "mAltitude": {
-            "description": "",
+            "description": "Altitude of the baloon, according to the ACS.",
             "type": np.float64,
-            "units": "",
+            "units": "meters",
         },
         "obc_filename": {
-            "description": "",
-            "type": np.object,
+            "description": "Name of the image, according to the onboard computer.",
+            "type": str,
             "units": "",
         },
         "obc_timestamp": {
-            "description": "",
-            "type": np.object,
+            "description": "Timestamp of the image, according to the onboard computer.",
+            "type": str,
             "units": "",
         },
         "odroid_timestamp": {
-            "description": "",
-            "type": np.object,
-            "units": "",
+            "description": "TBD",
+            "type": str,
+            "units": "TBD",
         },
         "order": {
-            "description": "",
+            "description": "Order in which to analyze the images.",
             "type": np.int64,
             "units": "",
         },
         "output_filepath": {
-            "description": "",
-            "type": np.object,
+            "description": (
+                "Location the output image (usually a referenced image) is saved at."
+            ),
+            "type": str,
             "units": "",
         },
         "padding": {
-            "description": "",
+            "description": (
+                "When performing image registration, the search zone is of a size "
+                "(width + 2 * padding, height + 2 * padding.)"
+            ),
             "type": np.float64,
-            "units": "",
+            "units": "meters",
         },
         "pixel_height": {
-            "description": "",
+            "description": "Height of an individual pixel.",
             "type": np.float64,
-            "units": "",
+            "units": "meters",
         },
         "pixel_height_diff": {
-            "description": "",
+            "description": (
+                "Difference between the estimated and actual height of a "
+                "pixel. Used when testing."
+            ),
             "type": np.float64,
-            "units": "",
+            "units": "meters",
         },
         "pixel_width": {
-            "description": "",
+            "description": "Width of an individual pixel."
             "type": np.float64,
-            "units": "",
+            "units": "meters",
         },
         "pixel_width_diff": {
-            "description": "",
+            "description": (
+                "Difference between the estimated and actual width of a "
+                "pixel. Used when testing."
+            ),
             "type": np.float64,
-            "units": "",
+            "units": "meters",
         },
         "pressure": {
             "description": "",
