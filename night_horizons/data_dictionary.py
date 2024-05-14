@@ -238,7 +238,7 @@ DATA_DICTONARIES = {
             "units": "meters",
         },
         "pixel_width": {
-            "description": "Width of an individual pixel."
+            "description": "Width of an individual pixel.",
             "type": np.float64,
             "units": "meters",
         },
@@ -257,7 +257,7 @@ DATA_DICTONARIES = {
         },
         "return_code": {
             "description": "",
-            "type": np.object,
+            "type": str,
             "units": "",
         },
         "score": {
@@ -297,7 +297,7 @@ DATA_DICTONARIES = {
         },
         "timestamp": {
             "description": "",
-            "type": np.object,
+            "type": str,
             "units": "",
         },
         "timestamp_id": {
