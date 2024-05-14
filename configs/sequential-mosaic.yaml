@@ -8,7 +8,8 @@ pipeline:
 
 # I/O settings
 # These settings assume that the user has mounted their data directory at /data
-# The "&" is a yaml anchor, which allows you to reuse the same settings in multiple places
+# The "&" is a yaml anchor, which allows you to reuse the same settings in
+# multiple places
 io_manager: &default_io_settings
   # input_dir and input_description specify the location of the input data
   input_dir: /data/input
@@ -39,13 +40,9 @@ io_manager: &default_io_settings
   # How often we want to checkpoint the data
   checkpoint_freq: 1
 
-# The new io manager inherits the default settings
+# The io_manager used to construct the training data inherits the default settings
 io_manager_train:
   <<: *default_io_settings
-
-# DEBUG
-# data_splitter:
-#   max_raw_size: 10
 
 # What metadata processor to use (based on metadata format)
 metadata_processor:
@@ -61,7 +58,8 @@ random_state:
   seed: 1592
 
 # The data splitter is used to split the data into training and testing sets
-# Even during production, we reserve a fraction of the manually-referenced images for testing (test_size)
+# Even during production, we reserve a fraction of the manually-referenced images
+# for testing (test_size)
 data_splitter:
   test_size: 0.2 # The fraction reserved for testing
 
@@ -75,19 +73,31 @@ steady_filter:
   column: imuGyroMag
   max_gyro: 0.075
 
-# These are settings for the mosaicker, which loops through all the images and makes the mosaic.
+# These are settings for the mosaicker, which loops through all the images and
+# makes the mosaic.
 mosaicker:
-  pixel_width: # By leaving this blank, the pixel width is set based on the width of the referenced images.
-  pixel_height: # By leaving this blank, the pixel height is set based on the width of the referenced images.
+  # By leaving pixel_width blank, the pixel width is set based on the pixel width
+  # of the referenced images.
+  pixel_width:
+  # By leaving pixel_height blank, the pixel height is set based on the pixel height
+  # of the referenced images.
+  pixel_height:
   dtype: uint8 # The data type of the output image. uint8 is standard.
   n_bands: 4 # RGB +Alpha = 4 ba
 
 # The image operator is used to align and blend each pair of images.
 image_operator:
-  # The determinant of the homography matrix indicates how much the image has been scaled up or down. A high or low determinant indicates a bad match.
+  # The determinant of the homography matrix indicates how much the image
+  # has been scaled up or down. A high or low determinant indicates a bad match.
   det_min: 0.6 
   det_max: 1.7
-  required_brightness: 0.03 # The minimum brightness to count as "light" relative to 1.0. Used for filtering out dark images.
-  required_bright_pixel_area: 50000 # The number of pixels that must be bright to count as "light". Used for filtering out dark images.
-  outline: 0 # You can place a border around the image to help see how blending worked. This value is the width of the border.
+  # The minimum brightness to count as "light" relative to 1.0.
+  # Used for filtering out dark images.
+  required_brightness: 0.03
+  # The number of pixels that must be bright to count as "light".
+  # Used for filtering out dark images.
+  required_bright_pixel_area: 50000
+  # You can place a border around the image to help see how blending worked.
+  # This value is the width of the border.
+  outline: 0
 ds.
