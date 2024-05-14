@@ -259,7 +259,11 @@ class DIContainer:
 
         return deep_interpret(config)
 
-    def save_config(self, filepath: str):
+    def save_config(
+        self,
+        filepath: str,
+        documentation_url: str = "https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html",
+    ):
         """
         Save the configuration to a file.
 
@@ -267,7 +271,6 @@ class DIContainer:
         ----------
         filepath : str
             The filepath to save the configuration.
-
         """
 
         # Get the parameters for each service
@@ -283,9 +286,19 @@ class DIContainer:
             if wrapped_constructor is not None:
                 constructor = wrapped_constructor
 
+            # Make the comment to go on the end of the line.
+            if (
+                documentation_url is not None
+                and constructor.__module__.split(".")[0] == "night_horizons"
+            ):
+                eol_comment = f"{documentation_url}/{constructor.__module__}.html#"
+            else:
+                eol_comment = ""
+            eol_comment += f"{constructor.__module__}.{constructor.__name__}"
+
             # Comment the name of the constructor
             doc.yaml_add_eol_comment(
-                f"{constructor.__module__}.{constructor.__name__}",
+                comment=eol_comment,
                 key=name,
             )
 
