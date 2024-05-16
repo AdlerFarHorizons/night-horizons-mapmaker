@@ -1,6 +1,7 @@
 ###############################################################################
 # Example Mosaicker Config
 ###############################################################################
+# This config file is used to specify the settings for using the pipeline to generate a mosaic from referenced images.
 
 # Indicate what stage of the pipeline to run
 pipeline:
@@ -34,3 +35,22 @@ crs:
 
 random_state:
   seed: 15923
+
+# These are settings for the mosaicker itself, which loops through all the images
+# and makes the mosaic.
+mosaicker:
+  # By leaving pixel_width blank, the pixel width is set based on the pixel width
+  # of the referenced images.
+  pixel_width:
+  # By leaving pixel_height blank, the pixel height is set based on the pixel height
+  # of the referenced images.
+  pixel_height:
+  dtype: uint8 # The data type of the output image. uint8 is standard.
+  n_bands: 4 # RGB +Alpha = 4 ba
+
+# The image operator is used to blend each pair of images.
+image_operator:
+  # You can place a border around the image to help see how blending worked.
+  # This value is the width of the border.
+  outline: 0
+
