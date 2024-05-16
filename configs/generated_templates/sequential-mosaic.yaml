@@ -1,8 +1,8 @@
-pipeline:  # night_horizons.pipeline.SequentialMosaicMaker
+pipeline:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.pipeline.html#night_horizons.pipeline.SequentialMosaicMaker
   stage: sequential_mosaicker
   score_output: true
   verbose: true
-io_manager:  # night_horizons.io_manager.SequentialMosaicIOManager
+io_manager:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.io_manager.html#night_horizons.io_manager.SequentialMosaicIOManager
   output_description:
     mosaic: mosaic.tiff
     settings: settings.yaml
@@ -37,25 +37,25 @@ random_state: # sklearn.utils.validation.check_random_state
   seed: 1592
 metadata_processor:
   version: fh135_metadata_processor
-fh135_metadata_processor:  # night_horizons.transformers.preprocessors.MetadataPreprocessor135
+fh135_metadata_processor:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.transformers.preprocessors.html#night_horizons.transformers.preprocessors.MetadataPreprocessor135
   output_columns:
   use_cached_output: true
   unhandled_files: drop
   tz_offset_in_hr: 5.0
   passthrough: &id001 []
-fh145_metadata_processor:  # night_horizons.transformers.preprocessors.MetadataPreprocessor145
+fh145_metadata_processor:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.transformers.preprocessors.html#night_horizons.transformers.preprocessors.MetadataPreprocessor145
   output_columns:
   use_cached_output: true
   unhandled_files: drop
   tz_offset_in_hr: 5.0
   passthrough: *id001
-data_splitter:  # night_horizons.io_manager.ReferencedRawSplitter
+data_splitter:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.io_manager.html#night_horizons.io_manager.ReferencedRawSplitter
   test_size: 0.2
   max_raw_size:
   drop_raw_images: false
   random_state:
   use_test_dir: true
-metadata_image_registrar:  # night_horizons.image_processing.registration.MetadataImageRegistrar
+metadata_image_registrar:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.image_processing.registration.html#night_horizons.image_processing.registration.MetadataImageRegistrar
   passthrough: false
   use_observed_error: true
   camera_angles:
@@ -64,17 +64,17 @@ metadata_image_registrar:  # night_horizons.image_processing.registration.Metada
     2: 30.0
   angle_error: 5.0
   padding_fraction: 1.5
-geotiff_preprocessor:  # night_horizons.transformers.preprocessors.GeoTIFFPreprocessor
+geotiff_preprocessor:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.transformers.preprocessors.html#night_horizons.transformers.preprocessors.GeoTIFFPreprocessor
   spatial_error: 0.0
   padding_fraction: 0.1
   passthrough: true
-altitude_filter:  # night_horizons.transformers.filters.AltitudeFilter
+altitude_filter:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.transformers.filters.html#night_horizons.transformers.filters.AltitudeFilter
   column: mAltitude
   float_altitude: 100.0
-steady_filter: # night_horizons.transformers.filters.SteadyFilter
+steady_filter: # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.transformers.filters.html#night_horizons.transformers.filters.SteadyFilter
   column: imuGyroMag
   max_gyro: 0.075
-order:  # night_horizons.transformers.order.SensorAndDistanceOrder
+order:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.transformers.order.html#night_horizons.transformers.order.SensorAndDistanceOrder
   apply: true
   sensor_order_col: camera_num
   sensor_order_map:
@@ -87,7 +87,7 @@ order:  # night_horizons.transformers.order.SensorAndDistanceOrder
 preprocessor_pipeline: # sklearn.pipeline.Pipeline
   memory:
   verbose: false
-mosaicker:  # night_horizons.image_processing.mosaicking.SequentialMosaicker
+mosaicker:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.image_processing.mosaicking.html#night_horizons.image_processing.mosaicking.SequentialMosaicker
   memory_snapshot_freq: 10
   pixel_width:
   pixel_height:
@@ -100,16 +100,16 @@ mosaicker:  # night_horizons.image_processing.mosaicking.SequentialMosaicker
   - ind
   - return_code
   - abs_det_M
-processor: # night_horizons.image_processing.processors.ReferencerDatasetUpdater
+processor: # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.ReferencerDatasetUpdater
   log_keys: &id002 []
   save_return_codes:
   - bad_det
   - out_of_bounds
   use_safe_process: true
   dtype: uint8
-scorer: # night_horizons.image_processing.scorers.ReferencedImageScorer
+scorer: # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.image_processing.scorers.html#night_horizons.image_processing.scorers.ReferencedImageScorer
   crs:
-image_operator:  # night_horizons.image_processing.operators.ImageAlignerBlender
+image_operator:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageAlignerBlender
   det_min: 0.6
   det_max: 1.7
   required_brightness: 0.03
@@ -123,11 +123,11 @@ image_operator:  # night_horizons.image_processing.operators.ImageAlignerBlender
   log_keys:
   - abs_det_M
   - duration
-preprocessor_train: # night_horizons.transformers.preprocessors.GeoTIFFPreprocessor
+preprocessor_train: # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.transformers.preprocessors.html#night_horizons.transformers.preprocessors.GeoTIFFPreprocessor
   spatial_error: 0.0
   padding_fraction: 0.1
   passthrough: true
-io_manager_train:  # night_horizons.io_manager.TrainMosaicIOManager
+io_manager_train:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.io_manager.html#night_horizons.io_manager.TrainMosaicIOManager
   output_description:
     mosaic: mosaic.tiff
     settings: settings_train.yaml
@@ -151,16 +151,16 @@ io_manager_train:  # night_horizons.io_manager.TrainMosaicIOManager
       directory: test_referenced_images/220513-FH135
   output_dir: ./test/test_data/temp
   checkpoint_freq: 1
-image_operator_train:  # night_horizons.image_processing.operators.ImageBlender
+image_operator_train:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.image_processing.operators.html#night_horizons.image_processing.operators.ImageBlender
   fill_value:
   outline: 0
   log_keys: []
-processor_train: # night_horizons.image_processing.processors.DatasetUpdater
+processor_train: # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.image_processing.processors.html#night_horizons.image_processing.processors.DatasetUpdater
   log_keys: *id002
   save_return_codes: []
   use_safe_process: true
   dtype: uint8
-mosaicker_train:  # night_horizons.image_processing.mosaicking.Mosaicker
+mosaicker_train:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.image_processing.mosaicking.html#night_horizons.image_processing.mosaicking.Mosaicker
   pixel_width:
   pixel_height:
   dtype: uint8

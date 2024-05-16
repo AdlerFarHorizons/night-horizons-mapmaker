@@ -147,7 +147,8 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
                 self.io_manager.input_filepaths["metadata"],
                 index_col=0,
             )
-        except (KeyError, FileNotFoundError, AssertionError) as e:
+        except (KeyError, FileNotFoundError, AssertionError) as _:
+
             # Do the calculations
             log_df = self.get_logs()
 

@@ -19,7 +19,7 @@ io_manager: &default_io_settings
     imu_log: metadata/220513-FH135/PresIMULog.csv
     gps_log: metadata/220513-FH135/GPSLog.csv
     # Alternatively, you can specify a combined metadata file.
-    metadata: metadata/220513-FH135/combined_metadata.csv
+    # metadata: metadata/220513-FH135/combined_metadata.csv
     # Images without georeferencing.
     images:
       # Relative to input_dir
