@@ -28,6 +28,8 @@ io_manager:
 query_processor:
   # The actual condition for the queried data to obey.
   # In this example we do a 1km box around two coordinates
+  # For a full list of all variables available in the metadata, see
+  # https://github.com/AdlerFarHorizons/night-horizons-mapmaker/blob/main/night_horizons/data_dictionary.py
   condition: >- # The ">-" allows you to use linebreaks for clarity
     (x_center < -9593500 + 1000) &
     (x_center > -9593500 - 1000) &
