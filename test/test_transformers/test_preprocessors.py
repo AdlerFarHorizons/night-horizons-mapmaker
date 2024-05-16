@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pyproj
 
 import night_horizons.transformers.preprocessors as preprocessors
 import night_horizons.utils as utils
@@ -182,7 +183,9 @@ class TestGeoTIFFPreprocessor(unittest.TestCase):
         fps = pd.concat([raw_fps, referenced_fps], ignore_index=True)
         n_files = len(fps)
 
-        transformer = preprocessors.GeoTIFFPreprocessor()
+        crs = pyproj.CRS("EPSG:3857")
+
+        transformer = preprocessors.GeoTIFFPreprocessor(crs=crs)
         X = transformer.fit_transform(fps)
 
         expected_cols = [
