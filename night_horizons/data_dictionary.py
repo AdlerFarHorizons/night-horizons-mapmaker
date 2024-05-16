@@ -431,6 +431,13 @@ def get_data_dictionary(fields: list = None) -> dict[dict]:
     # Fill in the dictionary
     data_dict = {}
     for field in fields:
-        data_dict[field] = DATA_DICTIONARY[field]
+        try:
+            data_dict[field] = DATA_DICTIONARY[field]
+        except KeyError:
+            data_dict[field] = {
+                "description": "This field was not found in the data dictionary.",
+                "type": "Unknown",
+                "units": "Unknown",
+            }
 
     return data_dict

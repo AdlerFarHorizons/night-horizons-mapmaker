@@ -83,7 +83,7 @@ class TestMetadataPreprocessor(unittest.TestCase):
         assert metadata.equals(metadata2)
 
         # Check that we have descriptions for all the columns
-        data_dict = get_data_dictionary("metadata", metadata)
+        data_dict = get_data_dictionary(metadata.columns)
         for column in metadata.columns:
             assert column in data_dict
         assert len(data_dict) == len(metadata.columns)
