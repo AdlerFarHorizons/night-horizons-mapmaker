@@ -158,7 +158,7 @@ class TestSequentialMosaicMaker(TestStage):
                 'input_description': {
                     # Overwrite config default, which is nadir only
                     'images': {
-                        'directory': 'images/220513-FH135',
+                        'directory': 'nitelite.images/220513-FH135',
                     },
                     # Using a test dir is turned off by default
                     'test_referenced_images': {

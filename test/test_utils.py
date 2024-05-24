@@ -47,7 +47,7 @@ class TestDiscoverData(unittest.TestCase):
 
         fps = utils.discover_data(image_dir, extension=['raw', 'tif', 'tiff'])
 
-        actual_fps_a = [_ for _ in list(fps) if '/images/' in _]
+        actual_fps_a = [_ for _ in list(fps) if '/nitelite.images/' in _]
         assert list(actual_fps_a) == self.expected_fps_raw
 
         actual_fps_b = [_ for _ in list(fps) if 'referenced_images' in _]

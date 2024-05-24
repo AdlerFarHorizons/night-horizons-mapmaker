@@ -7,10 +7,10 @@ io_manager:
   input_dir: /data/220513-FH135
   input_description:
     raw_images:
-      directory: images/raw
+      directory: nitelite.images/raw
       extension: ['raw', 'tif', 'tiff']
     referenced_images:
-      directory: images/referenced
+      directory: nitelite.images/referenced
       extension: ['tif', 'tiff']
       pattern: 'Geo\s\d+_\d.tif'
   output_dir: /data/220513-FH135/mosaics/referenced

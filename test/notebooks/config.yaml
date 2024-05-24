@@ -8,15 +8,15 @@ io_manager:
   input_dir: ''
   input_description:
     raw_images:
-      directory: images/raw
+      directory: nitelite.images/raw
       extension: ['raw', 'tif', 'tiff']
     referenced_images:
-      directory: images/referenced
+      directory: nitelite.images/referenced
       extension: ['tif', 'tiff']
       pattern: 'Geo\s\d+_\d.tif'
-    img_log: metadata/image.log
-    imu_log: metadata/PresIMULog.csv
-    gps_log: metadata/GPSLog.csv
+    img_log: nitelite.metadata/image.log
+    imu_log: nitelite.metadata/PresIMULog.csv
+    gps_log: nitelite.metadata/GPSLog.csv
   output_dir: ./test/test_data/temp
   output_description: {}
   file_exists: overwrite

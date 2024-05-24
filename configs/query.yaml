@@ -13,10 +13,10 @@ io_manager:
   input_dir: /data/input
   input_description:
     # Output metadata file from sequential-mosaic
-    metadata: existing_output/sequential-mosaic/REPLACE_THIS/y_pred.csv
+    metadata: nitelite.pipeline-output/sequential-mosaic/REPLACE_THIS/y_pred.csv
     referenced_images:
       # Relative to input_dir
-      directory: existing_output/sequential-mosaic/REPLACE_THIS/referenced_images
+      directory: nitelite.pipeline-output/sequential-mosaic/REPLACE_THIS/referenced_images
 
   # Where the output files will be saved
   output_dir: /data/output

@@ -12,9 +12,9 @@ io_manager:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/
   checkpoint_freq: 100
   input_dir: /data/input
   input_description:
-    metadata: existing_output/sequential-mosaic/REPLACE_THIS/y_pred.csv
+    metadata: nitelite.pipeline-output/sequential-mosaic/REPLACE_THIS/y_pred.csv
     referenced_images:
-      directory: existing_output/sequential-mosaic/REPLACE_THIS/referenced_images
+      directory: nitelite.pipeline-output/sequential-mosaic/REPLACE_THIS/referenced_images
   output_dir: ./test/test_data/temp
   output_description:
     metadata_selected: y_pred_selected.csv

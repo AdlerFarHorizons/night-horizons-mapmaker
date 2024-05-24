@@ -15,22 +15,22 @@ io_manager: &default_io_settings
   input_dir: /data/input
   input_description:
     # Metadata files. This is the path relative to the input_dir.
-    img_log: metadata/220513-FH135/image.log
-    imu_log: metadata/220513-FH135/PresIMULog.csv
-    gps_log: metadata/220513-FH135/GPSLog.csv
+    img_log: nitelite.metadata/220513-FH135/image.log
+    imu_log: nitelite.metadata/220513-FH135/PresIMULog.csv
+    gps_log: nitelite.metadata/220513-FH135/GPSLog.csv
     # Alternatively, you can specify a combined metadata file.
-    # metadata: metadata/220513-FH135/combined_metadata.csv
+    # metadata: nitelite.metadata/220513-FH135/combined_metadata.csv
     # Images without georeferencing.
     images:
       # Relative to input_dir
       # 23085687 is the ID of the nadir camera. Delete it to process all images.
-      directory: images/220513-FH135/23085687
+      directory: nitelite.images/220513-FH135/23085687
       # Only files with these extensions will be considered.
       pattern: '\.(raw|tif|tiff)$'
     # Images with georeferencing.
     referenced_images:
       # This filepath is relative to input_dir
-      directory: referenced_images/220513-FH135
+      directory: nitelite.referenced-images/220513-FH135
       # This is a RegEx pattern. The "1" selects nadir images only.
       pattern: 'Geo\s\d+_1\.(tif|tiff)$'
   # output_dir and output_description specify where to save the output data

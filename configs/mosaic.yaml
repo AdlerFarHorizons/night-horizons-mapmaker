@@ -16,7 +16,7 @@ io_manager:
     # Images with georeferencing. We perform a search for matching files.
     referenced_images:
       # This filepath is relative to input_dir
-      directory: referenced_images/220513-FH135
+      directory: nitelite.referenced-images/220513-FH135
       # This is a RegEx pattern. The "1" selects nadir images only.
       pattern: 'Geo\s\d+_1\.(tif|tiff)$'
   # Where the output files will be saved

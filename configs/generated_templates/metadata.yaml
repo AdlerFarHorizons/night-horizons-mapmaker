@@ -12,11 +12,11 @@ io_manager:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/
   checkpoint_freq: 100
   input_dir: /data/input
   input_description:
-    img_log: metadata/220513-FH135/image.log
-    imu_log: metadata/220513-FH135/PresIMULog.csv
-    gps_log: metadata/220513-FH135/GPSLog.csv
+    img_log: nitelite.metadata/220513-FH135/image.log
+    imu_log: nitelite.metadata/220513-FH135/PresIMULog.csv
+    gps_log: nitelite.metadata/220513-FH135/GPSLog.csv
     images:
-      directory: images/220513-FH135
+      directory: nitelite.images/220513-FH135
       pattern: \.(raw|tif|tiff)$
   output_dir: ./test/test_data/temp
   output_description:

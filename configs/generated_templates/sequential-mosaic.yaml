@@ -18,14 +18,14 @@ io_manager:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/
   - y_pred
   input_dir: /data/input
   input_description:
-    img_log: metadata/220513-FH135/image.log
-    imu_log: metadata/220513-FH135/PresIMULog.csv
-    gps_log: metadata/220513-FH135/GPSLog.csv
+    img_log: nitelite.metadata/220513-FH135/image.log
+    imu_log: nitelite.metadata/220513-FH135/PresIMULog.csv
+    gps_log: nitelite.metadata/220513-FH135/GPSLog.csv
     images:
-      directory: images/220513-FH135
+      directory: nitelite.images/220513-FH135
       pattern: \.(raw|tif|tiff)$
     referenced_images:
-      directory: referenced_images/220513-FH135
+      directory: nitelite.referenced-images/220513-FH135
       pattern: Geo\s\d+_1\.(tif|tiff)$
     test_referenced_images:
       directory: test_referenced_images/220513-FH135
@@ -138,14 +138,14 @@ io_manager_train:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/
   file_exists: pass
   input_dir: /data/input
   input_description:
-    img_log: metadata/220513-FH135/image.log
-    imu_log: metadata/220513-FH135/PresIMULog.csv
-    gps_log: metadata/220513-FH135/GPSLog.csv
+    img_log: nitelite.metadata/220513-FH135/image.log
+    imu_log: nitelite.metadata/220513-FH135/PresIMULog.csv
+    gps_log: nitelite.metadata/220513-FH135/GPSLog.csv
     images:
-      directory: images/220513-FH135
+      directory: nitelite.images/220513-FH135
       pattern: \.(raw|tif|tiff)$
     referenced_images:
-      directory: referenced_images/220513-FH135
+      directory: nitelite.referenced-images/220513-FH135
       pattern: Geo\s\d+_1\.(tif|tiff)$
     test_referenced_images:
       directory: test_referenced_images/220513-FH135

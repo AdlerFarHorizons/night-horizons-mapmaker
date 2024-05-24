@@ -8,10 +8,10 @@ io_manager:
   input_dir: /data/input
   input_description:
     images:
-      directory: images
+      directory: nitelite.images
       extension: ['raw', 'tif', 'tiff']
     referenced_images:
-      directory: referenced_images/220513-FH135
+      directory: nitelite.referenced-images/220513-FH135
       pattern: 'Geo\s\d+_\d.tif$'
   output_dir: /data/output/temp
   output_description:

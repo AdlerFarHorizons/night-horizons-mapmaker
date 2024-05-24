@@ -21,7 +21,7 @@ io_manager:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/
   input_dir: /data/input
   input_description:
     referenced_images:
-      directory: referenced_images/220513-FH135
+      directory: nitelite.referenced-images/220513-FH135
       pattern: Geo\s\d+_1\.(tif|tiff)$
   output_dir: ./test/test_data/temp
 crs:  # pyproj.crs.crs.CRS
@@ -46,12 +46,6 @@ geotiff_preprocessor:  # https://adlerfarhorizons.github.io/night-horizons-mapma
   spatial_error: 0.0
   padding_fraction: 0.1
   passthrough: true
-quality_order: # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.transformers.order.html#night_horizons.transformers.order.OrderTransformer
-  apply: true
-  ascending: true
-preprocessor_pipeline: # sklearn.pipeline.Pipeline
-  memory:
-  verbose: false
 mosaicker:  # https://adlerfarhorizons.github.io/night-horizons-mapmaker/build/html/night_horizons.image_processing.mosaicking.html#night_horizons.image_processing.mosaicking.Mosaicker
   pixel_width:
   pixel_height:
