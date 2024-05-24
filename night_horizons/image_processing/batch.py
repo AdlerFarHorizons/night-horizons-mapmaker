@@ -255,12 +255,13 @@ class BatchProcessor(
 
             LOGGER.info(f"Processing row {i}...")
 
-            # Process the row
+            # Process the row.
+            # E.g. for mosaics this actually adds the pixels to each image.
             row = processor.process_row(i, row, resources)
 
             LOGGER.info(f"Postprocessing row {i}...")
 
-            # Combine
+            # Combine metadata from processing with other metadata from processing
             Z_out = row.to_frame().T.combine_first(Z_out)
 
             # Snapshot the memory usage
