@@ -27,7 +27,7 @@ class TestGDALDatasetIO(unittest.TestCase):
 
     def test_convert(self):
 
-        fp = '/data/input/referenced_images/220513-FH135/Geo 836109848_1.tif'
+        fp = '/data/input/nitelite.referenced-images/220513-FH135/Geo 836109848_1.tif'
         new_crs = pyproj.CRS('EPSG:3857')
 
         io = GDALDatasetIO()
@@ -52,7 +52,7 @@ class TestGDALDatasetIO(unittest.TestCase):
 
     def test_load_with_new_crs(self):
 
-        fp = '/data/input/referenced_images/220513-FH135/Geo 836109848_1.tif'
+        fp = '/data/input/nitelite.referenced-images/220513-FH135/Geo 836109848_1.tif'
         new_crs = pyproj.CRS('EPSG:3857')
 
         io = GDALDatasetIO()

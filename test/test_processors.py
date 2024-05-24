@@ -142,7 +142,7 @@ class TestDatasetRegistrar(unittest.TestCase):
 
         # Dataset
         expected_fp = (
-            '/data/input/referenced_images/220513-FH135/Geo 225856_1473511261_0.tif'
+            '/data/input/nitelite.referenced-images/220513-FH135/Geo 225856_1473511261_0.tif'
         )
         original_image = ReferencedImage.open(expected_fp)
         transformer = RasterCoordinateTransformer()
@@ -190,7 +190,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         '''
 
         original_fp = (
-            '/data/input/referenced_images/220513-FH135/Geo 225856_1473511261_0.tif'
+            '/data/input/nitelite.referenced-images/220513-FH135/Geo 225856_1473511261_0.tif'
         )
         original_image = ReferencedImage.open(original_fp)
 
@@ -230,7 +230,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         It does this twice.
         '''
 
-        test_dir = '/data/input/referenced_images/220513-FH135'
+        test_dir = '/data/input/nitelite.referenced-images/220513-FH135'
         filenames = [
             # 'Geo 225856_1473511261_0.tif',
             'Geo 836109848_1.tif',
@@ -252,7 +252,7 @@ class TestDatasetRegistrar(unittest.TestCase):
         This is the main logic of the sequential mosaic maker.
         '''
 
-        test_dir = '/data/input/referenced_images/220513-FH135'
+        test_dir = '/data/input/nitelite.referenced-images/220513-FH135'
         original_fp = os.path.join(test_dir, 'Geo 836109848_1.tif')
         expected_fp = os.path.join(test_dir, 'Geo 843083290_1.tif')
 

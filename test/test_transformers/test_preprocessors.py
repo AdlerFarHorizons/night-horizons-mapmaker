@@ -50,7 +50,7 @@ class TestMetadataPreprocessor(unittest.TestCase):
         """Test that the preprocessing works on unreferenced image data."""
 
         # Image filetree info
-        image_dir = "/data/input/images"
+        image_dir = "/data/input/nitelite.images"
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
@@ -92,7 +92,7 @@ class TestMetadataPreprocessor(unittest.TestCase):
         """Tests that the transformation works on referenced GeoTIFFs."""
 
         # Image filetree info
-        image_dir = "/data/input/referenced_images"
+        image_dir = "/data/input/nitelite.referenced-images"
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
 
@@ -109,7 +109,7 @@ class TestMetadataPreprocessor(unittest.TestCase):
         self.transformer.unhandled_files = "passthrough"
 
         # Image filetree info
-        image_dir = "/data/input/referenced_images"
+        image_dir = "/data/input/nitelite.referenced-images"
         fps = utils.discover_data(image_dir)
         n_files = len(fps)
         fps = pd.concat([pd.Series(["not_a_file"]), fps], ignore_index=True)
@@ -149,7 +149,7 @@ class TestMetadataPreprocessor145(TestMetadataPreprocessor):
         del self.io_manager.input_filepaths["img_log"]
 
         # Replace the image filepaths with fake ones with the right format
-        images_dir = "/data/input/images/240203-FH145/23085687"
+        images_dir = "/data/input/nitelite.images/240203-FH145/23085687"
         self.io_manager.input_filepaths["images"] = [
             os.path.join(images_dir, fn)
             for fn in [
@@ -173,10 +173,10 @@ class TestGeoTIFFPreprocessor(unittest.TestCase):
     def test_output(self):
 
         # Image filetree info
-        image_dir = "/data/input/images"
+        image_dir = "/data/input/nitelite.images"
         raw_fps = utils.discover_data(image_dir, extension=["raw"])
         n_files_unreffed = len(raw_fps)
-        referenced_image_dir = "/data/input/referenced_images"
+        referenced_image_dir = "/data/input/nitelite.referenced-images"
         referenced_fps = utils.discover_data(
             referenced_image_dir, extension=["tif", "tiff"]
         )

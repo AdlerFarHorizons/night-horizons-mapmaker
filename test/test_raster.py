@@ -21,7 +21,7 @@ class TestImage(unittest.TestCase):
 
     def test_open(self):
 
-        example_fp = '/data/input/referenced_images/220513-FH135/Geo 836109848_1.tif'
+        example_fp = '/data/input/nitelite.referenced-images/220513-FH135/Geo 836109848_1.tif'
         image = raster.Image.open(example_fp)
 
         assert image.img is not None

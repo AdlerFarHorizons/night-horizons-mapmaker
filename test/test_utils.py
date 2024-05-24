@@ -26,17 +26,17 @@ class TestDiscoverData(unittest.TestCase):
     def setUp(self):
 
         self.expected_fps_raw = [
-            ('/data/input/images/220513-FH135/23085686/'
+            ('/data/input/nitelite.images/220513-FH135/23085686/'
              '20220413_221313_1020286912_0_50_3.raw'),
-            ('/data/input/images/220513-FH135/23085687/'
+            ('/data/input/nitelite.images/220513-FH135/23085687/'
              '20220413_202740_745696_1_50_0.raw'),
-            ('/data/input/images/220513-FH135/23085687/'
+            ('/data/input/nitelite.images/220513-FH135/23085687/'
              'Geo 836109848_1.tif'),
         ]
 
     def test_discover_data(self):
 
-        image_dir = '/data/input/images'
+        image_dir = '/data/input/nitelite.images'
 
         fps = utils.discover_data(image_dir)
         assert list(fps) == self.expected_fps_raw
@@ -55,10 +55,10 @@ class TestDiscoverData(unittest.TestCase):
 
     def test_discover_data_pattern(self):
 
-        image_dir = '/data/input/referenced_images'
+        image_dir = '/data/input/nitelite.referenced-images'
         expected_fps = [
-            '/data/input/referenced_images/220513-FH135/Geo 843083290_1.tif',
-            '/data/input/referenced_images/220513-FH135/Geo 836109848_1.tif',
+            '/data/input/nitelite.referenced-images/220513-FH135/Geo 843083290_1.tif',
+            '/data/input/nitelite.referenced-images/220513-FH135/Geo 836109848_1.tif',
         ]
 
         fps = utils.discover_data(
