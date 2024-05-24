@@ -210,7 +210,7 @@ class MosaicMaker(Stage):
         # Preprocessing
         if self.verbose:
             print("Preprocessing...")
-        preprocessor = self.container.get_service("preprocessor_pipeline")
+        preprocessor = self.container.get_service("geotiff_preprocessor")
         x = preprocessor.fit_transform(referenced_fps)
 
         # Mosaicking
@@ -250,30 +250,6 @@ class MosaicMaker(Stage):
                 **kwargs
             ),
             wrapped_constructor=preprocessors.GeoTIFFPreprocessor,
-        )
-
-        # Preprocessor to order images
-        self.container.register_service(
-            "quality_order",
-            lambda quality_col="imuGyroMag", **kwargs: order.OrderTransformer(
-                order_columns=quality_col, **kwargs
-            ),
-            wrapped_constructor=order.OrderTransformer,
-        )
-
-        # Put it all together
-        def make_preprocessor_pipeline(steps: list[str] = None, **kwargs):
-            if steps is None:
-                steps = ["geotiff_preprocessor"]
-            return Pipeline(
-                [(step, self.container.get_service(step)) for step in steps],
-                **kwargs,
-            )
-
-        self.container.register_service(
-            "preprocessor_pipeline",
-            make_preprocessor_pipeline,
-            wrapped_constructor=Pipeline,
         )
 
     def register_default_processors(self):
