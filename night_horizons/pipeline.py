@@ -91,24 +91,14 @@ class Stage(ABC):
         )
 
         # Processors for different formats of metadata
-        self.container.register_service("metadata_processor", constructor=None)
         self.container.register_service(
-            "fh135_metadata_processor",
-            lambda **kwargs: preprocessors.MetadataPreprocessor135(
+            "metadata_processor",
+            lambda **kwargs: preprocessors.MetadataPreprocessor(
                 io_manager=self.container.get_service("io_manager"),
                 crs=self.container.get_service("crs"),
                 **kwargs,
             ),
-            wrapped_constructor=preprocessors.MetadataPreprocessor135,
-        )
-        self.container.register_service(
-            "fh145_metadata_processor",
-            lambda **kwargs: preprocessors.MetadataPreprocessor145(
-                io_manager=self.container.get_service("io_manager"),
-                crs=self.container.get_service("crs"),
-                **kwargs,
-            ),
-            wrapped_constructor=preprocessors.MetadataPreprocessor145,
+            wrapped_constructor=preprocessors.MetadataPreprocessor,
         )
 
     def register_default_services(self):

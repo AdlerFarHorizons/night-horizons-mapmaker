@@ -35,7 +35,7 @@ class TestMetadataPreprocessor(unittest.TestCase):
 
         # Preprocessor construction
         self.expected_cols = ["filepath", "sensor_x", "sensor_y"]
-        self.transformer = preprocessors.MetadataPreprocessor135(
+        self.transformer = preprocessors.MetadataPreprocessor(
             io_manager=self.io_manager,
             output_columns=self.expected_cols,
             crs=self.mapmaker.container.get_service("crs"),
