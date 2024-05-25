@@ -22,6 +22,9 @@ class TestMetadataPreprocessor(unittest.TestCase):
 
         self.setUpFunction()
 
+        self.image_dir = "/data/input/nitelite.images/220513-FH135"
+        self.referenced_image_dir = "/data/input/nitelite.referenced-images/220513-FH135"
+
     def setUpFunction(self, local_options={}):
 
         self.mapmaker = create_stage(
@@ -50,8 +53,7 @@ class TestMetadataPreprocessor(unittest.TestCase):
         """Test that the preprocessing works on unreferenced image data."""
 
         # Image filetree info
-        image_dir = "/data/input/nitelite.images"
-        fps = utils.discover_data(image_dir)
+        fps = utils.discover_data(self.image_dir)
         n_files = len(fps)
 
         # Add test columns to passthrough
@@ -92,8 +94,7 @@ class TestMetadataPreprocessor(unittest.TestCase):
         """Tests that the transformation works on referenced GeoTIFFs."""
 
         # Image filetree info
-        image_dir = "/data/input/nitelite.referenced-images"
-        fps = utils.discover_data(image_dir)
+        fps = utils.discover_data(self.referenced_image_dir)
         n_files = len(fps)
 
         metadata = self.transformer.fit_transform(fps)
@@ -109,8 +110,7 @@ class TestMetadataPreprocessor(unittest.TestCase):
         self.transformer.unhandled_files = "passthrough"
 
         # Image filetree info
-        image_dir = "/data/input/nitelite.referenced-images"
-        fps = utils.discover_data(image_dir)
+        fps = utils.discover_data(self.referenced_image_dir)
         n_files = len(fps)
         fps = pd.concat([pd.Series(["not_a_file"]), fps], ignore_index=True)
 
@@ -136,8 +136,11 @@ class TestMetadataPreprocessor145(TestMetadataPreprocessor):
         local_options = {
             "io_manager": {
                 "input_description": {
-                    "imu_log": "metadata/240203-FH145/PresIMULog.csv",
-                    "gps_log": "metadata/240203-FH145/GPSLog.csv",
+                    "imu_log": "nitelite.metadata/240203-FH145/PresIMULog.csv",
+                    "gps_log": "nitelite.metadata/240203-FH145/GPSLog.csv",
+                    "images": {
+                        "directory": "nitelite.images/240203-FH145/23085687",
+                    }
                 },
             },
         }
@@ -149,15 +152,16 @@ class TestMetadataPreprocessor145(TestMetadataPreprocessor):
         del self.io_manager.input_filepaths["img_log"]
 
         # Replace the image filepaths with fake ones with the right format
-        images_dir = "/data/input/nitelite.images/240203-FH145/23085687"
-        self.io_manager.input_filepaths["images"] = [
-            os.path.join(images_dir, fn)
-            for fn in [
-                "10_1707005484.653204_23085687_1_img_0.raw",
-                "1037_1707018103.7545705_23085687_1_img_0.raw",
-                "1012_1707017794.0622451_23085687_1_img.tiff",
-            ]
-        ]
+        self.image_dir = "240203-FH145"
+        self.referenced_image_dir = "/data/input/nitelite.referenced-images/240203-FH145"
+        # self.io_manager.input_filepaths["images"] = [
+        #     os.path.join(images_dir, fn)
+        #     for fn in [
+        #         "10_1707005484.653204_23085687_1_img_0.raw",
+        #         "1037_1707018103.7545705_23085687_1_img_0.raw",
+        #         "1012_1707017794.0622451_23085687_1_img.tiff",
+        #     ]
+        # ]
 
         # Turn off the timezone offset
         self.transformer.tz_offset_in_hr = 0.0
