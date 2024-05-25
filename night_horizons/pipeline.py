@@ -352,7 +352,8 @@ class SequentialMosaicMaker(MosaicMaker):
         preprocessor = self.container.get_service("preprocessor_pipeline")
         # The preprocessor is fit to the training sample
         preprocessor = preprocessor.fit(X=fps_train, y=y_train)
-        X = preprocessor.transform(fps)
+        # Get the pandas dataframe that we will use for mosaicking
+        X: pd.DataFrame = preprocessor.transform(fps)
 
         # Report on preprocessing
         if self.verbose:
@@ -371,7 +372,9 @@ class SequentialMosaicMaker(MosaicMaker):
         if self.verbose:
             print("Creating starting mosaic...")
         mosaicker = mosaicker.fit(
+            # Necessary to pass to ensure the geotiff encloses all the images
             X=X,
+            # Provides starting images
             X_train=X_train,
         )
         if self.verbose:
@@ -524,7 +527,7 @@ class SequentialMosaicMaker(MosaicMaker):
             "scorer",
             lambda **kwargs: scorers.ReferencedImageScorer(
                 crs=self.container.get_service("crs"),
-                io_manager=self.container.get_service("io_manager"),
+                io_manager=self.csequential-mosaicontainer.get_service("io_manager"),
                 image_operator=None,
                 **kwargs,
             ),

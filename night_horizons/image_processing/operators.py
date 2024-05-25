@@ -683,6 +683,7 @@ class ImageAlignerBlender(ImageAligner, ImageBlender):
             find_homography_options=find_homography_options,
         )
 
+        # Take the superclass of ImageAligner (which is ImageBlender) and initialize
         super(ImageAligner, self).__init__(
             fill_value=fill_value,
             outline=outline,
