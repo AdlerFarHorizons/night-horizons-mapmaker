@@ -31,6 +31,14 @@ class TestInput(unittest.TestCase):
              '20220413_221313_1020286912_0_50_3.raw'),
             ('/data/input/nitelite.images/220513-FH135/23085687/'
              '20220413_202740_745696_1_50_0.raw'),
+            ('/data/input/nitelite.images/240203-FH145/23085687/'
+             '10_1707005484.653204_23085687_1_img_0.raw'),
+            ('/data/input/nitelite.images/240203-FH145/23085687/'
+             '10_1707005484.683574_23085687_1_img_1.raw'),
+            ('/data/input/nitelite.images/240203-FH145/23085687/'
+             '10_1707005484.714646_23085687_1_img_2.raw'),
+            ('/data/input/nitelite.images/240203-FH145/23085687/'
+             '737_1707014395.8863537_23085687_1_img.tiff'),
             ('/data/input/nitelite.images/220513-FH135/23085687/'
              'Geo 836109848_1.tif'),
         ]
@@ -72,7 +80,7 @@ class TestInput(unittest.TestCase):
         )
 
         actual_fps_a = io_manager.input_filepaths['images']
-        assert_sorted_lists_equal(list(actual_fps_a), self.expected_fps_raw[:-1])
+        assert_sorted_lists_equal(list(actual_fps_a), self.expected_fps_raw[:-2])
 
         actual_fps_b = io_manager.input_filepaths['referenced_images']
         assert len(actual_fps_b) > 0
