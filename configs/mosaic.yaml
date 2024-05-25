@@ -29,10 +29,6 @@ io_manager:
     used_config: used-config.yaml
   file_exists: new
 
-# What metadata processor to use (based on metadata format)
-metadata_processor:
-  version: fh135_metadata_processor
-
 # Coordinate reference-system employed
 crs:
   projparams: 'EPSG:3857'

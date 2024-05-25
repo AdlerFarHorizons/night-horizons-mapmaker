@@ -35,10 +35,6 @@ io_manager:
   # with a new ID attached.
   file_exists: overwrite
 
-# What metadata processor to use (based on metadata format)
-metadata_processor:
-  version: fh135_metadata_processor
-
 # Coordinate reference-system employed
 crs:
   projparams: 'EPSG:3857' # The coordinate system used for google maps, this is a pretty good cartesian standard.

@@ -40,10 +40,6 @@ query_processor:
     (y_center < 4857700 + 1000) &
     (y_center > 4857700 - 1000)
 
-# What metadata processor to use (based on metadata format)
-metadata_processor:
-  version: fh135_metadata_processor
-
 # Coordinate reference-system employed
 crs:
   projparams: 'EPSG:3857'

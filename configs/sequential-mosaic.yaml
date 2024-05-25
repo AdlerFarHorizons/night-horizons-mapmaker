@@ -48,10 +48,6 @@ io_manager: &default_io_settings
 io_manager_train:
   <<: *default_io_settings
 
-# What metadata processor to use (based on metadata format)
-metadata_processor:
-  version: fh135_metadata_processor
-
 # Coordinate reference-system employed
 crs:
   # A standard CRS for cartesian coordinates
