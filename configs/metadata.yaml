@@ -7,7 +7,11 @@ pipeline:
   stage: metadata_processor
 
 # I/O settings
-# These settings assume that the user has mounted their data directory at /data
+# These settings work for the default AWS setup.
+# The s3 buckets nitelite.metadata, nitelite.images, nitelite.referenced-images, and
+# nitelite.pipeline-output are available to the pipeline inside /data/input.
+# You can pull data from any of these simply by using the path relative to the bucket.
+# See below for examples.
 io_manager:
   # Specifies the input data
   input_dir: /data/input
