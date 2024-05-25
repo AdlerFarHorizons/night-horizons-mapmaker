@@ -32,6 +32,14 @@ class TestDiscoverData(unittest.TestCase):
              '20220413_202740_745696_1_50_0.raw'),
             ('/data/input/nitelite.images/220513-FH135/23085687/'
              'Geo 836109848_1.tif'),
+            ('/data/input/nitelite.images/240203-FH145/23085687/'
+             '10_1707005484.653204_23085687_1_img_0.raw'),
+            ('/data/input/nitelite.images/240203-FH145/23085687/'
+             '10_1707005484.683574_23085687_1_img_1.raw'),
+            ('/data/input/nitelite.images/240203-FH145/23085687/'
+             '10_1707005484.714646_23085687_1_img_2.raw'),
+            ('/data/input/nitelite.images/240203-FH145/23085687/'
+             '737_1707014395.8863537_23085687_1_img.tiff'),
         ]
 
     def test_discover_data(self):
@@ -50,7 +58,7 @@ class TestDiscoverData(unittest.TestCase):
         actual_fps_a = [_ for _ in list(fps) if '/nitelite.images/' in _]
         assert list(actual_fps_a) == self.expected_fps_raw
 
-        actual_fps_b = [_ for _ in list(fps) if 'referenced_images' in _]
+        actual_fps_b = [_ for _ in list(fps) if 'nitelite.referenced-images' in _]
         assert len(actual_fps_b) > 0
 
     def test_discover_data_pattern(self):

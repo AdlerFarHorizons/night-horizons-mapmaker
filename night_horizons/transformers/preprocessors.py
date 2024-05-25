@@ -155,28 +155,29 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
             # Merge, assuming filenames remain the same.
             X["original_index"] = X.index
             X["filename"] = X["filepath"].apply(os.path.basename)
-            X_corr = pd.merge(X, log_df, how="inner", on="filename")
+            X_out = pd.merge(X, log_df, how="inner", on="filename")
 
             # Rename filepath_x
-            if "filepath_x" in X_corr.columns:
-                X_corr["filepath"] = X_corr["filepath_x"]
-                del X_corr["filepath_x"]
+            if "filepath_x" in X_out.columns:
+                X_out["filepath"] = X_out["filepath_x"]
+                del X_out["filepath_x"]
 
-            # Leftovers
-            X_remain = (X.loc[~X.index.isin(X_corr["original_index"])]).copy()
+            # Try a few patterns to see if we can get the rest
+            patterns = [r"(\d+)_\d.tif", r"(\d+)\.\d+.tif"]
+            for pattern in patterns:
+                # Leftovers
+                X_remain = (X.loc[~X.index.isin(X_out["original_index"])]).copy()
 
-            if len(X_remain) > 0:
-                # Secondary merge attempt, using a common pattern
-                pattern = r"(\d+)_\d.tif"
-                X_remain["timestamp_id"] = (
-                    X_remain["filename"].str.findall(pattern).str[-1]
-                )
-                X_corr2 = pd.merge(X_remain, log_df, how="inner", on="timestamp_id")
+                if len(X_remain) > 0:
+                    # Secondary merge attempt, using a common pattern
+                    X_remain["timestamp_id"] = (
+                        X_remain["filename"].str.findall(pattern).str[-1]
+                    )
+                    X_remain = X_remain.dropna(subset=["timestamp_id"])
+                    X_out2 = pd.merge(X_remain, log_df, how="inner", on="timestamp_id")
 
-                # Recombine
-                X_out = pd.concat([X_corr, X_corr2], axis="rows")
-            else:
-                X_out = X_corr
+                    # Recombine
+                    X_out = pd.concat([X_out, X_out2], axis="rows")
 
             X_out.set_index("original_index", inplace=True)
 
@@ -193,7 +194,6 @@ class MetadataPreprocessor(TransformerMixin, BaseEstimator):
             elif "drop" in self.unhandled_files:
                 if "warn" in self.unhandled_files:
                     warnings.warn(w_message)
-                pass
             elif "passthrough" in self.unhandled_files:
                 if "warn" in self.unhandled_files:
                     warnings.warn(w_message)
@@ -314,9 +314,9 @@ class MetadataPreprocessor135(MetadataPreprocessor):
                     "internal_temp",
                     "filename",
                 ]
-                + ["Unnamed: {}".format(i + 1) for i in range(12)],
+                + [f"Unnamed: {i + 1}" for i in range(12)],
             )
-        except (KeyError, IOError) as e:
+        except (KeyError, IOError) as _:
             # If there's no explicit image log we fall back to the filenames
             img_log_df = utils.check_filepaths_input(
                 self.io_manager.input_filepaths["images"]

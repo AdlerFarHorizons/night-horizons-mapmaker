@@ -82,7 +82,7 @@ class TestMetadataPreprocessor(unittest.TestCase):
         del self.io_manager.input_filepaths["imu_log"]
         metadata2 = self.transformer.fit_transform(fps)
 
-        assert metadata.equals(metadata2)
+        pd.testing.assert_frame_equal(metadata, metadata2)
 
         # Check that we have descriptions for all the columns
         data_dict = get_data_dictionary(metadata.columns)

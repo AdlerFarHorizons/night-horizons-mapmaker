@@ -527,7 +527,7 @@ class SequentialMosaicMaker(MosaicMaker):
             "scorer",
             lambda **kwargs: scorers.ReferencedImageScorer(
                 crs=self.container.get_service("crs"),
-                io_manager=self.csequential-mosaicontainer.get_service("io_manager"),
+                io_manager=self.container.get_service("io_manager"),
                 image_operator=None,
                 **kwargs,
             ),
